@@ -109,7 +109,7 @@ module PointClickEngine
     def draw
       # Draw background
       if bg = @background
-        RL.draw_texture_ex(bg, RL::Vector2.new(x: 0, y: 0), 0.0, @scale, RL::Color::White)
+        RL.draw_texture_ex(bg, RL::Vector2.new(x: 0, y: 0), 0.0, @scale, RL::WHITE)
       end
 
       # Draw objects
@@ -177,11 +177,11 @@ module PointClickEngine
       return unless @visible
 
       mouse_pos = RL.get_mouse_position
-      if RL.is_mouse_button_pressed(RL::MouseButton::Left)
+      if RL::MouseButton::Left.pressed?
         # Check if clicking on an item
         @items.each_with_index do |item, index|
           item_rect = get_item_rect(index)
-          if RL.check_collision_point_rec(mouse_pos, item_rect)
+          if RL.check_collision_point_rec?(mouse_pos, item_rect)
             @selected_item = item
             break
           end
@@ -207,12 +207,12 @@ module PointClickEngine
         # Draw item icon if available
         if icon = item.icon
           RL.draw_texture_ex(icon, RL::Vector2.new(x: item_rect.x, y: item_rect.y), 0.0,
-                            @slot_size / icon.width.to_f, RL::Color::White)
+                            @slot_size / icon.width.to_f, RL::WHITE)
         end
 
         # Highlight selected item
         if item == @selected_item
-          RL.draw_rectangle_lines_ex(item_rect, 2, RL::Color::Yellow)
+          RL.draw_rectangle_lines_ex(item_rect, 2, RL::YELLOW)
         end
       end
     end
@@ -237,6 +237,7 @@ module PointClickEngine
     property font_size : Int32 = 20
     property background_color : RL::Color = RL::Color.new(r: 0, g: 0, b: 0, a: 220)
     property text_color : RL::Color = RL::WHITE
+    property ready_to_process_input : Bool = false
 
     struct DialogChoice
       property text : String
@@ -255,28 +256,38 @@ module PointClickEngine
 
     def show
       @visible = true
+      @ready_to_process_input = false
+      puts "Dialog#show: '#{@text}' devient visible." # DEBUG
     end
 
     def hide
       @visible = false
+      puts "Dialog#hide: '#{@text}' devient invisible." # DEBUG
       @on_complete.try &.call
     end
 
     def update(dt : Float32)
       return unless @visible
 
+      unless @ready_to_process_input
+        @ready_to_process_input = true
+        # puts "Dialog#update: '#{@text}' - maintenant prêt pour l'entrée au prochain frame." # Débogage
+        return # On saute le traitement de l'entrée pour ce premier update
+      end
+
       if @choices.empty?
         # Skip dialog on click/key press
-        if RL.is_mouse_button_pressed(RL::MouseButton::Left) || RL.is_key_pressed(RL::Key::Space)
+        if RL::MouseButton::Left.pressed? || RL::KeyboardKey::Space.pressed?
+          puts "Dialog#update: '#{@text}' - condition de fermeture (pas de choix, clic/espace)." # DEBUG
           hide
         end
       else
         # Handle choice selection
         mouse_pos = RL.get_mouse_position
-        if RL.is_mouse_button_pressed(RL::MouseButton::Left)
+        if RL::MouseButton::Left.pressed?
           @choices.each_with_index do |choice, index|
             choice_rect = get_choice_rect(index)
-            if RL.check_collision_point_rec(mouse_pos, choice_rect)
+            if RL.check_collision_point_rec?(mouse_pos, choice_rect)
               choice.action.call
               hide
               break
@@ -287,18 +298,20 @@ module PointClickEngine
     end
 
     def draw
+      puts "Dialog#draw Tentative: '#{@text}', visible: #{@visible}" if @visible && RL.window_ready? && !RL.window_hidden?
+
       return unless @visible
 
       # Draw background
       bg_rect = RL::Rectangle.new(x: @position.x, y: @position.y, width: @size.x, height: @size.y)
       RL.draw_rectangle_rec(bg_rect, @background_color)
-      RL.draw_rectangle_lines_ex(bg_rect, 2, RL::Color::White)
+      RL.draw_rectangle_lines_ex(bg_rect, 2, RL::WHITE)
 
       # Draw character name if present
       y_offset = @padding
       if char = @character
         RL.draw_text(char, @position.x.to_i + @padding.to_i,
-                     @position.y.to_i + y_offset.to_i, @font_size + 4, RL::Color::Yellow)
+                     @position.y.to_i + y_offset.to_i, @font_size + 4, RL::YELLOW)
         y_offset += @font_size + 10
       end
 
@@ -314,8 +327,8 @@ module PointClickEngine
 
           # Highlight on hover
           mouse_pos = RL.get_mouse_position
-          color = RL.check_collision_point_rec(mouse_pos, choice_rect) ?
-                  RL::Color::Yellow : RL::Color::White
+          color = RL.check_collision_point_rec?(mouse_pos, choice_rect) ?
+                  RL::YELLOW : RL::WHITE
 
           RL.draw_text("> #{choice.text}", choice_rect.x.to_i, choice_rect.y.to_i,
                       @font_size, color)
@@ -333,6 +346,7 @@ module PointClickEngine
   class Game
     class_property debug_mode : Bool = false
 
+    property initialized : Bool = false
     property window_width : Int32
     property window_height : Int32
     property title : String
@@ -350,9 +364,12 @@ module PointClickEngine
     end
 
     def init
+      return if @initialized
+
       RL.init_window(@window_width, @window_height, @title)
       RL.set_target_fps(@target_fps)
       RL.hide_cursor if @cursor_texture
+      @initialized = true
     end
 
     def load_cursor(path : String)
@@ -381,7 +398,7 @@ module PointClickEngine
       init
       @running = true
 
-      while @running && !RL.window_should_close
+      while @running && !RL.close_window? #window_should_close
         update(RL.get_frame_time)
         draw
       end
@@ -405,12 +422,12 @@ module PointClickEngine
       @dialogs.reject! { |d| !d.visible }
 
       # Toggle inventory
-      if RL.is_key_pressed(RL::Key::I)
+      if RL::KeyboardKey::I.pressed?
         @inventory.visible = !@inventory.visible
       end
 
       # Toggle debug mode
-      if RL.is_key_pressed(RL::Key::F1)
+      if RL::KeyboardKey::F1.pressed?
         Game.debug_mode = !Game.debug_mode
       end
 
@@ -420,7 +437,7 @@ module PointClickEngine
 
     private def draw
       RL.begin_drawing
-      RL.clear_background(RL::Color::Black)
+      RL.clear_background(RL::BLACK)
 
       # Draw current scene
       @current_scene.try &.draw
@@ -434,14 +451,14 @@ module PointClickEngine
       # Draw custom cursor
       if cursor = @cursor_texture
         mouse_pos = RL.get_mouse_position
-        RL.draw_texture_v(cursor, mouse_pos, RL::Color::White)
+        RL.draw_texture_v(cursor, mouse_pos, RL::WHITE)
       end
 
       # Draw debug info
       if Game.debug_mode
-        RL.draw_text("FPS: #{RL.get_fps}", 10, 10, 20, RL::Color::Green)
+        RL.draw_text("FPS: #{RL.get_fps}", 10, 10, 20, RL::GREEN)
         mouse_pos = RL.get_mouse_position
-        RL.draw_text("Mouse: #{mouse_pos.x.to_i}, #{mouse_pos.y.to_i}", 10, 35, 20, RL::Color::Green)
+        RL.draw_text("Mouse: #{mouse_pos.x.to_i}, #{mouse_pos.y.to_i}", 10, 35, 20, RL::GREEN)
       end
 
       RL.end_drawing
@@ -557,7 +574,7 @@ module PointClickEngine
         height: @frame_height * @scale
       )
 
-      RL.draw_texture_pro(tex, source_rect, dest_rect, RL::Vector2.new(x: 0, y: 0), 0.0, RL::Color::White)
+      RL.draw_texture_pro(tex, source_rect, dest_rect, RL::Vector2.new(x: 0, y: 0), 0.0, RL::WHITE)
     end
   end
 
