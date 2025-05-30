@@ -7,19 +7,13 @@ require "raylib-cr"
 alias RL = Raylib
 
 module PointClickEngine
-  VERSION = "0.1.0"
+  VERSION = "0.2.0"
 
-  # Base class for all game objects
-  abstract class GameObject
-    property position : RL::Vector2
-    property size : RL::Vector2
+  module Drawable
     property visible : Bool = true
-    property active : Bool = true
+    property position : RL::Vector2
+    property size : RL::Vector2 = RL::Vector2.new
 
-    def initialize(@position : RL::Vector2, @size : RL::Vector2)
-    end
-
-    abstract def update(dt : Float32)
     abstract def draw
 
     def bounds : RL::Rectangle
@@ -33,6 +27,17 @@ module PointClickEngine
       point.y >= bounds.y &&
       point.y <= bounds.y + bounds.height
     end
+  end
+
+  # Base class for all game objects
+  abstract class GameObject
+    include Drawable
+    property active : Bool = true
+
+    def initialize(@position : RL::Vector2, @size : RL::Vector2)
+    end
+
+    abstract def update(dt : Float32)
   end
 
   # Clickable hotspot in the game
@@ -146,15 +151,15 @@ module PointClickEngine
 
   # Player inventory system
   class Inventory
+    include Drawable
     property items : Array(InventoryItem) = [] of InventoryItem
-    property visible : Bool = false
-    property position : RL::Vector2
     property slot_size : Float32 = 64.0
     property padding : Float32 = 8.0
     property background_color : RL::Color = RL::Color.new(r: 0, g: 0, b: 0, a: 200)
     property selected_item : InventoryItem?
 
     def initialize(@position : RL::Vector2 = RL::Vector2.new(x: 10, y: 10))
+      @visible = false
     end
 
     def add_item(item : InventoryItem)
@@ -226,13 +231,11 @@ module PointClickEngine
 
   # Dialog system
   class Dialog
+    include Drawable
     property text : String
     property character : String?
     property choices : Array(DialogChoice) = [] of DialogChoice
     property on_complete : Proc(Nil)?
-    property visible : Bool = false
-    property position : RL::Vector2
-    property size : RL::Vector2
     property padding : Float32 = 20.0
     property font_size : Int32 = 20
     property background_color : RL::Color = RL::Color.new(r: 0, g: 0, b: 0, a: 220)
@@ -248,6 +251,7 @@ module PointClickEngine
     end
 
     def initialize(@text : String, @position : RL::Vector2, @size : RL::Vector2)
+      @visible = false
     end
 
     def add_choice(text : String, &action : -> Nil)
@@ -581,9 +585,9 @@ module PointClickEngine
   # Particle effect for visual feedback
   class Particle
     property position : RL::Vector2
+    property size : Float32 = 0.0
     property velocity : RL::Vector2
     property color : RL::Color
-    property size : Float32
     property lifetime : Float32
     property age : Float32 = 0.0
 
@@ -681,3 +685,7 @@ end
 #
 # # Run the game
 # game.run
+
+
+require "./character"
+require "./display_manager"
