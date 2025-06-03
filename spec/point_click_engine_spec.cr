@@ -353,8 +353,8 @@ describe PointClickEngine do
 
     it "can have character name" do
       dialog = PointClickEngine::Dialog.new("Hello!", vec2(0, 0), vec2(100, 100))
-      dialog.character = "Bob"
-      dialog.character.should eq("Bob")
+      dialog.character_name = "Bob"
+      dialog.character_name.should eq("Bob")
     end
 
     it "can add choices" do
