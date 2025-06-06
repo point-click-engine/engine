@@ -123,12 +123,21 @@ module PointClickEngine
 
       def load_cursor(path : String)
         @cursor_texture_path = path
-        @cursor_texture = RL.load_texture(path)
+        @cursor_texture = AssetLoader.load_texture(path)
         RL.hide_cursor if @initialized
       end
 
       def add_scene(scene : Scenes::Scene)
         @scenes[scene.name] = scene
+      end
+
+      # Archive management methods
+      def mount_archive(path : String, mount_point : String = "/")
+        AssetManager.mount_archive(path, mount_point)
+      end
+
+      def unmount_archive(mount_point : String = "/")
+        AssetManager.unmount_archive(mount_point)
       end
 
       def change_scene(name : String)

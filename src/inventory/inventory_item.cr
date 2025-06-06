@@ -48,7 +48,7 @@ module PointClickEngine
 
       def load_icon(path : String)
         @icon_path = path
-        @icon = RL.load_texture(path)
+        @icon = AssetLoader.load_texture(path)
       end
     end
   end

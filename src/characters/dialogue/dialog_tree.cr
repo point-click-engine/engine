@@ -183,7 +183,7 @@ module PointClickEngine
 
         # Load dialog tree from YAML file
         def self.load_from_file(path : String) : DialogTree
-          yaml_content = File.read(path)
+          yaml_content = AssetLoader.read_yaml(path)
           DialogTree.from_yaml(yaml_content)
         end
 

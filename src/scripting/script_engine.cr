@@ -26,7 +26,7 @@ module PointClickEngine
 
       def execute_script_file(file_path : String) : Bool
         begin
-          content = File.read(file_path)
+          content = AssetLoader.read_script(file_path)
           execute_script(content)
         rescue ex
           puts "Script file error: #{ex.message}"

@@ -54,7 +54,7 @@ module PointClickEngine
 
       def load_background(path : String, scale : Float32 = 1.0)
         @background_path = path
-        @background = RL.load_texture(path)
+        @background = AssetLoader.load_texture(path)
         @scale = scale
       end
 

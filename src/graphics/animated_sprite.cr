@@ -46,7 +46,7 @@ module PointClickEngine
 
       def load_texture(path : String)
         @texture_path = path
-        @texture = RL.load_texture(path)
+        @texture = AssetLoader.load_texture(path)
       end
 
       def play

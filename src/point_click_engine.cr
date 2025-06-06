@@ -48,6 +48,10 @@ require "./core/save_system"
 # Audio modules (optional - only if audio is enabled)
 require "./audio/sound_system"
 
+# Asset management modules
+require "./assets/asset_manager"
+require "./assets/asset_loader"
+
 module PointClickEngine
   VERSION = "0.3.0"
 
@@ -106,4 +110,5 @@ module PointClickEngine
   alias FunctionEventHandler = Scripting::FunctionEventHandler
   alias ScriptableCharacter = Characters::ScriptableCharacter
   alias SimpleNPC = Characters::SimpleNPC
+
 end

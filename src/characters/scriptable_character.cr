@@ -30,7 +30,7 @@ module PointClickEngine
       def load_script(file_path : String)
         @script_file = file_path
         begin
-          @script_content = File.read(file_path)
+          @script_content = AssetLoader.read_script(file_path)
           initialize_script
         rescue ex
           puts "Failed to load script #{file_path}: #{ex.message}"
