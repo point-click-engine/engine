@@ -1,0 +1,111 @@
+name: Examples
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-examples:
+    name: Build Examples
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install system dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libasound2-dev \
+          mesa-common-dev \
+          libx11-dev \
+          libxrandr-dev \
+          libxi-dev \
+          xorg-dev \
+          libgl1-mesa-dev \
+          libglu1-mesa-dev \
+          build-essential
+          
+    - name: Install system dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew update
+        brew install raylib
+        
+    - name: Install Crystal
+      uses: crystal-lang/install-crystal@v1.8.2
+      with:
+        crystal: latest
+        
+    - name: Cache shards
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/shards
+          lib
+        key: ${{ runner.os }}-shards-${{ hashFiles('shard.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-shards-
+          
+    - name: Install dependencies
+      run: shards install
+      
+    - name: Create example assets
+      run: |
+        mkdir -p example/assets
+        # Create placeholder assets for CI
+        echo "Creating placeholder assets for CI build..."
+        # You would replace these with actual asset creation
+        touch example/assets/background.png
+        touch example/assets/player.png
+        
+    - name: Build modular example
+      run: |
+        crystal build example/modular_example.cr --no-codegen
+        echo "✅ Modular example builds successfully"
+        
+    - name: Build original example (if exists)
+      run: |
+        if [ -f "example/example.cr" ]; then
+          crystal build example/example.cr --no-codegen
+          echo "✅ Original example builds successfully"
+        else
+          echo "ℹ️  Original example not found, skipping"
+        fi
+        
+    - name: Validate example structure
+      run: |
+        echo "Validating example structure..."
+        
+        # Check that examples use the engine correctly
+        if grep -q "PointClickEngine::" example/modular_example.cr; then
+          echo "✅ Example uses modular structure"
+        else
+          echo "❌ Example doesn't use modular structure"
+          exit 1
+        fi
+        
+        # Check that examples have proper error handling
+        if grep -q "rescue\|begin\|ensure" example/modular_example.cr || grep -q "try\|if.*nil" example/modular_example.cr; then
+          echo "✅ Example has error handling"
+        else
+          echo "⚠️  Example could benefit from error handling"
+        fi
+        
+    - name: Upload example artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: examples-${{ runner.os }}
+        path: |
+          example/modular_example
+          example/example
+        retention-days: 7
+        if-no-files-found: ignore

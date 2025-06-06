@@ -1,0 +1,61 @@
+# Auto-labeling configuration for pull requests
+
+# Core engine changes
+'core':
+  - 'src/core/**/*'
+  - 'src/point_click_engine.cr'
+
+# Graphics and rendering
+'graphics':
+  - 'src/graphics/**/*'
+
+# Character system
+'characters':
+  - 'src/characters/**/*'
+
+# Scene management
+'scenes':
+  - 'src/scenes/**/*'
+
+# Inventory system
+'inventory':
+  - 'src/inventory/**/*'
+
+# User interface
+'ui':
+  - 'src/ui/**/*'
+
+# Utilities
+'utils':
+  - 'src/utils/**/*'
+
+# Documentation
+'documentation':
+  - '**/*.md'
+  - 'docs/**/*'
+
+# Tests
+'tests':
+  - 'spec/**/*'
+
+# Examples
+'examples':
+  - 'example/**/*'
+
+# CI/CD
+'ci/cd':
+  - '.github/**/*'
+  - '.github/workflows/**/*'
+
+# Dependencies
+'dependencies':
+  - 'shard.yml'
+  - 'shard.lock'
+
+# Configuration
+'config':
+  - '*.yml'
+  - '*.yaml'
+  - '*.json'
+  - '.gitignore'
+  - '.editorconfig'

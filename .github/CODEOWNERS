@@ -1,0 +1,25 @@
+# Global owners
+* @point-click-engine/maintainers
+
+# Core engine files
+/src/core/ @point-click-engine/core-team
+/src/point_click_engine.cr @point-click-engine/core-team
+
+# Graphics and rendering
+/src/graphics/ @point-click-engine/graphics-team
+
+# Character system
+/src/characters/ @point-click-engine/gameplay-team
+
+# Documentation
+*.md @point-click-engine/docs-team
+/docs/ @point-click-engine/docs-team
+
+# CI/CD and GitHub configuration
+/.github/ @point-click-engine/devops-team
+
+# Tests
+/spec/ @point-click-engine/maintainers
+
+# Build configuration
+/shard.yml @point-click-engine/maintainers

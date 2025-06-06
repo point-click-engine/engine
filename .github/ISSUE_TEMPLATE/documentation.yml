@@ -1,0 +1,121 @@
+name: Documentation
+description: Report missing or incorrect documentation
+title: "[Docs]: "
+labels: ["documentation", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve our documentation! Report missing, incorrect, or unclear documentation.
+        
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs attention?
+      options:
+        - "API Documentation"
+        - "Tutorial/Guide"
+        - "Code Examples"
+        - "README"
+        - "Installation Instructions"
+        - "Module Documentation"
+        - "Comment Documentation"
+        - "Other"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: location
+    attributes:
+      label: Location
+      description: Where is the documentation issue located?
+      placeholder: |
+        - File: src/core/engine.cr
+        - Method: Engine#initialize
+        - Line: 50
+        Or:
+        - URL: https://point-click-engine.github.io/engine/docs/
+        - Section: Getting Started
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What kind of documentation issue is this?
+      options:
+        - "Missing documentation"
+        - "Incorrect information"
+        - "Unclear explanation"
+        - "Outdated information"
+        - "Broken links"
+        - "Missing examples"
+        - "Typos/Grammar"
+        - "Other"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Documentation
+      description: What does the current documentation say? (if any)
+      render: markdown
+      placeholder: Current text or "No documentation exists"
+    validations:
+      required: false
+      
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Documentation
+      description: What should the documentation say instead?
+      render: markdown
+      placeholder: Describe what the documentation should contain
+    validations:
+      required: true
+      
+  - type: textarea
+    id: code-example
+    attributes:
+      label: Code Example
+      description: If applicable, provide a code example that should be documented
+      render: crystal
+      placeholder: |
+        # Example code that needs documentation
+        engine = PointClickEngine::Engine.new(800, 600, "My Game")
+        
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Target Audience
+      description: Who is the primary audience for this documentation?
+      options:
+        - "Beginners/First-time users"
+        - "Intermediate developers"
+        - "Advanced users"
+        - "Contributors/Maintainers"
+        - "All users"
+    validations:
+      required: true
+      
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Would you be willing to help improve this documentation?
+      options:
+        - label: I can write the documentation
+        - label: I can review the documentation
+        - label: I can provide examples
+        - label: I can test the documentation
+        
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the documentation issue here.
+    validations:
+      required: false

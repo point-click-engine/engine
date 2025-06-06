@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  CRYSTAL_VERSION: "1.16.3"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        crystal: ["1.15.0", "1.16.3", "latest"]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install system dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libasound2-dev \
+          mesa-common-dev \
+          libx11-dev \
+          libxrandr-dev \
+          libxi-dev \
+          xorg-dev \
+          libgl1-mesa-dev \
+          libglu1-mesa-dev \
+          build-essential
+          
+    - name: Install system dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew update
+        brew install raylib
+        
+    - name: Install Crystal
+      uses: crystal-lang/install-crystal@v1.8.2
+      with:
+        crystal: ${{ matrix.crystal }}
+        
+    - name: Cache shards
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/shards
+          lib
+        key: ${{ runner.os }}-shards-${{ hashFiles('shard.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-shards-
+          
+    - name: Install dependencies
+      run: shards install
+      
+    - name: Check formatting
+      run: crystal tool format --check
+      
+    - name: Run specs
+      run: crystal spec --error-trace
+      
+    - name: Build project
+      run: crystal build src/point_click_engine.cr --no-codegen

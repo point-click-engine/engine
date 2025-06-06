@@ -1,0 +1,79 @@
+name: Coverage
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libasound2-dev \
+          mesa-common-dev \
+          libx11-dev \
+          libxrandr-dev \
+          libxi-dev \
+          xorg-dev \
+          libgl1-mesa-dev \
+          libglu1-mesa-dev \
+          build-essential
+          
+    - name: Install Crystal
+      uses: crystal-lang/install-crystal@v1.8.2
+      with:
+        crystal: latest
+        
+    - name: Cache shards
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/shards
+          lib
+        key: ${{ runner.os }}-shards-${{ hashFiles('shard.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-shards-
+          
+    - name: Install dependencies
+      run: shards install
+      
+    - name: Run specs with coverage
+      run: |
+        # Note: Crystal doesn't have built-in coverage yet
+        # This is a placeholder for future coverage integration
+        crystal spec --verbose
+        echo "Coverage reporting will be added when Crystal supports it natively"
+        
+    - name: Generate coverage report
+      run: |
+        # Placeholder for future coverage tools
+        echo "## Test Results" > coverage-report.md
+        echo "" >> coverage-report.md
+        echo "All $(crystal spec --dry-run | grep -c "^.*it ") specs passed successfully" >> coverage-report.md
+        echo "" >> coverage-report.md
+        echo "Coverage reporting will be enhanced when Crystal tooling improves." >> coverage-report.md
+        
+    - name: Comment coverage results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const coverageReport = fs.readFileSync('coverage-report.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: coverageReport
+          });

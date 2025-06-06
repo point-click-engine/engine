@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Get version from tag
+      id: get_version
+      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Point & Click Engine ${{ steps.get_version.outputs.version }}
+        draft: false
+        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        body: |
+          ## What's Changed
+          
+          See [CHANGELOG.md](./CHANGELOG.md) for detailed changes.
+          
+          ## Installation
+          
+          Add this to your application's `shard.yml`:
+          
+          ```yaml
+          dependencies:
+            point_click_engine:
+              github: point-click-engine/engine
+              version: ~> ${{ steps.get_version.outputs.version }}
+          ```
+
+  build:
+    name: Build Examples
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install system dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libasound2-dev \
+          mesa-common-dev \
+          libx11-dev \
+          libxrandr-dev \
+          libxi-dev \
+          xorg-dev \
+          libgl1-mesa-dev \
+          libglu1-mesa-dev \
+          build-essential
+          
+    - name: Install system dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew update
+        brew install raylib
+        
+    - name: Install Crystal
+      uses: crystal-lang/install-crystal@v1.8.2
+      with:
+        crystal: latest
+        
+    - name: Install dependencies
+      run: shards install
+      
+    - name: Build example (with assets placeholder)
+      run: |
+        mkdir -p example/assets
+        echo "# Example built for release ${{ needs.create-release.outputs.version }}" > example/README.md
+        crystal build example/modular_example.cr -o example-${{ runner.os }}-${{ needs.create-release.outputs.version }}
+        
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./example-${{ runner.os }}-${{ needs.create-release.outputs.version }}
+        asset_name: example-${{ runner.os }}-${{ needs.create-release.outputs.version }}
+        asset_content_type: application/octet-stream
