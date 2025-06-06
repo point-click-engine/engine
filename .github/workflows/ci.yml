@@ -37,9 +37,19 @@ jobs:
           libgl1-mesa-dev \
           libglu1-mesa-dev \
           build-essential \
-          libraylib-dev \
           libluajit-5.1-dev \
-          pkg-config
+          pkg-config \
+          git \
+          cmake
+        # Build and install raylib from source
+        git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git
+        cd raylib
+        mkdir build && cd build
+        cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/usr/local ..
+        make
+        sudo make install
+        sudo ldconfig
+        cd ../..
           
     - name: Install system dependencies (macOS)
       if: runner.os == 'macOS'
