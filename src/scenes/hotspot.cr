@@ -14,7 +14,7 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property on_hover : Proc(Nil)?
       
-      @[YAML::Field(converter: Utils::YAMLConverters::ColorConverter)]
+      @[YAML::Field(ignore: true)]
       property debug_color : RL::Color = RL::Color.new(r: 255, g: 0, b: 0, a: 100)
 
       enum CursorType

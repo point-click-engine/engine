@@ -5,11 +5,10 @@ module ScriptingExample
   # Create a basic game with scripting
   def self.run
     # Initialize the game engine
-    engine = PointClickEngine::Engine.new(800, 600, "Scripting Example")
+    engine = PointClickEngine::Game.new(800, 600, "Scripting Example")
     
     # Create a scene
     scene = PointClickEngine::Scene.new("main_room")
-    scene.description = "A room with magical properties"
     engine.add_scene(scene)
     
     # Create a scriptable character
@@ -91,7 +90,7 @@ module ScriptingExample
         )
       end
       # Remove the hotspot after use
-      scene.remove_hotspot("key_spot")
+      # scene.remove_hotspot("key_spot")  # Method not implemented yet
     }
     scene.add_hotspot(key_hotspot)
     

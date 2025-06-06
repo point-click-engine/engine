@@ -36,7 +36,7 @@ glowing_mushroom.on_click = ->{
   dialog_pos = RL::Vector2.new(x: 100, y: game.window_height - 150)
   dialog_size = RL::Vector2.new(x: game.window_width - 200, y: 100)
   mushroom_dialog = PCE::Dialog.new(dialog_text, dialog_pos, dialog_size)
-  mushroom_dialog.character = "Observation"
+  mushroom_dialog.character_name = "Observation"
   game.show_dialog(mushroom_dialog)
 }
 grove_scene.add_hotspot(glowing_mushroom)
@@ -64,7 +64,7 @@ old_chest.on_click = ->{
     dialog_pos = RL::Vector2.new(x: 100, y: game.window_height - 150)
     dialog_size = RL::Vector2.new(x: game.window_width - 200, y: 100)
     key_dialog = PCE::Dialog.new(dialog_text, dialog_pos, dialog_size)
-    key_dialog.character = "Découverte"
+    key_dialog.character_name = "Découverte"
     game.show_dialog(key_dialog)
 
     # Optionnel: Rendre le hotspot inactif après avoir pris la clé

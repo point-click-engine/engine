@@ -3,6 +3,7 @@
 
 require "raylib-cr"
 require "yaml"
+require "json"  # Required for luajit.cr compatibility (fixes JSON::Any issue)
 
 # Alias for convenience
 alias RL = Raylib

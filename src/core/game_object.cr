@@ -2,6 +2,7 @@
 
 require "raylib-cr"
 require "yaml"
+require "../utils/yaml_converters"
 
 module PointClickEngine
   module Core
@@ -9,10 +10,10 @@ module PointClickEngine
     module Drawable
       property visible : Bool = true
       
-      @[YAML::Field(converter: Utils::YAMLConverters::Vector2Converter)]
+      @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter)]
       property position : RL::Vector2
       
-      @[YAML::Field(converter: Utils::YAMLConverters::Vector2Converter)]
+      @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter)]
       property size : RL::Vector2 = RL::Vector2.new
 
       abstract def draw

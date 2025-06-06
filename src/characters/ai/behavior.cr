@@ -18,7 +18,7 @@ module PointClickEngine
       class PatrolBehavior < NPCBehavior
         include YAML::Serializable
         
-        @[YAML::Field(converter: Utils::YAMLConverters::Vector2ArrayConverter)]
+        @[YAML::Field(ignore: true)]
         property waypoints : Array(RL::Vector2) = [] of RL::Vector2
         property current_waypoint_index : Int32 = 0
         property wait_time : Float32 = 2.0
@@ -60,7 +60,7 @@ module PointClickEngine
       class RandomWalkBehavior < NPCBehavior
         include YAML::Serializable
         
-        @[YAML::Field(converter: Utils::YAMLConverters::RectangleConverter)]
+        @[YAML::Field(ignore: true)]
         property bounds : RL::Rectangle
         property walk_interval : Float32 = 5.0
         property walk_timer : Float32 = 0.0

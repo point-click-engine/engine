@@ -42,7 +42,7 @@ engine.add_scene(scene)
 engine.change_scene("Main Room")
 
 # Save the game state to demonstrate YAML serialization
-engine.save_game("example_save.yaml")
+# engine.save_game("example_save.yaml")
 
 # Run the game
 # engine.run

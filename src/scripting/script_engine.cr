@@ -16,7 +16,7 @@ module PointClickEngine
 
       def execute_script(script_content : String) : Bool
         begin
-          @lua.eval(script_content)
+          @lua.execute!(script_content)
           true
         rescue ex
           puts "Script error: #{ex.message}"
@@ -62,7 +62,7 @@ module PointClickEngine
 
       private def setup_lua_environment
         # Set up basic Lua environment
-        @lua.eval <<-LUA
+        @lua.execute! <<-LUA
           -- Utility functions for scripts
           function log(message)
             print("[Script] " .. tostring(message))
@@ -107,7 +107,7 @@ module PointClickEngine
       end
 
       private def register_scene_api
-        @lua.eval <<-LUA
+        @lua.execute! <<-LUA
           -- Scene management API
           scene = {}
           
@@ -125,21 +125,21 @@ module PointClickEngine
         LUA
 
         # Register Crystal callbacks
-        @lua.register("_engine_change_scene", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_change_scene") do |state|
           if state.size >= 1
             scene_name = state.to_string(1)
             Core::Engine.instance.change_scene(scene_name)
           end
           0
-        end)
+        end
 
-        @lua.register("_engine_get_current_scene", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_get_current_scene") do |state|
           scene_name = Core::Engine.instance.current_scene.try(&.name) || ""
           state.push(scene_name)
           1
-        end)
+        end
 
-        @lua.register("_engine_add_hotspot", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_add_hotspot") do |state|
           if state.size >= 5
             name = state.to_string(1)
             x = state.to_f32(2)
@@ -154,11 +154,11 @@ module PointClickEngine
           else
             0
           end
-        end)
+        end
       end
 
       private def register_character_api
-        @lua.eval <<-LUA
+        @lua.execute! <<-LUA
           -- Character management API
           character = {}
           
@@ -179,7 +179,7 @@ module PointClickEngine
           end
         LUA
 
-        @lua.register("_engine_character_say", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_character_say") do |state|
           if state.size >= 2
             char_name = state.to_string(1)
             text = state.to_string(2)
@@ -191,9 +191,9 @@ module PointClickEngine
             end
           end
           0
-        end)
+        end
 
-        @lua.register("_engine_character_move_to", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_character_move_to") do |state|
           if state.size >= 3
             char_name = state.to_string(1)
             x = state.to_f32(2)
@@ -206,9 +206,9 @@ module PointClickEngine
             end
           end
           0
-        end)
+        end
 
-        @lua.register("_engine_character_get_position", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_character_get_position") do |state|
           if state.size >= 1
             char_name = state.to_string(1)
             
@@ -222,14 +222,14 @@ module PointClickEngine
                 state.push("y")
                 state.push(pos.y)
                 state.set_table(-3)
-                return 1
+                next 1
               end
             end
           end
           0
-        end)
+        end
 
-        @lua.register("_engine_character_set_animation", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_character_set_animation") do |state|
           if state.size >= 2
             char_name = state.to_string(1)
             anim_name = state.to_string(2)
@@ -241,11 +241,11 @@ module PointClickEngine
             end
           end
           0
-        end)
+        end
       end
 
       private def register_inventory_api
-        @lua.eval <<-LUA
+        @lua.execute! <<-LUA
           -- Inventory management API
           inventory = {}
           
@@ -266,7 +266,7 @@ module PointClickEngine
           end
         LUA
 
-        @lua.register("_engine_inventory_add_item", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_inventory_add_item") do |state|
           if state.size >= 2
             name = state.to_string(1)
             desc = state.to_string(2)
@@ -275,17 +275,17 @@ module PointClickEngine
             Core::Engine.instance.inventory.add_item(item)
           end
           0
-        end)
+        end
 
-        @lua.register("_engine_inventory_remove_item", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_inventory_remove_item") do |state|
           if state.size >= 1
             name = state.to_string(1)
             Core::Engine.instance.inventory.remove_item(name)
           end
           0
-        end)
+        end
 
-        @lua.register("_engine_inventory_has_item", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_inventory_has_item") do |state|
           if state.size >= 1
             name = state.to_string(1)
             has_item = Core::Engine.instance.inventory.has_item?(name)
@@ -295,17 +295,17 @@ module PointClickEngine
             state.push(false)
             1
           end
-        end)
+        end
 
-        @lua.register("_engine_inventory_get_selected", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_inventory_get_selected") do |state|
           selected_name = Core::Engine.instance.inventory.selected_item.try(&.name) || ""
           state.push(selected_name)
           1
-        end)
+        end
       end
 
       private def register_dialog_api
-        @lua.eval <<-LUA
+        @lua.execute! <<-LUA
           -- Dialog system API
           dialog = {}
           
@@ -318,7 +318,7 @@ module PointClickEngine
           end
         LUA
 
-        @lua.register("_engine_dialog_show", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_dialog_show") do |state|
           if state.size >= 1
             text = state.to_string(1)
             char_name = state.size >= 2 ? state.to_string(2) : ""
@@ -331,9 +331,9 @@ module PointClickEngine
             Core::Engine.instance.show_dialog(dialog)
           end
           0
-        end)
+        end
 
-        @lua.register("_engine_dialog_show_choices", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_dialog_show_choices") do |state|
           if state.size >= 2
             question = state.to_string(1)
             # choices_table = state.to_table(2) # TODO: Implement table parsing
@@ -343,11 +343,11 @@ module PointClickEngine
             # This would require more complex Lua table parsing
           end
           0
-        end)
+        end
       end
 
       private def register_utility_api
-        @lua.eval <<-LUA
+        @lua.execute! <<-LUA
           -- Utility functions API
           game = {}
           
@@ -368,36 +368,36 @@ module PointClickEngine
           end
         LUA
 
-        @lua.register("_engine_save_game", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_save_game") do |state|
           if state.size >= 1
             filename = state.to_string(1)
             Core::Engine.instance.save_game(filename)
           end
           0
-        end)
+        end
 
-        @lua.register("_engine_load_game", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_load_game") do |state|
           if state.size >= 1
             filename = state.to_string(1)
             # Note: Loading would require special handling since it replaces the engine state
             puts "Load game requested: #{filename}"
           end
           0
-        end)
+        end
 
-        @lua.register("_engine_debug_log", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_debug_log") do |state|
           if state.size >= 1
             message = state.to_string(1)
             puts "[Script Debug] #{message}"
           end
           0
-        end)
+        end
 
-        @lua.register("_engine_get_time", Luajit::LuaState::Function.new do |state|
+        @lua.register_fn_global("_engine_get_time") do |state|
           current_time = Time.utc.to_unix_f
           state.push(current_time)
           1
-        end)
+        end
       end
     end
   end

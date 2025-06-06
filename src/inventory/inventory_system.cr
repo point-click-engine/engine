@@ -14,7 +14,7 @@ module PointClickEngine
       property slot_size : Float32 = 64.0
       property padding : Float32 = 8.0
       
-      @[YAML::Field(converter: Utils::YAMLConverters::ColorConverter)]
+      @[YAML::Field(ignore: true)]
       property background_color : RL::Color = RL::Color.new(r: 0, g: 0, b: 0, a: 200)
 
       property selected_item_name : String?

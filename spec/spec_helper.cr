@@ -1,4 +1,5 @@
 require "spec"
+require "json"  # Fix for luajit.cr JSON::Any issue
 require "../src/point_click_engine"
 
 # Helper to create test vectors

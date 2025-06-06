@@ -4,7 +4,7 @@ module PointClickEngine
   module Scripting
     # Event data container
     struct Event
-      include YAML::Serializable
+      # include YAML::Serializable
 
       property type : String
       property data : Hash(String, String) = {} of String => String
@@ -43,26 +43,23 @@ module PointClickEngine
 
     # Script-based event handler
     class ScriptEventHandler < EventHandler
-      getter script_content : String
+      getter script_engine : ScriptEngine
+      getter function_name : String
       getter handled_events : Array(String)
 
-      def initialize(@script_content : String, @handled_events : Array(String))
+      def initialize(@script_engine : ScriptEngine, @function_name : String, @handled_events : Array(String) = [] of String)
       end
 
       def handle_event(event : Event) : Bool
-        return false unless @handled_events.includes?(event.type)
+        return false unless @handled_events.empty? || @handled_events.includes?(event.type)
         
-        if engine = Core::Engine.instance.script_engine
-          # Set event data in Lua environment
-          engine.set_global("current_event", {
-            "type" => event.type,
-            "data" => event.data,
-            "timestamp" => event.timestamp
-          })
-          
-          # Execute the script
-          engine.execute_script(@script_content)
-        end
+        # Set event data in Lua environment
+        @script_engine.set_global("current_event_type", event.type)
+        @script_engine.set_global("current_event_data", event.data.to_s)
+        @script_engine.set_global("current_event_timestamp", event.timestamp)
+        
+        # Call the specific Lua function
+        @script_engine.call_function(@function_name, event.data)
         
         true
       end

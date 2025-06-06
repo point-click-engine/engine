@@ -2,6 +2,7 @@
 
 require "raylib-cr"
 require "yaml"
+require "../utils/yaml_converters"
 
 module PointClickEngine
   module Characters
@@ -47,7 +48,7 @@ module PointClickEngine
       property direction : Direction = Direction::Right
       property walking_speed : Float32 = 100.0
 
-      @[YAML::Field(converter: Utils::YAMLConverters::Vector2Converter, nilable: true)]
+      @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter, nilable: true)]
       property target_position : RL::Vector2?
 
       property dialogue_system_data : Dialogue::CharacterDialogue?
@@ -239,10 +240,10 @@ module PointClickEngine
       end
 
       private def calculate_scale(frame_width : Int32, frame_height : Int32) : Float32
-        return 1.0 if frame_width == 0 || frame_height == 0
+        return 1.0_f32 if frame_width == 0 || frame_height == 0
         scale_x = @size.x / frame_width
         scale_y = @size.y / frame_height
-        Math.min(scale_x, scale_y)
+        Math.min(scale_x, scale_y).to_f32
       end
     end
   end

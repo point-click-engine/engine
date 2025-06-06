@@ -1,14 +1,21 @@
 # Particle system for visual effects
 
 require "raylib-cr"
+require "yaml"
+require "../utils/yaml_converters"
 
 module PointClickEngine
   module Graphics
     # Individual particle
     class Particle
+      include YAML::Serializable
+      
+      @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter)]
       property position : RL::Vector2
       property size : Float64 = 0.0
+      @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter)]
       property velocity : RL::Vector2
+      @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::ColorConverter)]
       property color : RL::Color
       property lifetime : Float64
       property age : Float64 = 0.0
@@ -42,6 +49,7 @@ module PointClickEngine
       property particle_lifetime : Float64 = 1.0
       property particle_size : Float64 = 3.0
       property particle_speed : Float64 = 100.0
+      @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::ColorConverter)]
       property particle_color : RL::Color = RL::WHITE
       property emitting : Bool = true
 

@@ -2,6 +2,7 @@
 
 require "raylib-cr"
 require "yaml"
+require "../../utils/yaml_converters"
 
 module PointClickEngine
   module Characters
@@ -16,7 +17,7 @@ module PointClickEngine
         @[YAML::Field(ignore: true)]
         delegate current_dialog, to: @current_dialog_data
 
-        @[YAML::Field(converter: Utils::YAMLConverters::Vector2Converter)]
+        @[YAML::Field(ignore: true)]
         property dialog_offset : RL::Vector2 = RL::Vector2.new(x: 0, y: -100)
 
         def initialize(@character : Character)

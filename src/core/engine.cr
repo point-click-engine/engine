@@ -40,6 +40,7 @@ module PointClickEngine
       property cursor_texture : RL::Texture2D?
       property default_cursor : RL::MouseCursor = RL::MouseCursor::Default
 
+      @[YAML::Field(ignore: true)]
       property display_manager : Graphics::DisplayManager?
       property fullscreen : Bool = false
 

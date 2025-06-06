@@ -8,6 +8,7 @@ module PointClickEngine
     class ScriptableCharacter < Character
       property script_file : String?
       property script_content : String?
+      @[YAML::Field(ignore: true)]
       property event_handlers : Array(Scripting::EventHandler) = [] of Scripting::EventHandler
       property custom_properties : Hash(String, String) = {} of String => String
 
