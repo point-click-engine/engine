@@ -110,5 +110,4 @@ module PointClickEngine
   alias FunctionEventHandler = Scripting::FunctionEventHandler
   alias ScriptableCharacter = Characters::ScriptableCharacter
   alias SimpleNPC = Characters::SimpleNPC
-
 end

@@ -6,7 +6,7 @@ describe PointClickEngine::AssetManager do
     it "reads files from a mounted ZIP archive" do
       # Create a temporary ZIP file
       temp_zip = File.tempname("test_archive", ".zip")
-      
+
       begin
         # Create ZIP with test content
         File.open(temp_zip, "w") do |file|
@@ -38,11 +38,11 @@ describe PointClickEngine::AssetManager do
 
     it "falls back to filesystem when file not in archive" do
       manager = PointClickEngine::AssetManager.new
-      
+
       # Create a temporary file on filesystem
       temp_file = File.tempname("test_file", ".txt")
       File.write(temp_file, "Filesystem content")
-      
+
       begin
         content = manager.read_file(temp_file)
         content.should eq("Filesystem content")
@@ -53,7 +53,7 @@ describe PointClickEngine::AssetManager do
 
     it "raises error when file not found" do
       manager = PointClickEngine::AssetManager.new
-      
+
       expect_raises(PointClickEngine::AssetManager::AssetNotFoundError, "Asset not found: nonexistent.txt") do
         manager.read_file("nonexistent.txt")
       end
@@ -63,12 +63,12 @@ describe PointClickEngine::AssetManager do
   describe "#read_bytes" do
     it "reads binary data from archive" do
       temp_zip = File.tempname("test_archive", ".zip")
-      
+
       begin
         # Create ZIP with binary content
         File.open(temp_zip, "w") do |file|
           Compress::Zip::Writer.open(file) do |zip|
-            binary_data = Bytes[0x89, 0x50, 0x4E, 0x47]  # PNG header
+            binary_data = Bytes[0x89, 0x50, 0x4E, 0x47] # PNG header
             zip.add("image.png", IO::Memory.new(binary_data))
           end
         end
@@ -94,7 +94,7 @@ describe PointClickEngine::AssetManager do
   describe "#exists?" do
     it "checks if file exists in archive" do
       temp_zip = File.tempname("test_archive", ".zip")
-      
+
       begin
         File.open(temp_zip, "w") do |file|
           Compress::Zip::Writer.open(file) do |zip|
@@ -114,10 +114,10 @@ describe PointClickEngine::AssetManager do
 
     it "checks filesystem when not in archive" do
       manager = PointClickEngine::AssetManager.new
-      
+
       temp_file = File.tempname("test_file", ".txt")
       File.write(temp_file, "content")
-      
+
       begin
         manager.exists?(temp_file).should be_true
         manager.exists?("nonexistent.txt").should be_false
@@ -130,7 +130,7 @@ describe PointClickEngine::AssetManager do
   describe "#list_files" do
     it "lists files from archive" do
       temp_zip = File.tempname("test_archive", ".zip")
-      
+
       begin
         File.open(temp_zip, "w") do |file|
           Compress::Zip::Writer.open(file) do |zip|
@@ -162,7 +162,7 @@ describe PointClickEngine::AssetManager do
   describe "#unmount_archive" do
     it "removes archive and clears cache" do
       temp_zip = File.tempname("test_archive", ".zip")
-      
+
       begin
         File.open(temp_zip, "w") do |file|
           Compress::Zip::Writer.open(file) do |zip|
@@ -172,13 +172,13 @@ describe PointClickEngine::AssetManager do
 
         manager = PointClickEngine::AssetManager.new
         manager.mount_archive(temp_zip)
-        
+
         # Verify file is accessible
         manager.exists?("test.txt").should be_true
-        
+
         # Unmount archive
         manager.unmount_archive
-        
+
         # File should no longer be accessible
         manager.exists?("test.txt").should be_false
       ensure
@@ -190,7 +190,7 @@ describe PointClickEngine::AssetManager do
   describe "caching" do
     it "caches read files" do
       temp_zip = File.tempname("test_archive", ".zip")
-      
+
       begin
         File.open(temp_zip, "w") do |file|
           Compress::Zip::Writer.open(file) do |zip|
@@ -200,13 +200,13 @@ describe PointClickEngine::AssetManager do
 
         manager = PointClickEngine::AssetManager.new
         manager.mount_archive(temp_zip)
-        
+
         # First read
         content1 = manager.read_file("cached.txt")
-        
+
         # Second read should come from cache
         content2 = manager.read_file("cached.txt")
-        
+
         content1.should eq(content2)
         content1.should eq("cached content")
       ensure
@@ -223,7 +223,7 @@ describe PointClickEngine::AssetManager do
 
     it "delegates class methods to instance" do
       temp_zip = File.tempname("test_archive", ".zip")
-      
+
       begin
         File.open(temp_zip, "w") do |file|
           Compress::Zip::Writer.open(file) do |zip|
@@ -232,10 +232,10 @@ describe PointClickEngine::AssetManager do
         end
 
         PointClickEngine::AssetManager.mount_archive(temp_zip)
-        
+
         content = PointClickEngine::AssetManager.read_file("singleton.txt")
         content.should eq("singleton content")
-        
+
         PointClickEngine::AssetManager.unmount_archive
       ensure
         File.delete(temp_zip) if File.exists?(temp_zip)

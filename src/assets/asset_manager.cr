@@ -35,14 +35,14 @@ module PointClickEngine
 
     def read_bytes(path : String) : Bytes?
       return @cache[path].as(Bytes) if @cache.has_key?(path) && @cache[path].is_a?(Bytes)
-      
+
       # Try archives first
       @archives.each do |mount_point, archive|
         normalized_path = normalize_path(path)
-        
+
         # Re-create reader from stored data to reset position
         reader = Compress::Zip::Reader.new(IO::Memory.new(@archive_data[mount_point]))
-        
+
         reader.each_entry do |entry|
           if entry.filename == normalized_path
             data = entry.io.gets_to_end.to_slice
@@ -66,10 +66,10 @@ module PointClickEngine
       # Check archives
       @archives.each do |mount_point, archive|
         normalized_path = normalize_path(path)
-        
+
         # Re-create reader from stored data
         reader = Compress::Zip::Reader.new(IO::Memory.new(@archive_data[mount_point]))
-        
+
         reader.each_entry do |entry|
           return true if entry.filename == normalized_path
         end
@@ -86,7 +86,7 @@ module PointClickEngine
       # List from archives
       @archives.each do |mount_point, archive|
         reader = Compress::Zip::Reader.new(IO::Memory.new(@archive_data[mount_point]))
-        
+
         reader.each_entry do |entry|
           if normalized_dir.empty? || entry.filename.starts_with?(normalized_dir)
             files << entry.filename
