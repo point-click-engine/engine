@@ -28,15 +28,15 @@ module PointClickEngine
       end
 
       def on_interact(interactor : Character)
-        say("Someone's trying to interact with me, #{@name}.") {}
+        say("Someone's trying to interact with me, #{@name}.") { }
       end
 
       def on_look
-        say("That's me, #{@name}.") {}
+        say("That's me, #{@name}.") { }
       end
 
       def on_talk
-        say("I'd rather talk to someone else if I'm initiating.") {}
+        say("I'd rather talk to someone else if I'm initiating.") { }
       end
 
       def handle_click(target_pos : RL::Vector2, scene : Scenes::Scene)

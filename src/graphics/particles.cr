@@ -9,7 +9,7 @@ module PointClickEngine
     # Individual particle
     class Particle
       include YAML::Serializable
-      
+
       @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter)]
       property position : RL::Vector2
       property size : Float64 = 0.0
@@ -21,7 +21,7 @@ module PointClickEngine
       property age : Float64 = 0.0
 
       def initialize(@position : RL::Vector2, @velocity : RL::Vector2, @color : RL::Color,
-        @size : Float64, @lifetime : Float64)
+                     @size : Float64, @lifetime : Float64)
       end
 
       def update(dt : Float32)

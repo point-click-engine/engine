@@ -13,7 +13,7 @@ module PointClickEngine
       property on_click : Proc(Nil)?
       @[YAML::Field(ignore: true)]
       property on_hover : Proc(Nil)?
-      
+
       @[YAML::Field(ignore: true)]
       property debug_color : RL::Color = RL::Color.new(r: 255, g: 0, b: 0, a: 100)
 

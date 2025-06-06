@@ -6,25 +6,25 @@ module ScriptingExample
   def self.run
     # Initialize the game engine
     engine = PointClickEngine::Game.new(800, 600, "Scripting Example")
-    
+
     # Create a scene
     scene = PointClickEngine::Scene.new("main_room")
     engine.add_scene(scene)
-    
+
     # Create a scriptable character
     scriptable_char = PointClickEngine::ScriptableCharacter.new(
-      "wizard", 
-      RL::Vector2.new(x: 300, y: 400), 
+      "wizard",
+      RL::Vector2.new(x: 300, y: 400),
       RL::Vector2.new(x: 64, y: 64)
     )
     scriptable_char.description = "A mysterious wizard"
-    
+
     # Load the Lua script for this character
     scriptable_char.load_script("example/scripts/example_character.lua")
-    
+
     # Add character to scene
     scene.add_character(scriptable_char)
-    
+
     # Create a simple NPC that uses basic dialogue without scripting
     simple_npc = PointClickEngine::SimpleNPC.new(
       "guard",
@@ -36,7 +36,7 @@ module ScriptingExample
     simple_npc.add_dialogue("The wizard knows many secrets.")
     simple_npc.add_dialogue("Be careful in the dungeon.")
     scene.add_character(simple_npc)
-    
+
     # Create a player character
     player = PointClickEngine::Player.new(
       "hero",
@@ -44,19 +44,19 @@ module ScriptingExample
       RL::Vector2.new(x: 64, y: 64)
     )
     scene.player = player
-    
+
     # Add some hotspots with script-triggered events
     door_hotspot = PointClickEngine::Hotspot.new(
       "door",
       RL::Vector2.new(x: 700, y: 350),
       RL::Vector2.new(x: 50, y: 100)
     )
-    door_hotspot.on_click = ->{
+    door_hotspot.on_click = -> {
       # Trigger custom event via scripting system
       engine.event_system.trigger_event("custom_event", {
-        "message" => "The door creaks open..."
+        "message" => "The door creaks open...",
       })
-      
+
       # Execute some Lua code directly
       if script_engine = engine.script_engine
         script_engine.execute_script(<<-LUA
@@ -72,14 +72,14 @@ module ScriptingExample
       end
     }
     scene.add_hotspot(door_hotspot)
-    
+
     # Add a key item that can be found
     key_hotspot = PointClickEngine::Hotspot.new(
       "key_spot",
       RL::Vector2.new(x: 200, y: 500),
       RL::Vector2.new(x: 32, y: 32)
     )
-    key_hotspot.on_click = ->{
+    key_hotspot.on_click = -> {
       # Add key to inventory via scripting
       if script_engine = engine.script_engine
         script_engine.execute_script(<<-LUA
@@ -93,10 +93,10 @@ module ScriptingExample
       # scene.remove_hotspot("key_spot")  # Method not implemented yet
     }
     scene.add_hotspot(key_hotspot)
-    
+
     # Set the initial scene
     engine.change_scene("main_room")
-    
+
     puts "=== Point & Click Engine with Lua Scripting ==="
     puts "Features demonstrated:"
     puts "- Scriptable characters with Lua AI"
@@ -113,7 +113,7 @@ module ScriptingExample
     puts "- Press I to toggle inventory"
     puts "- Press F1 to toggle debug mode"
     puts ""
-    
+
     # Start the game
     engine.run
   end

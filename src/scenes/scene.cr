@@ -43,7 +43,7 @@ module PointClickEngine
         if path = @background_path
           load_background(path, @scale)
         end
-        
+
         @characters.each &.after_yaml_deserialize(ctx)
 
         if name = @player_name_for_serialization

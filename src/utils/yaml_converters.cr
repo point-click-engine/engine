@@ -12,7 +12,7 @@ module PointClickEngine
           yaml.mapping do
             yaml.scalar "x"
             yaml.scalar vec.x
-            yaml.scalar "y" 
+            yaml.scalar "y"
             yaml.scalar vec.y
           end
         end
@@ -21,7 +21,7 @@ module PointClickEngine
           unless node.is_a?(YAML::Nodes::Mapping)
             node.raise "Expected mapping, not #{node.class}"
           end
-          
+
           x = y = 0_f32
           node.each do |key, value|
             case key.as_s
@@ -54,7 +54,7 @@ module PointClickEngine
           unless node.is_a?(YAML::Nodes::Mapping)
             node.raise "Expected mapping, not #{node.class}"
           end
-          
+
           r = g = b = a = 0_u8
           node.each do |key, value|
             case key.as_s
@@ -91,7 +91,7 @@ module PointClickEngine
           unless node.is_a?(YAML::Nodes::Mapping)
             node.raise "Expected mapping, not #{node.class}"
           end
-          
+
           x = y = width = height = 0_f32
           node.each do |key, value|
             case key.as_s
@@ -123,7 +123,7 @@ module PointClickEngine
           unless node.is_a?(YAML::Nodes::Sequence)
             node.raise "Expected sequence, not #{node.class}"
           end
-          
+
           result = [] of RL::Vector2
           node.each do |item_node|
             result << Vector2Converter.from_yaml(ctx, item_node)

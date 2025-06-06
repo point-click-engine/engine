@@ -13,7 +13,7 @@ module PointClickEngine
       property items : Array(InventoryItem) = [] of InventoryItem
       property slot_size : Float32 = 64.0
       property padding : Float32 = 8.0
-      
+
       @[YAML::Field(ignore: true)]
       property background_color : RL::Color = RL::Color.new(r: 0, g: 0, b: 0, a: 200)
 

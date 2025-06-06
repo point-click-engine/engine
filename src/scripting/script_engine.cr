@@ -146,7 +146,7 @@ module PointClickEngine
             y = state.to_f32(3)
             width = state.to_f32(4)
             height = state.to_f32(5)
-            
+
             hotspot = Scenes::Hotspot.new(name, RL::Vector2.new(x: x, y: y), RL::Vector2.new(x: width, y: height))
             Core::Engine.instance.current_scene.try(&.add_hotspot(hotspot))
             state.push(name)
@@ -183,10 +183,10 @@ module PointClickEngine
           if state.size >= 2
             char_name = state.to_string(1)
             text = state.to_string(2)
-            
+
             if scene = Core::Engine.instance.current_scene
               if char = scene.get_character(char_name)
-                char.say(text) {}
+                char.say(text) { }
               end
             end
           end
@@ -198,7 +198,7 @@ module PointClickEngine
             char_name = state.to_string(1)
             x = state.to_f32(2)
             y = state.to_f32(3)
-            
+
             if scene = Core::Engine.instance.current_scene
               if char = scene.get_character(char_name)
                 char.walk_to(RL::Vector2.new(x: x, y: y))
@@ -211,7 +211,7 @@ module PointClickEngine
         @lua.register_fn_global("_engine_character_get_position") do |state|
           if state.size >= 1
             char_name = state.to_string(1)
-            
+
             if scene = Core::Engine.instance.current_scene
               if char = scene.get_character(char_name)
                 pos = char.position
@@ -233,7 +233,7 @@ module PointClickEngine
           if state.size >= 2
             char_name = state.to_string(1)
             anim_name = state.to_string(2)
-            
+
             if scene = Core::Engine.instance.current_scene
               if char = scene.get_character(char_name)
                 char.play_animation(anim_name)
@@ -270,7 +270,7 @@ module PointClickEngine
           if state.size >= 2
             name = state.to_string(1)
             desc = state.to_string(2)
-            
+
             item = Inventory::InventoryItem.new(name, desc)
             Core::Engine.instance.inventory.add_item(item)
           end
@@ -322,7 +322,7 @@ module PointClickEngine
           if state.size >= 1
             text = state.to_string(1)
             char_name = state.size >= 2 ? state.to_string(2) : ""
-            
+
             # Create and show dialog
             pos = RL::Vector2.new(x: 100, y: 100)
             size = RL::Vector2.new(x: 400, y: 150)
@@ -338,7 +338,7 @@ module PointClickEngine
             question = state.to_string(1)
             # choices_table = state.to_table(2) # TODO: Implement table parsing
             char_name = state.size >= 3 ? state.to_string(3) : ""
-            
+
             # TODO: Parse choices table and create dialog with choices
             # This would require more complex Lua table parsing
           end

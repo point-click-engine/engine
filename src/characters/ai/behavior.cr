@@ -9,7 +9,7 @@ module PointClickEngine
       # Base class for NPC behaviors
       abstract class NPCBehavior
         abstract def update(npc : NPC, dt : Float32)
-        
+
         def after_yaml_deserialize(ctx : YAML::ParseContext, npc : NPC)
         end
       end
@@ -17,7 +17,7 @@ module PointClickEngine
       # Patrol behavior - moves between waypoints
       class PatrolBehavior < NPCBehavior
         include YAML::Serializable
-        
+
         @[YAML::Field(ignore: true)]
         property waypoints : Array(RL::Vector2) = [] of RL::Vector2
         property current_waypoint_index : Int32 = 0
@@ -59,7 +59,7 @@ module PointClickEngine
       # Random walk behavior - walks randomly within bounds
       class RandomWalkBehavior < NPCBehavior
         include YAML::Serializable
-        
+
         @[YAML::Field(ignore: true)]
         property bounds : RL::Rectangle
         property walk_interval : Float32 = 5.0
@@ -81,13 +81,13 @@ module PointClickEngine
         def update(npc : NPC, dt : Float32)
           return if npc.state == CharacterState::Talking
           @walk_timer += dt
-          
+
           if @walk_timer >= @walk_interval && npc.state == CharacterState::Idle
             angle = Random.rand * Math::PI * 2
             distance = Random.rand * @walk_distance
             new_x = npc.position.x + Math.cos(angle) * distance
             new_y = npc.position.y + Math.sin(angle) * distance
-            
+
             new_x = new_x.clamp(@bounds.x, @bounds.x + @bounds.width)
             new_y = new_y.clamp(@bounds.y, @bounds.y + @bounds.height)
 
@@ -112,7 +112,7 @@ module PointClickEngine
       # Follow behavior - follows a target character
       class FollowBehavior < NPCBehavior
         include YAML::Serializable
-        
+
         property target_name : String?
         @[YAML::Field(ignore: true)]
         property target : Character?
@@ -136,7 +136,7 @@ module PointClickEngine
           return unless target = @target
 
           distance = Math.sqrt((target.position.x - npc.position.x)**2 + (target.position.y - npc.position.y)**2)
-          
+
           if distance > @follow_distance
             npc.walking_speed = @follow_speed
             npc.walk_to(target.position)

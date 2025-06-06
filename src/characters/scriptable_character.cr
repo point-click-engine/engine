@@ -49,14 +49,14 @@ module PointClickEngine
 
       def set_property(key : String, value : String)
         @custom_properties[key] = value
-        
+
         # Trigger property changed event
         Core::Engine.instance.event_system.trigger_event(
           "character_property_changed",
           {
             "character" => @name,
-            "property" => key,
-            "value" => value
+            "property"  => key,
+            "value"     => value,
           }
         )
       end
@@ -67,7 +67,7 @@ module PointClickEngine
 
       def update(dt : Float32)
         super(dt)
-        
+
         if @auto_update
           @last_update += dt
           if @last_update >= @update_interval
@@ -96,7 +96,7 @@ module PointClickEngine
           engine.set_global("this_character", @name)
           engine.set_global("this_position", {"x" => @position.x, "y" => @position.y})
           engine.set_global("this_properties", @custom_properties)
-          
+
           # Call the function
           engine.call_function(function_name, *args)
         end
@@ -104,14 +104,14 @@ module PointClickEngine
 
       private def initialize_script
         return unless @script_content
-        
+
         if engine = Core::Engine.instance.script_engine
           # Set up character-specific environment
           engine.set_global("character_name", @name)
-          
+
           # Execute the script to define functions
           engine.execute_script(@script_content.not_nil!)
-          
+
           # Call initialization function if it exists
           execute_script_function("on_init")
         end
@@ -145,7 +145,7 @@ module PointClickEngine
           [Scripting::Events::CHARACTER_REACHED_TARGET]
         )
         @event_handlers << movement_handler
-        
+
         # Add handler for animation completion
         animation_handler = Scripting::FunctionEventHandler.new(
           ->(event : Scripting::Event) {
@@ -162,13 +162,13 @@ module PointClickEngine
       # Override movement to trigger events
       def walk_to(target : RL::Vector2)
         super(target)
-        
+
         Core::Engine.instance.event_system.trigger_event(
           Scripting::Events::PLAYER_MOVED,
           {
             "character" => @name,
-            "target_x" => target.x.to_s,
-            "target_y" => target.y.to_s
+            "target_x"  => target.x.to_s,
+            "target_y"  => target.y.to_s,
           }
         )
       end
@@ -176,14 +176,14 @@ module PointClickEngine
       def stop_walking
         was_walking = @state == CharacterState::Walking
         super()
-        
+
         if was_walking
           Core::Engine.instance.event_system.trigger_event(
             Scripting::Events::CHARACTER_REACHED_TARGET,
             {
-              "character" => @name,
+              "character"  => @name,
               "position_x" => @position.x.to_s,
-              "position_y" => @position.y.to_s
+              "position_y" => @position.y.to_s,
             }
           )
         end
@@ -195,10 +195,10 @@ module PointClickEngine
           Scripting::Events::CHARACTER_SPEAK,
           {
             "character" => @name,
-            "text" => text
+            "text"      => text,
           }
         )
-        
+
         super(text, &block)
       end
     end
@@ -233,7 +233,7 @@ module PointClickEngine
 
       def on_look
         if @script_content.nil?
-          say(@description) {}
+          say(@description) { }
         else
           super()
         end

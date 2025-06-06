@@ -9,10 +9,10 @@ module PointClickEngine
     # Drawable module for objects that can be rendered
     module Drawable
       property visible : Bool = true
-      
+
       @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter)]
       property position : RL::Vector2
-      
+
       @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter)]
       property size : RL::Vector2 = RL::Vector2.new
 

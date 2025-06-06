@@ -52,15 +52,15 @@ module PointClickEngine
 
       def handle_event(event : Event) : Bool
         return false unless @handled_events.empty? || @handled_events.includes?(event.type)
-        
+
         # Set event data in Lua environment
         @script_engine.set_global("current_event_type", event.type)
         @script_engine.set_global("current_event_data", event.data.to_s)
         @script_engine.set_global("current_event_timestamp", event.timestamp)
-        
+
         # Call the specific Lua function
         @script_engine.call_function(@function_name, event.data)
-        
+
         true
       end
 
@@ -144,39 +144,39 @@ module PointClickEngine
     # Common game events
     module Events
       # Player events
-      PLAYER_MOVED = "player_moved"
+      PLAYER_MOVED    = "player_moved"
       PLAYER_INTERACT = "player_interact"
-      PLAYER_CLICK = "player_click"
-      
+      PLAYER_CLICK    = "player_click"
+
       # Character events
-      CHARACTER_SPEAK = "character_speak"
+      CHARACTER_SPEAK              = "character_speak"
       CHARACTER_ANIMATION_COMPLETE = "character_animation_complete"
-      CHARACTER_REACHED_TARGET = "character_reached_target"
-      
+      CHARACTER_REACHED_TARGET     = "character_reached_target"
+
       # Scene events
-      SCENE_ENTERED = "scene_entered"
-      SCENE_EXITED = "scene_exited"
+      SCENE_ENTERED   = "scene_entered"
+      SCENE_EXITED    = "scene_exited"
       HOTSPOT_CLICKED = "hotspot_clicked"
       HOTSPOT_HOVERED = "hotspot_hovered"
-      
+
       # Inventory events
-      ITEM_ADDED = "item_added"
-      ITEM_REMOVED = "item_removed"
+      ITEM_ADDED    = "item_added"
+      ITEM_REMOVED  = "item_removed"
       ITEM_SELECTED = "item_selected"
-      ITEM_USED = "item_used"
-      
+      ITEM_USED     = "item_used"
+
       # Dialog events
-      DIALOG_STARTED = "dialog_started"
-      DIALOG_ENDED = "dialog_ended"
+      DIALOG_STARTED         = "dialog_started"
+      DIALOG_ENDED           = "dialog_ended"
       DIALOG_CHOICE_SELECTED = "dialog_choice_selected"
-      
+
       # Game events
       GAME_STARTED = "game_started"
-      GAME_SAVED = "game_saved"
-      GAME_LOADED = "game_loaded"
-      GAME_PAUSED = "game_paused"
+      GAME_SAVED   = "game_saved"
+      GAME_LOADED  = "game_loaded"
+      GAME_PAUSED  = "game_paused"
       GAME_RESUMED = "game_resumed"
-      
+
       # Custom events (for user scripts)
       CUSTOM_EVENT = "custom_event"
     end

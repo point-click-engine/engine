@@ -1,5 +1,5 @@
 require "spec"
-require "json"  # Fix for luajit.cr JSON::Any issue
+require "json" # Fix for luajit.cr JSON::Any issue
 require "../src/point_click_engine"
 
 # Helper to create test vectors
@@ -7,7 +7,7 @@ def vec2(x, y)
   RL::Vector2.new(x: x, y: y)
 end
 
-# Helper to create test rectangles  
+# Helper to create test rectangles
 def rect(x, y, w, h)
   RL::Rectangle.new(x: x, y: y, width: w, height: h)
 end
@@ -15,9 +15,9 @@ end
 # Helper to check point in rectangle (since Raylib function not available in tests)
 def point_in_rect?(point : RL::Vector2, rect : RL::Rectangle) : Bool
   point.x >= rect.x &&
-  point.x <= rect.x + rect.width &&
-  point.y >= rect.y &&
-  point.y <= rect.y + rect.height
+    point.x <= rect.x + rect.width &&
+    point.y >= rect.y &&
+    point.y <= rect.y + rect.height
 end
 
 # Create a concrete implementation for testing

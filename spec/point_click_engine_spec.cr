@@ -67,8 +67,8 @@ describe PointClickEngine do
       click_triggered = false
       hover_triggered = false
 
-      hotspot.on_click = ->{ click_triggered = true }
-      hotspot.on_hover = ->{ hover_triggered = true }
+      hotspot.on_click = -> { click_triggered = true }
+      hotspot.on_hover = -> { hover_triggered = true }
 
       # Simulate mouse over hotspot
       # Note: In real tests, we'd need to mock RL.get_mouse_position and RL.is_mouse_button_pressed
@@ -148,8 +148,8 @@ describe PointClickEngine do
       entered = false
       exited = false
 
-      scene.on_enter = ->{ entered = true }
-      scene.on_exit = ->{ exited = true }
+      scene.on_enter = -> { entered = true }
+      scene.on_exit = -> { exited = true }
 
       scene.enter
       entered.should be_true
@@ -312,7 +312,7 @@ describe PointClickEngine do
       dialog = PointClickEngine::Dialog.new("Test", vec2(0, 0), vec2(100, 100))
 
       completed = false
-      dialog.on_complete = ->{ completed = true }
+      dialog.on_complete = -> { completed = true }
 
       dialog.hide
       completed.should be_true
@@ -351,7 +351,7 @@ describe PointClickEngine do
       dialog.padding = 30.0_f32
       dialog.font_size = 24
       dialog.background_color = RL::Color.new(r: 50, g: 50, b: 50, a: 255)
-      dialog.text_color = RL::RED #RL::Color.new(200, 200, 200, 255)
+      dialog.text_color = RL::RED # RL::Color.new(200, 200, 200, 255)
 
       dialog.padding.should eq(30.0_f32)
       dialog.font_size.should eq(24)
@@ -580,7 +580,7 @@ describe PointClickEngine do
 
       # Wait for them to die
       system.emitting = false # Stop emitting new ones
-      system.update(0.6_f32) # Particles should be dead now
+      system.update(0.6_f32)  # Particles should be dead now
 
       system.particles.should be_empty
     end
@@ -641,9 +641,9 @@ describe PointClickEngine do
       scene1_exited = false
       scene2_entered = false
 
-      scene1.on_enter = ->{ scene1_entered = true }
-      scene1.on_exit = ->{ scene1_exited = true }
-      scene2.on_enter = ->{ scene2_entered = true }
+      scene1.on_enter = -> { scene1_entered = true }
+      scene1.on_exit = -> { scene1_exited = true }
+      scene2.on_enter = -> { scene2_entered = true }
 
       # Change to scene1
       game.change_scene("scene1")
@@ -719,7 +719,7 @@ describe "Integration" do
     # Add interactive hotspot
     door = PointClickEngine::Hotspot.new("door", vec2(300, 200), vec2(100, 150))
     door_clicked = false
-    door.on_click = ->{ door_clicked = true }
+    door.on_click = -> { door_clicked = true }
     main_scene.add_hotspot(door)
 
     # Add inventory item

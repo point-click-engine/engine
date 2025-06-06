@@ -8,8 +8,8 @@ module PointClickEngine
     # Manages resolution scaling and rendering
     class DisplayManager
       # Reference resolution (design resolution)
-      REFERENCE_WIDTH = 1024
-      REFERENCE_HEIGHT = 768
+      REFERENCE_WIDTH        = 1024
+      REFERENCE_HEIGHT       =  768
       REFERENCE_ASPECT_RATIO = REFERENCE_WIDTH.to_f / REFERENCE_HEIGHT.to_f
 
       property target_width : Int32
@@ -21,11 +21,11 @@ module PointClickEngine
       property render_texture : RL::RenderTexture2D?
 
       enum ScalingMode
-        FitWithBars    # Maintains aspect ratio with black bars
-        Stretch        # Stretches to fill screen (may distort)
-        Fill          # Fills screen by cropping if necessary
-        PixelPerfect  # Integer multiples only
-        FixedZoom     # Fixed zoom level
+        FitWithBars  # Maintains aspect ratio with black bars
+        Stretch      # Stretches to fill screen (may distort)
+        Fill         # Fills screen by cropping if necessary
+        PixelPerfect # Integer multiples only
+        FixedZoom    # Fixed zoom level
       end
 
       def initialize(@target_width : Int32, @target_height : Int32)
@@ -76,7 +76,7 @@ module PointClickEngine
       def is_in_game_area(screen_pos : RL::Vector2) : Bool
         game_pos = screen_to_game(screen_pos)
         game_pos.x >= 0 && game_pos.x <= REFERENCE_WIDTH &&
-        game_pos.y >= 0 && game_pos.y <= REFERENCE_HEIGHT
+          game_pos.y >= 0 && game_pos.y <= REFERENCE_HEIGHT
       end
 
       def begin_game_rendering
@@ -106,7 +106,7 @@ module PointClickEngine
           )
 
           RL.draw_texture_pro(rt.texture, source_rect, dest_rect,
-                             RL::Vector2.new(x: 0, y: 0), 0.0, RL::WHITE)
+            RL::Vector2.new(x: 0, y: 0), 0.0, RL::WHITE)
 
           if Core::Engine.debug_mode
             draw_debug_info
@@ -184,9 +184,9 @@ module PointClickEngine
 
       private def draw_debug_info
         info_text = "Target: #{@target_width}x#{@target_height} | " \
-                   "Scale: #{@scale_factor.round(2)} | " \
-                   "Mode: #{@scaling_mode} | " \
-                   "Offset: (#{@offset_x.to_i}, #{@offset_y.to_i})"
+                    "Scale: #{@scale_factor.round(2)} | " \
+                    "Mode: #{@scaling_mode} | " \
+                    "Offset: (#{@offset_x.to_i}, #{@offset_y.to_i})"
 
         RL.draw_text(info_text, 10, 10, 16, RL::GREEN)
 

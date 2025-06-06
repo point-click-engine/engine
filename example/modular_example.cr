@@ -23,14 +23,14 @@ waypoints = [
   RL::Vector2.new(x: 350, y: 300),
   RL::Vector2.new(x: 450, y: 300),
   RL::Vector2.new(x: 450, y: 250),
-  RL::Vector2.new(x: 350, y: 250)
+  RL::Vector2.new(x: 350, y: 250),
 ]
 patrol_behavior = PointClickEngine::Characters::AI::PatrolBehavior.new(waypoints)
 npc.set_ai_behavior(patrol_behavior)
 
 # Create a hotspot
 door_hotspot = PointClickEngine::Scenes::Hotspot.new("Door", RL::Vector2.new(x: 700, y: 200), RL::Vector2.new(x: 50, y: 100))
-door_hotspot.on_click = ->{ puts "Door clicked!" }
+door_hotspot.on_click = -> { puts "Door clicked!" }
 
 # Add everything to the scene
 scene.set_player(player)

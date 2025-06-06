@@ -28,10 +28,10 @@ grove_scene.load_background("background2.png")
 glowing_mushroom = PCE::Hotspot.new(
   "champignon",
   RL::Vector2.new(x: 150, y: 400), # Position x, y
-  RL::Vector2.new(x: 260, y: 260)    # Taille largeur, hauteur
+  RL::Vector2.new(x: 260, y: 260)  # Taille largeur, hauteur
 )
 glowing_mushroom.cursor_type = PCE::Hotspot::CursorType::Look # Change le curseur en mode "Regarder"
-glowing_mushroom.on_click = ->{
+glowing_mushroom.on_click = -> {
   dialog_text = "Ce champignon émet une douce lueur apaisante."
   dialog_pos = RL::Vector2.new(x: 100, y: game.window_height - 150)
   dialog_size = RL::Vector2.new(x: game.window_width - 200, y: 100)
@@ -50,7 +50,7 @@ old_chest = PCE::Hotspot.new(
 old_chest.cursor_type = PCE::Hotspot::CursorType::Hand # Curseur "Main" pour interagir
 
 # Action lorsque le coffre est cliqué
-old_chest.on_click = ->{
+old_chest.on_click = -> {
   # Vérifier si la clé est déjà dans l'inventaire pour éviter les doublons
   unless game.inventory.has_item?("Vieille Clé")
     # Créer l'objet d'inventaire
@@ -88,7 +88,6 @@ grove_scene.add_hotspot(old_chest)
 # an_animated_sprite.frame_speed = 0.2
 # an_animated_sprite.scale = 1.5
 # grove_scene.add_object(an_animated_sprite)
-
 
 # 4. Ajout de la scène au jeu et configuration initiale
 game.add_scene(grove_scene)

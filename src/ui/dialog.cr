@@ -8,14 +8,14 @@ module PointClickEngine
     # Dialog choice structure
     struct DialogChoice
       include YAML::Serializable
-      
+
       property text : String
       @[YAML::Field(ignore: true)]
       property action : Proc(Nil)
 
       def initialize
         @text = ""
-        @action = ->{}
+        @action = -> { }
       end
 
       def initialize(@text : String, @action : Proc(Nil))
@@ -34,13 +34,13 @@ module PointClickEngine
       property on_complete : Proc(Nil)?
       property padding : Float32 = 20.0
       property font_size : Int32 = 20
-      
+
       @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::ColorConverter)]
       property background_color : RL::Color = RL::Color.new(r: 0, g: 0, b: 0, a: 220)
-      
+
       @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::ColorConverter)]
       property text_color : RL::Color = RL::WHITE
-      
+
       property ready_to_process_input : Bool = false
 
       def initialize

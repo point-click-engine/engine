@@ -61,7 +61,7 @@ module PointClickEngine
       end
 
       def on_look
-        say(@description) {}
+        say(@description) { }
       end
 
       def on_talk
@@ -116,14 +116,14 @@ module PointClickEngine
                     when NPCMood::Happy then "happy"
                     when NPCMood::Sad   then "sad"
                     when NPCMood::Angry then "angry"
-                    else "idle"
+                    else                     "idle"
                     end
 
         directional_idle = if mood_anim == "idle"
-            @direction == Direction::Left ? "idle_left" : "idle_right"
-        else
-            nil
-        end
+                             @direction == Direction::Left ? "idle_left" : "idle_right"
+                           else
+                             nil
+                           end
 
         if directional_idle && @animations.has_key?(directional_idle)
           play_animation(directional_idle, force_restart: false)

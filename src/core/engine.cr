@@ -286,9 +286,9 @@ module PointClickEngine
           if scene = @current_scene
             if hotspot = scene.get_hotspot_at(game_mouse_pos)
               case hotspot.cursor_type
-              when Scenes::Hotspot::CursorType::Hand then RL.set_mouse_cursor(RL::MouseCursor::PointingHand)
+              when Scenes::Hotspot::CursorType::Hand    then RL.set_mouse_cursor(RL::MouseCursor::PointingHand)
               when Scenes::Hotspot::CursorType::Default then RL.set_mouse_cursor(RL::MouseCursor::Default)
-              else RL.set_mouse_cursor(RL::MouseCursor::Crosshair)
+              else                                           RL.set_mouse_cursor(RL::MouseCursor::Crosshair)
               end
             else
               RL.set_mouse_cursor(@default_cursor)
@@ -383,14 +383,14 @@ module PointClickEngine
       private def initialize_scripting
         begin
           @script_engine = Scripting::ScriptEngine.new
-          
+
           # Trigger game started event
           @event_system.trigger_event(
             Scripting::Events::GAME_STARTED,
             {
-              "window_width" => @window_width.to_s,
+              "window_width"  => @window_width.to_s,
               "window_height" => @window_height.to_s,
-              "title" => @title
+              "title"         => @title,
             }
           )
         rescue ex

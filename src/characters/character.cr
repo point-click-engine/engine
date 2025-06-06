@@ -97,7 +97,7 @@ module PointClickEngine
       end
 
       def add_animation(name : String, start_frame : Int32, frame_count : Int32,
-                       frame_speed : Float32 = 0.1, loop : Bool = true)
+                        frame_speed : Float32 = 0.1, loop : Bool = true)
         @animations[name] = AnimationData.new(start_frame, frame_count, frame_speed, loop)
       end
 
