@@ -45,7 +45,7 @@ wizard.set_dialogues([
   "Greetings, young adventurer! What brings you to my grove?",
   "I can teach you the ways of magic, but first you must prove yourself worthy.",
   "Find the ancient key and combine it with the mystical crystal. Then return to me.",
-  "You have all the items you need. Combine them to create something magical!"
+  "You have all the items you need. Combine them to create something magical!",
 ])
 
 main_scene.add_character(wizard)
@@ -61,12 +61,12 @@ crystal_hotspot.on_click = -> {
     crystal.combinable_with = ["Ancient Key"]
     crystal.combine_actions = {"Ancient Key" => "create_magic_item"}
     game.inventory.add_item(crystal)
-    
+
     # audio.play_sound_effect("pickup")
-    
-    dialog = PCE::Dialog.new("You picked up the Mystical Crystal!", 
-                           RL::Vector2.new(x: 100, y: 450), 
-                           RL::Vector2.new(x: 600, y: 100))
+
+    dialog = PCE::Dialog.new("You picked up the Mystical Crystal!",
+      RL::Vector2.new(x: 100, y: 450),
+      RL::Vector2.new(x: 600, y: 100))
     game.show_dialog(dialog)
     crystal_hotspot.active = false
   end
@@ -83,12 +83,12 @@ key_hotspot.on_click = -> {
     key.combinable_with = ["Mystical Crystal"]
     key.combine_actions = {"Mystical Crystal" => "create_magic_item"}
     game.inventory.add_item(key)
-    
+
     # audio.play_sound_effect("pickup")
-    
-    dialog = PCE::Dialog.new("You found the Ancient Key!", 
-                           RL::Vector2.new(x: 100, y: 450), 
-                           RL::Vector2.new(x: 600, y: 100))
+
+    dialog = PCE::Dialog.new("You found the Ancient Key!",
+      RL::Vector2.new(x: 100, y: 450),
+      RL::Vector2.new(x: 600, y: 100))
     game.show_dialog(dialog)
     key_hotspot.active = false
   end
@@ -101,19 +101,19 @@ game.inventory.on_items_combined = ->(item1 : PCE::InventoryItem, item2 : PCE::I
     # Remove individual items
     game.inventory.remove_item(item1)
     game.inventory.remove_item(item2)
-    
+
     # Create combined item
     magic_item = PCE::InventoryItem.new("Magic Artifact", "A powerful artifact created by combining the key and crystal")
     magic_item.load_icon("assets/key.png") # Placeholder icon
     game.inventory.add_item(magic_item)
-    
+
     # Item combination successful
-    
+
     # audio.play_sound_effect("magic")
-    
-    dialog = PCE::Dialog.new("The key and crystal have fused into a powerful magic artifact!", 
-                           RL::Vector2.new(x: 100, y: 450), 
-                           RL::Vector2.new(x: 600, y: 100))
+
+    dialog = PCE::Dialog.new("The key and crystal have fused into a powerful magic artifact!",
+      RL::Vector2.new(x: 100, y: 450),
+      RL::Vector2.new(x: 600, y: 100))
     game.show_dialog(dialog)
   end
 }

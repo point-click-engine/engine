@@ -82,7 +82,7 @@ module PointClickEngine
             end
           end
         end
-        
+
         # Right click to cancel combination mode
         if RL::MouseButton::Right.pressed?
           @combination_mode = false
@@ -139,13 +139,13 @@ module PointClickEngine
             RL.draw_rectangle_lines_ex(item_rect, 2, color)
           end
         end
-        
+
         # Draw combination mode indicator
         if @combination_mode
           text = "Combination Mode - Click another item"
           text_width = RL.measure_text(text, 16)
-          RL.draw_text(text, (@position.x + total_width/2 - text_width/2).to_i, 
-                      (@position.y - 25).to_i, 16, RL::RED)
+          RL.draw_text(text, (@position.x + total_width/2 - text_width/2).to_i,
+            (@position.y - 25).to_i, 16, RL::RED)
         end
       end
 

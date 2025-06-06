@@ -15,7 +15,7 @@ module PointClickEngine
         property character_name : String?
         property choices : Array(DialogChoice) = [] of DialogChoice
         property conditions : Array(String) = [] of String # Script conditions
-        property actions : Array(String) = [] of String # Actions to execute
+        property actions : Array(String) = [] of String    # Actions to execute
         property is_end : Bool = false
 
         def initialize(@id : String, @text : String)
@@ -38,7 +38,7 @@ module PointClickEngine
         property text : String
         property target_node_id : String
         property conditions : Array(String) = [] of String # Script conditions
-        property actions : Array(String) = [] of String # Actions to execute
+        property actions : Array(String) = [] of String    # Actions to execute
         property once_only : Bool = false
         property used : Bool = false
 
@@ -99,7 +99,7 @@ module PointClickEngine
 
           # Move to target node
           @current_node_id = choice.target_node_id
-          
+
           if target_node = get_current_node
             if target_node.is_end
               end_conversation
@@ -127,7 +127,7 @@ module PointClickEngine
 
         private def show_current_node
           return unless current_node = get_current_node
-          
+
           # Execute node actions
           execute_actions(current_node.actions)
 
@@ -142,7 +142,7 @@ module PointClickEngine
 
           # Build dialog with choices
           choice_tuples = available_choices.map_with_index do |choice, index|
-            {choice.text, ->{ make_choice(index) }}
+            {choice.text, -> { make_choice(index) }}
           end
 
           # Show dialog using character dialogue system
@@ -154,11 +154,11 @@ module PointClickEngine
             dialog_size = RL::Vector2.new(x: Core::Engine.instance.window_width - 200, y: 150)
             dialog = UI::Dialog.new(current_node.text, dialog_pos, dialog_size)
             dialog.character_name = current_node.character_name || "Unknown"
-            
+
             choice_tuples.each do |choice_text, action|
               dialog.add_choice(choice_text, &action)
             end
-            
+
             Core::Engine.instance.show_dialog(dialog)
           end
         end

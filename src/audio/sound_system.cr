@@ -180,10 +180,10 @@ module PointClickEngine
 
       def play_music(name : String, loop : Bool = true)
         return if @muted
-        
+
         # Stop current music if playing
         @current_music.try(&.stop)
-        
+
         if music = @music_tracks[name]?
           music.volume = @music_volume * @master_volume
           music.play(loop)

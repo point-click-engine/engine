@@ -41,10 +41,10 @@ module PointClickEngine
       def self.save_game(engine : Engine, slot_name : String = "autosave") : Bool
         begin
           ensure_save_directory
-          
+
           save_data = SaveData.new
           save_data.timestamp = Time.utc
-          
+
           # Save current scene
           if current_scene = engine.current_scene
             save_data.current_scene_name = current_scene.name
@@ -80,7 +80,7 @@ module PointClickEngine
           # Write save file
           save_path = File.join(SAVE_DIRECTORY, "#{slot_name}#{SAVE_EXTENSION}")
           File.write(save_path, save_data.to_yaml)
-          
+
           true
         rescue ex
           puts "Failed to save game: #{ex.message}"

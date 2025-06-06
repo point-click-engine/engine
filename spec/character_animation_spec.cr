@@ -12,14 +12,13 @@ class TestCharacter < PointClickEngine::Characters::Character
 end
 
 describe PointClickEngine::Characters::Character do
-
   describe "#add_animation" do
     it "adds animation data to character" do
       character = TestCharacter.new("Hero", RL::Vector2.new(x: 100, y: 100), RL::Vector2.new(x: 32, y: 32))
-      
+
       character.add_animation("walk_right", 0, 4, 0.1_f32, true)
       character.animations.has_key?("walk_right").should be_true
-      
+
       anim = character.animations["walk_right"]
       anim.start_frame.should eq(0)
       anim.frame_count.should eq(4)
@@ -32,7 +31,7 @@ describe PointClickEngine::Characters::Character do
     it "sets walking state and target position" do
       character = TestCharacter.new("Hero", RL::Vector2.new(x: 100, y: 100), RL::Vector2.new(x: 32, y: 32))
       target = RL::Vector2.new(x: 200, y: 150)
-      
+
       character.walk_to(target)
       character.state.should eq(PointClickEngine::Characters::CharacterState::Walking)
       character.target_position.should eq(target)
@@ -42,7 +41,7 @@ describe PointClickEngine::Characters::Character do
     it "sets correct direction based on target" do
       character = TestCharacter.new("Hero", RL::Vector2.new(x: 200, y: 100), RL::Vector2.new(x: 32, y: 32))
       target = RL::Vector2.new(x: 100, y: 150)
-      
+
       character.walk_to(target)
       character.direction.should eq(PointClickEngine::Characters::Direction::Left)
     end
@@ -51,10 +50,10 @@ describe PointClickEngine::Characters::Character do
   describe "#stop_walking" do
     it "stops walking and resets state" do
       character = TestCharacter.new("Hero", RL::Vector2.new(x: 100, y: 100), RL::Vector2.new(x: 32, y: 32))
-      
+
       character.walk_to(RL::Vector2.new(x: 200, y: 150))
       character.stop_walking
-      
+
       character.state.should eq(PointClickEngine::Characters::CharacterState::Idle)
       character.target_position.should be_nil
     end
@@ -67,7 +66,7 @@ describe PointClickEngine::Graphics::AnimatedSprite do
       sprite = PointClickEngine::Graphics::AnimatedSprite.new(
         RL::Vector2.new(x: 100, y: 100), 32, 32, 8
       )
-      
+
       sprite.frame_width.should eq(32)
       sprite.frame_height.should eq(32)
       sprite.frame_count.should eq(8)
@@ -81,10 +80,10 @@ describe PointClickEngine::Graphics::AnimatedSprite do
       sprite = PointClickEngine::Graphics::AnimatedSprite.new(
         RL::Vector2.new(x: 100, y: 100), 32, 32, 4
       )
-      
+
       sprite.stop
       sprite.playing.should be_false
-      
+
       sprite.play
       sprite.playing.should be_true
       sprite.frame_timer.should eq(0.0)
