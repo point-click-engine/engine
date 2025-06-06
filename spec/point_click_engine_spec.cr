@@ -1,37 +1,4 @@
-require "spec"
-require "../src/point_click_engine"
-
-# Helper to create test vectors
-def vec2(x, y)
-  RL::Vector2.new(x: x, y: y)
-end
-
-# Helper to create test rectangles
-def rect(x, y, w, h)
-  RL::Rectangle.new(x: x, y: y, width: w, height: h)
-end
-
-# Helper to check point in rectangle (since Raylib function not available in tests)
-def point_in_rect?(point : RL::Vector2, rect : RL::Rectangle) : Bool
-  point.x >= rect.x &&
-  point.x <= rect.x + rect.width &&
-  point.y >= rect.y &&
-  point.y <= rect.y + rect.height
-end
-
-# Test implementation of GameObject
-class TestGameObject < PointClickEngine::GameObject
-  property update_called = false
-  property draw_called = false
-
-  def update(dt : Float32)
-    @update_called = true
-  end
-
-  def draw
-    @draw_called = true
-  end
-end
+require "./spec_helper"
 
 describe PointClickEngine do
   describe PointClickEngine::GameObject do
@@ -233,22 +200,22 @@ describe PointClickEngine do
     end
   end
 
-  describe PointClickEngine::Inventory do
+  describe PointClickEngine::InventoryUI do
     it "initializes with default position" do
-      inventory = PointClickEngine::Inventory.new
+      inventory = PointClickEngine::InventoryUI.new
       inventory.position.x.should eq(10)
       inventory.position.y.should eq(10)
     end
 
     it "starts hidden and empty" do
-      inventory = PointClickEngine::Inventory.new
+      inventory = PointClickEngine::InventoryUI.new
       inventory.visible.should be_false
       inventory.items.should be_empty
       inventory.selected_item.should be_nil
     end
 
     it "can add items" do
-      inventory = PointClickEngine::Inventory.new
+      inventory = PointClickEngine::InventoryUI.new
       item = PointClickEngine::InventoryItem.new("key", "A key")
 
       inventory.add_item(item)
@@ -258,7 +225,7 @@ describe PointClickEngine do
     end
 
     it "prevents duplicate items" do
-      inventory = PointClickEngine::Inventory.new
+      inventory = PointClickEngine::InventoryUI.new
       item = PointClickEngine::InventoryItem.new("key", "A key")
 
       inventory.add_item(item)
@@ -268,7 +235,7 @@ describe PointClickEngine do
     end
 
     it "can remove items" do
-      inventory = PointClickEngine::Inventory.new
+      inventory = PointClickEngine::InventoryUI.new
       item = PointClickEngine::InventoryItem.new("key", "A key")
 
       inventory.add_item(item)
@@ -278,7 +245,7 @@ describe PointClickEngine do
     end
 
     it "checks if item exists by name" do
-      inventory = PointClickEngine::Inventory.new
+      inventory = PointClickEngine::InventoryUI.new
       item = PointClickEngine::InventoryItem.new("key", "A key")
 
       inventory.add_item(item)
@@ -288,7 +255,7 @@ describe PointClickEngine do
     end
 
     it "gets item by name" do
-      inventory = PointClickEngine::Inventory.new
+      inventory = PointClickEngine::InventoryUI.new
       item = PointClickEngine::InventoryItem.new("key", "A key")
 
       inventory.add_item(item)
@@ -298,7 +265,7 @@ describe PointClickEngine do
     end
 
     it "has configurable appearance" do
-      inventory = PointClickEngine::Inventory.new(vec2(100, 200))
+      inventory = PointClickEngine::InventoryUI.new(vec2(100, 200))
 
       inventory.position.x.should eq(100)
       inventory.position.y.should eq(200)
@@ -353,8 +320,8 @@ describe PointClickEngine do
 
     it "can have character name" do
       dialog = PointClickEngine::Dialog.new("Hello!", vec2(0, 0), vec2(100, 100))
-      dialog.character = "Bob"
-      dialog.character.should eq("Bob")
+      dialog.character_name = "Bob"
+      dialog.character_name.should eq("Bob")
     end
 
     it "can add choices" do

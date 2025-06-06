@@ -1,5 +1,5 @@
 name: point_click_engine
-version: 0.1.0
+version: 0.2.0
 
 authors:
   - Remy Marronnier <remy@marronnier.dev>
@@ -11,3 +11,6 @@ license: MIT
 dependencies:
   raylib-cr:
     github: sol-vin/raylib-cr
+  luajit:
+    github: mdwagner/luajit.cr
+    version: ~> 0.4.0
