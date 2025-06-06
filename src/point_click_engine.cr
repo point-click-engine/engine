@@ -24,6 +24,7 @@ require "./characters/player"
 require "./characters/npc"
 require "./characters/ai/behavior"
 require "./characters/dialogue/character_dialogue"
+require "./characters/dialogue/dialog_tree"
 
 # UI modules
 require "./ui"
@@ -40,6 +41,12 @@ require "./scenes/scene"
 require "./scripting/event_system"
 require "./scripting/script_engine"
 require "./characters/scriptable_character"
+
+# Core system modules
+require "./core/save_system"
+
+# Audio modules (optional - only if audio is enabled)
+require "./audio/sound_system"
 
 module PointClickEngine
   VERSION = "0.3.0"
@@ -67,6 +74,9 @@ module PointClickEngine
   alias NPCMood = Characters::NPCMood
   alias AnimationData = Characters::AnimationData
   alias CharacterDialogue = Characters::Dialogue::CharacterDialogue
+  alias DialogTree = Characters::Dialogue::DialogTree
+  alias DialogNode = Characters::Dialogue::DialogNode
+  alias DialogChoice = Characters::Dialogue::DialogChoice
 
   # AI behavior aliases
   alias NPCBehavior = Characters::AI::NPCBehavior
@@ -77,6 +87,15 @@ module PointClickEngine
 
   # Utility aliases
   alias YAMLConverters = Utils::YAMLConverters
+
+  # Audio system aliases
+  alias AudioManager = Audio::AudioManager
+  alias SoundEffect = Audio::SoundEffect
+  alias Music = Audio::Music
+
+  # Save system aliases
+  alias SaveSystem = Core::SaveSystem
+  alias SaveData = Core::SaveData
 
   # Scripting system aliases
   alias ScriptEngine = Scripting::ScriptEngine

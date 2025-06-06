@@ -1,0 +1,45 @@
+name: wizard_conversation
+nodes:
+  greeting:
+    id: greeting
+    text: "Greetings, young adventurer! What brings you to my grove?"
+    character_name: "Old Wizard"
+    choices:
+      - text: "I seek knowledge and adventure!"
+        target_node_id: help
+      - text: "Just passing through."
+        target_node_id: goodbye
+  
+  help:
+    id: help
+    text: "I can teach you the ways of magic, but first you must prove yourself worthy."
+    character_name: "Old Wizard"
+    choices:
+      - text: "What must I do?"
+        target_node_id: quest
+      - text: "I'm not interested."
+        target_node_id: goodbye
+  
+  quest:
+    id: quest
+    text: "Find the ancient key and combine it with the mystical crystal. Then return to me."
+    character_name: "Old Wizard"
+    choices:
+      - text: "I have the items you seek!"
+        target_node_id: completion
+        conditions: ["has_magic_item"]
+      - text: "I'll be back soon."
+        target_node_id: goodbye
+  
+  completion:
+    id: completion
+    text: "Well done! You have proven yourself. Take this magic potion as your reward."
+    character_name: "Old Wizard"
+    is_end: true
+    actions: ["give_reward"]
+  
+  goodbye:
+    id: goodbye
+    text: "Farewell, traveler. May your journey be safe."
+    character_name: "Old Wizard"
+    is_end: true

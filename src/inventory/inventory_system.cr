@@ -20,6 +20,12 @@ module PointClickEngine
       property selected_item_name : String?
       @[YAML::Field(ignore: true)]
       property selected_item : InventoryItem?
+      @[YAML::Field(ignore: true)]
+      property combination_mode : Bool = false
+      @[YAML::Field(ignore: true)]
+      property on_item_used : Proc(InventoryItem, String, Nil)?
+      @[YAML::Field(ignore: true)]
+      property on_items_combined : Proc(InventoryItem, InventoryItem, String?, Nil)?
 
       def initialize
         @position = RL::Vector2.new(x: 10, y: 10)
@@ -71,12 +77,48 @@ module PointClickEngine
           @items.each_with_index do |item, index|
             item_rect = get_item_rect(index)
             if RL.check_collision_point_rec?(mouse_pos, item_rect)
-              @selected_item = item
-              @selected_item_name = item.name
+              handle_item_click(item)
               break
             end
           end
         end
+        
+        # Right click to cancel combination mode
+        if RL::MouseButton::Right.pressed?
+          @combination_mode = false
+        end
+      end
+
+      def handle_item_click(item : InventoryItem)
+        if @combination_mode && @selected_item && @selected_item != item
+          try_combine_items(@selected_item.not_nil!, item)
+          @combination_mode = false
+        else
+          @selected_item = item
+          @selected_item_name = item.name
+        end
+      end
+
+      def try_combine_items(item1 : InventoryItem, item2 : InventoryItem)
+        if item1.can_combine_with?(item2)
+          action = item1.get_combine_action(item2.name)
+          @on_items_combined.try(&.call(item1, item2, action))
+        elsif item2.can_combine_with?(item1)
+          action = item2.get_combine_action(item1.name)
+          @on_items_combined.try(&.call(item2, item1, action))
+        end
+      end
+
+      def use_selected_item_on(target_name : String)
+        return unless selected = @selected_item
+        if selected.can_use_on?(target_name)
+          @on_item_used.try(&.call(selected, target_name))
+          remove_item(selected) if selected.consumable
+        end
+      end
+
+      def start_combination_mode
+        @combination_mode = true if @selected_item
       end
 
       def draw
@@ -93,8 +135,17 @@ module PointClickEngine
               @slot_size / icon.width.to_f, RL::WHITE)
           end
           if item == @selected_item
-            RL.draw_rectangle_lines_ex(item_rect, 2, RL::YELLOW)
+            color = @combination_mode ? RL::RED : RL::YELLOW
+            RL.draw_rectangle_lines_ex(item_rect, 2, color)
           end
+        end
+        
+        # Draw combination mode indicator
+        if @combination_mode
+          text = "Combination Mode - Click another item"
+          text_width = RL.measure_text(text, 16)
+          RL.draw_text(text, (@position.x + total_width/2 - text_width/2).to_i, 
+                      (@position.y - 25).to_i, 16, RL::RED)
         end
       end
 

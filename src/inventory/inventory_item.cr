@@ -15,6 +15,10 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property icon : RL::Texture2D?
       property combinable_with : Array(String) = [] of String
+      property usable_on : Array(String) = [] of String
+      property consumable : Bool = false
+      property use_action : String?
+      property combine_actions : Hash(String, String) = {} of String => String
 
       def initialize
         @name = ""
@@ -22,6 +26,18 @@ module PointClickEngine
       end
 
       def initialize(@name : String, @description : String)
+      end
+
+      def can_combine_with?(other_item : InventoryItem) : Bool
+        @combinable_with.includes?(other_item.name)
+      end
+
+      def can_use_on?(target_name : String) : Bool
+        @usable_on.includes?(target_name)
+      end
+
+      def get_combine_action(other_item_name : String) : String?
+        @combine_actions[other_item_name]?
       end
 
       def after_yaml_deserialize(ctx : YAML::ParseContext)
