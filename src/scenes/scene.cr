@@ -13,8 +13,11 @@ module PointClickEngine
       property background_path : String?
       @[YAML::Field(ignore: true)]
       property background : RL::Texture2D?
+      @[YAML::Field(ignore: true)]
       property hotspots : Array(Hotspot) = [] of Hotspot
+      @[YAML::Field(ignore: true)]
       property objects : Array(Core::GameObject) = [] of Core::GameObject
+      @[YAML::Field(ignore: true)]
       property characters : Array(Characters::Character) = [] of Characters::Character
       @[YAML::Field(ignore: true)]
       property on_enter : Proc(Nil)?

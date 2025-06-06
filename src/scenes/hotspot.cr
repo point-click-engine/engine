@@ -2,12 +2,14 @@
 
 require "raylib-cr"
 require "yaml"
+require "../utils/yaml_converters"
 
 module PointClickEngine
   module Scenes
     # Clickable hotspot in the game
     class Hotspot < Core::GameObject
       property name : String
+      property description : String = ""
       property cursor_type : CursorType = CursorType::Hand
       @[YAML::Field(ignore: true)]
       property on_click : Proc(Nil)?
@@ -26,12 +28,14 @@ module PointClickEngine
       end
 
       def initialize
-        super(RL::Vector2.new, RL::Vector2.new)
+        super()
         @name = ""
+        @description = ""
       end
 
       def initialize(@name : String, position : RL::Vector2, size : RL::Vector2)
         super(position, size)
+        @description = ""
       end
 
       def update(dt : Float32)

@@ -3,9 +3,61 @@
 require "raylib-cr"
 require "yaml"
 
+# Extend Vector2 with YAML support
+struct RL::Vector2
+  include YAML::Serializable
+
+  # Keep the original constructors
+  def initialize
+    @x = 0.0f32
+    @y = 0.0f32
+  end
+
+  def initialize(@x : Float32, @y : Float32)
+  end
+end
+
 module PointClickEngine
   module Utils
     module YAMLConverters
+      # YAML::Field converter for Vector2
+      module Vector2Converter
+        def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : RL::Vector2
+          case node
+          when YAML::Nodes::Mapping
+            x = y = 0.0f32
+            node.each do |key_node, value_node|
+              case key_node
+              when YAML::Nodes::Scalar
+                key = key_node.value
+                case value_node
+                when YAML::Nodes::Scalar
+                  value = value_node.value.to_f32
+                  case key
+                  when "x"
+                    x = value
+                  when "y"
+                    y = value
+                  end
+                end
+              end
+            end
+            RL::Vector2.new(x: x, y: y)
+          else
+            RL::Vector2.new(x: 0.0f32, y: 0.0f32)
+          end
+        end
+
+        def self.to_yaml(value : RL::Vector2, yaml : YAML::Nodes::Builder) : Nil
+          yaml.mapping do
+            yaml.scalar "x"
+            yaml.scalar value.x.to_s
+            yaml.scalar "y"
+            yaml.scalar value.y.to_s
+          end
+        end
+      end
+
       # Helper to convert Vector2 to/from YAML
       def self.vector2_to_yaml(vec : RL::Vector2) : String
         {"x" => vec.x, "y" => vec.y}.to_yaml

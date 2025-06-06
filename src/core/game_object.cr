@@ -10,10 +10,7 @@ module PointClickEngine
     module Drawable
       property visible : Bool = true
 
-      @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter)]
-      property position : RL::Vector2
-
-      @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter)]
+      property position : RL::Vector2 = RL::Vector2.new
       property size : RL::Vector2 = RL::Vector2.new
 
       abstract def draw
@@ -46,7 +43,6 @@ module PointClickEngine
 
     # Base class for all game objects
     abstract class GameObject
-      include YAML::Serializable
       include Drawable
 
       property active : Bool = true
