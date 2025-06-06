@@ -35,6 +35,11 @@ require "./inventory/inventory_system"
 require "./scenes/hotspot"
 require "./scenes/scene"
 
+# Scripting modules
+require "./scripting/event_system"
+require "./scripting/script_engine"
+require "./characters/scriptable_character"
+
 module PointClickEngine
   VERSION = "0.3.0"
 
@@ -71,4 +76,14 @@ module PointClickEngine
 
   # Utility aliases
   alias YAMLConverters = Utils::YAMLConverters
+
+  # Scripting system aliases
+  alias ScriptEngine = Scripting::ScriptEngine
+  alias EventSystem = Scripting::EventSystem
+  alias Event = Scripting::Event
+  alias EventHandler = Scripting::EventHandler
+  alias ScriptEventHandler = Scripting::ScriptEventHandler
+  alias FunctionEventHandler = Scripting::FunctionEventHandler
+  alias ScriptableCharacter = Characters::ScriptableCharacter
+  alias SimpleNPC = Characters::SimpleNPC
 end

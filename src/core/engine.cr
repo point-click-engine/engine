@@ -43,6 +43,12 @@ module PointClickEngine
       property display_manager : Graphics::DisplayManager?
       property fullscreen : Bool = false
 
+      # Scripting system
+      @[YAML::Field(ignore: true)]
+      property script_engine : Scripting::ScriptEngine?
+      @[YAML::Field(ignore: true)]
+      property event_system : Scripting::EventSystem = Scripting::EventSystem.new
+
       def initialize(@window_width : Int32, @window_height : Int32, @title : String)
         @inventory = Inventory::InventorySystem.new(RL::Vector2.new(x: 10, y: @window_height - 80))
         @scenes = {} of String => Scenes::Scene
@@ -107,6 +113,9 @@ module PointClickEngine
         else
           RL.set_mouse_cursor(@default_cursor)
         end
+
+        # Initialize scripting engine
+        initialize_scripting
 
         @initialized = true
       end
@@ -231,6 +240,9 @@ module PointClickEngine
       end
 
       private def update_game_logic(dt : Float32, mouse_pos : RL::Vector2)
+        # Process events first
+        @event_system.process_events
+
         @current_scene.try &.update(dt)
         @inventory.update(dt)
         @dialogs.each(&.update(dt))
@@ -340,6 +352,9 @@ module PointClickEngine
       private def cleanup
         @display_manager.try &.cleanup
 
+        # Cleanup scripting engine
+        @script_engine.try &.cleanup
+
         @scenes.each_value do |scene|
           if bg = scene.background
             RL.unload_texture(bg)
@@ -362,6 +377,25 @@ module PointClickEngine
         end
 
         RL.close_window if @initialized && RL.window_ready?
+      end
+
+      private def initialize_scripting
+        begin
+          @script_engine = Scripting::ScriptEngine.new
+          
+          # Trigger game started event
+          @event_system.trigger_event(
+            Scripting::Events::GAME_STARTED,
+            {
+              "window_width" => @window_width.to_s,
+              "window_height" => @window_height.to_s,
+              "title" => @title
+            }
+          )
+        rescue ex
+          puts "Failed to initialize scripting engine: #{ex.message}"
+          @script_engine = nil
+        end
       end
     end
 
