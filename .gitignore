@@ -5,6 +5,7 @@
 /assets
 /.shards/
 *.dwarf
+*.png
 
 # Compiled binaries
 modular_example

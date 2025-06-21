@@ -52,6 +52,7 @@ module PointClickEngine
         when .south_west? then Direction8::NorthEast
         when .west? then Direction8::East
         when .north_west? then Direction8::SouthEast
+        else Direction8::South  # Default fallback
         end
       end
       

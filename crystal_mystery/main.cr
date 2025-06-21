@@ -1075,6 +1075,14 @@ class CrystalMysteryGame
         player.walk_to(pos)
       end
     when .look?
+      # Play examine animation
+      if player = @engine.current_scene.try(&.player)
+        if player.is_a?(PointClickEngine::Characters::EnhancedPlayer)
+          enhanced_player = player.as(PointClickEngine::Characters::EnhancedPlayer)
+          enhanced_player.examine_object(pos)
+        end
+      end
+      
       @engine.dialog_manager.try &.show_message(hotspot.description)
     when .talk?
       @engine.dialog_manager.try &.show_message("I can't talk to that.")
