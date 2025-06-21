@@ -422,7 +422,7 @@ module PointClickEngine
         # Update cursor
         @render_coordinator.update_cursor(@current_scene)
       end
-      
+
       # Update game state
       private def update
         dt = RL.get_frame_time

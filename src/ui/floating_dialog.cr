@@ -1,7 +1,6 @@
 # Floating dialog text system for Simon the Sorcerer 1 style conversations
 # Displays colored text above character heads during dialog
 
-
 module PointClickEngine
   module UI
     # Style options for floating dialog text

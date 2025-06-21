@@ -1,6 +1,5 @@
 # Transition effect types and base classes
 
-
 module PointClickEngine
   module Graphics
     module Transitions
