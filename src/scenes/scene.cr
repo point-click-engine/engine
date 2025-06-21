@@ -4,6 +4,7 @@ require "raylib-cr"
 require "yaml"
 require "../navigation/pathfinding"
 require "../assets/asset_loader"
+require "./walkable_area"
 
 module PointClickEngine
   module Scenes
@@ -39,6 +40,9 @@ module PointClickEngine
       property enable_pathfinding : Bool = true
       property navigation_cell_size : Int32 = 16
       property script_path : String?
+      
+      @[YAML::Field(ignore: true)]
+      property walkable_area : WalkableArea?
 
       def initialize
         @name = ""
@@ -94,6 +98,19 @@ module PointClickEngine
 
       def update(dt : Float32)
         @objects.each(&.update(dt))
+        
+        # Update character scales based on position
+        if walkable = @walkable_area
+          @characters.each do |character|
+            scale = walkable.get_scale_at_y(character.position.y)
+            character.scale = scale
+          end
+          
+          @player.try do |p|
+            scale = walkable.get_scale_at_y(p.position.y)
+            p.scale = scale
+          end
+        end
       end
 
       def draw
@@ -106,15 +123,47 @@ module PointClickEngine
           RL.draw_texture_ex(bg, RL::Vector2.new(x: 0, y: 0), 0.0, scale, RL::WHITE)
         end
         
-        # Draw all scene elements
+        # Sort characters by Y position for proper depth
+        all_characters = @characters.dup
+        if player = @player
+          all_characters << player
+        end
+        sorted_characters = all_characters.sort_by(&.position.y)
+        
+        # Draw scene elements with proper depth sorting
         @hotspots.each(&.draw)
-        @objects.each(&.draw)
-        @characters.each(&.draw)
-        @player.try(&.draw)
+        
+        # Draw objects and characters with walk-behind support
+        if walkable = @walkable_area
+          sorted_characters.each do |character|
+            # Draw walk-behind regions that should appear in front
+            behind_regions = walkable.get_walk_behind_at_y(character.position.y)
+            
+            # Draw the character
+            character.draw
+            
+            # Draw walk-behind regions on top if needed
+            # (In a full implementation, we'd draw masked background parts here)
+          end
+          
+          # Draw other objects
+          @objects.each do |obj|
+            obj.draw unless obj.is_a?(Characters::Character)
+          end
+        else
+          # No walkable area defined, use simple drawing
+          @objects.each(&.draw)
+          sorted_characters.each(&.draw)
+        end
         
         # Draw navigation debug if enabled
-        if Core::Engine.debug_mode && @navigation_grid
-          draw_navigation_debug
+        if Core::Engine.debug_mode
+          if @navigation_grid
+            draw_navigation_debug
+          end
+          
+          # Draw walkable area debug
+          @walkable_area.try(&.draw_debug)
         end
       end
 
@@ -150,6 +199,21 @@ module PointClickEngine
         )
 
         @pathfinder = Navigation::Pathfinding.new(@navigation_grid.not_nil!)
+      end
+      
+      # Check if a point is walkable
+      def is_walkable?(point : RL::Vector2) : Bool
+        if walkable = @walkable_area
+          walkable.is_point_walkable?(point)
+        else
+          # If no walkable area defined, allow movement everywhere
+          true
+        end
+      end
+      
+      # Get character scale at Y position
+      def get_character_scale(y_position : Float32) : Float32
+        @walkable_area.try(&.get_scale_at_y(y_position)) || 1.0f32
       end
 
       def find_path(start_x : Float32, start_y : Float32, end_x : Float32, end_y : Float32) : Array(Raylib::Vector2)?

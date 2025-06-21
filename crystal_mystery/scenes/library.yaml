@@ -3,6 +3,39 @@ background_path: assets/backgrounds/library.png
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/library.lua
+walkable_areas:
+  regions:
+    - name: main_floor
+      walkable: true
+      vertices:
+        - {x: 100, y: 350}
+        - {x: 900, y: 350}
+        - {x: 900, y: 700}
+        - {x: 100, y: 700}
+    - name: desk_area
+      walkable: false
+      vertices:
+        - {x: 380, y: 380}
+        - {x: 620, y: 380}
+        - {x: 620, y: 550}
+        - {x: 380, y: 550}
+  walk_behind:
+    - name: desk_front
+      y_threshold: 450
+      vertices:
+        - {x: 400, y: 430}
+        - {x: 600, y: 430}
+        - {x: 600, y: 550}
+        - {x: 400, y: 550}
+  scale_zones:
+    - min_y: 350
+      max_y: 500
+      min_scale: 0.8
+      max_scale: 1.0
+    - min_y: 500
+      max_y: 700
+      min_scale: 1.0
+      max_scale: 1.2
 hotspots:
   - name: bookshelf
     x: 100
@@ -17,16 +50,26 @@ hotspots:
     height: 150
     description: "A mahogany desk with scattered papers"
   - name: door_to_lab
+    type: exit
     x: 850
     y: 300
     width: 100
     height: 200
+    target_scene: laboratory
+    target_position: {x: 100, y: 400}
+    transition_type: fade
+    auto_walk: true
     description: "Door to the laboratory"
+    default_verb: walk
+    object_type: exit
   - name: painting
-    x: 500
-    y: 100
-    width: 120
-    height: 150
+    type: polygon
+    vertices:
+      - {x: 500, y: 100}
+      - {x: 620, y: 100}
+      - {x: 620, y: 250}
+      - {x: 560, y: 280}
+      - {x: 500, y: 250}
     description: "A portrait of the mansion's founder"
 characters:
   - name: butler

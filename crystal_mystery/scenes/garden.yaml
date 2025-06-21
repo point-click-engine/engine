@@ -11,10 +11,16 @@ hotspots:
     height: 200
     description: "An ornate fountain with crystal-clear water"
   - name: statue
-    x: 700
-    y: 200
-    width: 100
-    height: 300
+    type: polygon
+    vertices:
+      - {x: 740, y: 200}  # top (head)
+      - {x: 760, y: 220}  # right shoulder
+      - {x: 780, y: 260}  # right arm
+      - {x: 770, y: 400}  # right base
+      - {x: 730, y: 450}  # bottom base
+      - {x: 690, y: 400}  # left base
+      - {x: 680, y: 260}  # left arm  
+      - {x: 700, y: 220}  # left shoulder
     description: "A weathered statue holding something..."
   - name: flowerbed
     x: 150
@@ -23,8 +29,15 @@ hotspots:
     height: 100
     description: "Beautiful roses in full bloom"
   - name: door_to_lab
+    type: exit
     x: 50
     y: 300
     width: 100
     height: 200
+    target_scene: laboratory
+    target_position: {x: 800, y: 400}
+    transition_type: fade
+    auto_walk: true
     description: "Back to the laboratory"
+    default_verb: walk
+    object_type: exit

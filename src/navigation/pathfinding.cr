@@ -77,6 +77,19 @@ module PointClickEngine
           grid_height = (height / cell_size).to_i + 1
           grid = new(grid_width, grid_height, cell_size)
 
+          # Apply walkable area restrictions if defined
+          if walkable_area = scene.walkable_area
+            # Mark all cells based on walkable area
+            (0...grid.height).each do |y|
+              (0...grid.width).each do |x|
+                world_x, world_y = grid.grid_to_world(x, y)
+                world_pos = RL::Vector2.new(x: world_x, y: world_y)
+                is_walkable = walkable_area.is_point_walkable?(world_pos)
+                grid.set_walkable(x, y, is_walkable)
+              end
+            end
+          end
+          
           # Mark non-walkable areas from hotspots
           scene.hotspots.each do |hotspot|
             if hotspot.blocks_movement

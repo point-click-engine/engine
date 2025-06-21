@@ -74,6 +74,19 @@ module PointClickEngine
       def get_item(name : String) : InventoryItem?
         @items.find { |i| i.name == name }
       end
+      
+      def get_item_at_position(pos : RL::Vector2) : InventoryItem?
+        return nil unless @visible
+        
+        @items.each_with_index do |item, index|
+          item_rect = get_item_rect(index)
+          if RL.check_collision_point_rec?(pos, item_rect)
+            return item
+          end
+        end
+        
+        nil
+      end
 
       def select_item(name : String)
         if item = get_item(name)

@@ -57,6 +57,9 @@ module PointClickEngine
       property current_path_index : Int32 = 0
 
       property use_pathfinding : Bool = true
+      
+      @[YAML::Field(ignore: true)]
+      property on_walk_complete : Proc(Nil)?
 
       property dialogue_system_data : Dialogue::CharacterDialogue?
       @[YAML::Field(ignore: true)]
@@ -173,6 +176,12 @@ module PointClickEngine
         base_idle_anim = @direction == Direction::Left ? "idle_left" : "idle_right"
         play_animation(base_idle_anim) if @animations.has_key?(base_idle_anim)
         play_animation("idle") if !@animations.has_key?(base_idle_anim) && @animations.has_key?("idle")
+        
+        # Call completion callback if set
+        if callback = @on_walk_complete
+          @on_walk_complete = nil  # Clear callback to prevent double calls
+          callback.call
+        end
       end
 
       def say(text : String, &block : -> Nil)
@@ -211,7 +220,15 @@ module PointClickEngine
 
       def draw
         return unless @visible
-        @sprite_data.try &.draw
+        
+        # Apply character scale to sprite
+        if sprite = @sprite_data
+          old_scale = sprite.scale
+          sprite.scale = @scale
+          sprite.draw
+          sprite.scale = old_scale
+        end
+        
         @dialogue_system_data.try &.draw
 
         if Core::Engine.debug_mode
@@ -236,6 +253,13 @@ module PointClickEngine
       abstract def on_interact(interactor : Character)
       abstract def on_look
       abstract def on_talk
+      
+      # Get the current scene from the engine
+      private def get_current_scene : Scenes::Scene?
+        Core::Engine.instance.current_scene
+      rescue
+        nil
+      end
 
       private def update_movement(dt : Float32)
         return unless @state == CharacterState::Walking
@@ -257,8 +281,28 @@ module PointClickEngine
           normalized_dir_x = direction_vec.x / distance
           normalized_dir_y = direction_vec.y / distance
 
-          @position.x += normalized_dir_x * @walking_speed * dt
-          @position.y += normalized_dir_y * @walking_speed * dt
+          new_position = RL::Vector2.new(
+            x: @position.x + normalized_dir_x * @walking_speed * dt,
+            y: @position.y + normalized_dir_y * @walking_speed * dt
+          )
+          
+          # Check if new position is walkable
+          if scene = get_current_scene
+            if scene.is_walkable?(new_position)
+              @position = new_position
+              # Update character scale based on Y position
+              @scale = scene.get_character_scale(@position.y)
+            else
+              # Try to slide along the boundary
+              constrained_pos = scene.walkable_area.try(&.constrain_to_walkable(@position, new_position))
+              if constrained_pos
+                @position = constrained_pos
+                @scale = scene.get_character_scale(@position.y)
+              end
+            end
+          else
+            @position = new_position
+          end
 
           @sprite_data.try &.position = @position
 
@@ -326,8 +370,23 @@ module PointClickEngine
         normalized_dir_x = direction_vec.x / distance
         normalized_dir_y = direction_vec.y / distance
 
-        @position.x += normalized_dir_x * @walking_speed * dt
-        @position.y += normalized_dir_y * @walking_speed * dt
+        new_position = RL::Vector2.new(
+          x: @position.x + normalized_dir_x * @walking_speed * dt,
+          y: @position.y + normalized_dir_y * @walking_speed * dt
+        )
+        
+        # Check walkable area for pathfinding movement too
+        if scene = get_current_scene
+          if scene.is_walkable?(new_position)
+            @position = new_position
+          else
+            # Constrain to walkable area
+            constrained_pos = scene.walkable_area.try(&.constrain_to_walkable(@position, new_position))
+            @position = constrained_pos || @position
+          end
+        else
+          @position = new_position
+        end
 
         @sprite_data.try &.position = @position
       end

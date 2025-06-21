@@ -17,17 +17,31 @@ hotspots:
     height: 400
     description: "A locked cabinet with glass doors"
   - name: door_to_library
+    type: exit
     x: 50
     y: 300
     width: 100
     height: 200
+    target_scene: library
+    target_position: {x: 800, y: 400}
+    transition_type: fade
+    auto_walk: true
     description: "Back to the library"
+    default_verb: walk
+    object_type: exit
   - name: door_to_garden
+    type: exit
     x: 850
     y: 300
     width: 100
     height: 200
+    target_scene: garden
+    target_position: {x: 100, y: 400}
+    transition_type: iris
+    auto_walk: true
     description: "Door to the garden"
+    default_verb: walk
+    object_type: exit
 characters:
   - name: scientist
     position:

@@ -3,6 +3,7 @@
 
 require "raylib-cr"
 require "yaml"
+require "./state_value"
 
 module PointClickEngine
   module Core
@@ -26,6 +27,8 @@ module PointClickEngine
       property target_fps : Int32 = 60
       @[YAML::Field(ignore: true)]
       property running : Bool = false
+      @[YAML::Field(ignore: true)]
+      property handle_clicks : Bool = true
 
       property current_scene_name : String?
       @[YAML::Field(ignore: true)]
@@ -65,10 +68,17 @@ module PointClickEngine
       property config : Core::ConfigManager?
       @[YAML::Field(ignore: true)]
       property player : Characters::Player?
+      
+      # Game state variables
+      property state_variables : Hash(String, StateValue) = {} of String => StateValue
 
       # Cutscene system
       @[YAML::Field(ignore: true)]
       property cutscene_manager : Cutscenes::CutsceneManager = Cutscenes::CutsceneManager.new
+      
+      # Transition system
+      @[YAML::Field(ignore: true)]
+      property transition_manager : Graphics::TransitionManager?
 
       @ui_visible : Bool = true
 
@@ -320,15 +330,11 @@ module PointClickEngine
           @dialogs.each(&.update(dt))
           @dialogs.reject! { |d| !d.visible }
 
-          if RL::KeyboardKey::I.pressed?
-            @inventory.visible = !@inventory.visible
-          end
+          # Removed - input handling moved to game class
 
-          if RL::KeyboardKey::F1.pressed?
-            Engine.debug_mode = !Engine.debug_mode
-          end
+          # Removed - input handling moved to game class
 
-          if RL::MouseButton::Left.pressed?
+          if @handle_clicks && RL::MouseButton::Left.pressed?
             handle_click(mouse_pos)
           end
 
@@ -340,7 +346,13 @@ module PointClickEngine
         return unless scene = @current_scene
 
         if hotspot = scene.get_hotspot_at(game_mouse_pos)
-          hotspot.on_click.try &.call
+          # Special handling for exit zones
+          if hotspot.is_a?(Scenes::ExitZone)
+            exit_zone = hotspot.as(Scenes::ExitZone)
+            exit_zone.on_click_exit(self)
+          else
+            hotspot.on_click.try &.call
+          end
         elsif character = scene.get_character_at(game_mouse_pos)
           if player = scene.player
             character.on_interact(player)
@@ -455,8 +467,22 @@ module PointClickEngine
         end
       end
 
+      # State variable management
+      def get_state_variable(name : String) : StateValue?
+        @state_variables[name]?
+      end
+      
+      def set_state_variable(name : String, value : String | Int32 | Float32 | Bool)
+        @state_variables[name] = StateValue.new(value)
+      end
+      
+      def has_state_variable?(name : String) : Bool
+        @state_variables.has_key?(name)
+      end
+      
       def cleanup
         @display_manager.try &.cleanup
+        @transition_manager.try &.cleanup
 
         # Cleanup scripting engine
         @script_engine.try &.cleanup
@@ -522,6 +548,9 @@ module PointClickEngine
 
         # Initialize config manager
         @config ||= Core::ConfigManager.new
+        
+        # Initialize transition manager
+        @transition_manager ||= Graphics::TransitionManager.new(@window_width, @window_height)
       end
 
       # UI Visibility Controls

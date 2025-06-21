@@ -3,6 +3,7 @@
 require "raylib-cr"
 require "yaml"
 require "../utils/yaml_converters"
+require "../ui/cursor_manager"
 
 module PointClickEngine
   module Scenes
@@ -12,6 +13,8 @@ module PointClickEngine
       property description : String = ""
       property cursor_type : CursorType = CursorType::Hand
       property blocks_movement : Bool = false
+      property default_verb : UI::VerbType?
+      property object_type : UI::ObjectType = UI::ObjectType::Background
       @[YAML::Field(ignore: true)]
       property on_click : Proc(Nil)?
       @[YAML::Field(ignore: true)]
@@ -53,8 +56,24 @@ module PointClickEngine
 
       def draw
         if Core::Engine.debug_mode && @visible
-          RL.draw_rectangle_rec(bounds, @debug_color)
+          draw_debug
         end
+      end
+      
+      # Override this method in subclasses for custom debug rendering
+      def draw_debug
+        RL.draw_rectangle_rec(bounds, @debug_color)
+      end
+      
+      # Get outline points for rendering (override in polygon hotspot)
+      def get_outline_points : Array(RL::Vector2)
+        # Return rectangle corners for rectangular hotspot
+        [
+          RL::Vector2.new(x: @position.x, y: @position.y),
+          RL::Vector2.new(x: @position.x + @size.x, y: @position.y),
+          RL::Vector2.new(x: @position.x + @size.x, y: @position.y + @size.y),
+          RL::Vector2.new(x: @position.x, y: @position.y + @size.y)
+        ]
       end
     end
   end

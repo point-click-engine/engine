@@ -19,6 +19,7 @@ require "./core/engine"
 require "./graphics/display_manager"
 require "./graphics/animated_sprite"
 require "./graphics/particles"
+require "./graphics/transitions"
 require "./graphics/shaders/shader_system"
 require "./graphics/shaders/shader_helpers"
 
@@ -41,6 +42,9 @@ require "./inventory/inventory_system"
 
 # Scene modules
 require "./scenes/hotspot"
+require "./scenes/polygon_hotspot"
+require "./scenes/exit_zone"
+require "./scenes/walkable_area"
 require "./scenes/scene"
 require "./scenes/scene_loader"
 
@@ -84,6 +88,14 @@ module PointClickEngine
   alias NPC = Characters::NPC
   alias Scene = Scenes::Scene
   alias Hotspot = Scenes::Hotspot
+  alias PolygonHotspot = Scenes::PolygonHotspot
+  alias ExitZone = Scenes::ExitZone
+  alias TransitionType = Scenes::TransitionType
+  alias EdgeExit = Scenes::EdgeExit
+  alias WalkableArea = Scenes::WalkableArea
+  alias PolygonRegion = Scenes::PolygonRegion
+  alias WalkBehindRegion = Scenes::WalkBehindRegion
+  alias ScaleZone = Scenes::ScaleZone
   alias Dialog = UI::Dialog
   alias InventoryItem = Inventory::InventoryItem
   alias InventoryUI = Inventory::InventorySystem
@@ -91,6 +103,8 @@ module PointClickEngine
   alias DisplayManager = Graphics::DisplayManager
   alias ParticleSystem = Graphics::ParticleSystem
   alias Particle = Graphics::Particle
+  alias TransitionManager = Graphics::TransitionManager
+  alias TransitionEffect = Graphics::TransitionEffect
   alias ShaderSystem = Graphics::Shaders::ShaderSystem
   alias ShaderHelpers = Graphics::Shaders::ShaderHelpers
 

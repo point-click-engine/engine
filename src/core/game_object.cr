@@ -12,6 +12,7 @@ module PointClickEngine
 
       property position : RL::Vector2 = RL::Vector2.new
       property size : RL::Vector2 = RL::Vector2.new
+      property scale : Float32 = 1.0f32
 
       abstract def draw
 

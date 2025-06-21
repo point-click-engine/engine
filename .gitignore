@@ -1,6 +1,8 @@
 /docs/
 /lib/
 /bin/
+/crystal_mystery/assets
+/assets
 /.shards/
 *.dwarf
 
