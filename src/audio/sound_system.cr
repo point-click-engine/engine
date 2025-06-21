@@ -218,14 +218,14 @@ module PointClickEngine
       end
 
       def set_master_volume(volume : Float32)
-        @master_volume = volume.clamp(0.0, 1.0)
+        @master_volume = volume.clamp(0.0f32, 1.0f32)
         {% if flag?(:with_audio) %}
           RAudio.set_master_volume(@master_volume)
         {% end %}
       end
 
       def set_music_volume(volume : Float32)
-        @music_volume = volume.clamp(0.0, 1.0)
+        @music_volume = volume.clamp(0.0f32, 1.0f32)
         @current_music.try do |music|
           music.volume = @music_volume * @master_volume
           {% if flag?(:with_audio) %}
@@ -237,7 +237,7 @@ module PointClickEngine
       end
 
       def set_sfx_volume(volume : Float32)
-        @sfx_volume = volume.clamp(0.0, 1.0)
+        @sfx_volume = volume.clamp(0.0f32, 1.0f32)
       end
 
       def toggle_mute

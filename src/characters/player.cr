@@ -15,6 +15,8 @@ module PointClickEngine
 
       def initialize
         super()
+        @name = "Player"
+        @size = RL::Vector2.new(x: 32f32, y: 64f32)
       end
 
       def initialize(name : String, position : RL::Vector2, size : RL::Vector2)

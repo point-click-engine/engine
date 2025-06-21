@@ -17,6 +17,9 @@ collector:
 speedrun:
   unlocked: false
   unlock_time:
-test:
+explorer:
   unlocked: true
-  unlock_time: 2025-06-21 16:18:27 UTC
+  unlock_time: 2025-06-21 16:57:17 UTC
+detective:
+  unlocked: true
+  unlock_time: 2025-06-21 16:57:17 UTC

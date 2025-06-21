@@ -354,18 +354,216 @@ class CrystalMysteryGame
   end
 
   private def show_load_menu
-    # TODO: Implement save/load system
-    @engine.dialog_manager.try &.show_message("Load game feature coming soon!")
+    # Clear current GUI elements
+    @engine.gui.try &.clear_all
+
+    # Get available save files
+    save_files = PointClickEngine::Core::SaveSystem.get_save_files
+
+    if gui = @engine.gui
+      # Title
+      gui.add_label("load_title", "Load Game", Raylib::Vector2.new(x: 512f32, y: 150f32), 36, Raylib::WHITE)
+
+      if save_files.empty?
+        gui.add_label("no_saves", "No saved games found", Raylib::Vector2.new(x: 512f32, y: 300f32), 24, Raylib::GRAY)
+      else
+        y_offset = 250f32
+        save_files.each_with_index do |save_name, i|
+          button_pos = Raylib::Vector2.new(x: 412f32, y: y_offset + (i * 60f32))
+          button_size = Raylib::Vector2.new(x: 200f32, y: 50f32)
+
+          gui.add_button("load_#{i}", save_name, button_pos, button_size) do
+            load_game(save_name)
+          end
+        end
+      end
+
+      # Back button
+      back_pos = Raylib::Vector2.new(x: 412f32, y: 600f32)
+      back_size = Raylib::Vector2.new(x: 200f32, y: 50f32)
+
+      gui.add_button("back_to_menu", "Back to Menu", back_pos, back_size) do
+        back_to_main_menu
+      end
+    end
   end
 
   private def show_options_menu
-    # TODO: Implement options menu
-    @engine.dialog_manager.try &.show_message("Options menu coming soon!")
+    # Clear current GUI elements
+    @engine.gui.try &.clear_all
+
+    if gui = @engine.gui
+      # Title
+      gui.add_label("options_title", "Options", Raylib::Vector2.new(x: 512f32, y: 150f32), 36, Raylib::WHITE)
+
+      # Audio Settings
+      gui.add_label("audio_label", "Audio Settings", Raylib::Vector2.new(x: 300f32, y: 250f32), 24, Raylib::WHITE)
+
+      # Master Volume
+      current_volume = @engine.config.try(&.get("audio.master_volume", "0.8").to_f32) || 0.8f32
+      volume_text = "Master Volume: #{(current_volume * 100).to_i}%"
+      gui.add_label("volume_label", volume_text, Raylib::Vector2.new(x: 300f32, y: 290f32), 20, Raylib::LIGHTGRAY)
+
+      # Volume buttons
+      vol_down_pos = Raylib::Vector2.new(x: 250f32, y: 320f32)
+      vol_up_pos = Raylib::Vector2.new(x: 350f32, y: 320f32)
+      vol_button_size = Raylib::Vector2.new(x: 50f32, y: 30f32)
+
+      gui.add_button("vol_down", "- ", vol_down_pos, vol_button_size) do
+        decrease_volume
+      end
+
+      gui.add_button("vol_up", "+ ", vol_up_pos, vol_button_size) do
+        increase_volume
+      end
+
+      # Graphics Settings
+      gui.add_label("graphics_label", "Graphics Settings", Raylib::Vector2.new(x: 300f32, y: 400f32), 24, Raylib::WHITE)
+
+      # Fullscreen toggle
+      is_fullscreen = @engine.config.try(&.get("graphics.fullscreen", "false")) == "true"
+      fullscreen_text = "Fullscreen: #{is_fullscreen ? "ON" : "OFF"}"
+      gui.add_label("fullscreen_label", fullscreen_text, Raylib::Vector2.new(x: 300f32, y: 440f32), 20, Raylib::LIGHTGRAY)
+
+      fullscreen_pos = Raylib::Vector2.new(x: 300f32, y: 470f32)
+      fullscreen_size = Raylib::Vector2.new(x: 150f32, y: 30f32)
+
+      gui.add_button("toggle_fullscreen", "Toggle", fullscreen_pos, fullscreen_size) do
+        toggle_fullscreen
+      end
+
+      # Debug Mode
+      is_debug = PointClickEngine::Core::Engine.debug_mode
+      debug_text = "Debug Mode: #{is_debug ? "ON" : "OFF"}"
+      gui.add_label("debug_label", debug_text, Raylib::Vector2.new(x: 300f32, y: 520f32), 20, Raylib::LIGHTGRAY)
+
+      debug_pos = Raylib::Vector2.new(x: 300f32, y: 550f32)
+      debug_size = Raylib::Vector2.new(x: 150f32, y: 30f32)
+
+      gui.add_button("toggle_debug", "Toggle", debug_pos, debug_size) do
+        toggle_debug_mode
+      end
+
+      # Back button
+      back_pos = Raylib::Vector2.new(x: 412f32, y: 650f32)
+      back_size = Raylib::Vector2.new(x: 200f32, y: 50f32)
+
+      gui.add_button("back_to_menu", "Back to Menu", back_pos, back_size) do
+        back_to_main_menu
+      end
+    end
+  end
+
+  private def save_game(slot_name : String = "quicksave")
+    success = PointClickEngine::Core::SaveSystem.save_game(@engine, slot_name)
+    message = success ? "Game saved successfully!" : "Failed to save game."
+    @engine.dialog_manager.try &.show_message(message)
+  end
+
+  private def load_game(slot_name : String)
+    success = PointClickEngine::Core::SaveSystem.load_game(@engine, slot_name)
+    if success
+      @engine.dialog_manager.try &.show_message("Game loaded successfully!")
+      @current_scene = @engine.current_scene.try(&.name) || "library"
+    else
+      @engine.dialog_manager.try &.show_message("Failed to load game.")
+    end
+  end
+
+  private def back_to_main_menu
+    @engine.gui.try &.clear_all
+    @engine.change_scene("main_menu")
+    create_main_menu # Recreate main menu GUI
+  end
+
+  private def decrease_volume
+    if config = @engine.config
+      current_volume = config.get("audio.master_volume", "0.8").to_f32
+      new_volume = Math.max(0.0f32, current_volume - 0.1f32)
+      config.set("audio.master_volume", new_volume.to_s)
+      @engine.audio_manager.try &.set_master_volume(new_volume)
+      update_options_display
+    end
+  end
+
+  private def increase_volume
+    if config = @engine.config
+      current_volume = config.get("audio.master_volume", "0.8").to_f32
+      new_volume = Math.min(1.0f32, current_volume + 0.1f32)
+      config.set("audio.master_volume", new_volume.to_s)
+      @engine.audio_manager.try &.set_master_volume(new_volume)
+      update_options_display
+    end
+  end
+
+  private def toggle_fullscreen
+    if config = @engine.config
+      is_fullscreen = config.get("graphics.fullscreen", "false") == "true"
+      new_fullscreen = !is_fullscreen
+      config.set("graphics.fullscreen", new_fullscreen.to_s)
+
+      # Note: In a real implementation, you would toggle the window mode here
+      # Raylib.toggle_fullscreen
+
+      update_options_display
+    end
+  end
+
+  private def toggle_debug_mode
+    PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
+    update_options_display
+  end
+
+  private def update_options_display
+    # Update the option labels with new values
+    if gui = @engine.gui
+      # Update volume label
+      if config = @engine.config
+        current_volume = config.get("audio.master_volume", "0.8").to_f32
+        volume_text = "Master Volume: #{(current_volume * 100).to_i}%"
+        gui.update_label("volume_label", volume_text)
+
+        # Update fullscreen label
+        is_fullscreen = config.get("graphics.fullscreen", "false") == "true"
+        fullscreen_text = "Fullscreen: #{is_fullscreen ? "ON" : "OFF"}"
+        gui.update_label("fullscreen_label", fullscreen_text)
+      end
+
+      # Update debug label
+      is_debug = PointClickEngine::Core::Engine.debug_mode
+      debug_text = "Debug Mode: #{is_debug ? "ON" : "OFF"}"
+      gui.update_label("debug_label", debug_text)
+    end
   end
 
   private def setup_global_input
-    # TODO: Set up global input handling in the engine's update loop
-    # For now, we'll add input handling to each scene
+    # Note: Global input handling would be implemented in the engine's main loop
+    # For now, shortcuts are handled per-scene in the game logic
+    # F5 = Quick Save, F9 = Quick Load, ESC = Main Menu
+  end
+
+  def handle_global_input
+    # F5 = Quick Save
+    if Raylib.key_pressed?(Raylib::KeyboardKey::F5.to_i)
+      save_game("quicksave")
+    end
+
+    # F9 = Quick Load
+    if Raylib.key_pressed?(Raylib::KeyboardKey::F9.to_i)
+      if PointClickEngine::Core::SaveSystem.save_exists?("quicksave")
+        load_game("quicksave")
+      else
+        @engine.dialog_manager.try &.show_message("No quicksave found!")
+      end
+    end
+
+    # ESC = Back to main menu (if in game)
+    if Raylib.key_pressed?(Raylib::KeyboardKey::Escape.to_i)
+      current_scene_name = @engine.current_scene.try(&.name)
+      if current_scene_name != "main_menu"
+        back_to_main_menu
+      end
+    end
   end
 end
 

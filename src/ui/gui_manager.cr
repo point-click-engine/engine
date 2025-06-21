@@ -109,6 +109,16 @@ module PointClickEngine
         @buttons.clear
       end
 
+      def clear_all
+        clear
+      end
+
+      def update_label(id : String, new_text : String)
+        if label = @labels[id]?
+          label.text = new_text
+        end
+      end
+
       def update(dt : Float32)
         return unless @visible
 

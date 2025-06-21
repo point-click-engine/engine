@@ -522,6 +522,31 @@ module PointClickEngine
         # Initialize config manager
         @config ||= Core::ConfigManager.new
       end
+
+      # UI Visibility Controls
+      def ui_visible : Bool
+        @ui_visible
+      end
+
+      def hide_ui
+        @ui_visible = false
+        @gui.try &.hide
+        @inventory.hide if @inventory.responds_to?(:hide)
+      end
+
+      def show_ui
+        @ui_visible = true
+        @gui.try &.show
+        @inventory.show if @inventory.responds_to?(:show)
+      end
+
+      def toggle_ui
+        if @ui_visible
+          hide_ui
+        else
+          show_ui
+        end
+      end
     end
 
     # Alias for backward compatibility

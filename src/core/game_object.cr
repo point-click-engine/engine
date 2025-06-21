@@ -39,6 +39,18 @@ module PointClickEngine
           end
         end
       end
+
+      def show
+        @visible = true
+      end
+
+      def hide
+        @visible = false
+      end
+
+      def toggle_visibility
+        @visible = !@visible
+      end
     end
 
     # Base class for all game objects

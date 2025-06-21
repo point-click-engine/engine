@@ -51,7 +51,10 @@ module PointClickEngine
           end
 
           # Save player position
-          if current_scene = engine.current_scene
+          if player = engine.player
+            save_data.player_position_x = player.position.x
+            save_data.player_position_y = player.position.y
+          elsif current_scene = engine.current_scene
             if player = current_scene.player
               save_data.player_position_x = player.position.x
               save_data.player_position_y = player.position.y
@@ -102,7 +105,9 @@ module PointClickEngine
           end
 
           # Restore player position
-          if current_scene = engine.current_scene
+          if player = engine.player
+            player.position = RL::Vector2.new(x: save_data.player_position_x, y: save_data.player_position_y)
+          elsif current_scene = engine.current_scene
             if player = current_scene.player
               player.position = RL::Vector2.new(x: save_data.player_position_x, y: save_data.player_position_y)
             end

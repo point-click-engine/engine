@@ -75,6 +75,19 @@ module PointClickEngine
         @items.find { |i| i.name == name }
       end
 
+      def select_item(name : String)
+        if item = get_item(name)
+          @selected_item = item
+          @selected_item_name = name
+        end
+      end
+
+      def deselect_item
+        @selected_item = nil
+        @selected_item_name = nil
+        @combination_mode = false
+      end
+
       def update(dt : Float32)
         return unless @visible
 
