@@ -1,6 +1,5 @@
 # Transition effect types and base classes
 
-require "raylib-cr"
 
 module PointClickEngine
   module Graphics

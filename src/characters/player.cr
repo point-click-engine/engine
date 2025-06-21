@@ -1,6 +1,5 @@
 # Enhanced player character with 8-directional animations and adventure game features
 
-require "raylib-cr"
 require "yaml"
 require "./animation"
 

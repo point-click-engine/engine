@@ -1,7 +1,6 @@
 # Enhanced camera system for cinematic cutscenes
 # Provides smooth camera movements, shaking, zooming, and target following
 
-require "raylib-cr"
 require "../characters/character"
 
 module PointClickEngine

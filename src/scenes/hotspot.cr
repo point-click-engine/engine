@@ -1,6 +1,5 @@
 # Hotspot implementation for interactive areas
 
-require "raylib-cr"
 require "yaml"
 require "../utils/yaml_converters"
 require "../ui/cursor_manager"

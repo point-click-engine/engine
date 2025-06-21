@@ -1,6 +1,5 @@
 # Scene transition manager using modular effects
 
-require "raylib-cr"
 require "./transition_effect"
 require "./shader_loader"
 require "./effects/basic_effects"

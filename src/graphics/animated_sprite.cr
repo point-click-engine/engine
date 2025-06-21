@@ -1,6 +1,5 @@
 # Animated Sprite system for characters and objects
 
-require "raylib-cr"
 require "yaml"
 
 module PointClickEngine

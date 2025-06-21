@@ -1,7 +1,6 @@
 # Status bar for displaying current verb, object, and game information
 # Provides visual feedback about player actions and game state
 
-require "raylib-cr"
 require "./cursor_manager"
 require "../inventory/inventory_system"
 

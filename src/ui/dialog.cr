@@ -1,6 +1,5 @@
 # Dialog system for character conversations
 
-require "raylib-cr"
 require "yaml"
 
 module PointClickEngine

@@ -1,4 +1,3 @@
-require "raylib-cr"
 
 module PointClickEngine
   module UI
@@ -44,6 +43,14 @@ module PointClickEngine
           return unless @visible
 
           mouse_pos = Raylib.get_mouse_position
+          
+          # Convert screen coordinates to game coordinates if display manager exists
+          if engine = Core::Engine.instance
+            if dm = engine.display_manager
+              mouse_pos = dm.screen_to_game(mouse_pos)
+            end
+          end
+          
           @hovered = Raylib.check_collision_point_rec?(mouse_pos, bounds)
 
           if @hovered && Raylib.mouse_button_pressed?(Raylib::MouseButton::Left.to_i)

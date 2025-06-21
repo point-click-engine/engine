@@ -1,6 +1,5 @@
 # Basic transition effects - fade, dissolve, cross-fade, slides
 
-require "raylib-cr"
 require "../transition_effect"
 require "../shader_loader"
 

@@ -1,6 +1,5 @@
 # Walkable area system for defining where characters can move
 
-require "raylib-cr"
 require "yaml"
 
 module PointClickEngine

@@ -1,6 +1,5 @@
 # Common shader loading utilities for transitions
 
-require "raylib-cr"
 require "./transition_effect"
 
 module PointClickEngine

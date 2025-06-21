@@ -1,6 +1,5 @@
 # Cursor management system for context-sensitive interactions
 
-require "raylib-cr"
 require "../scenes/hotspot"
 
 module PointClickEngine

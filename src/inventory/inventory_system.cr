@@ -1,6 +1,5 @@
 # Player inventory system
 
-require "raylib-cr"
 require "yaml"
 
 module PointClickEngine

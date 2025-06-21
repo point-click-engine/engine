@@ -1,6 +1,5 @@
 # Particle system for visual effects
 
-require "raylib-cr"
 require "yaml"
 require "../utils/yaml_converters"
 

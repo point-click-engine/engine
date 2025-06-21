@@ -1,6 +1,5 @@
 # Sound and Music system for adventure games
 
-require "raylib-cr"
 
 # Only require audio if explicitly enabled
 {% if flag?(:with_audio) %}

@@ -37,7 +37,8 @@
 # - `Navigation` - Pathfinding and movement systems
 # - `Cutscenes` - Cinematic sequences and scripted events
 
-require "../lib/raylib-cr/src/raylib-cr"
+require "raylib-cr"
+require "luajit"
 require "yaml"
 require "json" # Required for luajit.cr compatibility (fixes JSON::Any issue)
 

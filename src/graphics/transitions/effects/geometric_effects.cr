@@ -1,6 +1,5 @@
 # Geometric transition effects - iris, star, heart wipes, checkerboard
 
-require "raylib-cr"
 require "../transition_effect"
 require "../shader_loader"
 

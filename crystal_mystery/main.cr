@@ -93,6 +93,9 @@ class CrystalMysteryGame
       # Update engine (let it handle its own timing)
       dt = Raylib.get_frame_time
 
+      # Update the engine - this updates scenes, characters, etc.
+      @engine.update(dt)
+
       # Update game state and quests
       @game_state_manager.update_timers(dt)
       @game_state_manager.update_game_time(dt)
@@ -100,6 +103,9 @@ class CrystalMysteryGame
 
       # Update transitions
       @engine.transition_manager.try(&.update(dt))
+
+      # Update GUI
+      @engine.gui.try(&.update(dt))
 
       # Draw with custom hotspot highlighting
       draw_with_highlighting
@@ -825,12 +831,6 @@ class CrystalMysteryGame
     end
   end
 
-  private def back_to_main_menu
-    @engine.gui.try &.clear_all
-    @engine.change_scene("main_menu")
-    create_main_menu # Recreate main menu GUI
-  end
-
   private def decrease_volume
     if config = @engine.config
       current_volume = config.get("audio.master_volume", "0.8").to_f32
@@ -857,8 +857,8 @@ class CrystalMysteryGame
       new_fullscreen = !is_fullscreen
       config.set("graphics.fullscreen", new_fullscreen.to_s)
 
-      # Note: In a real implementation, you would toggle the window mode here
-      # Raylib.toggle_fullscreen
+      # Toggle the actual window mode
+      Raylib.toggle_fullscreen
 
       update_options_display
     end
@@ -1243,7 +1243,9 @@ class CrystalMysteryGame
   end
 
   private def back_to_main_menu
+    @engine.gui.try &.clear_all
     @engine.change_scene("main_menu")
+    create_main_menu # Recreate main menu GUI
     @engine.audio_manager.try &.play_music("main_theme", true)
   end
 

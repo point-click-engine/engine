@@ -1,7 +1,6 @@
 # Verb coin interface for Simon the Sorcerer 1 style interactions
 # Displays verbs in a circular pattern when right-clicking
 
-require "raylib-cr"
 require "./cursor_manager"
 
 module PointClickEngine

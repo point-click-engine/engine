@@ -1,6 +1,5 @@
 # Engine rendering coordination and debug visualization
 
-require "raylib-cr"
 require "../../scenes/scene"
 require "../../ui/dialog"
 require "../../cutscenes/cutscene_manager"
@@ -139,14 +138,14 @@ module PointClickEngine
           return unless scene
 
           mouse_pos = RL.get_mouse_position
-          hotspot = scene.get_hotspot_at_position(mouse_pos)
+          hotspot = scene.get_hotspot_at(mouse_pos)
 
           if hotspot
             # Set cursor based on hotspot type
             cursor = case hotspot.cursor_type
                      when .hand? then RL::MouseCursor::PointingHand
                      when .look? then RL::MouseCursor::Crosshair
-                     when .talk? then RL::MouseCursor::IBeam
+                     when .talk? then RL::MouseCursor::Ibeam
                      else             RL::MouseCursor::Default
                      end
             RL.set_mouse_cursor(cursor)

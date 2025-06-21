@@ -1,6 +1,5 @@
 # Display Manager for adaptive resolution scaling
 
-require "raylib-cr"
 require "yaml"
 require "./shaders/shader_system"
 require "./shaders/shader_helpers"

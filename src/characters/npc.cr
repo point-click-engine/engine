@@ -1,6 +1,5 @@
 # Non-Player Character (NPC) implementation
 
-require "raylib-cr"
 require "yaml"
 
 module PointClickEngine

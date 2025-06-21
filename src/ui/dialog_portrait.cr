@@ -1,7 +1,6 @@
 # Dialog portrait system for character conversations
 # Displays animated character portraits during dialog with expressions and animations
 
-require "raylib-cr"
 require "yaml"
 
 module PointClickEngine

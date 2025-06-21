@@ -1,6 +1,5 @@
 # AI Behavior system for NPCs
 
-require "raylib-cr"
 require "yaml"
 
 module PointClickEngine

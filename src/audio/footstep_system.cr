@@ -1,7 +1,6 @@
 # Advanced footstep system with surface-based variations
 # Provides realistic footstep audio based on character movement and surface types
 
-require "raylib-cr"
 require "../characters/character"
 
 # Only require audio if explicitly enabled

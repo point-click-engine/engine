@@ -1,6 +1,5 @@
 # Character dialogue system for managing character conversations
 
-require "raylib-cr"
 require "yaml"
 require "../../utils/yaml_converters"
 

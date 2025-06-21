@@ -1,6 +1,5 @@
 # Engine input processing and click handling
 
-require "raylib-cr"
 require "../../scenes/scene"
 require "../../characters/character"
 
@@ -23,7 +22,7 @@ module PointClickEngine
           mouse_pos = RL.get_mouse_position
 
           # Check if any hotspot was clicked
-          clicked_hotspot = scene.get_hotspot_at_position(mouse_pos)
+          clicked_hotspot = scene.get_hotspot_at(mouse_pos)
 
           if clicked_hotspot
             clicked_hotspot.on_click.try(&.call)
@@ -40,15 +39,15 @@ module PointClickEngine
         # Process keyboard input
         def handle_keyboard_input
           # Handle common keyboard shortcuts
-          if RL.key_pressed?(RL::Key::Escape)
+          if RL.key_pressed?(RL::KeyboardKey::Escape)
             handle_escape_key
           end
 
-          if RL.key_pressed?(RL::Key::F11)
+          if RL.key_pressed?(RL::KeyboardKey::F11)
             handle_fullscreen_toggle
           end
 
-          if RL.key_pressed?(RL::Key::F1)
+          if RL.key_pressed?(RL::KeyboardKey::F1)
             handle_debug_toggle
           end
         end
@@ -59,7 +58,7 @@ module PointClickEngine
           return unless RL.mouse_button_pressed?(RL::MouseButton::Right)
 
           mouse_pos = RL.get_mouse_position
-          clicked_hotspot = scene.get_hotspot_at_position(mouse_pos)
+          clicked_hotspot = scene.get_hotspot_at(mouse_pos)
 
           if clicked_hotspot
             # Show context menu or verb selection for hotspot

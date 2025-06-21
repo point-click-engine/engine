@@ -1,7 +1,6 @@
 # UI Manager for coordinating verb coin, status bar, and other UI elements
 # Provides unified interface management for Simon the Sorcerer 1 style interactions
 
-require "raylib-cr"
 require "./verb_coin"
 require "./status_bar"
 require "./cursor_manager"

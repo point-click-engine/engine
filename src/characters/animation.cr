@@ -1,7 +1,6 @@
 # Enhanced animation system for 8-directional character movement
 # and context-specific animations for adventure game interactions.
 
-require "raylib-cr"
 require "yaml"
 
 module PointClickEngine

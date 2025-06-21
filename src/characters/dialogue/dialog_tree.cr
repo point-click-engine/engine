@@ -1,6 +1,5 @@
 # Dialog tree system for complex branching conversations like in adventure games
 
-require "raylib-cr"
 require "yaml"
 
 module PointClickEngine

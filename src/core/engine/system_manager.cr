@@ -1,6 +1,5 @@
 # Engine system initialization and management
 
-require "raylib-cr"
 require "../achievement_manager"
 require "../../audio/sound_system"
 require "../../graphics/shaders/shader_system"
@@ -72,13 +71,13 @@ module PointClickEngine
 
         # Update all systems
         def update_systems(dt : Float32)
-          @achievement_manager.try(&.update)
+          @achievement_manager.try(&.update(dt))
           @audio_manager.try(&.update)
-          @shader_system.try(&.update(dt))
+          # @shader_system.try(&.update(dt)) # No update method
           @gui.try(&.update(dt))
           @dialog_manager.try(&.update(dt))
           @transition_manager.try(&.update(dt))
-          @event_system.update
+          # @event_system.update # No update method
         end
 
         # Cleanup all systems

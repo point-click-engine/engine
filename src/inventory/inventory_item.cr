@@ -1,6 +1,5 @@
 # Inventory item implementation
 
-require "raylib-cr"
 require "yaml"
 
 module PointClickEngine

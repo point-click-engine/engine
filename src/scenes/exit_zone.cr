@@ -1,6 +1,5 @@
 # Exit zones for scene transitions
 
-require "raylib-cr"
 require "yaml"
 require "./hotspot"
 

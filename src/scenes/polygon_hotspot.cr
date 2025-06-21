@@ -1,6 +1,5 @@
 # Polygon-shaped hotspot implementation for precise click detection
 
-require "raylib-cr"
 require "yaml"
 require "./hotspot"
 

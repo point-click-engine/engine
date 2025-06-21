@@ -1,6 +1,5 @@
 # Scene management for game environments
 
-require "raylib-cr"
 require "yaml"
 require "../navigation/pathfinding"
 require "../assets/asset_loader"

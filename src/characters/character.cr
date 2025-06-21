@@ -1,6 +1,5 @@
 # Base Character class and related types
 
-require "raylib-cr"
 require "yaml"
 require "../utils/yaml_converters"
 require "../core/game_object"

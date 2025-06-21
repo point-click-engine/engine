@@ -1,7 +1,6 @@
 # Ambient sound management for atmospheric audio
 # Handles environmental sounds, room ambience, and contextual audio
 
-require "raylib-cr"
 require "../core/game_object"
 
 # Only require audio if explicitly enabled

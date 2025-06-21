@@ -11,7 +11,6 @@
 # - Save/load functionality
 # - Debug mode and development tools
 
-require "raylib-cr"
 require "yaml"
 require "./state_value"
 require "./engine/system_manager"
@@ -402,6 +401,28 @@ module PointClickEngine
         @running = false
       end
 
+      # Public update method for external use
+      def update(dt : Float32)
+        # Update systems
+        @system_manager.update_systems(dt)
+
+        # Update current scene
+        @current_scene.try(&.update(dt))
+
+        # Update cutscenes
+        @cutscene_manager.update(dt)
+
+        # Update dialogs
+        @dialogs.each(&.update(dt))
+        # @dialogs.reject!(&.completed?) # Dialog doesn't have completed? method
+
+        # Process input
+        @input_handler.process_input(@current_scene, @player)
+
+        # Update cursor
+        @render_coordinator.update_cursor(@current_scene)
+      end
+      
       # Update game state
       private def update
         dt = RL.get_frame_time
@@ -417,7 +438,7 @@ module PointClickEngine
 
         # Update dialogs
         @dialogs.each(&.update(dt))
-        @dialogs.reject!(&.completed?)
+        # @dialogs.reject!(&.completed?) # Dialog doesn't have completed? method
 
         # Process input
         @input_handler.process_input(@current_scene, @player)
