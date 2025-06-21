@@ -1,0 +1,130 @@
+quests:
+  - id: "find_crystal"
+    name: "The Missing Crystal"
+    description: "A valuable crystal has gone missing from the laboratory. Find it and uncover the truth."
+    status: active
+    priority: high
+    objectives:
+      - id: "examine_lab"
+        description: "Examine the laboratory for clues"
+        type: flag
+        condition: "lab_examined"
+        completed: false
+      - id: "talk_to_scientist"
+        description: "Question the scientist about the missing crystal"
+        type: flag
+        condition: "scientist_questioned"
+        completed: false
+      - id: "find_crystal_clue"
+        description: "Find evidence of where the crystal might be"
+        type: item
+        condition: "mysterious_note"
+        completed: false
+      - id: "locate_crystal"
+        description: "Find the missing crystal"
+        type: item
+        condition: "crystal"
+        completed: false
+    rewards:
+      - type: achievement
+        id: "crystal_detective"
+        name: "Crystal Detective"
+        description: "Solved the mystery of the missing crystal"
+      - type: experience
+        amount: 100
+
+  - id: "butler_mystery"
+    name: "The Butler's Secret"
+    description: "The butler seems to be hiding something. Investigate his activities."
+    status: inactive
+    prerequisites: ["find_crystal"]
+    priority: medium
+    objectives:
+      - id: "follow_butler"
+        description: "Follow the butler to see what he's up to"
+        type: flag
+        condition: "butler_followed"
+        completed: false
+      - id: "search_butler_room"
+        description: "Search the butler's quarters"
+        type: flag
+        condition: "butler_room_searched"
+        completed: false
+      - id: "confront_butler"
+        description: "Confront the butler with the evidence"
+        type: flag
+        condition: "butler_confronted"
+        completed: false
+    rewards:
+      - type: achievement
+        id: "butler_truth"
+        name: "The Butler's Truth"
+        description: "Uncovered the butler's secret"
+      - type: item
+        id: "brass_key"
+        name: "Butler's Brass Key"
+
+  - id: "library_investigation"
+    name: "Secrets in the Library"
+    description: "The library holds ancient knowledge that might help solve the mystery."
+    status: inactive
+    prerequisites: ["butler_mystery"]
+    priority: medium
+    objectives:
+      - id: "find_research_notes"
+        description: "Locate the research notes in the library"
+        type: item
+        condition: "research_notes"
+        completed: false
+      - id: "decode_ancient_text"
+        description: "Decipher the ancient text about crystals"
+        type: flag
+        condition: "ancient_text_decoded"
+        completed: false
+      - id: "discover_ritual"
+        description: "Learn about the crystal enhancement ritual"
+        type: flag
+        condition: "ritual_discovered"
+        completed: false
+    rewards:
+      - type: achievement
+        id: "scholar"
+        name: "Scholar of Mysteries"
+        description: "Uncovered ancient knowledge"
+      - type: item
+        id: "crystal_lens"
+        name: "Crystal Enhancement Lens"
+
+  - id: "final_revelation"
+    name: "The Final Truth"
+    description: "All the pieces are coming together. Time to solve the ultimate mystery."
+    status: inactive
+    prerequisites: ["library_investigation"]
+    priority: critical
+    objectives:
+      - id: "combine_evidence"
+        description: "Combine all evidence to reveal the truth"
+        type: multi_item
+        conditions: ["crystal", "research_notes", "crystal_lens"]
+        completed: false
+      - id: "confront_mastermind"
+        description: "Confront the true culprit behind everything"
+        type: flag
+        condition: "mastermind_confronted"
+        completed: false
+      - id: "restore_crystal"
+        description: "Use the knowledge to restore the crystal's power"
+        type: flag
+        condition: "crystal_restored"
+        completed: false
+    rewards:
+      - type: achievement
+        id: "master_detective"
+        name: "Master Detective"
+        description: "Solved the ultimate mystery"
+      - type: ending
+        id: "good_ending"
+        name: "The Crystal's Light"
+        description: "You have restored the crystal and brought light back to the world"
+      - type: experience
+        amount: 500

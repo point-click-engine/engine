@@ -1,0 +1,186 @@
+character: butler
+root_node: greeting
+
+nodes:
+  greeting:
+    id: greeting
+    text: "Good evening, Detective. I trust you are finding the mansion... accommodating?"
+    speaker: butler
+    choices:
+      - text: "I'm here about the missing crystal."
+        target: crystal_inquiry
+      - text: "You seem nervous. Is everything alright?"
+        target: nervous_observation
+      - text: "Tell me about your duties here."
+        target: duties_question
+
+  crystal_inquiry:
+    id: crystal_inquiry
+    text: "Ah yes, the scientist mentioned that unfortunate incident. Most distressing, I'm sure. Though I must say, perhaps it's for the best - such dangerous objects shouldn't be kept in a home."
+    speaker: butler
+    choices:
+      - text: "Dangerous? How do you know about its properties?"
+        target: knowledge_suspicion
+      - text: "Where were you last night?"
+        target: alibi_question
+      - text: "Do you know who might have taken it?"
+        target: suspect_question
+
+  nervous_observation:
+    id: nervous_observation
+    text: "Nervous? I... well, it's not every day we have a detective investigating in the house. One must maintain proper decorum, you understand."
+    speaker: butler
+    choices:
+      - text: "You're hiding something."
+        target: hiding_accusation
+      - text: "This is just routine questioning."
+        target: routine_response
+      - text: "Tell me about last night."
+        target: last_night
+
+  duties_question:
+    id: duties_question
+    text: "I oversee the daily operations of the mansion - cleaning, maintenance, security. I have keys to every room and know every corner of this estate."
+    speaker: butler
+    flags:
+      set: ["butler_has_all_keys"]
+    choices:
+      - text: "Including the laboratory?"
+        target: lab_access
+      - text: "That's a lot of responsibility."
+        target: responsibility_comment
+      - text: "And the library?"
+        target: library_access
+
+  knowledge_suspicion:
+    id: knowledge_suspicion
+    text: "Well, I... one overhears things. The scientist can be quite vocal about his work when he's excited. I may have picked up a detail or two."
+    speaker: butler
+    choices:
+      - text: "What exactly did you overhear?"
+        target: overheard_details
+      - text: "You were eavesdropping?"
+        target: eavesdropping_accusation
+      - text: "That's very convenient."
+        target: convenient_response
+
+  alibi_question:
+    id: alibi_question
+    text: "Last night? I was... attending to my usual evening duties. Checking locks, turning off lights. I retired to my quarters around midnight."
+    speaker: butler
+    choices:
+      - text: "Can anyone verify that?"
+        target: verify_alibi
+      - text: "What time did you check the laboratory?"
+        target: lab_check_time
+      - text: "Did you see anything unusual?"
+        target: unusual_sightings
+
+  hiding_accusation:
+    id: hiding_accusation
+    text: "I... that is... Detective, I assure you my only concern is for the proper functioning of this household!"
+    speaker: butler
+    stress_level: increase
+    choices:
+      - text: "Then why are you so defensive?"
+        target: defensive_response
+      - text: "I think you know more than you're saying."
+        target: knows_more
+      - text: "Let's start over. Where were you last night?"
+        target: alibi_question
+
+  # Key revelation path
+  pressed_confession:
+    id: pressed_confession
+    text: "Alright, alright! I... I did take something, but not the crystal! I found this old key in the library and thought... thought it might be valuable."
+    speaker: butler
+    flags:
+      set: ["butler_confessed", "butler_has_brass_key"]
+    items:
+      give: ["brass_key"]
+    choices:
+      - text: "What key? Show me."
+        target: show_key
+      - text: "You're a thief!"
+        target: thief_accusation
+      - text: "Why did you think it was valuable?"
+        target: key_value_question
+
+  show_key:
+    id: show_key
+    text: "Here... it's just an old brass key I found behind a book. I thought the master wouldn't miss it, but if it helps find the real thief..."
+    speaker: butler
+    quest_progress:
+      objective: "confront_butler"
+      complete: true
+    choices:
+      - text: "This might unlock something important."
+        target: key_importance
+      - text: "You should have told the truth from the start."
+        target: truth_lesson
+      - text: "Do you know what this key opens?"
+        target: key_purpose
+
+  key_importance:
+    id: key_importance
+    text: "You think so? I just... I've been struggling financially, and I thought it might be worth something. I never meant any real harm."
+    speaker: butler
+    choices:
+      - text: "Help me find the real thief and all is forgiven."
+        target: cooperation_offer
+      - text: "This key might lead us to the crystal."
+        target: crystal_lead
+
+  cooperation_offer:
+    id: cooperation_offer
+    text: "Yes! Yes, of course! I know this mansion better than anyone. I'll help however I can, Detective."
+    speaker: butler
+    flags:
+      set: ["butler_cooperating"]
+    choices:
+      - text: "Good. Now, who else knew about the crystal?"
+        target: other_suspects
+      - text: "Tell me about the laboratory's security."
+        target: lab_security
+
+  # Different conversation path if player has evidence
+  evidence_confrontation:
+    id: evidence_confrontation
+    text: "That key... where did you get it? I haven't seen it in years..."
+    speaker: butler
+    conditions:
+      has_item: ["brass_key"]
+    choices:
+      - text: "You tell me - it's from the library."
+        target: library_key_revelation
+      - text: "So you do recognize it."
+        target: recognition_admission
+
+  end_conversation:
+    id: end_conversation
+    text: "I hope you find the real culprit soon, Detective. This mansion hasn't felt safe since the crystal disappeared."
+    speaker: butler
+    action: end
+
+  # Helper nodes for various conversation branches
+  defensive_response:
+    id: defensive_response
+    text: "I've served this family faithfully for twenty years! I would never... that is... perhaps I have been on edge lately."
+    speaker: butler
+    choices:
+      - text: "Why have you been on edge?"
+        target: edge_explanation
+      - text: "Then help me by telling the truth."
+        target: truth_request
+
+  truth_request:
+    id: truth_request
+    text: "The truth is... I've been worried. There are old stories about that crystal, Detective. Dark stories. Perhaps it's better off gone."
+    speaker: butler
+    flags:
+      set: ["butler_knows_crystal_lore"]
+    choices:
+      - text: "What kind of stories?"
+        target: crystal_stories
+      - text: "You think someone stole it for a reason?"
+        target: motivated_theft

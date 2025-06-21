@@ -1,0 +1,159 @@
+character: scientist
+root_node: greeting
+
+nodes:
+  greeting:
+    id: greeting
+    text: "Ah, Detective! Thank goodness you're here. Something terrible has happened!"
+    speaker: scientist
+    choices:
+      - text: "What happened exactly?"
+        target: explain_theft
+      - text: "When did you notice it was missing?"
+        target: timing
+      - text: "Who else had access to the laboratory?"
+        target: access_question
+
+  explain_theft:
+    id: explain_theft
+    text: "The Crystal of Luminus has been stolen! It was the centerpiece of my research into crystalline energy amplification. Without it, years of work are ruined!"
+    speaker: scientist
+    choices:
+      - text: "Tell me more about this crystal."
+        target: crystal_details
+      - text: "Who knew about its value?"
+        target: who_knew
+      - text: "I'll help you find it."
+        target: accept_case
+
+  timing:
+    id: timing
+    text: "I discovered it missing this morning when I came to check on my experiments. The display case was empty, and there were no signs of forced entry."
+    speaker: scientist
+    choices:
+      - text: "So it was an inside job?"
+        target: inside_job
+      - text: "What about security cameras?"
+        target: no_cameras
+      - text: "Who was here yesterday?"
+        target: yesterday_visitors
+
+  access_question:
+    id: access_question
+    text: "Only myself, the butler, and occasionally the mansion's owner. But surely none of them would... Oh dear, I shouldn't have said that."
+    speaker: scientist
+    flags:
+      set: ["scientist_mentioned_butler"]
+    choices:
+      - text: "The butler? Tell me more about him."
+        target: butler_suspicion
+      - text: "Why are you concerned about them?"
+        target: concern_explanation
+      - text: "I need to investigate everyone."
+        target: accept_case
+
+  crystal_details:
+    id: crystal_details
+    text: "It's not just any crystal - it can amplify energy tenfold! In the wrong hands, it could be incredibly dangerous. That's why I kept it so carefully hidden."
+    speaker: scientist
+    choices:
+      - text: "Hidden? But it was stolen..."
+        target: hiding_failed
+      - text: "Who else knew about its power?"
+        target: who_knew
+      - text: "I'll find it and bring it back."
+        target: accept_case
+
+  who_knew:
+    id: who_knew
+    text: "I was careful to keep it secret, but... well, the butler has been acting strangely lately. And there are ancient texts in the library that mention such crystals."
+    speaker: scientist
+    flags:
+      set: ["scientist_suspects_butler", "library_clue_given"]
+    choices:
+      - text: "What kind of strange behavior?"
+        target: butler_behavior
+      - text: "I should check the library then."
+        target: library_suggestion
+      - text: "I'll investigate both leads."
+        target: accept_case
+
+  butler_suspicion:
+    id: butler_suspicion
+    text: "He's been... secretive lately. Asking odd questions about my research, staying late in the library. I caught him near my laboratory after hours once."
+    speaker: scientist
+    flags:
+      set: ["scientist_suspects_butler"]
+    choices:
+      - text: "Did you confront him about it?"
+        target: confrontation_question
+      - text: "What was his excuse?"
+        target: butler_excuse
+      - text: "I'll need to question him."
+        target: question_butler
+
+  accept_case:
+    id: accept_case
+    text: "Thank you, Detective! Please, you must find the Crystal of Luminus before it's too late. Check my workbench - I left some notes there that might help."
+    speaker: scientist
+    flags:
+      set: ["case_accepted", "workbench_clue_given"]
+    quest_progress:
+      objective: "talk_to_scientist"
+      complete: true
+    choices:
+      - text: "I'll start investigating immediately."
+        target: end_conversation
+      - text: "Any other clues you can give me?"
+        target: final_clues
+
+  final_clues:
+    id: final_clues
+    text: "The butler has a key to everything in this mansion. And there are old books in the library about crystal magic - perhaps someone learned too much."
+    speaker: scientist
+    flags:
+      set: ["butler_has_key", "library_contains_crystal_lore"]
+    choices:
+      - text: "I'll investigate both leads."
+        target: end_conversation
+
+  end_conversation:
+    id: end_conversation
+    text: "Good luck, Detective. The fate of the crystal - and perhaps much more - rests in your hands."
+    speaker: scientist
+    action: end
+
+  # Additional nodes for return visits
+  return_visit:
+    id: return_visit
+    text: "Have you found any leads on my missing crystal?"
+    speaker: scientist
+    conditions:
+      flags: ["case_accepted"]
+    choices:
+      - text: "Still investigating."
+        target: still_working
+      - text: "Tell me about the butler again."
+        target: butler_info_repeat
+      - text: "What about the library?"
+        target: library_info_repeat
+
+  still_working:
+    id: still_working
+    text: "Please hurry, Detective. I fear what might happen if the crystal falls into the wrong hands."
+    speaker: scientist
+    choices:
+      - text: "I'll find it soon."
+        target: end_conversation
+
+  # Victory condition
+  crystal_returned:
+    id: crystal_returned
+    text: "My crystal! You found it! How can I ever thank you? The world is safe once again."
+    speaker: scientist
+    conditions:
+      has_item: ["crystal"]
+    quest_progress:
+      quest: "find_crystal"
+      complete: true
+    action: end

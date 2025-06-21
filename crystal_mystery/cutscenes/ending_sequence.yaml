@@ -1,0 +1,121 @@
+name: "ending_sequence"
+description: "Final cutscene showing crystal restoration and victory"
+skippable: true
+auto_advance: false
+
+actions:
+  - type: fade_in
+    duration: 2.0
+    color: [0, 0, 0, 255]
+    
+  - type: camera_focus
+    target: "fountain"
+    duration: 3.0
+    smooth: true
+    
+  - type: play_music
+    track: "victory_theme"
+    volume: 0.8
+    fade_in: 2.0
+    
+  - type: particle_effect
+    position: {x: 500, y: 350}
+    effect: "crystal_energy"
+    duration: 5.0
+    intensity: 1.0
+    
+  - type: floating_dialog
+    character: "Detective"
+    text: "The Crystal of Luminus pulses with restored energy..."
+    duration: 4.0
+    style: "narration"
+    
+  - type: camera_zoom
+    target_zoom: 1.5
+    duration: 2.0
+    focus_point: {x: 500, y: 350}
+    
+  - type: particle_effect
+    position: {x: 500, y: 350}
+    effect: "magical_sparkles"
+    duration: 8.0
+    intensity: 2.0
+    
+  - type: floating_dialog
+    character: "Detective"
+    text: "The mystery of the mansion is finally solved!"
+    duration: 4.0
+    style: "success"
+    
+  - type: camera_pan
+    target: {x: 400, y: 300}
+    duration: 3.0
+    
+  - type: weather_effect
+    type: "sparkles"
+    intensity: 0.5
+    duration: 6.0
+    
+  - type: floating_dialog
+    character: "Detective"
+    text: "With the crystal's power restored, the mansion can finally rest in peace."
+    duration: 5.0
+    style: "narration"
+    
+  - type: fade_to_color
+    color: [255, 255, 255, 255]
+    duration: 3.0
+    
+  - type: show_text
+    text: "Congratulations! You have solved The Crystal Mystery!"
+    font_size: 48
+    color: [100, 50, 200, 255]
+    position: "center"
+    duration: 4.0
+    
+  - type: show_text
+    text: "Final Score: Detective Rank - Master Investigator"
+    font_size: 24
+    color: [50, 50, 50, 255]
+    position: "center_below"
+    duration: 4.0
+    
+  - type: wait
+    duration: 2.0
+    
+  - type: show_credits
+    scroll_speed: 1.0
+    background_music: "credits_theme"
+    
+  - type: fade_out
+    duration: 2.0
+    
+  - type: return_to_menu
+    delay: 1.0
+
+# Variables that can be referenced in actions
+variables:
+  fountain_position: {x: 500, y: 350}
+  player_position: {x: 450, y: 400}
+  
+# Conditions for alternative endings
+conditions:
+  - name: "perfect_score"
+    check: "all_achievements_unlocked"
+    actions:
+      - type: show_text
+        text: "PERFECT SCORE! You found every secret!"
+        font_size: 32
+        color: [255, 215, 0, 255]
+        position: "center"
+        duration: 3.0
+        
+  - name: "speed_run"
+    check: "game_time < 600" # 10 minutes
+    actions:
+      - type: show_text
+        text: "SPEED RUN BONUS! Solved in record time!"
+        font_size: 28
+        color: [0, 255, 100, 255]
+        position: "center"
+        duration: 3.0

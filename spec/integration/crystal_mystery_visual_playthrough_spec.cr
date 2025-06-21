@@ -162,7 +162,9 @@ describe "Crystal Mystery Visual Playthrough" do
 
           # Move player to hotspot (simulate click)
           if player = game.engine.player
-            player.handle_click(click_pos, scene)
+            if player.is_a?(PointClickEngine::Characters::Player)
+              player.handle_click(click_pos, scene)
+            end
             take_screenshot.call("08_#{i + 1}_clicked_#{hotspot.name}")
 
             # Simulate some time passing for movement

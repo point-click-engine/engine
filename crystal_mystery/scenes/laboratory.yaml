@@ -10,12 +10,30 @@ hotspots:
     width: 300
     height: 200
     description: "A cluttered workbench with beakers and tools"
+    items:
+      - mysterious_note
   - name: cabinet
     x: 600
     y: 200
     width: 150
     height: 400
     description: "A locked cabinet with glass doors"
+    locked: true
+    required_item: brass_key
+    items:
+      - crystal_lens
+  - name: microscope
+    x: 520
+    y: 380
+    width: 80
+    height: 80
+    description: "A powerful microscope for examining small objects"
+  - name: chemical_shelf
+    x: 750
+    y: 150
+    width: 100
+    height: 250
+    description: "Shelves lined with mysterious chemicals"
   - name: door_to_library
     type: exit
     x: 50
@@ -27,8 +45,6 @@ hotspots:
     transition_type: fade
     auto_walk: true
     description: "Back to the library"
-    default_verb: walk
-    object_type: exit
   - name: door_to_garden
     type: exit
     x: 850
@@ -40,8 +56,6 @@ hotspots:
     transition_type: iris
     auto_walk: true
     description: "Door to the garden"
-    default_verb: walk
-    object_type: exit
 characters:
   - name: scientist
     position:

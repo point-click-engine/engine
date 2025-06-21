@@ -1,11 +1,47 @@
 # Point & Click Game Engine
-# A Crystal shard for creating pixel art point-and-click adventure games using raylib-cr
+#
+# A Crystal shard for creating pixel art point-and-click adventure games using raylib-cr.
+# This library provides a comprehensive framework for building traditional adventure games
+# with features like scene management, inventory systems, dialog trees, character AI,
+# pathfinding, cutscenes, and more.
+#
+# ## Quick Start
+#
+# ```crystal
+# require "point_click_engine"
+#
+# # Create a new game
+# game = PointClickEngine::Core::Engine.new(800, 600, "My Adventure Game")
+# game.init
+#
+# # Create and add a scene
+# scene = PointClickEngine::Scenes::Scene.new("main_room")
+# scene.load_background("assets/room.png")
+# game.add_scene(scene)
+# game.change_scene("main_room")
+#
+# # Run the game
+# game.run
+# ```
+#
+# ## Main Modules
+#
+# - `Core` - Core engine functionality, game loop, and state management
+# - `Scenes` - Scene management, hotspots, and interactive areas
+# - `Characters` - Character system with AI, animation, and dialogue
+# - `UI` - User interface components and dialog systems
+# - `Graphics` - Rendering, animations, transitions, and visual effects
+# - `Audio` - Sound effects, music, and ambient audio management
+# - `Inventory` - Item management and inventory systems
+# - `Scripting` - Lua scripting integration for game logic
+# - `Navigation` - Pathfinding and movement systems
+# - `Cutscenes` - Cinematic sequences and scripted events
 
 require "../lib/raylib-cr/src/raylib-cr"
 require "yaml"
 require "json" # Required for luajit.cr compatibility (fixes JSON::Any issue)
 
-# Alias for convenience
+# Alias for convenience - shorthand for Raylib module
 alias RL = Raylib
 
 # Core modules
@@ -13,6 +49,8 @@ require "./utils/yaml_converters"
 require "./core/game_object"
 require "./core/config_manager"
 require "./core/achievement_manager"
+require "./core/game_state_manager"
+require "./core/quest_system"
 require "./core/engine"
 
 # Graphics modules
@@ -27,6 +65,7 @@ require "./graphics/shaders/shader_helpers"
 require "./characters/character"
 require "./characters/player"
 require "./characters/npc"
+require "./characters/animation"
 require "./characters/ai/behavior"
 require "./characters/dialogue/character_dialogue"
 require "./characters/dialogue/dialog_tree"
@@ -35,6 +74,10 @@ require "./characters/dialogue/dialog_tree"
 require "./ui"
 require "./ui/dialog_manager"
 require "./ui/gui_manager"
+require "./ui/floating_dialog"
+require "./ui/verb_coin"
+require "./ui/status_bar"
+require "./ui/ui_manager"
 
 # Inventory modules
 require "./inventory/inventory_item"
@@ -58,6 +101,8 @@ require "./core/save_system"
 
 # Audio modules (optional - only if audio is enabled)
 require "./audio/sound_system"
+require "./audio/ambient_sound_manager"
+require "./audio/footstep_system"
 
 # Asset management modules
 require "./assets/asset_manager"
@@ -97,6 +142,12 @@ module PointClickEngine
   alias WalkBehindRegion = Scenes::WalkBehindRegion
   alias ScaleZone = Scenes::ScaleZone
   alias Dialog = UI::Dialog
+  alias VerbCoin = UI::VerbCoin
+  alias StatusBar = UI::StatusBar
+  alias UIManager = UI::UIManager
+  alias FloatingDialog = UI::FloatingDialog
+  alias FloatingDialogManager = UI::FloatingDialogManager
+  alias DialogStyle = UI::DialogStyle
   alias InventoryItem = Inventory::InventoryItem
   alias InventoryUI = Inventory::InventorySystem
   alias AnimatedSprite = Graphics::AnimatedSprite
@@ -111,6 +162,9 @@ module PointClickEngine
   # Character system aliases
   alias CharacterState = Characters::CharacterState
   alias Direction = Characters::Direction
+  alias Direction8 = Characters::Direction8
+  alias AnimationState = Characters::AnimationState
+  alias AnimationController = Characters::AnimationController
   alias NPCMood = Characters::NPCMood
   alias AnimationData = Characters::AnimationData
   alias CharacterDialogue = Characters::Dialogue::CharacterDialogue
@@ -136,6 +190,15 @@ module PointClickEngine
   # Save system aliases
   alias SaveSystem = Core::SaveSystem
   alias SaveData = Core::SaveData
+  
+  # Game state and quest system aliases
+  alias GameStateManager = Core::GameStateManager
+  alias QuestManager = Core::QuestManager
+  alias Quest = Core::Quest
+  alias QuestObjective = Core::QuestObjective
+  alias QuestReward = Core::QuestReward
+  alias GameValue = Core::GameValue
+  alias ConditionResult = Core::ConditionResult
 
   # Scripting system aliases
   alias ScriptEngine = Scripting::ScriptEngine

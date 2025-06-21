@@ -1,0 +1,137 @@
+name: "intro_sequence"
+description: "Opening cutscene introducing the mystery"
+skippable: true
+auto_advance: false
+
+actions:
+  - type: fade_in
+    duration: 1.0
+    color: [0, 0, 0, 255]
+    
+  - type: play_music
+    track: "mystery_theme"
+    volume: 0.6
+    fade_in: 3.0
+    
+  - type: show_text
+    text: "The Crystal Mystery"
+    font_size: 64
+    color: [255, 255, 255, 255]
+    position: "center"
+    duration: 4.0
+    
+  - type: fade_out
+    duration: 1.0
+    
+  - type: change_scene
+    target: "laboratory"
+    fade_duration: 2.0
+    
+  - type: camera_focus
+    target: "scientist"
+    duration: 2.0
+    
+  - type: character_move
+    character: "scientist"
+    target: {x: 450, y: 400}
+    duration: 3.0
+    animation: "worried_walk"
+    
+  - type: floating_dialog
+    character: "scientist"
+    text: "Where could it be? The Crystal of Luminus has vanished!"
+    duration: 4.0
+    style: "worried"
+    
+  - type: character_animation
+    character: "scientist"
+    animation: "examine_equipment"
+    duration: 2.0
+    
+  - type: floating_dialog
+    character: "scientist"
+    text: "I must call for help... this is beyond my capabilities."
+    duration: 4.0
+    style: "desperate"
+    
+  - type: sound_effect
+    sound: "phone_ring"
+    volume: 0.7
+    
+  - type: fade_to_black
+    duration: 1.0
+    
+  - type: show_text
+    text: "One hour later..."
+    font_size: 32
+    color: [255, 255, 255, 255]
+    position: "center"
+    duration: 3.0
+    
+  - type: fade_in
+    duration: 1.0
+    
+  - type: character_enter
+    character: "player"
+    from: "door_to_library"
+    animation: "confident_walk"
+    duration: 2.0
+    
+  - type: camera_follow
+    character: "player"
+    smooth: true
+    
+  - type: floating_dialog
+    character: "player"
+    text: "Detective Williams reporting for duty. What seems to be the problem?"
+    duration: 4.0
+    style: "professional"
+    
+  - type: character_face
+    character: "scientist"
+    target: "player"
+    
+  - type: floating_dialog
+    character: "scientist"
+    text: "Thank goodness you're here! My most precious crystal has been stolen!"
+    duration: 4.0
+    style: "relieved"
+    
+  - type: floating_dialog
+    character: "player"
+    text: "Don't worry, I'll get to the bottom of this. Let me examine the scene."
+    duration: 4.0
+    style: "confident"
+    
+  - type: camera_pan
+    target: {x: 400, y: 300}
+    duration: 2.0
+    
+  - type: show_text
+    text: "Your investigation begins..."
+    font_size: 24
+    color: [200, 200, 200, 255]
+    position: "bottom"
+    duration: 3.0
+    
+  - type: fade_out
+    duration: 1.0
+    
+  - type: enable_player_control
+    
+# Variables for character positions
+variables:
+  scientist_start: {x: 300, y: 450}
+  player_entry: {x: 100, y: 400}
+  
+# Conditional content based on difficulty
+conditions:
+  - name: "tutorial_mode"
+    check: "difficulty == easy"
+    actions:
+      - type: show_text
+        text: "HINT: Click on objects to examine them. Press TAB to highlight interactive areas."
+        font_size: 16
+        color: [100, 255, 100, 255]
+        position: "bottom"
+        duration: 5.0

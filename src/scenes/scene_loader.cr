@@ -395,7 +395,7 @@ module PointClickEngine
               })
               
               if pos = exit_zone.target_position
-                exit_data["target_position"] = {"x" => pos.x, "y" => pos.y}
+                exit_data["target_position"] = "#{pos.x},#{pos.y}"
               end
               
               if item = exit_zone.requires_item

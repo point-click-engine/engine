@@ -8,42 +8,95 @@ require "./walkable_area"
 
 module PointClickEngine
   module Scenes
-    # Game scene/room representation
+    # Represents a game scene or room in a point-and-click adventure game.
+    #
+    # A Scene is the primary container for game content, managing backgrounds,
+    # characters, interactive hotspots, navigation, and game objects. Each scene
+    # represents a distinct location or room that the player can explore.
+    #
+    # ## Key Responsibilities
+    # - Background image rendering and scaling
+    # - Character management and depth sorting
+    # - Hotspot interaction handling
+    # - Pathfinding and navigation setup
+    # - Walkable area constraints
+    # - Script execution and event handling
+    #
+    # ## Usage Example
+    # ```crystal
+    # scene = Scene.new("bedroom")
+    # scene.load_background("assets/bedroom.png")
+    # scene.add_character(player)
+    # scene.add_hotspot(door_hotspot)
+    # scene.setup_navigation
+    # ```
+    #
+    # NOTE: Scenes support YAML serialization for save/load functionality
     class Scene
       include YAML::Serializable
 
+      # The unique name identifier for this scene
       property name : String
+      
+      # File path to the background image for this scene
       property background_path : String?
+      
+      # The loaded background texture (runtime only)
       @[YAML::Field(ignore: true)]
       property background : RL::Texture2D?
+      
+      # Collection of interactive hotspots in the scene
       @[YAML::Field(ignore: true)]
       property hotspots : Array(Hotspot) = [] of Hotspot
+      
+      # All game objects present in the scene
       @[YAML::Field(ignore: true)]
       property objects : Array(Core::GameObject) = [] of Core::GameObject
+      
+      # Characters present in the scene (excluding player)
       @[YAML::Field(ignore: true)]
       property characters : Array(Characters::Character) = [] of Characters::Character
+      
+      # Callback executed when entering this scene
       @[YAML::Field(ignore: true)]
       property on_enter : Proc(Nil)?
+      
+      # Callback executed when exiting this scene
       @[YAML::Field(ignore: true)]
       property on_exit : Proc(Nil)?
+      
+      # Rendering scale factor for the background (1.0 = original size)
       property scale : Float32 = 1.0
 
+      # Player character name for serialization purposes
       property player_name_for_serialization : String?
+      
+      # Reference to the player character (runtime only)
       @[YAML::Field(ignore: true)]
-      property player : Characters::Player?
+      property player : Characters::Character?
 
+      # Navigation grid for pathfinding (runtime only)
       @[YAML::Field(ignore: true)]
       property navigation_grid : Navigation::Pathfinding::NavigationGrid?
+      
+      # Pathfinding system instance (runtime only)
       @[YAML::Field(ignore: true)]
       property pathfinder : Navigation::Pathfinding?
 
+      # Whether pathfinding is enabled for this scene
       property enable_pathfinding : Bool = true
+      
+      # Size of navigation grid cells in pixels (smaller = more precise)
       property navigation_cell_size : Int32 = 16
+      
+      # Optional path to scene-specific script file
       property script_path : String?
       
+      # Walkable area definition for character movement constraints
       @[YAML::Field(ignore: true)]
       property walkable_area : WalkableArea?
 
+      # Creates a new scene with empty name and collections
       def initialize
         @name = ""
         @objects = [] of Core::GameObject
@@ -51,12 +104,21 @@ module PointClickEngine
         @characters = [] of Characters::Character
       end
 
+      # Creates a new scene with the specified *name*
+      #
+      # - *name* : Unique identifier for the scene
       def initialize(@name : String)
         @objects = [] of Core::GameObject
         @hotspots = [] of Hotspot
         @characters = [] of Characters::Character
       end
 
+      # Called after YAML deserialization to restore runtime state
+      #
+      # Loads the background texture, restores character state, and
+      # reconnects the player character reference.
+      #
+      # - *ctx* : YAML parsing context
       def after_yaml_deserialize(ctx : YAML::ParseContext)
         if path = @background_path
           load_background(path, @scale)
@@ -70,32 +132,73 @@ module PointClickEngine
         end
       end
 
+      # Loads a background image for the scene
+      #
+      # The background will be automatically scaled to fit the screen dimensions
+      # while maintaining aspect ratio.
+      #
+      # - *path* : File path to the background image
+      # - *scale* : Optional scaling factor (default: 1.0)
+      #
+      # ```crystal
+      # scene.load_background("assets/backgrounds/room.png", 1.5)
+      # ```
       def load_background(path : String, scale : Float32 = 1.0)
         @background_path = path
         @background = PointClickEngine::AssetLoader.load_texture(path)
         @scale = scale
       end
 
+      # Adds an interactive hotspot to the scene
+      #
+      # The hotspot will be added to both the hotspot collection and the
+      # general objects collection for unified processing.
+      #
+      # - *hotspot* : The hotspot to add
       def add_hotspot(hotspot : Hotspot)
         @hotspots << hotspot
         @objects << hotspot unless @objects.includes?(hotspot)
       end
 
+      # Adds a game object to the scene
+      #
+      # Objects are processed during update and draw cycles.
+      # Duplicates are automatically prevented.
+      #
+      # - *object* : The game object to add
       def add_object(object : Core::GameObject)
         @objects << object unless @objects.includes?(object)
       end
 
+      # Adds a character to the scene
+      #
+      # Characters are added to both the character collection and the
+      # general objects collection for proper rendering and interaction.
+      #
+      # - *character* : The character to add
       def add_character(character : Characters::Character)
         @characters << character unless @characters.includes?(character)
         add_object(character) unless @objects.includes?(character)
       end
 
-      def set_player(player : Characters::Player)
+      # Sets the player character for this scene
+      #
+      # The player character receives special handling for input processing
+      # and is automatically added to the scene if not already present.
+      #
+      # - *player* : The character to set as player
+      def set_player(player : Characters::Character)
         @player = player
         @player_name_for_serialization = player.name
         add_character(player) unless @characters.includes?(player)
       end
 
+      # Updates the scene and all contained objects
+      #
+      # Processes all game objects, updates character scaling based on
+      # walkable area depth, and handles scene-specific logic.
+      #
+      # - *dt* : Delta time in seconds since last update
       def update(dt : Float32)
         @objects.each(&.update(dt))
         
@@ -113,6 +216,11 @@ module PointClickEngine
         end
       end
 
+      # Renders the scene and all contained elements
+      #
+      # Handles background rendering with automatic scaling, depth-sorted
+      # character drawing, walk-behind regions, and debug visualization.
+      # Characters are automatically sorted by Y position for proper depth.
       def draw
         if bg = @background
           # Calculate scale to fit screen (1024x768)
@@ -167,26 +275,68 @@ module PointClickEngine
         end
       end
 
+      # Called when the player enters this scene
+      #
+      # Executes the scene's entry callback if one is defined.
+      # Use this for triggering cutscenes, playing music, or setting up
+      # scene-specific state.
       def enter
         @on_enter.try &.call
       end
 
+      # Called when the player exits this scene
+      #
+      # Executes the scene's exit callback if one is defined.
+      # Use this for cleanup, stopping music, or saving scene state.
       def exit
         @on_exit.try &.call
       end
 
+      # Finds the topmost active hotspot at the specified screen position
+      #
+      # Used for mouse interaction detection. Returns `nil` if no active
+      # hotspot is found at the given position.
+      #
+      # - *point* : Screen position to check
+      #
+      # Returns: The hotspot at that position, or `nil`
       def get_hotspot_at(point : RL::Vector2) : Hotspot?
         @hotspots.find { |h| h.active && h.contains_point?(point) }
       end
 
+      # Finds an active character (excluding player) at the specified position
+      #
+      # Used for character interaction detection. The player character
+      # is automatically excluded from results.
+      #
+      # - *point* : Screen position to check
+      #
+      # Returns: The character at that position, or `nil`
       def get_character_at(point : RL::Vector2) : Characters::Character?
         @characters.find { |c| c.active && c.contains_point?(point) && c != @player }
       end
 
+      # Finds a character by name
+      #
+      # Searches all characters in the scene for one with the specified name.
+      #
+      # - *name* : The character's name to search for
+      #
+      # Returns: The character with that name, or `nil`
       def get_character(name : String) : Characters::Character?
         @characters.find { |c| c.name == name }
       end
 
+      # Initializes the pathfinding system for this scene
+      #
+      # Creates a navigation grid based on the background dimensions and
+      # walkable areas. Must be called after loading the background.
+      # Only runs if pathfinding is enabled for this scene.
+      #
+      # ```crystal
+      # scene.load_background("room.png")
+      # scene.setup_navigation
+      # ```
       def setup_navigation
         return unless @enable_pathfinding
         return unless bg = @background
@@ -201,7 +351,15 @@ module PointClickEngine
         @pathfinder = Navigation::Pathfinding.new(@navigation_grid.not_nil!)
       end
       
-      # Check if a point is walkable
+      # Checks if a point is walkable within the scene
+      #
+      # Uses the walkable area definition to determine if characters
+      # can move to the specified position. If no walkable area is
+      # defined, all positions are considered walkable.
+      #
+      # - *point* : Position to check
+      #
+      # Returns: `true` if the position is walkable, `false` otherwise
       def is_walkable?(point : RL::Vector2) : Bool
         if walkable = @walkable_area
           walkable.is_point_walkable?(point)
@@ -211,20 +369,49 @@ module PointClickEngine
         end
       end
       
-      # Get character scale at Y position
+      # Gets the character scale factor at a specific Y position
+      #
+      # Uses the walkable area's depth information to determine the
+      # appropriate scale for characters at different Y positions,
+      # creating perspective effects.
+      #
+      # - *y_position* : Y coordinate to check
+      #
+      # Returns: Scale factor (1.0 = normal size)
       def get_character_scale(y_position : Float32) : Float32
         @walkable_area.try(&.get_scale_at_y(y_position)) || 1.0f32
       end
 
+      # Finds a path between two points using the pathfinding system
+      #
+      # Calculates the optimal route between start and end positions,
+      # taking into account walkable areas and obstacles.
+      #
+      # - *start_x* : Starting X coordinate
+      # - *start_y* : Starting Y coordinate  
+      # - *end_x* : Destination X coordinate
+      # - *end_y* : Destination Y coordinate
+      #
+      # Returns: Array of waypoints forming the path, or `nil` if no path exists
       def find_path(start_x : Float32, start_y : Float32, end_x : Float32, end_y : Float32) : Array(Raylib::Vector2)?
         return nil unless pf = @pathfinder
         pf.find_path(start_x, start_y, end_x, end_y)
       end
 
-      def draw_navigation_debug
+      # Draws navigation debug information
+      #
+      # Renders the pathfinding grid and navigation data when debug mode
+      # is enabled. Green indicates walkable areas, red indicates obstacles.
+      private def draw_navigation_debug
         @pathfinder.try &.draw_debug(Raylib::GREEN, Raylib::RED, 50u8)
       end
 
+      # Loads and executes the scene's script file
+      #
+      # Runs any scene-specific scripting logic defined in the script file.
+      # Used for cutscenes, dialogue setup, and custom scene behavior.
+      #
+      # - *engine* : The game engine instance
       def load_script(engine : Core::Engine)
         return unless script_path = @script_path
         engine.script_engine.try &.execute_script_file(script_path)

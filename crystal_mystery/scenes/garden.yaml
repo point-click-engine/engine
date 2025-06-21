@@ -22,12 +22,35 @@ hotspots:
       - {x: 680, y: 260}  # left arm  
       - {x: 700, y: 220}  # left shoulder
     description: "A weathered statue holding something..."
+    items:
+      - crystal
   - name: flowerbed
     x: 150
     y: 450
     width: 250
     height: 100
     description: "Beautiful roses in full bloom"
+  - name: garden_shed
+    x: 800
+    y: 500
+    width: 120
+    height: 100
+    description: "A small tool shed"
+    locked: true
+  - name: bench
+    x: 250
+    y: 550
+    width: 120
+    height: 60
+    description: "A weathered stone bench"
+  - name: lamp_post
+    x: 650
+    y: 380
+    width: 40
+    height: 120
+    description: "An old-fashioned lamp post"
+    items:
+      - lamp
   - name: door_to_lab
     type: exit
     x: 50
@@ -39,5 +62,3 @@ hotspots:
     transition_type: fade
     auto_walk: true
     description: "Back to the laboratory"
-    default_verb: walk
-    object_type: exit
