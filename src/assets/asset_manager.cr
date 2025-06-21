@@ -1,9 +1,43 @@
 require "compress/zip"
 
 module PointClickEngine
+  # Asset management system with ZIP archive support
+  #
+  # The AssetManager provides a unified interface for loading game assets from
+  # both the filesystem and ZIP archives. It supports mounting multiple archives,
+  # caching loaded assets, and transparent fallback between archives and filesystem.
+  #
+  # ## Features
+  # - Mount multiple ZIP archives as virtual filesystems
+  # - Automatic caching of loaded assets
+  # - Transparent access to both archived and filesystem assets
+  # - Singleton pattern for global access
+  #
+  # ## Example
+  #
+  # ```
+  # # Mount a game archive
+  # AssetManager.mount_archive("game_assets.zip")
+  #
+  # # Read a text file
+  # dialog_text = AssetManager.read_file("dialogs/intro.txt")
+  #
+  # # Read binary data (e.g., images)
+  # image_data = AssetManager.read_bytes("sprites/player.png")
+  #
+  # # Check if asset exists
+  # if AssetManager.exists?("music/theme.ogg")
+  #   # Load the music
+  # end
+  #
+  # # List all files in a directory
+  # sprites = AssetManager.list_files("sprites/")
+  # ```
   class AssetManager
+    # Exception raised when a requested asset cannot be found
     class AssetNotFoundError < Exception; end
 
+    # Alias for cached asset data (can be binary or text)
     alias AssetData = Bytes | String
 
     @archives : Hash(String, Compress::Zip::Reader) = {} of String => Compress::Zip::Reader
@@ -13,18 +47,43 @@ module PointClickEngine
     def initialize
     end
 
+    # Mount a ZIP archive as a virtual filesystem
+    #
+    # Archives are searched before the filesystem when loading assets.
+    # Multiple archives can be mounted at different mount points.
+    #
+    # - **path** : Path to the ZIP archive file
+    # - **mount_point** : Virtual mount point (default: "/")
+    #
+    # ```
+    # AssetManager.mount_archive("game_data.zip")
+    # AssetManager.mount_archive("dlc_content.zip", "/dlc")
+    # ```
     def mount_archive(path : String, mount_point : String = "/")
       file_data = File.read(path).to_slice
       @archive_data[mount_point] = file_data
       @archives[mount_point] = Compress::Zip::Reader.new(IO::Memory.new(file_data))
     end
 
+    # Unmount a previously mounted archive
+    #
+    # This also clears the asset cache to free memory.
+    #
+    # - **mount_point** : The mount point to unmount (default: "/")
     def unmount_archive(mount_point : String = "/")
       @archives.delete(mount_point)
       @archive_data.delete(mount_point)
       @cache.clear
     end
 
+    # Read a text file from archives or filesystem
+    #
+    # Searches mounted archives first, then falls back to filesystem.
+    # The result is cached for faster subsequent access.
+    #
+    # - **path** : Path to the file to read
+    # - **returns** : File contents as a string
+    # - **raises** : AssetNotFoundError if the file doesn't exist
     def read_file(path : String) : String
       if data = read_bytes(path)
         String.new(data)
@@ -33,6 +92,13 @@ module PointClickEngine
       end
     end
 
+    # Read binary data from archives or filesystem
+    #
+    # Searches mounted archives first, then falls back to filesystem.
+    # The result is cached for faster subsequent access.
+    #
+    # - **path** : Path to the file to read
+    # - **returns** : File contents as bytes, or nil if not found
     def read_bytes(path : String) : Bytes?
       return @cache[path].as(Bytes) if @cache.has_key?(path) && @cache[path].is_a?(Bytes)
 
@@ -62,6 +128,10 @@ module PointClickEngine
       nil
     end
 
+    # Check if an asset exists in archives or filesystem
+    #
+    # - **path** : Path to check
+    # - **returns** : True if the asset exists
     def exists?(path : String) : Bool
       # Check archives
       @archives.each do |mount_point, archive|
@@ -79,6 +149,10 @@ module PointClickEngine
       File.exists?(path)
     end
 
+    # List all files in a directory across archives and filesystem
+    #
+    # - **directory** : Directory path to list (empty for all files)
+    # - **returns** : Array of file paths
     def list_files(directory : String = "") : Array(String)
       files = [] of String
       normalized_dir = normalize_path(directory)
@@ -104,6 +178,7 @@ module PointClickEngine
       files.uniq
     end
 
+    # Clear the asset cache to free memory
     def clear_cache
       @cache.clear
     end

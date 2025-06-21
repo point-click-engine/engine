@@ -13,7 +13,7 @@ module PointClickEngine
       Slide
       Iris
     end
-    
+
     # Edge exit directions
     enum EdgeExit
       None
@@ -22,7 +22,7 @@ module PointClickEngine
       East
       West
     end
-    
+
     # Special hotspot that triggers scene transitions
     class ExitZone < Hotspot
       property target_scene : String = ""
@@ -33,7 +33,7 @@ module PointClickEngine
       property requires_item : String?
       property locked_message : String?
       property walk_to_position : RL::Vector2?
-      
+
       # Cursor changes to exit arrow when hovering
       def initialize
         super()
@@ -41,7 +41,7 @@ module PointClickEngine
         @default_verb = UI::VerbType::Walk
         @object_type = UI::ObjectType::Exit
       end
-      
+
       def initialize(@name : String, position : RL::Vector2, size : RL::Vector2, @target_scene : String)
         super(name, position, size)
         @cursor_type = CursorType::Use
@@ -49,30 +49,30 @@ module PointClickEngine
         @default_verb = UI::VerbType::Walk
         @object_type = UI::ObjectType::Exit
       end
-      
+
       # Check if the exit is accessible
       def is_accessible?(inventory : Inventory::InventorySystem) : Bool
         return true unless item_name = @requires_item
         inventory.has_item?(item_name)
       end
-      
+
       # Get the position character should walk to before transitioning
       def get_walk_target : RL::Vector2
         if pos = @walk_to_position
           return pos
         end
-        
+
         # Default to center of exit zone
         RL::Vector2.new(
           x: @position.x + @size.x / 2,
           y: @position.y + @size.y / 2
         )
       end
-      
+
       # Handle click on exit
       def on_click_exit(engine : Core::Engine)
         return unless engine.current_scene
-        
+
         # Check if exit is locked
         if !is_accessible?(engine.inventory)
           if msg = @locked_message
@@ -82,15 +82,15 @@ module PointClickEngine
           end
           return
         end
-        
+
         # Start exit sequence
         if @auto_walk && (player = engine.player)
           # Walk to exit position first
           walk_target = get_walk_target
           player.walk_to(walk_target)
-          
+
           # Set up callback for when walking is complete
-          player.on_walk_complete = ->{ 
+          player.on_walk_complete = -> {
             perform_transition(engine)
           }
         else
@@ -98,36 +98,36 @@ module PointClickEngine
           perform_transition(engine)
         end
       end
-      
+
       # Perform the actual scene transition
       private def perform_transition(engine : Core::Engine)
         # Map our transition types to graphics transition effects
         effect = case @transition_type
-        when TransitionType::Fade
-          Graphics::TransitionEffect::Fade
-        when TransitionType::Slide
-          # Choose slide direction based on exit position
-          if @position.x < 100
-            Graphics::TransitionEffect::SlideLeft
-          elsif @position.x > 900
-            Graphics::TransitionEffect::SlideRight
-          elsif @position.y < 100
-            Graphics::TransitionEffect::SlideUp
-          else
-            Graphics::TransitionEffect::SlideDown
-          end
-        when TransitionType::Iris
-          Graphics::TransitionEffect::Iris
-        else
-          Graphics::TransitionEffect::Fade
-        end
-        
+                 when TransitionType::Fade
+                   Graphics::TransitionEffect::Fade
+                 when TransitionType::Slide
+                   # Choose slide direction based on exit position
+                   if @position.x < 100
+                     Graphics::TransitionEffect::SlideLeft
+                   elsif @position.x > 900
+                     Graphics::TransitionEffect::SlideRight
+                   elsif @position.y < 100
+                     Graphics::TransitionEffect::SlideUp
+                   else
+                     Graphics::TransitionEffect::SlideDown
+                   end
+                 when TransitionType::Iris
+                   Graphics::TransitionEffect::Iris
+                 else
+                   Graphics::TransitionEffect::Fade
+                 end
+
         # Start the transition
         if tm = engine.transition_manager
           tm.start_transition(effect, 0.5f32) do
             # This runs when transition reaches halfway
             engine.change_scene(@target_scene)
-            
+
             # Set player position in new scene
             if (pos = @target_position) && (player = engine.player)
               player.position = pos
@@ -143,25 +143,25 @@ module PointClickEngine
           end
         end
       end
-      
+
       # Draw exit zone with special highlighting
       def draw
         if Core::Engine.debug_mode && @visible
           # Different color for exits
           exit_color = RL::Color.new(r: 0, g: 0, b: 255, a: 100)
           RL.draw_rectangle_rec(bounds, exit_color)
-          
+
           # Draw target info
           text = "→ #{@target_scene}"
           RL.draw_text(text, @position.x.to_i, @position.y.to_i - 20, 12, RL::WHITE)
-          
+
           # Draw lock icon if locked
           if @requires_item
             RL.draw_text("🔒", @position.x.to_i, @position.y.to_i, 20, RL::YELLOW)
           end
         end
       end
-      
+
       # Special handling for edge exits
       def setup_edge_exit(scene_width : Int32, scene_height : Int32)
         case @edge_exit

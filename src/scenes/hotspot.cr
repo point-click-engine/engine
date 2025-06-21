@@ -21,11 +21,11 @@ module PointClickEngine
     # - Debug visualization support
     #
     # ## Usage Example
-    # ```crystal
+    # ```
     # door = Hotspot.new("door", Vector2.new(100, 50), Vector2.new(80, 120))
     # door.description = "A wooden door"
     # door.cursor_type = CursorType::Use
-    # door.on_click = ->{ open_door }
+    # door.on_click = -> { open_door }
     # scene.add_hotspot(door)
     # ```
     #
@@ -33,26 +33,26 @@ module PointClickEngine
     class Hotspot < Core::GameObject
       # Unique identifier for this hotspot
       property name : String
-      
+
       # Descriptive text shown when examining the hotspot
       property description : String = ""
-      
+
       # Cursor appearance when hovering over this hotspot
       property cursor_type : CursorType = CursorType::Hand
-      
+
       # Whether this hotspot blocks character movement
       property blocks_movement : Bool = false
-      
+
       # Default verb action for this hotspot (optional)
       property default_verb : UI::VerbType?
-      
+
       # Classification of this object for interaction purposes
       property object_type : UI::ObjectType = UI::ObjectType::Background
-      
+
       # Callback executed when the hotspot is clicked (runtime only)
       @[YAML::Field(ignore: true)]
       property on_click : Proc(Nil)?
-      
+
       # Callback executed when the hotspot is hovered (runtime only)
       @[YAML::Field(ignore: true)]
       property on_hover : Proc(Nil)?
@@ -119,7 +119,7 @@ module PointClickEngine
           draw_debug
         end
       end
-      
+
       # Draws debug visualization of the hotspot area
       #
       # Override this method in subclasses for custom debug rendering
@@ -127,7 +127,7 @@ module PointClickEngine
       def draw_debug
         RL.draw_rectangle_rec(bounds, @debug_color)
       end
-      
+
       # Gets the outline points for rendering or collision detection
       #
       # Returns the corner points of the hotspot area. Override in
@@ -140,7 +140,7 @@ module PointClickEngine
           RL::Vector2.new(x: @position.x, y: @position.y),
           RL::Vector2.new(x: @position.x + @size.x, y: @position.y),
           RL::Vector2.new(x: @position.x + @size.x, y: @position.y + @size.y),
-          RL::Vector2.new(x: @position.x, y: @position.y + @size.y)
+          RL::Vector2.new(x: @position.x, y: @position.y + @size.y),
         ]
       end
     end

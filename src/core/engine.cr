@@ -29,7 +29,7 @@ module PointClickEngine
     #
     # ## Example
     #
-    # ```crystal
+    # ```
     # # Create and initialize the engine
     # engine = PointClickEngine::Core::Engine.new(800, 600, "My Game")
     # engine.init
@@ -44,7 +44,7 @@ module PointClickEngine
 
       # Global debug mode flag - enables debug visualization and logging
       class_property debug_mode : Bool = false
-      
+
       @@instance : Engine?
 
       # Returns the singleton Engine instance
@@ -52,7 +52,7 @@ module PointClickEngine
       # Raises an exception if the engine hasn't been initialized yet.
       # The engine instance is automatically set when creating a new Engine.
       #
-      # ```crystal
+      # ```
       # engine = Engine.new(800, 600, "Game")
       # same_engine = Engine.instance # Returns the same instance
       # ```
@@ -62,76 +62,76 @@ module PointClickEngine
       end
 
       # Core engine properties
-      
+
       # Whether the engine has been initialized (window created, systems loaded)
       @[YAML::Field(ignore: true)]
       property initialized : Bool = false
-      
+
       # Window width in pixels
       property window_width : Int32
-      
-      # Window height in pixels  
+
+      # Window height in pixels
       property window_height : Int32
-      
+
       # Window title displayed in the title bar
       property title : String
-      
+
       # Target frames per second (default: 60)
       property target_fps : Int32 = 60
-      
+
       # Whether the game loop is currently running
       @[YAML::Field(ignore: true)]
       property running : Bool = false
 
       # Scene management
-      
+
       # Name of the currently active scene
       property current_scene_name : String?
-      
+
       # Currently active scene object (not serialized)
       @[YAML::Field(ignore: true)]
       property current_scene : Scenes::Scene?
-      
+
       # Hash of all registered scenes, indexed by name
       property scenes : Hash(String, Scenes::Scene) = {} of String => Scenes::Scene
 
       # Game systems
-      
+
       # Main inventory system for item management
       property inventory : Inventory::InventorySystem
-      
+
       # Currently active dialogs being displayed
       property dialogs : Array(UI::Dialog) = [] of UI::Dialog
-      
+
       # Global game state variables (flags, counters, etc.)
       property state_variables : Hash(String, StateValue) = {} of String => StateValue
 
       # System managers (not serialized)
-      
+
       # Manages all engine subsystems (audio, graphics, GUI, etc.)
       @[YAML::Field(ignore: true)]
       property system_manager : EngineComponents::SystemManager
-      
+
       # Handles input processing and click coordination
       @[YAML::Field(ignore: true)]
       property input_handler : EngineComponents::InputHandler
-      
+
       # Coordinates rendering and debug visualization
       @[YAML::Field(ignore: true)]
       property render_coordinator : EngineComponents::RenderCoordinator
 
       # Legacy properties for backwards compatibility
-      
+
       # Path to custom cursor texture file
       property cursor_texture_path : String?
-      
+
       # Loaded cursor texture (not serialized)
       @[YAML::Field(ignore: true)]
       property cursor_texture : RL::Texture2D?
-      
+
       # Default mouse cursor type
       property default_cursor : RL::MouseCursor = RL::MouseCursor::Default
-      
+
       # Whether the window is in fullscreen mode
       property fullscreen : Bool = false
 
@@ -149,10 +149,10 @@ module PointClickEngine
       # The engine must be initialized with `#init` before use.
       #
       # *window_width* - Width of the game window in pixels
-      # *window_height* - Height of the game window in pixels  
+      # *window_height* - Height of the game window in pixels
       # *title* - Window title to display
       #
-      # ```crystal
+      # ```
       # engine = Engine.new(1024, 768, "My Adventure Game")
       # engine.init
       # ```
@@ -172,7 +172,7 @@ module PointClickEngine
       # Uses default window size (800x600) and title ("Game").
       # The engine must be initialized with `#init` before use.
       #
-      # ```crystal
+      # ```
       # engine = Engine.new
       # engine.init
       # ```
@@ -209,18 +209,18 @@ module PointClickEngine
       #
       # Returns immediately if already initialized.
       #
-      # ```crystal
+      # ```
       # engine = Engine.new(800, 600, "My Game")
       # engine.init # Creates window and initializes systems
       # ```
       def init
         return if @initialized
-        
+
         RL.init_window(@window_width, @window_height, @title)
         RL.set_target_fps(@target_fps)
-        
+
         @system_manager.initialize_systems(@window_width, @window_height)
-        
+
         @initialized = true
         puts "Engine initialized with #{@system_manager.initialized_systems_count} systems"
       end
@@ -235,7 +235,7 @@ module PointClickEngine
       # *height* - Window height in pixels
       # *title* - Window title to display in the title bar
       #
-      # ```crystal
+      # ```
       # engine = Engine.new
       # engine.init(1024, 768, "My Adventure Game")
       # ```
@@ -251,7 +251,7 @@ module PointClickEngine
       end
 
       # Scene management
-      
+
       # Registers a scene with the engine for later use
       #
       # Adds a scene to the engine's scene registry, making it available
@@ -260,7 +260,7 @@ module PointClickEngine
       #
       # *scene* - The scene object to register with the engine
       #
-      # ```crystal
+      # ```
       # main_room = Scenes::Scene.new("main_room")
       # engine.add_scene(main_room)
       # engine.change_scene("main_room") # Now available
@@ -280,7 +280,7 @@ module PointClickEngine
       #
       # *name* - Name of the scene to activate
       #
-      # ```crystal
+      # ```
       # engine.add_scene(living_room_scene)
       # engine.change_scene("living_room") # Activates the scene
       # ```
@@ -298,7 +298,7 @@ module PointClickEngine
       end
 
       # Dialog management
-      
+
       # Displays a dialog to the player
       #
       # Adds a dialog to the active dialog queue. The dialog will be
@@ -307,7 +307,7 @@ module PointClickEngine
       #
       # *dialog* - The dialog object to display
       #
-      # ```crystal
+      # ```
       # dialog = UI::Dialog.new("Hello, world!")
       # engine.show_dialog(dialog)
       # ```
@@ -319,17 +319,17 @@ module PointClickEngine
       end
 
       # UI visibility
-      
+
       # Makes the game UI visible
       #
       # Shows all UI elements including inventory, dialog boxes, and other
       # interface components. This is useful for toggling UI visibility
       # during cutscenes or special game states.
       #
-      # ```crystal
-      # engine.hide_ui  # Hide UI for cutscene
+      # ```
+      # engine.hide_ui # Hide UI for cutscene
       # # ... cutscene plays ...
-      # engine.show_ui  # Restore UI after cutscene
+      # engine.show_ui # Restore UI after cutscene
       # ```
       def show_ui
         @render_coordinator.ui_visible = true
@@ -341,17 +341,17 @@ module PointClickEngine
       # interface components. This is useful for creating immersive cutscenes
       # or special game states where the UI should not be visible.
       #
-      # ```crystal
-      # engine.hide_ui  # Hide UI for cutscene
+      # ```
+      # engine.hide_ui # Hide UI for cutscene
       # play_intro_cutscene()
-      # engine.show_ui  # Restore UI when done
+      # engine.show_ui # Restore UI when done
       # ```
       def hide_ui
         @render_coordinator.ui_visible = false
       end
 
       # Main game loop
-      
+
       # Starts the main game loop and runs until stopped
       #
       # Begins the core game loop that handles input, updates game state,
@@ -361,27 +361,27 @@ module PointClickEngine
       #
       # Returns immediately if the engine is not initialized.
       #
-      # ```crystal
+      # ```
       # engine = Engine.new(800, 600, "My Game")
       # engine.init
       # engine.add_scene(main_scene)
       # engine.change_scene("main_scene")
-      # engine.run  # Starts the game loop
+      # engine.run # Starts the game loop
       # ```
       #
       # NOTE: This method blocks until the game loop ends. All cleanup
       # is performed automatically when the loop exits.
       def run
         return unless @initialized
-        
+
         @running = true
         puts "Starting game loop..."
-        
+
         while @running && !RL.window_should_close?
           update
           render
         end
-        
+
         cleanup
       end
 
@@ -391,9 +391,9 @@ module PointClickEngine
       # cause the `#run` method to return and trigger engine cleanup.
       # The game window will be closed and all resources freed.
       #
-      # ```crystal
+      # ```
       # # In a menu or quit handler:
-      # engine.stop  # Gracefully exits the game
+      # engine.stop # Gracefully exits the game
       # ```
       #
       # NOTE: The loop will not stop immediately but will exit after
@@ -405,23 +405,23 @@ module PointClickEngine
       # Update game state
       private def update
         dt = RL.get_frame_time
-        
+
         # Update systems
         @system_manager.update_systems(dt)
-        
+
         # Update current scene
         @current_scene.try(&.update(dt))
-        
+
         # Update cutscenes
         @cutscene_manager.update(dt)
-        
+
         # Update dialogs
         @dialogs.each(&.update(dt))
         @dialogs.reject!(&.completed?)
-        
+
         # Process input
         @input_handler.process_input(@current_scene, @player)
-        
+
         # Update cursor
         @render_coordinator.update_cursor(@current_scene)
       end
@@ -429,26 +429,26 @@ module PointClickEngine
       # Render game
       private def render
         RL.begin_drawing
-        
+
         @render_coordinator.render(
           @current_scene,
           @dialogs,
           @cutscene_manager,
           @system_manager.transition_manager
         )
-        
+
         RL.end_drawing
       end
 
       # Display settings
-      
+
       # Toggles between fullscreen and windowed mode
       #
       # Switches the game window between fullscreen and windowed display
       # modes. The engine tracks the current fullscreen state and updates
       # it when toggled.
       #
-      # ```crystal
+      # ```
       # # Toggle fullscreen on F11 key press
       # if RL.key_pressed?(RL::KeyboardKey::F11)
       #   engine.toggle_fullscreen
@@ -483,7 +483,7 @@ module PointClickEngine
       end
 
       # Save/Load system
-      
+
       # Saves the current game state to a file
       #
       # Serializes the engine state including scenes, inventory, dialogs,
@@ -492,10 +492,10 @@ module PointClickEngine
       #
       # *filepath* - Path where the save file should be written
       #
-      # ```crystal
+      # ```
       # # Save the game to a file
       # engine.save_game("saves/quicksave.yml")
-      # 
+      #
       # # Save with timestamp
       # timestamp = Time.local.to_s("%Y%m%d_%H%M%S")
       # engine.save_game("saves/game_#{timestamp}.yml")
@@ -519,7 +519,7 @@ module PointClickEngine
       #
       # Returns the loaded Engine instance, or `nil` if loading failed
       #
-      # ```crystal
+      # ```
       # # Load a saved game
       # if engine = Engine.load_game("saves/quicksave.yml")
       #   engine.run
@@ -533,7 +533,7 @@ module PointClickEngine
       # Returns `nil` if the file doesn't exist or contains invalid data.
       def self.load_game(filepath : String) : Engine?
         return nil unless File.exists?(filepath)
-        
+
         yaml_content = File.read(filepath)
         engine = Engine.from_yaml(yaml_content)
         engine.init

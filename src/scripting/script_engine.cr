@@ -1,14 +1,11 @@
 # Lua scripting engine for runtime game scripting
 
 require "luajit"
-require "./enhanced_api"
 
 module PointClickEngine
   module Scripting
     # Main script engine that manages Lua state and script execution
     class ScriptEngine
-      include EnhancedAPI
-
       getter lua : Luajit::LuaState
       getter game_state : Hash(String, Luajit::LuaAny) = {} of String => Luajit::LuaAny
 
@@ -108,7 +105,7 @@ module PointClickEngine
         register_inventory_api
         register_dialog_api
         register_utility_api
-        register_enhanced_api
+        # Enhanced API features are now integrated into main API
       end
 
       private def register_scene_api

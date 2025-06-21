@@ -89,7 +89,7 @@ module PointClickEngine
               end
             end
           end
-          
+
           # Mark non-walkable areas from hotspots
           scene.hotspots.each do |hotspot|
             if hotspot.blocks_movement

@@ -11,16 +11,15 @@ module PointClickEngine
       # Coordinates rendering of all game elements
       class RenderCoordinator
         property ui_visible : Bool = true
-        
+
         def initialize
         end
 
         # Main rendering method
-        def render(scene : Scenes::Scene?, 
-                  dialogs : Array(UI::Dialog),
-                  cutscene_manager : Cutscenes::CutsceneManager,
-                  transition_manager : Graphics::TransitionManager?)
-          
+        def render(scene : Scenes::Scene?,
+                   dialogs : Array(UI::Dialog),
+                   cutscene_manager : Cutscenes::CutsceneManager,
+                   transition_manager : Graphics::TransitionManager?)
           # Use transition manager if available and active
           if transition_manager && transition_manager.transitioning?
             transition_manager.render_with_transition do
@@ -36,8 +35,8 @@ module PointClickEngine
 
         # Render scene and game content
         private def render_scene_content(scene : Scenes::Scene?,
-                                       dialogs : Array(UI::Dialog),
-                                       cutscene_manager : Cutscenes::CutsceneManager)
+                                         dialogs : Array(UI::Dialog),
+                                         cutscene_manager : Cutscenes::CutsceneManager)
           # Clear background
           RL.clear_background(RL::BLACK)
 
@@ -76,7 +75,7 @@ module PointClickEngine
               hotspot.size.y.to_i,
               RL::GREEN
             )
-            
+
             # Draw hotspot name
             RL.draw_text(
               hotspot.name,
@@ -108,7 +107,7 @@ module PointClickEngine
               5,
               RL::RED
             )
-            
+
             RL.draw_text(
               character.name,
               character.position.x.to_i + 10,
@@ -141,15 +140,15 @@ module PointClickEngine
 
           mouse_pos = RL.get_mouse_position
           hotspot = scene.get_hotspot_at_position(mouse_pos)
-          
+
           if hotspot
             # Set cursor based on hotspot type
             cursor = case hotspot.cursor_type
-                    when .hand? then RL::MouseCursor::PointingHand
-                    when .look? then RL::MouseCursor::Crosshair
-                    when .talk? then RL::MouseCursor::IBeam
-                    else RL::MouseCursor::Default
-                    end
+                     when .hand? then RL::MouseCursor::PointingHand
+                     when .look? then RL::MouseCursor::Crosshair
+                     when .talk? then RL::MouseCursor::IBeam
+                     else             RL::MouseCursor::Default
+                     end
             RL.set_mouse_cursor(cursor)
           else
             RL.set_mouse_cursor(RL::MouseCursor::Default)

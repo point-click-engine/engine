@@ -23,7 +23,7 @@ module PointClickEngine
     # - Script execution and event handling
     #
     # ## Usage Example
-    # ```crystal
+    # ```
     # scene = Scene.new("bedroom")
     # scene.load_background("assets/bedroom.png")
     # scene.add_character(player)
@@ -37,40 +37,40 @@ module PointClickEngine
 
       # The unique name identifier for this scene
       property name : String
-      
+
       # File path to the background image for this scene
       property background_path : String?
-      
+
       # The loaded background texture (runtime only)
       @[YAML::Field(ignore: true)]
       property background : RL::Texture2D?
-      
+
       # Collection of interactive hotspots in the scene
       @[YAML::Field(ignore: true)]
       property hotspots : Array(Hotspot) = [] of Hotspot
-      
+
       # All game objects present in the scene
       @[YAML::Field(ignore: true)]
       property objects : Array(Core::GameObject) = [] of Core::GameObject
-      
+
       # Characters present in the scene (excluding player)
       @[YAML::Field(ignore: true)]
       property characters : Array(Characters::Character) = [] of Characters::Character
-      
+
       # Callback executed when entering this scene
       @[YAML::Field(ignore: true)]
       property on_enter : Proc(Nil)?
-      
+
       # Callback executed when exiting this scene
       @[YAML::Field(ignore: true)]
       property on_exit : Proc(Nil)?
-      
+
       # Rendering scale factor for the background (1.0 = original size)
       property scale : Float32 = 1.0
 
       # Player character name for serialization purposes
       property player_name_for_serialization : String?
-      
+
       # Reference to the player character (runtime only)
       @[YAML::Field(ignore: true)]
       property player : Characters::Character?
@@ -78,20 +78,20 @@ module PointClickEngine
       # Navigation grid for pathfinding (runtime only)
       @[YAML::Field(ignore: true)]
       property navigation_grid : Navigation::Pathfinding::NavigationGrid?
-      
+
       # Pathfinding system instance (runtime only)
       @[YAML::Field(ignore: true)]
       property pathfinder : Navigation::Pathfinding?
 
       # Whether pathfinding is enabled for this scene
       property enable_pathfinding : Bool = true
-      
+
       # Size of navigation grid cells in pixels (smaller = more precise)
       property navigation_cell_size : Int32 = 16
-      
+
       # Optional path to scene-specific script file
       property script_path : String?
-      
+
       # Walkable area definition for character movement constraints
       @[YAML::Field(ignore: true)]
       property walkable_area : WalkableArea?
@@ -140,7 +140,7 @@ module PointClickEngine
       # - *path* : File path to the background image
       # - *scale* : Optional scaling factor (default: 1.0)
       #
-      # ```crystal
+      # ```
       # scene.load_background("assets/backgrounds/room.png", 1.5)
       # ```
       def load_background(path : String, scale : Float32 = 1.0)
@@ -201,14 +201,14 @@ module PointClickEngine
       # - *dt* : Delta time in seconds since last update
       def update(dt : Float32)
         @objects.each(&.update(dt))
-        
+
         # Update character scales based on position
         if walkable = @walkable_area
           @characters.each do |character|
             scale = walkable.get_scale_at_y(character.position.y)
             character.scale = scale
           end
-          
+
           @player.try do |p|
             scale = walkable.get_scale_at_y(p.position.y)
             p.scale = scale
@@ -230,30 +230,30 @@ module PointClickEngine
 
           RL.draw_texture_ex(bg, RL::Vector2.new(x: 0, y: 0), 0.0, scale, RL::WHITE)
         end
-        
+
         # Sort characters by Y position for proper depth
         all_characters = @characters.dup
         if player = @player
           all_characters << player
         end
         sorted_characters = all_characters.sort_by(&.position.y)
-        
+
         # Draw scene elements with proper depth sorting
         @hotspots.each(&.draw)
-        
+
         # Draw objects and characters with walk-behind support
         if walkable = @walkable_area
           sorted_characters.each do |character|
             # Draw walk-behind regions that should appear in front
             behind_regions = walkable.get_walk_behind_at_y(character.position.y)
-            
+
             # Draw the character
             character.draw
-            
+
             # Draw walk-behind regions on top if needed
             # (In a full implementation, we'd draw masked background parts here)
           end
-          
+
           # Draw other objects
           @objects.each do |obj|
             obj.draw unless obj.is_a?(Characters::Character)
@@ -263,13 +263,13 @@ module PointClickEngine
           @objects.each(&.draw)
           sorted_characters.each(&.draw)
         end
-        
+
         # Draw navigation debug if enabled
         if Core::Engine.debug_mode
           if @navigation_grid
             draw_navigation_debug
           end
-          
+
           # Draw walkable area debug
           @walkable_area.try(&.draw_debug)
         end
@@ -333,7 +333,7 @@ module PointClickEngine
       # walkable areas. Must be called after loading the background.
       # Only runs if pathfinding is enabled for this scene.
       #
-      # ```crystal
+      # ```
       # scene.load_background("room.png")
       # scene.setup_navigation
       # ```
@@ -350,7 +350,7 @@ module PointClickEngine
 
         @pathfinder = Navigation::Pathfinding.new(@navigation_grid.not_nil!)
       end
-      
+
       # Checks if a point is walkable within the scene
       #
       # Uses the walkable area definition to determine if characters
@@ -368,7 +368,7 @@ module PointClickEngine
           true
         end
       end
-      
+
       # Gets the character scale factor at a specific Y position
       #
       # Uses the walkable area's depth information to determine the
@@ -388,7 +388,7 @@ module PointClickEngine
       # taking into account walkable areas and obstacles.
       #
       # - *start_x* : Starting X coordinate
-      # - *start_y* : Starting Y coordinate  
+      # - *start_y* : Starting Y coordinate
       # - *end_x* : Destination X coordinate
       # - *end_y* : Destination Y coordinate
       #

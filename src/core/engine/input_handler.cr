@@ -10,7 +10,7 @@ module PointClickEngine
       # Handles input processing and click coordination
       class InputHandler
         property handle_clicks : Bool = true
-        
+
         def initialize
         end
 
@@ -24,7 +24,7 @@ module PointClickEngine
 
           # Check if any hotspot was clicked
           clicked_hotspot = scene.get_hotspot_at_position(mouse_pos)
-          
+
           if clicked_hotspot
             clicked_hotspot.on_click.try(&.call)
           else
@@ -60,7 +60,7 @@ module PointClickEngine
 
           mouse_pos = RL.get_mouse_position
           clicked_hotspot = scene.get_hotspot_at_position(mouse_pos)
-          
+
           if clicked_hotspot
             # Show context menu or verb selection for hotspot
             handle_hotspot_context_menu(clicked_hotspot, mouse_pos)

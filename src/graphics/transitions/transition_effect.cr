@@ -8,38 +8,38 @@ module PointClickEngine
       # Available transition effects
       enum TransitionEffect
         # Elegant transitions
-        Fade          # Classic fade to black
-        Dissolve      # Random pixel dissolve
-        SlideLeft     # Slide out to the left
-        SlideRight    # Slide out to the right
-        SlideUp       # Slide out upward
-        SlideDown     # Slide out downward
-        CrossFade     # Smooth cross-fade between scenes
-        
+        Fade       # Classic fade to black
+        Dissolve   # Random pixel dissolve
+        SlideLeft  # Slide out to the left
+        SlideRight # Slide out to the right
+        SlideUp    # Slide out upward
+        SlideDown  # Slide out downward
+        CrossFade  # Smooth cross-fade between scenes
+
         # Cheesy/retro transitions
-        Iris          # Classic iris wipe (circle closing)
-        Pixelate      # Pixelate and fade
-        Swirl         # Swirl/spiral effect
-        Checkerboard  # Checkerboard wipe
-        StarWipe      # Star-shaped wipe
-        HeartWipe     # Heart-shaped wipe (very cheesy!)
-        Curtain       # Theater curtain closing
-        Ripple        # Water ripple effect
-        
+        Iris         # Classic iris wipe (circle closing)
+        Pixelate     # Pixelate and fade
+        Swirl        # Swirl/spiral effect
+        Checkerboard # Checkerboard wipe
+        StarWipe     # Star-shaped wipe
+        HeartWipe    # Heart-shaped wipe (very cheesy!)
+        Curtain      # Theater curtain closing
+        Ripple       # Water ripple effect
+
         # Movie-like transitions
-        Warp          # Space warp distortion
-        Wave          # Ocean wave effect
-        FilmBurn      # Old film burn transition
-        Static        # TV static noise
-        MatrixRain    # Digital rain effect
-        ZoomBlur      # Zoom with motion blur
-        ClockWipe     # Clock hand sweep
-        BarnDoor      # Barn doors closing
-        PageTurn      # Page turning effect
-        Shatter       # Glass shatter effect
-        Vortex        # Spiral vortex effect
-        Fire          # Fire transition effect
-        Glitch        # Digital glitch effect
+        Warp       # Space warp distortion
+        Wave       # Ocean wave effect
+        FilmBurn   # Old film burn transition
+        Static     # TV static noise
+        MatrixRain # Digital rain effect
+        ZoomBlur   # Zoom with motion blur
+        ClockWipe  # Clock hand sweep
+        BarnDoor   # Barn doors closing
+        PageTurn   # Page turning effect
+        Shatter    # Glass shatter effect
+        Vortex     # Spiral vortex effect
+        Fire       # Fire transition effect
+        Glitch     # Digital glitch effect
       end
 
       # Base class for transition effects

@@ -16,16 +16,16 @@ module PointClickEngine
         property duration : Float32 = 1.0f32
         property current_effect_type : TransitionEffect?
         property on_complete : Proc(Nil)?
-        
+
         @render_texture : RL::RenderTexture2D?
         @current_effect : BaseTransitionEffect?
         @width : Int32
         @height : Int32
-        
+
         def initialize(@width : Int32, @height : Int32)
           @render_texture = RL.load_render_texture(@width, @height)
         end
-        
+
         # Start a transition effect
         def start_transition(effect : TransitionEffect, duration : Float32 = 1.0f32, &on_complete : -> Nil)
           @active = true
@@ -33,46 +33,46 @@ module PointClickEngine
           @duration = duration
           @current_effect_type = effect
           @on_complete = on_complete
-          
+
           # Cleanup previous effect
           @current_effect.try(&.cleanup)
-          
+
           # Create new effect instance
           @current_effect = create_effect_instance(effect, duration)
           @current_effect.try(&.load_shader)
         end
-        
+
         # Update transition progress
         def update(dt : Float32)
           return unless @active
-          
+
           @progress += dt / @duration
-          
+
           if @progress >= 1.0f32
             @progress = 1.0f32
             @active = false
             @on_complete.try(&.call)
           end
-          
+
           # Update current effect
           if effect = @current_effect
             effect.progress = @progress
             effect.update_shader_params(@progress)
           end
         end
-        
+
         # Render with transition effect
         def render_with_transition(&block : -> Nil)
           return yield unless @active
           return yield unless texture = @render_texture
           return yield unless effect = @current_effect
           return yield unless shader = effect.shader
-          
+
           # Render scene to texture
           RL.begin_texture_mode(texture)
           yield
           RL.end_texture_mode
-          
+
           # Render texture with shader effect
           RL.begin_shader_mode(shader)
           RL.draw_texture_rec(
@@ -83,7 +83,7 @@ module PointClickEngine
           )
           RL.end_shader_mode
         end
-        
+
         # Stop current transition
         def stop_transition
           @active = false
@@ -91,17 +91,17 @@ module PointClickEngine
           @current_effect.try(&.cleanup)
           @current_effect = nil
         end
-        
+
         # Check if a transition is currently active
         def transitioning? : Bool
           @active
         end
-        
+
         # Get current transition progress (0.0 to 1.0)
         def current_progress : Float32
           @progress
         end
-        
+
         # Set second texture for cross-fade effects
         def set_second_texture(texture : RL::Texture2D)
           if effect = @current_effect
@@ -110,7 +110,7 @@ module PointClickEngine
             end
           end
         end
-        
+
         # Cleanup resources
         def cleanup
           @current_effect.try(&.cleanup)
@@ -119,7 +119,7 @@ module PointClickEngine
             @render_texture = nil
           end
         end
-        
+
         private def create_effect_instance(effect : TransitionEffect, duration : Float32) : BaseTransitionEffect?
           case effect
           when .fade?

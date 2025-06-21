@@ -23,10 +23,10 @@ module PointClickEngine
     # - `visible` - Whether the object should be drawn
     #
     # ## Example
-    # ```crystal
+    # ```
     # class MyObject
     #   include Drawable
-    #   
+    #
     #   def draw
     #     return unless visible
     #     # Custom drawing code here
@@ -39,10 +39,10 @@ module PointClickEngine
 
       # World position of the object (x, y coordinates)
       property position : RL::Vector2 = RL::Vector2.new
-      
+
       # Size of the object (width, height)
       property size : RL::Vector2 = RL::Vector2.new
-      
+
       # Scaling factor applied during rendering (1.0 = normal size)
       property scale : Float32 = 1.0f32
 
@@ -74,7 +74,7 @@ module PointClickEngine
       #
       # Returns `true` if the point is inside the bounds, `false` otherwise
       #
-      # ```crystal
+      # ```
       # if my_object.contains_point?(mouse_position)
       #   puts "Object clicked!"
       # end

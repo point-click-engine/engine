@@ -7,7 +7,7 @@
 #
 # ## Quick Start
 #
-# ```crystal
+# ```
 # require "point_click_engine"
 #
 # # Create a new game
@@ -190,7 +190,7 @@ module PointClickEngine
   # Save system aliases
   alias SaveSystem = Core::SaveSystem
   alias SaveData = Core::SaveData
-  
+
   # Game state and quest system aliases
   alias GameStateManager = Core::GameStateManager
   alias QuestManager = Core::QuestManager

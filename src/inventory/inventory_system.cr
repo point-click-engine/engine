@@ -21,15 +21,15 @@ module PointClickEngine
     # - YAML serialization for save/load functionality
     #
     # ## Usage Example
-    # ```crystal
+    # ```
     # inventory = InventorySystem.new(Vector2.new(10, 10))
     # inventory.add_item(key_item)
     # inventory.add_item(potion_item)
-    # 
+    #
     # inventory.on_item_used = ->(item : InventoryItem, target : String) {
     #   handle_item_usage(item, target)
     # }
-    # 
+    #
     # inventory.on_items_combined = ->(item1, item2, action) {
     #   create_combined_item(item1, item2, action)
     # }
@@ -43,10 +43,10 @@ module PointClickEngine
 
       # Collection of items currently in the inventory
       property items : Array(InventoryItem) = [] of InventoryItem
-      
+
       # Size of each inventory slot in pixels
       property slot_size : Float32 = 64.0
-      
+
       # Padding between inventory slots in pixels
       property padding : Float32 = 8.0
 
@@ -56,19 +56,19 @@ module PointClickEngine
 
       # Name of currently selected item for serialization
       property selected_item_name : String?
-      
+
       # Reference to currently selected item (runtime only)
       @[YAML::Field(ignore: true)]
       property selected_item : InventoryItem?
-      
+
       # Whether the system is in combination mode (runtime only)
       @[YAML::Field(ignore: true)]
       property combination_mode : Bool = false
-      
+
       # Callback for when an item is used on a target (runtime only)
       @[YAML::Field(ignore: true)]
       property on_item_used : Proc(InventoryItem, String, Nil)?
-      
+
       # Callback for when two items are combined (runtime only)
       @[YAML::Field(ignore: true)]
       property on_items_combined : Proc(InventoryItem, InventoryItem, String?, Nil)?
@@ -158,7 +158,7 @@ module PointClickEngine
       def get_item(name : String) : InventoryItem?
         @items.find { |i| i.name == name }
       end
-      
+
       # Gets the item at a specific screen position
       #
       # Used for mouse interaction to determine which item was clicked.
@@ -169,14 +169,14 @@ module PointClickEngine
       # Returns: The item at that position, or `nil` if none found
       def get_item_at_position(pos : RL::Vector2) : InventoryItem?
         return nil unless @visible
-        
+
         @items.each_with_index do |item, index|
           item_rect = get_item_rect(index)
           if RL.check_collision_point_rec?(pos, item_rect)
             return item
           end
         end
-        
+
         nil
       end
 
@@ -214,13 +214,13 @@ module PointClickEngine
         # Get the game coordinates from the display manager
         raw_mouse_pos = RL.get_mouse_position
         mouse_pos = raw_mouse_pos
-        
+
         if engine = Core::Engine.instance
           if dm = engine.display_manager
             mouse_pos = dm.screen_to_game(raw_mouse_pos)
           end
         end
-        
+
         if RL::MouseButton::Left.pressed?
           @items.each_with_index do |item, index|
             item_rect = get_item_rect(index)

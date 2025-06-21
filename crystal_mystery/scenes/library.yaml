@@ -43,32 +43,12 @@ hotspots:
     width: 150
     height: 300
     description: "Ancient books line the shelves"
-    items:
-      - research_notes
   - name: desk
     x: 400
     y: 400
     width: 200
     height: 150
     description: "A mahogany desk with scattered papers"
-  - name: ancient_tome
-    x: 700
-    y: 150
-    width: 100
-    height: 50
-    description: "A mysterious ancient book about crystals"
-  - name: globe
-    x: 320
-    y: 360
-    width: 60
-    height: 60
-    description: "An ornate celestial globe"
-  - name: candlestick
-    x: 650
-    y: 380
-    width: 40
-    height: 80
-    description: "An old brass candlestick"
   - name: door_to_lab
     type: exit
     x: 850

@@ -84,7 +84,7 @@ module PointClickEngine
         def update_shader_params(progress : Float32)
           return unless shader = @shader
           ShaderLoader.set_progress(shader, progress)
-          
+
           if texture = @second_texture
             ShaderLoader.set_shader_texture_uniform(shader, "texture1", texture, 1)
           end
@@ -126,16 +126,16 @@ module PointClickEngine
         def update_shader_params(progress : Float32)
           return unless shader = @shader
           ShaderLoader.set_progress(shader, progress)
-          
+
           # Set direction vector based on slide direction
           dir_vector = case @direction
-                      when .left?  then RL::Vector2.new(x: -1.0f32, y: 0.0f32)
-                      when .right? then RL::Vector2.new(x: 1.0f32, y: 0.0f32)
-                      when .up?    then RL::Vector2.new(x: 0.0f32, y: -1.0f32)
-                      when .down?  then RL::Vector2.new(x: 0.0f32, y: 1.0f32)
-                      else              RL::Vector2.new(x: 0.0f32, y: 0.0f32)
-                      end
-          
+                       when .left?  then RL::Vector2.new(x: -1.0f32, y: 0.0f32)
+                       when .right? then RL::Vector2.new(x: 1.0f32, y: 0.0f32)
+                       when .up?    then RL::Vector2.new(x: 0.0f32, y: -1.0f32)
+                       when .down?  then RL::Vector2.new(x: 0.0f32, y: 1.0f32)
+                       else              RL::Vector2.new(x: 0.0f32, y: 0.0f32)
+                       end
+
           ShaderLoader.set_direction(shader, dir_vector)
         end
 

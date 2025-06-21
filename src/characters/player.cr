@@ -19,12 +19,12 @@ module PointClickEngine
     # ```
     # player = Player.new("Simon", position, size)
     # player.load_enhanced_spritesheet("simon_8dir.png", 32, 64, 8, 4)
-    # player.walk_to(target)  # Automatically selects appropriate direction
+    # player.walk_to(target) # Automatically selects appropriate direction
     # player.perform_action(AnimationState::PickingUp, item_position)
     # ```
     class Player < EnhancedCharacter
       include Talkable
-      
+
       property inventory_access : Bool = true
       property movement_enabled : Bool = true
 
@@ -72,23 +72,23 @@ module PointClickEngine
       # Enhanced click handling with proper animations
       def handle_click(mouse_pos : RL::Vector2, scene : Scenes::Scene)
         return unless @movement_enabled
-        
+
         # Check if the target is walkable
         return unless scene.is_walkable?(mouse_pos)
-        
+
         # Start walking with enhanced animations
         walk_to(mouse_pos)
       end
-      
+
       # Perform specific action with appropriate animation
       def use_item_on_target(target_position : RL::Vector2)
         perform_action(AnimationState::Using, target_position)
       end
-      
+
       def pick_up_item(item_position : RL::Vector2)
         perform_action(AnimationState::PickingUp, item_position)
       end
-      
+
       def examine_object(object_position : RL::Vector2)
         # Look in direction of object
         direction_vec = RL::Vector2.new(
@@ -98,22 +98,22 @@ module PointClickEngine
         direction = Direction8.from_velocity(direction_vec)
         play_enhanced_animation(AnimationState::Idle, direction)
       end
-      
+
       def push_object(object_position : RL::Vector2)
         perform_action(AnimationState::Pushing, object_position)
       end
-      
+
       def pull_object(object_position : RL::Vector2)
         perform_action(AnimationState::Pulling, object_position)
       end
-      
+
       # Enhanced walking with pathfinding
       def walk_to_with_path(path : Array(RL::Vector2))
         return if path.empty?
-        
+
         @path = path
         @current_path_index = 0
-        
+
         if path.size > 1
           # Calculate initial direction from first two waypoints
           velocity = RL::Vector2.new(
@@ -122,10 +122,10 @@ module PointClickEngine
           )
           @enhanced_direction = Direction8.from_velocity(velocity)
         end
-        
+
         walk_to(path.first)
       end
-      
+
       # Override stop_walking to return to idle properly
       def stop_walking
         super
@@ -161,12 +161,12 @@ module PointClickEngine
         @animation_controller.add_idle_variation("check_inventory", 100, 8, 0.15)
         @animation_controller.add_idle_variation("look_around", 108, 6, 0.2)
         @animation_controller.add_idle_variation("tap_foot", 114, 4, 0.25)
-        
+
         # Add action animations (assuming they start after walking animations)
         # Walking: frames 0-31 (8 directions × 4 frames)
         # Talking: frames 32-47 (8 directions × 2 frames)
         @animation_controller.add_directional_animation("talk", 32, 2, 0.3)
-        
+
         # Action animations (single direction, will be mirrored/rotated as needed)
         @animation_controller.add_animation("pickup", 48, 6, 0.15, false, 5, true, true)
         @animation_controller.add_animation("use", 54, 4, 0.2, false, 5, true, true)

@@ -4,7 +4,7 @@ require "raylib-cr"
 require "yaml"
 
 # Extend Vector2 with YAML support
-struct RL::Vector2
+struct Raylib::Vector2
   include YAML::Serializable
 
   # Keep the original constructors
@@ -22,7 +22,7 @@ module PointClickEngine
     module YAMLConverters
       # YAML::Field converter for Vector2
       module Vector2Converter
-        def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : RL::Vector2
+        def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Raylib::Vector2
           case node
           when YAML::Nodes::Mapping
             x = y = 0.0f32
@@ -42,13 +42,13 @@ module PointClickEngine
                 end
               end
             end
-            RL::Vector2.new(x: x, y: y)
+            Raylib::Vector2.new(x: x, y: y)
           else
-            RL::Vector2.new(x: 0.0f32, y: 0.0f32)
+            Raylib::Vector2.new(x: 0.0f32, y: 0.0f32)
           end
         end
 
-        def self.to_yaml(value : RL::Vector2, yaml : YAML::Nodes::Builder) : Nil
+        def self.to_yaml(value : Raylib::Vector2, yaml : YAML::Nodes::Builder) : Nil
           yaml.mapping do
             yaml.scalar "x"
             yaml.scalar value.x.to_s
@@ -60,7 +60,7 @@ module PointClickEngine
 
       # YAML::Field converter for Color
       module ColorConverter
-        def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : RL::Color
+        def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Raylib::Color
           case node
           when YAML::Nodes::Mapping
             r = g = b = 0_u8
@@ -85,13 +85,13 @@ module PointClickEngine
                 end
               end
             end
-            RL::Color.new(r: r, g: g, b: b, a: a)
+            Raylib::Color.new(r: r, g: g, b: b, a: a)
           else
-            RL::Color.new(r: 255_u8, g: 255_u8, b: 255_u8, a: 255_u8)
+            Raylib::Color.new(r: 255_u8, g: 255_u8, b: 255_u8, a: 255_u8)
           end
         end
 
-        def self.to_yaml(value : RL::Color, yaml : YAML::Nodes::Builder) : Nil
+        def self.to_yaml(value : Raylib::Color, yaml : YAML::Nodes::Builder) : Nil
           yaml.mapping do
             yaml.scalar "r"
             yaml.scalar value.r.to_s
@@ -106,43 +106,43 @@ module PointClickEngine
       end
 
       # Helper to convert Vector2 to/from YAML
-      def self.vector2_to_yaml(vec : RL::Vector2) : String
+      def self.vector2_to_yaml(vec : Raylib::Vector2) : String
         {"x" => vec.x, "y" => vec.y}.to_yaml
       end
 
-      def self.vector2_from_yaml(yaml_string : String) : RL::Vector2
+      def self.vector2_from_yaml(yaml_string : String) : Raylib::Vector2
         data = Hash(String, Float32 | Float64).from_yaml(yaml_string)
-        RL::Vector2.new(x: data["x"].to_f32, y: data["y"].to_f32)
+        Raylib::Vector2.new(x: data["x"].to_f32, y: data["y"].to_f32)
       end
 
       # Helper to convert Color to/from YAML
-      def self.color_to_yaml(color : RL::Color) : String
+      def self.color_to_yaml(color : Raylib::Color) : String
         {"r" => color.r, "g" => color.g, "b" => color.b, "a" => color.a}.to_yaml
       end
 
-      def self.color_from_yaml(yaml_string : String) : RL::Color
+      def self.color_from_yaml(yaml_string : String) : Raylib::Color
         data = Hash(String, Int32).from_yaml(yaml_string)
-        RL::Color.new(r: data["r"].to_u8, g: data["g"].to_u8, b: data["b"].to_u8, a: data["a"].to_u8)
+        Raylib::Color.new(r: data["r"].to_u8, g: data["g"].to_u8, b: data["b"].to_u8, a: data["a"].to_u8)
       end
 
       # Helper to convert Rectangle to/from YAML
-      def self.rectangle_to_yaml(rect : RL::Rectangle) : String
+      def self.rectangle_to_yaml(rect : Raylib::Rectangle) : String
         {"x" => rect.x, "y" => rect.y, "width" => rect.width, "height" => rect.height}.to_yaml
       end
 
-      def self.rectangle_from_yaml(yaml_string : String) : RL::Rectangle
+      def self.rectangle_from_yaml(yaml_string : String) : Raylib::Rectangle
         data = Hash(String, Float32 | Float64).from_yaml(yaml_string)
-        RL::Rectangle.new(x: data["x"].to_f32, y: data["y"].to_f32, width: data["width"].to_f32, height: data["height"].to_f32)
+        Raylib::Rectangle.new(x: data["x"].to_f32, y: data["y"].to_f32, width: data["width"].to_f32, height: data["height"].to_f32)
       end
 
       # Helper to convert Array(Vector2) to/from YAML
-      def self.vector2_array_to_yaml(array : Array(RL::Vector2)) : String
+      def self.vector2_array_to_yaml(array : Array(Raylib::Vector2)) : String
         array.map { |v| {"x" => v.x, "y" => v.y} }.to_yaml
       end
 
-      def self.vector2_array_from_yaml(yaml_string : String) : Array(RL::Vector2)
+      def self.vector2_array_from_yaml(yaml_string : String) : Array(Raylib::Vector2)
         data = Array(Hash(String, Float32 | Float64)).from_yaml(yaml_string)
-        data.map { |h| RL::Vector2.new(x: h["x"].to_f32, y: h["y"].to_f32) }
+        data.map { |h| Raylib::Vector2.new(x: h["x"].to_f32, y: h["y"].to_f32) }
       end
     end
   end

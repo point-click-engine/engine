@@ -3,6 +3,7 @@
 require "raylib-cr"
 require "yaml"
 require "../utils/yaml_converters"
+require "../core/game_object"
 
 module PointClickEngine
   module Characters
@@ -23,7 +24,7 @@ module PointClickEngine
     # animation variants are played (e.g., "walk_left" vs "walk_right").
     enum Direction
       Left  # Character is facing left
-      Right # Character is facing right  
+      Right # Character is facing right
       Up    # Character is facing up/away
       Down  # Character is facing down/toward camera
     end
@@ -41,23 +42,23 @@ module PointClickEngine
     # for a specific character animation sequence.
     struct AnimationData
       include YAML::Serializable
-      
+
       # First frame index in the animation sequence
       property start_frame : Int32
-      
+
       # Number of frames in the animation
       property frame_count : Int32
-      
+
       # Time between frames in seconds (lower = faster)
       property frame_speed : Float32
-      
+
       # Whether the animation should loop continuously
       property loop : Bool
 
       # Creates animation data with specified parameters
       #
       # - *start_frame* : First frame index (default: 0)
-      # - *frame_count* : Number of frames (default: 1) 
+      # - *frame_count* : Number of frames (default: 1)
       # - *frame_speed* : Seconds per frame (default: 0.1)
       # - *loop* : Whether to loop (default: true)
       def initialize(@start_frame : Int32 = 0, @frame_count : Int32 = 1,
@@ -84,7 +85,7 @@ module PointClickEngine
     # character state and facing direction.
     #
     # ## Usage Example
-    # ```crystal
+    # ```
     # class MyCharacter < Character
     #   def initialize(name, position)
     #     super(name, position, Vector2.new(64, 64))
@@ -103,16 +104,16 @@ module PointClickEngine
     abstract class Character < Core::GameObject
       # The character's unique name identifier
       property name : String
-      
+
       # Descriptive text shown when examining the character
       property description : String
-      
+
       # Current behavioral state (idle, walking, talking, etc.)
       property state : CharacterState = CharacterState::Idle
-      
+
       # Current facing direction for sprite selection
       property direction : Direction = Direction::Right
-      
+
       # Movement speed in pixels per second
       property walking_speed : Float32 = 100.0
 
@@ -123,21 +124,21 @@ module PointClickEngine
       # Pathfinding waypoints for navigation (runtime only)
       @[YAML::Field(ignore: true)]
       property path : Array(RL::Vector2)?
-      
+
       # Current waypoint index when following a path (runtime only)
       @[YAML::Field(ignore: true)]
       property current_path_index : Int32 = 0
 
       # Whether to use pathfinding for movement (true = smart navigation)
       property use_pathfinding : Bool = true
-      
+
       # Callback executed when character finishes walking (runtime only)
       @[YAML::Field(ignore: true)]
       property on_walk_complete : Proc(Nil)?
 
       # Dialogue system data for this character
       property dialogue_system_data : Dialogue::CharacterDialogue?
-      
+
       # Delegate dialogue methods to the dialogue system
       @[YAML::Field(ignore: true)]
       delegate dialogue_system, to: @dialogue_system_data
@@ -161,13 +162,13 @@ module PointClickEngine
 
       # Name of the currently playing animation
       property current_animation : String = "idle"
-      
+
       # Collection of defined animations by name
       property animations : Hash(String, AnimationData) = {} of String => AnimationData
 
       # Name of character currently in conversation with (for serialization)
       property conversation_partner_name : String?
-      
+
       # Reference to character currently in conversation with (runtime only)
       @[YAML::Field(ignore: true)]
       property conversation_partner : Character?
@@ -218,7 +219,7 @@ module PointClickEngine
       # - *frame_width* : Width of each frame in pixels
       # - *frame_height* : Height of each frame in pixels
       #
-      # ```crystal
+      # ```
       # character.load_spritesheet("hero.png", 32, 48)
       # ```
       def load_spritesheet(path : String, frame_width : Int32, frame_height : Int32)
@@ -240,7 +241,7 @@ module PointClickEngine
       # - *frame_speed* : Time between frames in seconds (default: 0.1)
       # - *loop* : Whether animation should loop (default: true)
       #
-      # ```crystal
+      # ```
       # character.add_animation("walk_right", 8, 4, 0.15)
       # character.add_animation("idle", 0, 1, 0.1, false)
       # ```
@@ -257,7 +258,7 @@ module PointClickEngine
       # - *name* : Name of the animation to play
       # - *force_restart* : Whether to restart if already playing (default: true)
       #
-      # ```crystal
+      # ```
       # character.play_animation("walk_left")
       # character.play_animation("idle", force_restart: false)
       # ```
@@ -285,7 +286,7 @@ module PointClickEngine
       #
       # - *target* : World position to walk to
       #
-      # ```crystal
+      # ```
       # character.walk_to(Vector2.new(200, 300))
       # ```
       def walk_to(target : RL::Vector2)
@@ -313,7 +314,7 @@ module PointClickEngine
       #
       # - *path* : Array of waypoints to follow
       #
-      # ```crystal
+      # ```
       # waypoints = scene.find_path(start_x, start_y, end_x, end_y)
       # character.walk_to_with_path(waypoints) if waypoints
       # ```
@@ -348,10 +349,10 @@ module PointClickEngine
         base_idle_anim = @direction == Direction::Left ? "idle_left" : "idle_right"
         play_animation(base_idle_anim) if @animations.has_key?(base_idle_anim)
         play_animation("idle") if !@animations.has_key?(base_idle_anim) && @animations.has_key?("idle")
-        
+
         # Call completion callback if set
         if callback = @on_walk_complete
-          @on_walk_complete = nil  # Clear callback to prevent double calls
+          @on_walk_complete = nil # Clear callback to prevent double calls
           callback.call
         end
       end
@@ -365,7 +366,7 @@ module PointClickEngine
       # - *text* : The dialogue text to display
       # - *block* : Callback to execute when dialogue finishes
       #
-      # ```crystal
+      # ```
       # character.say("Hello, adventurer!") do
       #   puts "Dialogue completed"
       # end
@@ -393,10 +394,10 @@ module PointClickEngine
       # - *question* : The question text to display
       # - *choices* : Array of (response_text, callback) tuples
       #
-      # ```crystal
+      # ```
       # character.ask("What do you want?", [
-      #   {"Trade", ->{ start_trading }},
-      #   {"Nothing", ->{ end_conversation }}
+      #   {"Trade", -> { start_trading }},
+      #   {"Nothing", -> { end_conversation }},
       # ])
       # ```
       def ask(question : String, choices : Array(Tuple(String, Proc(Nil))))
@@ -430,7 +431,7 @@ module PointClickEngine
       # dialogue bubbles, and debug information when enabled.
       def draw
         return unless @visible
-        
+
         # Apply character scale to sprite
         if sprite = @sprite_data
           old_scale = sprite.scale
@@ -438,7 +439,7 @@ module PointClickEngine
           sprite.draw
           sprite.scale = old_scale
         end
-        
+
         @dialogue_system_data.try &.draw
 
         if Core::Engine.debug_mode
@@ -467,19 +468,19 @@ module PointClickEngine
       #
       # - *interactor* : The character performing the interaction
       abstract def on_interact(interactor : Character)
-      
+
       # Called when this character is examined/looked at
       #
       # Implement this method to provide descriptive text or trigger
       # examination-specific behavior.
       abstract def on_look
-      
+
       # Called when this character is talked to
       #
       # Implement this method to initiate conversation or provide
       # talk-specific responses.
       abstract def on_talk
-      
+
       # Get the current scene from the engine
       private def get_current_scene : Scenes::Scene?
         Core::Engine.instance.current_scene
@@ -511,7 +512,7 @@ module PointClickEngine
             x: @position.x + normalized_dir_x * @walking_speed * dt,
             y: @position.y + normalized_dir_y * @walking_speed * dt
           )
-          
+
           # Check if new position is walkable
           if scene = get_current_scene
             if scene.is_walkable?(new_position)
@@ -600,7 +601,7 @@ module PointClickEngine
           x: @position.x + normalized_dir_x * @walking_speed * dt,
           y: @position.y + normalized_dir_y * @walking_speed * dt
         )
-        
+
         # Check walkable area for pathfinding movement too
         if scene = get_current_scene
           if scene.is_walkable?(new_position)

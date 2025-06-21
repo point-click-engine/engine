@@ -31,24 +31,24 @@ module PointClickEngine
         dialog.visible = true
 
         @current_dialog = dialog
-        
+
         # Show portrait if enabled and character name is provided
         if @enable_portraits && !character_name.empty?
           @portrait_manager.show_portrait(character_name, expression)
           @portrait_manager.start_talking
         end
       end
-      
+
       # Show floating dialog above character position
-      def show_floating_dialog(character_name : String, text : String, character_pos : RL::Vector2, 
-                              duration : Float32? = nil, style : DialogStyle = DialogStyle::Bubble)
+      def show_floating_dialog(character_name : String, text : String, character_pos : RL::Vector2,
+                               duration : Float32? = nil, style : DialogStyle = DialogStyle::Bubble)
         return unless @enable_floating
         @floating_manager.show_dialog(character_name, text, character_pos, duration, style)
       end
-      
+
       # Show floating dialog for character (convenience method)
-      def show_character_dialog(character_name : String, text : String, character_pos : RL::Vector2, 
-                               style : DialogStyle = DialogStyle::Bubble)
+      def show_character_dialog(character_name : String, text : String, character_pos : RL::Vector2,
+                                style : DialogStyle = DialogStyle::Bubble)
         if @enable_floating
           @floating_manager.show_dialog(character_name, text, character_pos, nil, style)
         elsif @enable_portraits
@@ -98,22 +98,22 @@ module PointClickEngine
         @portrait_manager.stop_talking
         @portrait_manager.hide_portrait
       end
-      
+
       # Add a character portrait
       def add_character_portrait(character_name : String, texture_path : String) : DialogPortrait
         @portrait_manager.add_portrait(character_name, texture_path)
       end
-      
+
       # Set expression for current speaker
       def set_speaker_expression(expression : PortraitExpression)
         @portrait_manager.set_expression(expression)
       end
-      
+
       # Configure portrait positioning
       def set_portrait_position(position : PortraitPosition)
         @portrait_manager.default_position = position
       end
-      
+
       # Toggle portrait system
       def toggle_portraits(enabled : Bool)
         @enable_portraits = enabled
@@ -121,7 +121,7 @@ module PointClickEngine
           @portrait_manager.hide_portrait
         end
       end
-      
+
       # Cleanup resources
       def cleanup
         @portrait_manager.cleanup
