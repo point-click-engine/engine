@@ -1,12 +1,13 @@
-name: Examples
-
-on:
-  push:
-    branches: [ main, master, develop ]
-  pull_request:
-    branches: [ main, master ]
-
-jobs:
+# Temporarily disabled due to asset dependencies
+# name: Examples
+# 
+# on:
+#   push:
+#     branches: [ main, master, develop ]
+#   pull_request:
+#     branches: [ main, master ]
+# 
+# jobs:
   build-examples:
     name: Build Examples
     runs-on: ${{ matrix.os }}

@@ -1,0 +1,46 @@
+# Spanish translations
+menu.new_game: "Nueva Partida"
+menu.continue: "Continuar"
+menu.options: "Opciones"
+menu.quit: "Salir"
+
+game.loading: "Cargando..."
+game.saving: "Guardando..."
+game.paused: "Juego en Pausa"
+
+inventory.title: "Inventario"
+inventory.empty: "Tu inventario está vacío"
+inventory.items:
+  one: "{{count}} objeto"
+  other: "{{count}} objetos"
+
+dialog.skip: "Presiona ESC para saltar"
+dialog.continue: "Haz clic para continuar"
+
+character.player.name: "Héroe"
+character.npc.guard: "Guardia"
+character.npc.merchant: "Mercader"
+
+item.key: "Llave"
+item.key.description: "Una vieja llave oxidada"
+item.potion: "Poción de Salud"
+item.potion.description: "Restaura {{amount}} puntos de salud"
+
+action.use: "Usar"
+action.look: "Mirar"
+action.talk: "Hablar con"
+action.pickup: "Recoger"
+action.combine: "Combinar con"
+
+message.locked: "Está cerrado"
+message.cant_use: "No puedo usar eso aquí"
+message.nothing_happens: "No pasa nada"
+message.already_have: "Ya tengo eso"
+
+cutscene.skip_prompt: "Presiona ESPACIO o ESC para saltar"
+
+settings.language: "Idioma"
+settings.volume: "Volumen"
+settings.fullscreen: "Pantalla completa"
+settings.apply: "Aplicar"
+settings.cancel: "Cancelar"

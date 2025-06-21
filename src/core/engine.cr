@@ -50,10 +50,33 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property event_system : Scripting::EventSystem = Scripting::EventSystem.new
 
+      # Additional managers
+      @[YAML::Field(ignore: true)]
+      property dialog_manager : UI::DialogManager?
+      @[YAML::Field(ignore: true)]
+      property achievement_manager : Core::AchievementManager?
+      @[YAML::Field(ignore: true)]
+      property audio_manager : Audio::AudioManager?
+      @[YAML::Field(ignore: true)]
+      property shader_system : Graphics::Shaders::ShaderSystem?
+      @[YAML::Field(ignore: true)]
+      property gui : UI::GUIManager?
+      @[YAML::Field(ignore: true)]
+      property config : Core::ConfigManager?
+      @[YAML::Field(ignore: true)]
+      property player : Characters::Player?
+
+      # Cutscene system
+      @[YAML::Field(ignore: true)]
+      property cutscene_manager : Cutscenes::CutsceneManager = Cutscenes::CutsceneManager.new
+
+      @ui_visible : Bool = true
+
       def initialize(@window_width : Int32, @window_height : Int32, @title : String)
         @inventory = Inventory::InventorySystem.new(RL::Vector2.new(x: 10, y: @window_height - 80))
         @scenes = {} of String => Scenes::Scene
         @dialogs = [] of UI::Dialog
+        @cutscene_manager = Cutscenes::CutsceneManager.new
         @@instance = self
       end
 
@@ -64,6 +87,7 @@ module PointClickEngine
         @inventory = Inventory::InventorySystem.new(RL::Vector2.new(x: 10, y: 520))
         @scenes = {} of String => Scenes::Scene
         @dialogs = [] of UI::Dialog
+        @cutscene_manager = Cutscenes::CutsceneManager.new
         @@instance = self
       end
 
@@ -90,6 +114,14 @@ module PointClickEngine
         return if @initialized
 
         RL.init_window(@window_width, @window_height, @title)
+        init_engine_systems
+      end
+
+      def init(width : Int32, height : Int32, title : String)
+        @window_width = width
+        @window_height = height
+        @title = title
+        init
 
         monitor = RL.get_current_monitor
         screen_width = RL.get_monitor_width(monitor)
@@ -129,6 +161,8 @@ module PointClickEngine
 
       def add_scene(scene : Scenes::Scene)
         @scenes[scene.name] = scene
+        # Setup navigation grid when scene is added
+        scene.setup_navigation if scene.enable_pathfinding
       end
 
       # Archive management methods
@@ -146,12 +180,22 @@ module PointClickEngine
           @current_scene = new_scene
           @current_scene_name = name
           new_scene.enter
+          # Setup navigation when scene becomes active
+          new_scene.setup_navigation if new_scene.enable_pathfinding && !new_scene.navigation_grid
         end
       end
 
       def show_dialog(dialog : UI::Dialog)
         dialog.show
         @dialogs << dialog unless @dialogs.includes?(dialog)
+      end
+
+      def show_ui
+        @ui_visible = true
+      end
+
+      def hide_ui
+        @ui_visible = false
       end
 
       def run
@@ -253,24 +297,42 @@ module PointClickEngine
         # Process events first
         @event_system.process_events
 
-        @current_scene.try &.update(dt)
-        @inventory.update(dt)
-        @dialogs.each(&.update(dt))
-        @dialogs.reject! { |d| !d.visible }
+        # Update cutscenes
+        @cutscene_manager.update(dt)
 
-        if RL::KeyboardKey::I.pressed?
-          @inventory.visible = !@inventory.visible
+        # Skip cutscene on ESC or Space
+        if @cutscene_manager.is_playing?
+          if Raylib.key_pressed?(Raylib::KeyboardKey::Escape) || Raylib.key_pressed?(Raylib::KeyboardKey::Space)
+            @cutscene_manager.skip_current
+          end
         end
 
-        if RL::KeyboardKey::F1.pressed?
-          Engine.debug_mode = !Engine.debug_mode
-        end
+        # Only update game logic if not in cutscene
+        unless @cutscene_manager.is_playing?
+          @current_scene.try &.update(dt)
+          @inventory.update(dt) if @ui_visible
 
-        if RL::MouseButton::Left.pressed?
-          handle_click(mouse_pos)
-        end
+          # Update additional managers
+          @dialog_manager.try &.update(dt)
+          @gui.try &.update(dt)
+          @achievement_manager.try &.update(dt)
+          @dialogs.each(&.update(dt))
+          @dialogs.reject! { |d| !d.visible }
 
-        update_cursor
+          if RL::KeyboardKey::I.pressed?
+            @inventory.visible = !@inventory.visible
+          end
+
+          if RL::KeyboardKey::F1.pressed?
+            Engine.debug_mode = !Engine.debug_mode
+          end
+
+          if RL::MouseButton::Left.pressed?
+            handle_click(mouse_pos)
+          end
+
+          update_cursor
+        end
       end
 
       private def handle_click(game_mouse_pos : RL::Vector2)
@@ -283,7 +345,17 @@ module PointClickEngine
             character.on_interact(player)
           end
         elsif player = scene.player
-          player.handle_click(game_mouse_pos, scene)
+          # Use pathfinding if available
+          if player.use_pathfinding && scene.enable_pathfinding
+            if path = scene.find_path(player.position.x, player.position.y, game_mouse_pos.x, game_mouse_pos.y)
+              player.walk_to_with_path(path)
+            else
+              # No path found, try direct movement
+              player.walk_to(game_mouse_pos)
+            end
+          else
+            player.handle_click(game_mouse_pos, scene)
+          end
         end
       end
 
@@ -318,8 +390,20 @@ module PointClickEngine
 
       private def draw_game_content
         @current_scene.try &.draw
-        @inventory.draw
-        @dialogs.each(&.draw)
+
+        # Draw UI only if visible and not in cutscene
+        if @ui_visible && !@cutscene_manager.is_playing?
+          @inventory.draw
+          @dialogs.each(&.draw)
+          @dialog_manager.try &.draw
+          @gui.try &.draw
+        end
+
+        # Draw achievements notifications
+        @achievement_manager.try &.draw
+
+        # Draw cutscene overlays
+        @cutscene_manager.draw
 
         if cursor = @cursor_texture
           if dm = @display_manager
@@ -334,6 +418,12 @@ module PointClickEngine
         if Engine.debug_mode
           draw_debug_info
         end
+
+        # Draw cutscene skip prompt
+        if @cutscene_manager.is_playing?
+          skip_text = t("cutscene.skip_prompt", default: "Press ESC or SPACE to skip")
+          RL.draw_text(skip_text, 10, RL.get_screen_height - 30, 16, RL::WHITE)
+        end
       end
 
       private def draw_debug_info
@@ -343,6 +433,11 @@ module PointClickEngine
           game_mouse = dm.screen_to_game(raw_mouse)
           RL.draw_text("Game Mouse: #{game_mouse.x.to_i}, #{game_mouse.y.to_i}", 10, 35, 20, RL::GREEN)
           RL.draw_text("Resolution: #{Graphics::DisplayManager::REFERENCE_WIDTH}x#{Graphics::DisplayManager::REFERENCE_HEIGHT}", 10, 60, 20, RL::GREEN)
+
+          # Draw navigation debug
+          if RL.key_down?(RL::KeyboardKey::N.to_i)
+            @current_scene.try &.draw_navigation_debug
+          end
         end
       end
 
@@ -406,6 +501,26 @@ module PointClickEngine
           puts "Failed to initialize scripting engine: #{ex.message}"
           @script_engine = nil
         end
+      end
+
+      private def init_engine_systems
+        # Initialize audio manager if not already set
+        @audio_manager ||= Audio::AudioManager.new if Audio::AudioManager.available?
+
+        # Initialize shader system
+        @shader_system ||= Graphics::Shaders::ShaderSystem.new
+
+        # Initialize GUI manager
+        @gui ||= UI::GUIManager.new
+
+        # Initialize dialog manager
+        @dialog_manager ||= UI::DialogManager.new
+
+        # Initialize achievement manager
+        @achievement_manager ||= Core::AchievementManager.new
+
+        # Initialize config manager
+        @config ||= Core::ConfigManager.new
       end
     end
 

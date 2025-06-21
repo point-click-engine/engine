@@ -1,0 +1,38 @@
+name: library
+background_path: assets/backgrounds/library.png
+enable_pathfinding: true
+navigation_cell_size: 16
+script_path: scripts/library.lua
+hotspots:
+  - name: bookshelf
+    x: 100
+    y: 200
+    width: 150
+    height: 300
+    description: "Ancient books line the shelves"
+  - name: desk
+    x: 400
+    y: 400
+    width: 200
+    height: 150
+    description: "A mahogany desk with scattered papers"
+  - name: door_to_lab
+    x: 850
+    y: 300
+    width: 100
+    height: 200
+    description: "Door to the laboratory"
+  - name: painting
+    x: 500
+    y: 100
+    width: 120
+    height: 150
+    description: "A portrait of the mansion's founder"
+characters:
+  - name: butler
+    position:
+      x: 300
+      y: 450
+    sprite_info:
+      frame_width: 64
+      frame_height: 128

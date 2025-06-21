@@ -2,6 +2,8 @@
 
 require "raylib-cr"
 require "yaml"
+require "./shaders/shader_system"
+require "./shaders/shader_helpers"
 
 module PointClickEngine
   module Graphics
@@ -19,6 +21,9 @@ module PointClickEngine
       property offset_y : Float32 = 0.0
       property scaling_mode : ScalingMode = ScalingMode::FitWithBars
       property render_texture : RL::RenderTexture2D?
+      property shader_system : Shaders::ShaderSystem
+      property post_processing_enabled : Bool = false
+      property active_post_process : Symbol?
 
       enum ScalingMode
         FitWithBars  # Maintains aspect ratio with black bars
@@ -29,8 +34,10 @@ module PointClickEngine
       end
 
       def initialize(@target_width : Int32, @target_height : Int32)
+        @shader_system = Shaders::ShaderSystem.new
         calculate_scaling
         setup_render_texture
+        setup_default_shaders
       end
 
       def calculate_scaling
@@ -105,8 +112,18 @@ module PointClickEngine
             height: REFERENCE_HEIGHT * @scale_factor
           )
 
+          # Apply post-processing if enabled
+          if @post_processing_enabled && @active_post_process
+            @shader_system.set_active(@active_post_process.not_nil!)
+            @shader_system.begin_mode
+          end
+
           RL.draw_texture_pro(rt.texture, source_rect, dest_rect,
             RL::Vector2.new(x: 0, y: 0), 0.0, RL::WHITE)
+
+          if @post_processing_enabled && @active_post_process
+            @shader_system.end_mode
+          end
 
           if Core::Engine.debug_mode
             draw_debug_info
@@ -120,6 +137,25 @@ module PointClickEngine
         if rt = @render_texture
           RL.unload_render_texture(rt)
         end
+        @shader_system.cleanup
+      end
+
+      def enable_post_processing(effect : Symbol)
+        if @shader_system.get_shader(effect)
+          @post_processing_enabled = true
+          @active_post_process = effect
+        else
+          raise "Post-processing effect #{effect} not found"
+        end
+      end
+
+      def disable_post_processing
+        @post_processing_enabled = false
+        @active_post_process = nil
+      end
+
+      def update_shader_value(shader : Symbol, uniform : String, value)
+        @shader_system.set_value(shader, uniform, value)
       end
 
       private def calculate_fit_scaling(target_aspect : Float32)
@@ -190,12 +226,29 @@ module PointClickEngine
 
         RL.draw_text(info_text, 10, 10, 16, RL::GREEN)
 
+        if @post_processing_enabled && @active_post_process
+          RL.draw_text("Post-Process: #{@active_post_process}", 10, 30, 16, RL::YELLOW)
+        end
+
         game_rect = RL::Rectangle.new(
           x: @offset_x, y: @offset_y,
           width: REFERENCE_WIDTH * @scale_factor,
           height: REFERENCE_HEIGHT * @scale_factor
         )
         RL.draw_rectangle_lines_ex(game_rect, 2, RL::RED)
+      end
+
+      private def setup_default_shaders
+        # Load default shaders for common effects
+        Shaders::ShaderHelpers.create_pixelate_shader(@shader_system)
+        Shaders::ShaderHelpers.create_grayscale_shader(@shader_system)
+        Shaders::ShaderHelpers.create_sepia_shader(@shader_system)
+        Shaders::ShaderHelpers.create_vignette_shader(@shader_system)
+        Shaders::ShaderHelpers.create_chromatic_aberration_shader(@shader_system)
+        Shaders::ShaderHelpers.create_bloom_shader(@shader_system)
+        Shaders::ShaderHelpers.create_crt_shader(@shader_system)
+        Shaders::ShaderHelpers.create_wave_shader(@shader_system)
+        Shaders::ShaderHelpers.create_outline_shader(@shader_system)
       end
     end
   end

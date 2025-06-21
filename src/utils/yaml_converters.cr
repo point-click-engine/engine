@@ -58,6 +58,53 @@ module PointClickEngine
         end
       end
 
+      # YAML::Field converter for Color
+      module ColorConverter
+        def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : RL::Color
+          case node
+          when YAML::Nodes::Mapping
+            r = g = b = 0_u8
+            a = 255_u8
+            node.each do |key_node, value_node|
+              case key_node
+              when YAML::Nodes::Scalar
+                key = key_node.value
+                case value_node
+                when YAML::Nodes::Scalar
+                  value = value_node.value.to_i
+                  case key
+                  when "r"
+                    r = value.to_u8
+                  when "g"
+                    g = value.to_u8
+                  when "b"
+                    b = value.to_u8
+                  when "a"
+                    a = value.to_u8
+                  end
+                end
+              end
+            end
+            RL::Color.new(r: r, g: g, b: b, a: a)
+          else
+            RL::Color.new(r: 255_u8, g: 255_u8, b: 255_u8, a: 255_u8)
+          end
+        end
+
+        def self.to_yaml(value : RL::Color, yaml : YAML::Nodes::Builder) : Nil
+          yaml.mapping do
+            yaml.scalar "r"
+            yaml.scalar value.r.to_s
+            yaml.scalar "g"
+            yaml.scalar value.g.to_s
+            yaml.scalar "b"
+            yaml.scalar value.b.to_s
+            yaml.scalar "a"
+            yaml.scalar value.a.to_s
+          end
+        end
+      end
+
       # Helper to convert Vector2 to/from YAML
       def self.vector2_to_yaml(vec : RL::Vector2) : String
         {"x" => vec.x, "y" => vec.y}.to_yaml

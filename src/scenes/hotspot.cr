@@ -11,6 +11,7 @@ module PointClickEngine
       property name : String
       property description : String = ""
       property cursor_type : CursorType = CursorType::Hand
+      property blocks_movement : Bool = false
       @[YAML::Field(ignore: true)]
       property on_click : Proc(Nil)?
       @[YAML::Field(ignore: true)]

@@ -49,6 +49,12 @@ module PointClickEngine
         @items << item unless @items.any? { |existing_item| existing_item.name == item.name }
       end
 
+      def clear
+        @items.clear
+        @selected_item = nil
+        @combination_mode = false
+      end
+
       def remove_item(item_name : String)
         @items.reject! { |i| i.name == item_name }
         if @selected_item.try(&.name) == item_name

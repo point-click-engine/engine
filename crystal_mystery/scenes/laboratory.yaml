@@ -1,0 +1,38 @@
+name: laboratory
+background_path: assets/backgrounds/laboratory.png
+enable_pathfinding: true
+navigation_cell_size: 16
+script_path: scripts/laboratory.lua
+hotspots:
+  - name: workbench
+    x: 200
+    y: 350
+    width: 300
+    height: 200
+    description: "A cluttered workbench with beakers and tools"
+  - name: cabinet
+    x: 600
+    y: 200
+    width: 150
+    height: 400
+    description: "A locked cabinet with glass doors"
+  - name: door_to_library
+    x: 50
+    y: 300
+    width: 100
+    height: 200
+    description: "Back to the library"
+  - name: door_to_garden
+    x: 850
+    y: 300
+    width: 100
+    height: 200
+    description: "Door to the garden"
+characters:
+  - name: scientist
+    position:
+      x: 400
+      y: 400
+    sprite_info:
+      frame_width: 64
+      frame_height: 128

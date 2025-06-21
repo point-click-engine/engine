@@ -1,0 +1,22 @@
+---
+game_complete:
+  unlocked: false
+  unlock_time:
+all_secrets:
+  unlocked: false
+  unlock_time:
+bookworm:
+  unlocked: false
+  unlock_time:
+puzzle_master:
+  unlocked: false
+  unlock_time:
+collector:
+  unlocked: false
+  unlock_time:
+speedrun:
+  unlocked: false
+  unlock_time:
+test:
+  unlocked: true
+  unlock_time: 2025-06-21 16:18:27 UTC

@@ -9,6 +9,15 @@ require "raylib-cr"
 
 module PointClickEngine
   module Audio
+    # Check if audio is available
+    def self.available?
+      {% if flag?(:with_audio) %}
+        true
+      {% else %}
+        false
+      {% end %}
+    end
+
     {% if flag?(:with_audio) %}
       # Sound effect manager (full implementation)
       class SoundEffect
@@ -155,6 +164,10 @@ module PointClickEngine
       property music_volume : Float32 = 0.5
       property sfx_volume : Float32 = 1.0
       property muted : Bool = false
+
+      def self.available?
+        Audio.available?
+      end
 
       def initialize
         {% if flag?(:with_audio) %}

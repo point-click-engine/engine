@@ -1,0 +1,46 @@
+# English translations
+menu.new_game: "New Game"
+menu.continue: "Continue"
+menu.options: "Options"
+menu.quit: "Quit"
+
+game.loading: "Loading..."
+game.saving: "Saving..."
+game.paused: "Game Paused"
+
+inventory.title: "Inventory"
+inventory.empty: "Your inventory is empty"
+inventory.items:
+  one: "{{count}} item"
+  other: "{{count}} items"
+
+dialog.skip: "Press ESC to skip"
+dialog.continue: "Click to continue"
+
+character.player.name: "Hero"
+character.npc.guard: "Guard"
+character.npc.merchant: "Merchant"
+
+item.key: "Key"
+item.key.description: "A rusty old key"
+item.potion: "Health Potion"
+item.potion.description: "Restores {{amount}} health points"
+
+action.use: "Use"
+action.look: "Look at"
+action.talk: "Talk to"
+action.pickup: "Pick up"
+action.combine: "Combine with"
+
+message.locked: "It's locked"
+message.cant_use: "I can't use that here"
+message.nothing_happens: "Nothing happens"
+message.already_have: "I already have that"
+
+cutscene.skip_prompt: "Press SPACE or ESC to skip"
+
+settings.language: "Language"
+settings.volume: "Volume"
+settings.fullscreen: "Fullscreen"
+settings.apply: "Apply"
+settings.cancel: "Cancel"

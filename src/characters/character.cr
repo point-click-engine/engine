@@ -51,13 +51,26 @@ module PointClickEngine
       @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter, nilable: true)]
       property target_position : RL::Vector2?
 
+      @[YAML::Field(ignore: true)]
+      property path : Array(RL::Vector2)?
+      @[YAML::Field(ignore: true)]
+      property current_path_index : Int32 = 0
+
+      property use_pathfinding : Bool = true
+
       property dialogue_system_data : Dialogue::CharacterDialogue?
       @[YAML::Field(ignore: true)]
       delegate dialogue_system, to: @dialogue_system_data
 
       property sprite_data : Graphics::AnimatedSprite?
-      @[YAML::Field(ignore: true)]
-      delegate sprite, to: @sprite_data
+
+      def sprite
+        @sprite_data
+      end
+
+      def sprite=(value : Graphics::AnimatedSprite)
+        @sprite_data = value
+      end
 
       property current_animation : String = "idle"
       property animations : Hash(String, AnimationData) = {} of String => AnimationData
@@ -120,7 +133,30 @@ module PointClickEngine
       def walk_to(target : RL::Vector2)
         @target_position = target
         @state = CharacterState::Walking
+
+        # Reset path when new target is set
+        @path = nil
+        @current_path_index = 0
+
         if target.x < @position.x
+          @direction = Direction::Left
+          play_animation("walk_left") if @animations.has_key?("walk_left")
+        else
+          @direction = Direction::Right
+          play_animation("walk_right") if @animations.has_key?("walk_right")
+        end
+      end
+
+      def walk_to_with_path(path : Array(RL::Vector2))
+        return if path.empty?
+
+        @path = path
+        @current_path_index = 0
+        @target_position = path.last
+        @state = CharacterState::Walking
+
+        # Set initial direction based on first waypoint
+        if path[0].x < @position.x
           @direction = Direction::Left
           play_animation("walk_left") if @animations.has_key?("walk_left")
         else
@@ -131,6 +167,8 @@ module PointClickEngine
 
       def stop_walking
         @target_position = nil
+        @path = nil
+        @current_path_index = 0
         @state = CharacterState::Idle
         base_idle_anim = @direction == Direction::Left ? "idle_left" : "idle_right"
         play_animation(base_idle_anim) if @animations.has_key?(base_idle_anim)
@@ -182,6 +220,16 @@ module PointClickEngine
             RL.draw_line_v(@position, @target_position.not_nil!, RL::GREEN)
             RL.draw_circle_v(@target_position.not_nil!, 5.0, RL::GREEN)
           end
+
+          # Draw path if using pathfinding
+          if path = @path
+            (0...path.size - 1).each do |i|
+              RL.draw_line_v(path[i], path[i + 1], RL::YELLOW)
+            end
+            path.each do |waypoint|
+              RL.draw_circle_v(waypoint, 3.0, RL::YELLOW)
+            end
+          end
         end
       end
 
@@ -191,17 +239,90 @@ module PointClickEngine
 
       private def update_movement(dt : Float32)
         return unless @state == CharacterState::Walking
-        return unless target = @target_position
 
-        direction_vec = RL::Vector2.new(x: target.x - @position.x, y: target.y - @position.y)
-        distance = Math.sqrt(direction_vec.x ** 2 + direction_vec.y ** 2).to_f
+        # Use pathfinding if available
+        if path = @path
+          update_path_following(dt)
+        elsif target = @target_position
+          # Direct movement without pathfinding
+          direction_vec = RL::Vector2.new(x: target.x - @position.x, y: target.y - @position.y)
+          distance = Math.sqrt(direction_vec.x ** 2 + direction_vec.y ** 2).to_f
 
-        if distance < 5.0
-          @position = target
+          if distance < 5.0
+            @position = target
+            stop_walking
+            return
+          end
+
+          normalized_dir_x = direction_vec.x / distance
+          normalized_dir_y = direction_vec.y / distance
+
+          @position.x += normalized_dir_x * @walking_speed * dt
+          @position.y += normalized_dir_y * @walking_speed * dt
+
+          @sprite_data.try &.position = @position
+
+          # Update direction
+          if (target.x - @position.x).abs > 5.0
+            new_direction = target.x < @position.x ? Direction::Left : Direction::Right
+            if new_direction != @direction
+              @direction = new_direction
+              if @direction == Direction::Left
+                play_animation("walk_left") if @animations.has_key?("walk_left")
+              else
+                play_animation("walk_right") if @animations.has_key?("walk_right")
+              end
+            end
+          end
+        end
+      end
+
+      private def update_path_following(dt : Float32)
+        return unless path = @path
+        return if path.empty?
+
+        # Get current waypoint
+        if @current_path_index >= path.size
           stop_walking
           return
         end
 
+        current_waypoint = path[@current_path_index]
+        direction_vec = RL::Vector2.new(x: current_waypoint.x - @position.x, y: current_waypoint.y - @position.y)
+        distance = Math.sqrt(direction_vec.x ** 2 + direction_vec.y ** 2).to_f
+
+        # Check if we reached the current waypoint
+        if distance < 10.0
+          @current_path_index += 1
+
+          # Check if we reached the end
+          if @current_path_index >= path.size
+            if final_target = @target_position
+              @position = final_target
+            end
+            stop_walking
+            return
+          end
+
+          # Update direction for next waypoint
+          if @current_path_index < path.size
+            next_waypoint = path[@current_path_index]
+            if (next_waypoint.x - @position.x).abs > 5.0
+              new_direction = next_waypoint.x < @position.x ? Direction::Left : Direction::Right
+              if new_direction != @direction
+                @direction = new_direction
+                if @direction == Direction::Left
+                  play_animation("walk_left") if @animations.has_key?("walk_left")
+                else
+                  play_animation("walk_right") if @animations.has_key?("walk_right")
+                end
+              end
+            end
+          end
+          return
+        end
+
+        # Move towards current waypoint
         normalized_dir_x = direction_vec.x / distance
         normalized_dir_y = direction_vec.y / distance
 

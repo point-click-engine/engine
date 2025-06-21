@@ -1,0 +1,46 @@
+# French translations
+menu.new_game: "Nouvelle Partie"
+menu.continue: "Continuer"
+menu.options: "Options"
+menu.quit: "Quitter"
+
+game.loading: "Chargement..."
+game.saving: "Sauvegarde..."
+game.paused: "Jeu en Pause"
+
+inventory.title: "Inventaire"
+inventory.empty: "Votre inventaire est vide"
+inventory.items:
+  one: "{{count}} objet"
+  other: "{{count}} objets"
+
+dialog.skip: "Appuyez sur ÉCHAP pour passer"
+dialog.continue: "Cliquez pour continuer"
+
+character.player.name: "Héros"
+character.npc.guard: "Garde"
+character.npc.merchant: "Marchand"
+
+item.key: "Clé"
+item.key.description: "Une vieille clé rouillée"
+item.potion: "Potion de Santé"
+item.potion.description: "Restaure {{amount}} points de vie"
+
+action.use: "Utiliser"
+action.look: "Regarder"
+action.talk: "Parler à"
+action.pickup: "Ramasser"
+action.combine: "Combiner avec"
+
+message.locked: "C'est verrouillé"
+message.cant_use: "Je ne peux pas utiliser ça ici"
+message.nothing_happens: "Rien ne se passe"
+message.already_have: "J'ai déjà ça"
+
+cutscene.skip_prompt: "Appuyez sur ESPACE ou ÉCHAP pour passer"
+
+settings.language: "Langue"
+settings.volume: "Volume"
+settings.fullscreen: "Plein écran"
+settings.apply: "Appliquer"
+settings.cancel: "Annuler"

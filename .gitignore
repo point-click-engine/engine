@@ -4,6 +4,34 @@
 /.shards/
 *.dwarf
 
+# Compiled binaries
+modular_example
+scripting_example
+cutscene_example
+pathfinding_example
+shader_example
+localization_example
+archive_example
+enhanced_example
+example/example
+scene_editor
+test
+main
+crystal_mystery/main
+/main
+
+# macOS
+.DS_Store
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+
+# Test outputs
+test_results_summary.md
+test_results_*.md
+
 # Libraries don't need dependency lock
 # Dependencies will be locked in applications that use them
 /shard.lock

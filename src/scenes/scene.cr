@@ -2,6 +2,7 @@
 
 require "raylib-cr"
 require "yaml"
+require "../navigation/pathfinding"
 
 module PointClickEngine
   module Scenes
@@ -28,6 +29,15 @@ module PointClickEngine
       property player_name_for_serialization : String?
       @[YAML::Field(ignore: true)]
       property player : Characters::Player?
+
+      @[YAML::Field(ignore: true)]
+      property navigation_grid : Navigation::Pathfinding::NavigationGrid?
+      @[YAML::Field(ignore: true)]
+      property pathfinder : Navigation::Pathfinding?
+
+      property enable_pathfinding : Bool = true
+      property navigation_cell_size : Int32 = 16
+      property script_path : String?
 
       def initialize
         @name = ""
@@ -110,6 +120,34 @@ module PointClickEngine
 
       def get_character(name : String) : Characters::Character?
         @characters.find { |c| c.name == name }
+      end
+
+      def setup_navigation
+        return unless @enable_pathfinding
+        return unless bg = @background
+
+        @navigation_grid = Navigation::Pathfinding::NavigationGrid.from_scene(
+          self,
+          bg.width,
+          bg.height,
+          @navigation_cell_size
+        )
+
+        @pathfinder = Navigation::Pathfinding.new(@navigation_grid.not_nil!)
+      end
+
+      def find_path(start_x : Float32, start_y : Float32, end_x : Float32, end_y : Float32) : Array(Raylib::Vector2)?
+        return nil unless pf = @pathfinder
+        pf.find_path(start_x, start_y, end_x, end_y)
+      end
+
+      def draw_navigation_debug
+        @pathfinder.try &.draw_debug(Raylib::GREEN, Raylib::RED, 50u8)
+      end
+
+      def load_script(engine : Core::Engine)
+        return unless script_path = @script_path
+        engine.script_engine.try &.execute_script_file(script_path)
       end
     end
   end
