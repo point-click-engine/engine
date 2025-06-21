@@ -3,6 +3,7 @@
 require "raylib-cr"
 require "yaml"
 require "../navigation/pathfinding"
+require "../assets/asset_loader"
 
 module PointClickEngine
   module Scenes
@@ -67,7 +68,7 @@ module PointClickEngine
 
       def load_background(path : String, scale : Float32 = 1.0)
         @background_path = path
-        @background = AssetLoader.load_texture(path)
+        @background = PointClickEngine::AssetLoader.load_texture(path)
         @scale = scale
       end
 
@@ -97,9 +98,24 @@ module PointClickEngine
 
       def draw
         if bg = @background
-          RL.draw_texture_ex(bg, RL::Vector2.new(x: 0, y: 0), 0.0, @scale, RL::WHITE)
+          # Calculate scale to fit screen (1024x768)
+          scale_x = 1024.0f32 / bg.width
+          scale_y = 768.0f32 / bg.height
+          scale = Math.max(scale_x, scale_y) # Use the larger scale to fill screen
+
+          RL.draw_texture_ex(bg, RL::Vector2.new(x: 0, y: 0), 0.0, scale, RL::WHITE)
         end
+        
+        # Draw all scene elements
+        @hotspots.each(&.draw)
         @objects.each(&.draw)
+        @characters.each(&.draw)
+        @player.try(&.draw)
+        
+        # Draw navigation debug if enabled
+        if Core::Engine.debug_mode && @navigation_grid
+          draw_navigation_debug
+        end
       end
 
       def enter

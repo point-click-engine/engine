@@ -33,6 +33,7 @@ characters:
     position:
       x: 400
       y: 400
+    sprite_path: crystal_mystery/assets/sprites/scientist.png
     sprite_info:
-      frame_width: 64
-      frame_height: 128
+      frame_width: 100
+      frame_height: 100

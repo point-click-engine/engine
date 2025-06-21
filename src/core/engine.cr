@@ -258,7 +258,7 @@ module PointClickEngine
         end
       end
 
-      private def update(dt : Float32)
+      def update(dt : Float32)
         if RL.window_resized?
           new_width = RL.get_screen_width
           new_height = RL.get_screen_height
@@ -310,12 +310,13 @@ module PointClickEngine
         # Only update game logic if not in cutscene
         unless @cutscene_manager.is_playing?
           @current_scene.try &.update(dt)
-          @inventory.update(dt) if @ui_visible
+          @inventory.update(dt) if @inventory.visible
 
           # Update additional managers
           @dialog_manager.try &.update(dt)
           @gui.try &.update(dt)
           @achievement_manager.try &.update(dt)
+          @audio_manager.try &.update
           @dialogs.each(&.update(dt))
           @dialogs.reject! { |d| !d.visible }
 
@@ -454,7 +455,7 @@ module PointClickEngine
         end
       end
 
-      private def cleanup
+      def cleanup
         @display_manager.try &.cleanup
 
         # Cleanup scripting engine

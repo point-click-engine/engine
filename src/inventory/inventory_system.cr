@@ -91,7 +91,16 @@ module PointClickEngine
       def update(dt : Float32)
         return unless @visible
 
-        mouse_pos = RL.get_mouse_position
+        # Get the game coordinates from the display manager
+        raw_mouse_pos = RL.get_mouse_position
+        mouse_pos = raw_mouse_pos
+        
+        if engine = Core::Engine.instance
+          if dm = engine.display_manager
+            mouse_pos = dm.screen_to_game(raw_mouse_pos)
+          end
+        end
+        
         if RL::MouseButton::Left.pressed?
           @items.each_with_index do |item, index|
             item_rect = get_item_rect(index)
@@ -152,6 +161,14 @@ module PointClickEngine
           if icon = item.icon
             RL.draw_texture_ex(icon, RL::Vector2.new(x: item_rect.x, y: item_rect.y), 0.0,
               @slot_size / icon.width.to_f, RL::WHITE)
+          else
+            # Draw item name if no icon
+            name_text = item.name.size > 8 ? item.name[0..7] : item.name
+            text_size = 12
+            text_width = RL.measure_text(name_text, text_size)
+            text_x = (item_rect.x + @slot_size/2 - text_width/2).to_i
+            text_y = (item_rect.y + @slot_size/2 - text_size/2).to_i
+            RL.draw_text(name_text, text_x, text_y, text_size, RL::WHITE)
           end
           if item == @selected_item
             color = @combination_mode ? RL::RED : RL::YELLOW

@@ -1,4 +1,3 @@
-require "../lib/raylib-cr/src/raylib-cr"
 require "yaml"
 require "json"
 require "../src/point_click_engine"
@@ -7,6 +6,8 @@ require "../src/point_click_engine"
 class CrystalMysteryGame
   property engine : PointClickEngine::Core::Engine
   property current_scene : String = "main_menu"
+  property game_items : Hash(String, PointClickEngine::Inventory::InventoryItem) = {} of String => PointClickEngine::Inventory::InventoryItem
+  property hotspot_highlight_enabled : Bool = false
 
   def initialize
     @engine = PointClickEngine::Core::Engine.new
@@ -20,11 +21,13 @@ class CrystalMysteryGame
     @engine.config = PointClickEngine::Core::ConfigManager.new
     @engine.gui = PointClickEngine::UI::GUIManager.new
     @engine.shader_system = PointClickEngine::Graphics::Shaders::ShaderSystem.new
-    @engine.player = PointClickEngine::Characters::Player.new(
+    player = PointClickEngine::Characters::Player.new(
       "Detective",
       Raylib::Vector2.new(x: 500f32, y: 400f32),
       Raylib::Vector2.new(x: 64f32, y: 128f32)
     )
+    player.load_spritesheet("crystal_mystery/assets/sprites/player.png", 56, 56)
+    @engine.player = player
 
     # Configure display settings
     if dm = @engine.display_manager
@@ -36,6 +39,12 @@ class CrystalMysteryGame
     # Load game configuration
     load_configuration
 
+    # Load audio assets
+    load_audio_assets
+    
+    # Create game items
+    create_game_items
+    
     # Create scenes
     create_main_menu
     create_game_scenes
@@ -51,7 +60,139 @@ class CrystalMysteryGame
   end
 
   def run
-    @engine.run
+    @engine.init
+    @engine.running = true
+    @engine.current_scene.try &.enter
+    
+    while @engine.running && !Raylib.close_window?
+      # Handle global input before engine update
+      handle_global_input
+      
+      # Update engine
+      @engine.update(Raylib.get_frame_time)
+      
+      # Draw with custom hotspot highlighting
+      draw_with_highlighting
+    end
+    
+    @engine.cleanup
+  end
+  
+  private def draw_with_highlighting
+    return unless dm = @engine.display_manager
+    
+    dm.begin_game_rendering
+    
+    # Draw the current scene
+    @engine.current_scene.try &.draw
+    
+    # Draw highlighted hotspots if enabled (but not in main menu)
+    if @hotspot_highlight_enabled && @engine.current_scene
+      current_scene_name = @engine.current_scene.try(&.name)
+      if current_scene_name && current_scene_name != "main_menu"
+        draw_highlighted_hotspots
+      end
+    end
+    
+    # Draw UI elements
+    if @engine.ui_visible && !@engine.cutscene_manager.is_playing?
+      @engine.inventory.draw
+      @engine.dialogs.each(&.draw)
+      @engine.dialog_manager.try &.draw
+      @engine.gui.try &.draw
+    end
+    
+    # Draw other elements
+    @engine.achievement_manager.try &.draw
+    @engine.cutscene_manager.draw
+    
+    # Draw cursor if custom texture
+    if cursor = @engine.cursor_texture
+      raw_mouse = Raylib.get_mouse_position
+      if dm.is_in_game_area(raw_mouse)
+        game_mouse = dm.screen_to_game(raw_mouse)
+        Raylib.draw_texture_v(cursor, game_mouse, Raylib::WHITE)
+      end
+    end
+    
+    # Draw debug info
+    if PointClickEngine::Core::Engine.debug_mode
+      draw_debug_info
+    end
+    
+    # Draw cutscene skip prompt
+    if @engine.cutscene_manager.is_playing?
+      skip_text = "Press ESC or SPACE to skip"
+      Raylib.draw_text(skip_text, 10, Raylib.get_screen_height - 30, 16, Raylib::WHITE)
+    end
+    
+    dm.end_game_rendering
+  end
+  
+  private def draw_highlighted_hotspots
+    return unless scene = @engine.current_scene
+    
+    # Calculate pulsing effect
+    time = Raylib.get_time
+    pulse = ((Math.sin(time * 3.0) + 1.0) / 2.0).to_f32
+    outline_size = 2.0f32 + pulse * 2.0f32
+    
+    # Update shader parameters for pulsing effect
+    if shader_system = @engine.shader_system
+      shader_system.set_value(:outline, "outlineSize", outline_size)
+      
+      # Adjust alpha for pulsing
+      golden_color = Raylib::Color.new(
+        r: 255, 
+        g: 215, 
+        b: 0, 
+        a: (200 + pulse * 55).to_u8
+      )
+      color_array = [
+        golden_color.r.to_f32 / 255.0f32,
+        golden_color.g.to_f32 / 255.0f32,
+        golden_color.b.to_f32 / 255.0f32,
+        golden_color.a.to_f32 / 255.0f32,
+      ]
+      shader_system.set_value(:outline, "outlineColor", color_array)
+    end
+    
+    # Draw hotspots with highlighting effect
+    scene.hotspots.each do |hotspot|
+      next unless hotspot.active && hotspot.visible
+      
+      # Draw a glowing outline around the hotspot
+      bounds = hotspot.bounds
+      
+      # Draw outer glow
+      glow_color = Raylib::Color.new(r: 255, g: 215, b: 0, a: (30 * pulse).to_u8)
+      expanded_bounds = Raylib::Rectangle.new(
+        x: bounds.x - outline_size,
+        y: bounds.y - outline_size,
+        width: bounds.width + outline_size * 2,
+        height: bounds.height + outline_size * 2
+      )
+      Raylib.draw_rectangle_rec(expanded_bounds, glow_color)
+      
+      # Draw the main highlight
+      highlight_color = Raylib::Color.new(r: 255, g: 215, b: 0, a: (80 + pulse * 40).to_u8)
+      Raylib.draw_rectangle_rec(bounds, highlight_color)
+      
+      # Draw outline
+      outline_color = Raylib::Color.new(r: 255, g: 255, b: 100, a: 255)
+      Raylib.draw_rectangle_lines_ex(bounds, outline_size.to_i, outline_color)
+    end
+  end
+  
+  private def draw_debug_info
+    Raylib.draw_text("FPS: #{Raylib.get_fps}", 10, 10, 20, Raylib::GREEN)
+    if dm = @engine.display_manager
+      raw_mouse = Raylib.get_mouse_position
+      game_mouse = dm.screen_to_game(raw_mouse)
+      Raylib.draw_text("Game Mouse: #{game_mouse.x.to_i}, #{game_mouse.y.to_i}", 10, 35, 20, Raylib::GREEN)
+      Raylib.draw_text("Resolution: 1024x768", 10, 60, 20, Raylib::GREEN)
+      Raylib.draw_text("Hotspot Highlight: #{@hotspot_highlight_enabled ? "ON" : "OFF"} (Tab to toggle)", 10, 85, 20, Raylib::GREEN)
+    end
   end
 
   private def load_configuration
@@ -78,24 +219,28 @@ class CrystalMysteryGame
       new_game_size = Raylib::Vector2.new(x: 200f32, y: 50f32)
 
       gui.add_button("new_game", "New Game", new_game_pos, new_game_size) do
+        @engine.audio_manager.try &.play_sound_effect("click")
         start_new_game
       end
 
       load_pos = Raylib::Vector2.new(x: 412f32, y: 420f32)
 
       gui.add_button("load_game", "Load Game", load_pos, new_game_size) do
+        @engine.audio_manager.try &.play_sound_effect("click")
         show_load_menu
       end
 
       options_pos = Raylib::Vector2.new(x: 412f32, y: 490f32)
 
       gui.add_button("options", "Options", options_pos, new_game_size) do
+        @engine.audio_manager.try &.play_sound_effect("click")
         show_options_menu
       end
 
       quit_pos = Raylib::Vector2.new(x: 412f32, y: 560f32)
 
       gui.add_button("quit", "Quit", quit_pos, new_game_size) do
+        @engine.audio_manager.try &.play_sound_effect("click")
         @engine.running = false
       end
     end
@@ -151,9 +296,10 @@ class CrystalMysteryGame
         position:
           x: 300
           y: 450
+        sprite_path: crystal_mystery/assets/sprites/butler.png
         sprite_info:
-          frame_width: 64
-          frame_height: 128
+          frame_width: 100
+          frame_height: 100
     YAML
 
     File.write("crystal_mystery/scenes/library.yaml", scene_yaml)
@@ -202,9 +348,10 @@ class CrystalMysteryGame
         position:
           x: 400
           y: 400
+        sprite_path: crystal_mystery/assets/sprites/scientist.png
         sprite_info:
-          frame_width: 64
-          frame_height: 128
+          frame_width: 100
+          frame_height: 100
     YAML
 
     File.write("crystal_mystery/scenes/laboratory.yaml", scene_yaml)
@@ -262,11 +409,29 @@ class CrystalMysteryGame
       case hotspot.name
       when "door_to_lab"
         hotspot.on_click = -> do
+          @engine.audio_manager.try &.play_sound_effect("door_open")
           @engine.change_scene("laboratory")
         end
       when "bookshelf"
         hotspot.on_click = -> do
           @engine.dialog_manager.try &.show_message("You find a book about ancient crystals...")
+        end
+      when "desk"
+        hotspot.on_click = -> do
+          if @engine.script_engine.try(&.call_function("get_game_state", "has_key")) == false
+            if key_item = @game_items["key"]?
+              @engine.inventory.add_item(key_item)
+              @engine.audio_manager.try &.play_sound_effect("pickup")
+              @engine.dialog_manager.try &.show_message("You found a brass key!")
+              @engine.script_engine.try(&.call_function("set_game_state", "has_key", true))
+            end
+          else
+            @engine.dialog_manager.try &.show_message("The desk has scattered papers but nothing else of interest.")
+          end
+        end
+      when "painting"
+        hotspot.on_click = -> do
+          @engine.dialog_manager.try &.show_message("The founder's eyes seem to follow you...")
         end
       end
     end
@@ -277,11 +442,42 @@ class CrystalMysteryGame
       case hotspot.name
       when "door_to_library"
         hotspot.on_click = -> do
+          @engine.audio_manager.try &.play_sound_effect("door_open")
           @engine.change_scene("library")
         end
       when "door_to_garden"
         hotspot.on_click = -> do
+          @engine.audio_manager.try &.play_sound_effect("door_open")
           @engine.change_scene("garden")
+          @engine.audio_manager.try &.play_music("garden_theme", true)
+        end
+      when "cabinet"
+        hotspot.on_click = -> do
+          if @engine.inventory.selected_item.try(&.name) == "key"
+            if @engine.script_engine.try(&.call_function("get_game_state", "cabinet_unlocked")) == false
+              @engine.audio_manager.try &.play_sound_effect("click")
+              @engine.dialog_manager.try &.show_message("You unlock the cabinet with the key!")
+              @engine.script_engine.try(&.call_function("set_game_state", "cabinet_unlocked", true))
+              @engine.inventory.remove_item("key")
+              
+              # Add crystal to inventory
+              if crystal_item = @game_items["crystal"]?
+                @engine.inventory.add_item(crystal_item)
+                @engine.audio_manager.try &.play_sound_effect("success")
+                @engine.dialog_manager.try &.show_message("You found the mysterious crystal!")
+              end
+            else
+              @engine.dialog_manager.try &.show_message("The cabinet is already open.")
+            end
+          elsif @engine.script_engine.try(&.call_function("get_game_state", "cabinet_unlocked")) == true
+            @engine.dialog_manager.try &.show_message("The cabinet is open and empty.")
+          else
+            @engine.dialog_manager.try &.show_message("The cabinet is locked. You need a key.")
+          end
+        end
+      when "workbench"
+        hotspot.on_click = -> do
+          @engine.dialog_manager.try &.show_message("Scientific equipment and notes about crystal energy.")
         end
       end
     end
@@ -314,6 +510,12 @@ class CrystalMysteryGame
   end
 
   private def start_new_game
+    # Play door sound effect when starting game
+    @engine.audio_manager.try &.play_sound_effect("door_open")
+    
+    # Clear GUI from main menu
+    @engine.gui.try &.clear_all
+
     # Initialize player
     if player = @engine.player
       player.name = "Detective"
@@ -348,9 +550,27 @@ class CrystalMysteryGame
 
     # Start in library
     @engine.change_scene("library")
+    
+    # Change music when entering library
+    @engine.audio_manager.try &.play_music("castle_ambient", true)
+
+    # Add player to the library scene
+    if library_scene = @engine.scenes["library"]?
+      if player = @engine.player
+        library_scene.set_player(player)
+      end
+    end
 
     # Show opening message
     @engine.dialog_manager.try &.show_message("You arrive at the mysterious mansion to investigate the missing crystal...")
+    
+    # Add UI hints
+    if gui = @engine.gui
+      gui.add_label("inventory_hint", "Press 'I' to toggle inventory", Raylib::Vector2.new(x: 10f32, y: 10f32), 16, Raylib::WHITE)
+      gui.add_label("highlight_hint", "Press 'Tab' to highlight interactive areas", Raylib::Vector2.new(x: 10f32, y: 30f32), 16, Raylib::WHITE)
+      gui.add_label("debug_hint", "Press 'F1' to toggle debug mode", Raylib::Vector2.new(x: 10f32, y: 50f32), 16, Raylib::WHITE)
+      gui.add_label("usage_hint", "Select item in inventory, then click where to use it", Raylib::Vector2.new(x: 10f32, y: 70f32), 16, Raylib::WHITE)
+    end
   end
 
   private def show_load_menu
@@ -536,6 +756,47 @@ class CrystalMysteryGame
     end
   end
 
+  private def load_audio_assets
+    return unless @engine.audio_manager
+    
+    audio = @engine.audio_manager.not_nil!
+    
+    # Load music tracks
+    audio.load_music("main_theme", "crystal_mystery/assets/music/main_theme.ogg")
+    audio.load_music("garden_theme", "crystal_mystery/assets/music/garden_theme.ogg")
+    audio.load_music("castle_ambient", "crystal_mystery/assets/sounds/music/castle_ambient.ogg")
+    
+    # Load sound effects
+    audio.load_sound_effect("click", "crystal_mystery/assets/sounds/effects/click.ogg")
+    audio.load_sound_effect("door_open", "crystal_mystery/assets/sounds/effects/door_open.ogg")
+    audio.load_sound_effect("footsteps", "crystal_mystery/assets/sounds/effects/footsteps.ogg")
+    audio.load_sound_effect("pickup", "crystal_mystery/assets/sounds/effects/pickup.ogg")
+    audio.load_sound_effect("success", "crystal_mystery/assets/sounds/effects/success.ogg")
+    
+    # Play main menu music
+    audio.play_music("main_theme", true)
+  end
+  
+  private def create_game_items
+    # Create inventory items
+    key_item = PointClickEngine::Inventory::InventoryItem.new("key", "An ornate brass key")
+    key_item.load_icon("crystal_mystery/assets/items/brass_key.png")
+    key_item.usable_on = ["cabinet"]
+    
+    crystal_item = PointClickEngine::Inventory::InventoryItem.new("crystal", "A mysterious glowing crystal")
+    crystal_item.load_icon("crystal_mystery/assets/items/crystal.png")
+    
+    magnifying_glass = PointClickEngine::Inventory::InventoryItem.new("magnifying_glass", "A detective's magnifying glass")
+    # magnifying_glass.load_icon("crystal_mystery/assets/items/magnifying_glass.png")
+    
+    # Store items for later use
+    @game_items = {
+      "key" => key_item,
+      "crystal" => crystal_item,
+      "magnifying_glass" => magnifying_glass
+    }
+  end
+
   private def setup_global_input
     # Note: Global input handling would be implemented in the engine's main loop
     # For now, shortcuts are handled per-scene in the game logic
@@ -543,6 +804,21 @@ class CrystalMysteryGame
   end
 
   def handle_global_input
+    # I = Toggle inventory
+    if Raylib.key_pressed?(Raylib::KeyboardKey::I.to_i)
+      @engine.inventory.visible = !@engine.inventory.visible
+    end
+    
+    # F1 = Toggle debug mode
+    if Raylib.key_pressed?(Raylib::KeyboardKey::F1.to_i)
+      PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
+    end
+    
+    # Tab = Toggle hotspot highlighting
+    if Raylib.key_pressed?(Raylib::KeyboardKey::Tab.to_i)
+      toggle_hotspot_highlight
+    end
+    
     # F5 = Quick Save
     if Raylib.key_pressed?(Raylib::KeyboardKey::F5.to_i)
       save_game("quicksave")
@@ -562,6 +838,23 @@ class CrystalMysteryGame
       current_scene_name = @engine.current_scene.try(&.name)
       if current_scene_name != "main_menu"
         back_to_main_menu
+      end
+    end
+  end
+  
+  private def toggle_hotspot_highlight
+    @hotspot_highlight_enabled = !@hotspot_highlight_enabled
+    
+    if @hotspot_highlight_enabled
+      # Create a pulsing outline shader effect for hotspots
+      if shader_system = @engine.shader_system
+        # Create outline shader with a nice golden color
+        golden_color = Raylib::Color.new(r: 255, g: 215, b: 0, a: 255)
+        PointClickEngine::Graphics::Shaders::ShaderHelpers.create_outline_shader(
+          shader_system, 
+          golden_color, 
+          3.0f32
+        )
       end
     end
   end

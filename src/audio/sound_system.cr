@@ -110,7 +110,7 @@ module PointClickEngine
         end
 
         def update
-          if music = @music && @playing
+          if @playing && (music = @music)
             RAudio.update_music_stream(music)
           end
         end

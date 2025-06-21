@@ -8,17 +8,17 @@ module PointClickEngine
   module Scenes
     class SceneLoader
       def self.load_from_yaml(path : String) : Scene
-        yaml_content = AssetLoader.read_yaml(path)
+        yaml_content = PointClickEngine::AssetLoader.read_yaml(path)
         scene_data = YAML.parse(yaml_content)
 
         scene = Scene.new(scene_data["name"].as_s)
 
-        if background_path = scene_data["background_path"]?
-          scene.background_path = background_path.as_s
-        end
-
         if scale = scene_data["scale"]?
           scene.scale = scale.as_f.to_f32
+        end
+
+        if background_path = scene_data["background_path"]?
+          scene.load_background(background_path.as_s, scene.scale)
         end
 
         if enable_pathfinding = scene_data["enable_pathfinding"]?

@@ -33,6 +33,7 @@ characters:
     position:
       x: 300
       y: 450
+    sprite_path: crystal_mystery/assets/sprites/butler.png
     sprite_info:
-      frame_width: 64
-      frame_height: 128
+      frame_width: 100
+      frame_height: 100
