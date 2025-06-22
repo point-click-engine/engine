@@ -1,6 +1,7 @@
 require "./dialog"
 require "./dialog_portrait"
 require "./floating_dialog"
+require "./floating_text"
 
 module PointClickEngine
   module UI
@@ -57,6 +58,17 @@ module PointClickEngine
       end
 
       def show_message(text : String, duration : Float32 = 3.0f32)
+        if @enable_floating
+          # Try to show message as floating text near player
+          if engine = Core::Engine.instance
+            if player = engine.player
+              @floating_manager.show_dialog("", text, player.position, duration, DialogStyle::Rectangle)
+              return
+            end
+          end
+        end
+
+        # Fallback to regular dialog
         show_dialog("", text)
         @showing_message = true
         @message_timer = duration

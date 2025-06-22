@@ -107,6 +107,8 @@ module PointClickEngine
           uniform sampler2D texture0;
           uniform float progress;
 
+          float dot2(vec2 v) { return dot(v,v); }
+
           float heart(vec2 p) {
               p.x = abs(p.x);
               if(p.y + p.x > 1.0)
@@ -115,16 +117,14 @@ module PointClickEngine
                               dot2(p-0.5*max(p.x+p.y,0.0)))) * sign(p.x-p.y);
           }
 
-          float dot2(vec2 v) { return dot(v,v); }
-
           void main()
           {
               vec4 color = texture(texture0, fragTexCoord);
               vec2 center = (fragTexCoord - vec2(0.5, 0.5)) * 2.0;
               center.y = -center.y; // Flip Y for proper heart orientation
               float heartDist = heart(center);
-              float threshold = (progress - 0.5) * 1.5;
-              float alpha = step(threshold, heartDist);
+              float threshold = (1.0 - progress) * 1.5 - 0.75; // Inverted progress for fade in
+              float alpha = 1.0 - step(heartDist, threshold);
               finalColor = vec4(color.rgb, color.a * alpha);
           }
           SHADER

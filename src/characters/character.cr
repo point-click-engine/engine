@@ -480,6 +480,24 @@ module PointClickEngine
       # talk-specific responses.
       abstract def on_talk
 
+      # Check if a point is within the character's bounds
+      #
+      # Used for mouse interaction detection. Creates a bounding box
+      # around the character based on their position and size.
+      #
+      # - *point* : The screen position to check
+      #
+      # Returns: true if the point is within the character's bounds
+      def contains_point?(point : RL::Vector2) : Bool
+        bounds = RL::Rectangle.new(
+          x: @position.x - @size.x / 2,
+          y: @position.y - @size.y,
+          width: @size.x,
+          height: @size.y
+        )
+        RL.check_collision_point_rec?(point, bounds)
+      end
+
       # Get the current scene from the engine
       private def get_current_scene : Scenes::Scene?
         Core::Engine.instance.current_scene

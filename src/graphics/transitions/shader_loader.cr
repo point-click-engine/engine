@@ -11,9 +11,10 @@ module PointClickEngine
         def self.load_shader_from_code(vertex_source : String, fragment_source : String) : RL::Shader?
           begin
             shader = RL.load_shader_from_memory(vertex_source, fragment_source)
+            puts "TRANSITION: Shader loaded successfully, ID: #{shader.id}"
             return shader
-          rescue
-            puts "Failed to load transition shader"
+          rescue ex
+            puts "TRANSITION ERROR: Failed to load shader - #{ex.message}"
             return nil
           end
         end

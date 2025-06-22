@@ -33,8 +33,8 @@ module PointClickEngine
       property duration : Float32
       property elapsed : Float32 = 0.0f32
       property style : DialogStyle = DialogStyle::Bubble
-      property font_size : Int32 = 16
-      property max_width : Int32 = 300
+      property font_size : Int32 = 20  # Larger for better visibility
+      property max_width : Int32 = 400 # Wider for better readability
       property visible : Bool = true
 
       # Animation properties
@@ -56,6 +56,7 @@ module PointClickEngine
       def initialize(@text : String, @character_name : String, @character_position : RL::Vector2, @duration : Float32)
         @color = determine_character_color(@character_name)
         @background_color = RL::Color.new(r: 0, g: 0, b: 0, a: 180)
+        puts "FloatingDialog initialized: color=#{@color}, bg=#{@background_color}"
 
         # Enable typewriter for longer text
         @typewriter_enabled = @text.size > 20
@@ -71,7 +72,12 @@ module PointClickEngine
 
         # Update typewriter effect
         if @typewriter_enabled && @visible_characters < @text.size
+          old_visible = @visible_characters
           @visible_characters = Math.min(@text.size, (@elapsed * @typewriter_speed).to_i)
+          # Invalidate wrapped text cache when visible characters change
+          if old_visible != @visible_characters
+            @wrapped_text = nil
+          end
         end
 
         # Update fade out near end of duration
@@ -104,22 +110,14 @@ module PointClickEngine
 
         # Apply alpha to colors
         text_color = apply_alpha(@color, @fade_alpha)
-        bg_color = apply_alpha(@background_color, @fade_alpha)
 
-        case @style
-        when .bubble?
-          draw_speech_bubble(position, wrapped, text_color, bg_color)
-        when .thought?
-          draw_thought_bubble(position, wrapped, text_color, bg_color)
-        when .rectangle?
-          draw_rectangle_background(position, wrapped, text_color, bg_color)
-        when .shout?
-          draw_shout_text(position, wrapped, text_color)
-        when .whisper?
-          draw_whisper_text(position, wrapped, text_color)
-        when .narrator?
-          draw_narrator_text(position, wrapped, text_color, bg_color)
+        # Debug log only when empty
+        if wrapped.lines.empty?
+          puts "WARNING: No lines in wrapped text for: #{@text}"
         end
+
+        # Simple text rendering like Simon the Sorcerer - no backgrounds or bubbles
+        draw_wrapped_text(position, wrapped, text_color)
       end
 
       # Calculate screen position above character
@@ -185,21 +183,22 @@ module PointClickEngine
 
       # Determine character-specific color
       private def determine_character_color(name : String) : RL::Color
+        # Use bright, highly visible colors for Simon the Sorcerer style text
         case name.downcase
         when "player", "hero", "simon", "detective"
           RL::Color.new(r: 255, g: 255, b: 255, a: 255) # White
         when "wizard", "mage", "sorcerer"
-          RL::Color.new(r: 138, g: 43, b: 226, a: 255) # Purple
+          RL::Color.new(r: 255, g: 100, b: 255, a: 255) # Bright Purple
         when "butler", "servant"
-          RL::Color.new(r: 139, g: 69, b: 19, a: 255) # Brown
-        when "scientist", "doctor"
-          RL::Color.new(r: 0, g: 191, b: 255, a: 255) # Light blue
+          RL::Color.new(r: 255, g: 200, b: 100, a: 255) # Light Brown
+        when "scientist", "doctor", "librarian"
+          RL::Color.new(r: 100, g: 200, b: 255, a: 255) # Light blue
         when "guard", "soldier"
-          RL::Color.new(r: 255, g: 0, b: 0, a: 255) # Red
+          RL::Color.new(r: 255, g: 100, b: 100, a: 255) # Light Red
         when "merchant", "shopkeeper"
-          RL::Color.new(r: 255, g: 215, b: 0, a: 255) # Gold
+          RL::Color.new(r: 255, g: 255, b: 100, a: 255) # Light Yellow
         else
-          RL::Color.new(r: 200, g: 200, b: 200, a: 255) # Light gray
+          RL::Color.new(r: 255, g: 255, b: 255, a: 255) # Default to white for visibility
         end
       end
 
@@ -343,6 +342,7 @@ module PointClickEngine
       # Show floating dialog for character
       def show_dialog(character_name : String, text : String, character_pos : RL::Vector2,
                       duration : Float32? = nil, style : DialogStyle = DialogStyle::Bubble)
+        puts "FloatingDialogManager.show_dialog called: #{character_name}, #{text}"
         return unless @enable_floating
 
         # Remove oldest dialog if at max capacity
@@ -355,13 +355,18 @@ module PointClickEngine
         dialog.style = style
 
         @active_dialogs << dialog
+        puts "Added floating dialog, active count: #{@active_dialogs.size}"
       end
 
       # Update all active dialogs
       def update(dt : Float32)
         # Update dialogs and remove expired ones
         @active_dialogs.reject! do |dialog|
-          !dialog.update(dt)
+          should_remove = dialog.update(dt)
+          if should_remove
+            puts "Removing expired dialog after #{dialog.elapsed}s (duration: #{dialog.duration}s)"
+          end
+          should_remove
         end
       end
 

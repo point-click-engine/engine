@@ -27,6 +27,7 @@ module PointClickEngine
 
         # Start a transition effect
         def start_transition(effect : TransitionEffect, duration : Float32 = 1.0f32, &on_complete : -> Nil)
+          puts "TRANSITION: Starting transition #{effect} for #{duration}s"
           @active = true
           @progress = 0.0f32
           @duration = duration
@@ -38,7 +39,16 @@ module PointClickEngine
 
           # Create new effect instance
           @current_effect = create_effect_instance(effect, duration)
-          @current_effect.try(&.load_shader)
+          if effect_instance = @current_effect
+            puts "TRANSITION: Created effect instance: #{effect_instance.class}"
+            if shader = effect_instance.load_shader
+              puts "TRANSITION: Shader loaded successfully"
+            else
+              puts "TRANSITION: Failed to load shader!"
+            end
+          else
+            puts "TRANSITION: Failed to create effect instance!"
+          end
         end
 
         # Update transition progress
@@ -62,10 +72,30 @@ module PointClickEngine
 
         # Render with transition effect
         def render_with_transition(&block : -> Nil)
-          return yield unless @active
+          unless @active
+            yield
+            return
+          end
+
           return yield unless texture = @render_texture
           return yield unless effect = @current_effect
+
+          # For fade effect, we don't need shaders
+          if effect.is_a?(FadeEffect)
+            puts "TRANSITION: Rendering fade effect, progress: #{@progress}"
+
+            # Render scene normally
+            yield
+
+            # Draw a black overlay with varying alpha
+            alpha = (255 * @progress).to_u8
+            RL.draw_rectangle(0, 0, @width, @height, RL::Color.new(r: 0, g: 0, b: 0, a: alpha))
+            return
+          end
+
           return yield unless shader = effect.shader
+
+          puts "TRANSITION: Rendering with shader effect, progress: #{@progress}"
 
           # Render scene to texture
           RL.begin_texture_mode(texture)

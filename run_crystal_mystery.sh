@@ -12,4 +12,4 @@ echo "- ESC to return to menu"
 echo "- F1 for debug mode"
 echo ""
 
-./main
+./crystal_mystery_game
