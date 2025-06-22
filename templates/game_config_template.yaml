@@ -1,0 +1,96 @@
+# Game Configuration Template
+# Copy this file to your game directory and customize it
+
+game:
+  title: "My Adventure Game"
+  version: "1.0.0"
+  author: "Your Name"
+  
+window:
+  width: 1024
+  height: 768
+  fullscreen: false
+  target_fps: 60
+  
+display:
+  # Options: FitWithBars, Stretch, PixelPerfect
+  scaling_mode: FitWithBars
+  target_width: 1024
+  target_height: 768
+  
+player:
+  name: "Hero"
+  sprite_path: "assets/sprites/player.png"
+  sprite:
+    frame_width: 64
+    frame_height: 64
+    columns: 8
+    rows: 4
+  start_position:
+    x: 512
+    y: 600
+    
+features:
+  # Available features:
+  # - verbs           # Enable verb-based input (Walk, Look, Talk, etc.)
+  # - floating_dialogs # Enable floating dialog bubbles above characters
+  # - portraits       # Enable character portraits in dialog boxes
+  # - shaders        # Enable visual effects (vignette, bloom, etc.)
+  # - auto_save      # Enable automatic saving every 5 minutes
+  # - debug          # Enable debug mode on startup
+  - verbs
+  - floating_dialogs
+  
+assets:
+  # Glob patterns are supported (*.yaml, scenes/*.yaml, etc.)
+  scenes:
+    - "game/scenes/*.yaml"
+  
+  dialogs:
+    - "game/dialogs/*.yaml"
+    
+  quests:
+    - "game/quests/*.yaml"
+    
+  audio:
+    music:
+      main_theme: "assets/music/main_theme.ogg"
+      
+    sounds:
+      click: "assets/sounds/click.ogg"
+      pickup: "assets/sounds/pickup.ogg"
+      
+settings:
+  debug_mode: false
+  show_fps: false
+  master_volume: 0.8
+  music_volume: 0.7
+  sfx_volume: 0.9
+  
+initial_state:
+  # Initial game flags (true/false values)
+  flags:
+    game_started: true
+    
+  # Initial game variables (numbers or strings)
+  variables:
+    player_health: 100
+    game_time: 0.0
+  
+# Scene to load when starting a new game
+start_scene: "intro"
+
+# Music to play when starting a new game (optional)
+start_music: "main_theme"
+
+# UI Configuration
+ui:
+  # Tutorial hints shown at game start
+  hints:
+    - text: "Click to move your character"
+      duration: 5.0
+    - text: "Press I for inventory"
+      duration: 5.0
+      
+  # Message shown when starting a new game
+  opening_message: "Welcome to the adventure!"

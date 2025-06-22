@@ -7,6 +7,7 @@ require "json" # Fix for luajit.cr JSON::Any issue
 {% end %}
 
 require "../src/point_click_engine"
+require "../src/core/game_config"
 
 # Helper to create test vectors
 def vec2(x, y)

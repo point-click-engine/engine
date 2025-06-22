@@ -53,6 +53,7 @@ require "./core/achievement_manager"
 require "./core/game_state_manager"
 require "./core/quest_system"
 require "./core/engine"
+require "./core/game_config"
 
 # Graphics modules
 require "./graphics/display_manager"

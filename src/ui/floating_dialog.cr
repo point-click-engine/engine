@@ -53,8 +53,8 @@ module PointClickEngine
       @wrapped_text : WrappedText?
       @position_cache : RL::Vector2?
 
-      def initialize(@text : String, @character_name : String, @character_position : RL::Vector2, @duration : Float32)
-        @color = determine_character_color(@character_name)
+      def initialize(@text : String, @character_name : String, @character_position : RL::Vector2, @duration : Float32, color : RL::Color? = nil)
+        @color = color || determine_character_color(@character_name)
         @background_color = RL::Color.new(r: 0, g: 0, b: 0, a: 180)
         puts "FloatingDialog initialized: color=#{@color}, bg=#{@background_color}"
 
@@ -185,20 +185,36 @@ module PointClickEngine
       private def determine_character_color(name : String) : RL::Color
         # Use bright, highly visible colors for Simon the Sorcerer style text
         case name.downcase
-        when "player", "hero", "simon", "detective"
+        when "player", "hero", "simon", "detective", "you"
           RL::Color.new(r: 255, g: 255, b: 255, a: 255) # White
-        when "wizard", "mage", "sorcerer"
-          RL::Color.new(r: 255, g: 100, b: 255, a: 255) # Bright Purple
-        when "butler", "servant"
+        when "wizard", "mage", "sorcerer", "witch"
+          RL::Color.new(r: 138, g: 43, b: 226, a: 255) # Purple
+        when "butler", "servant", "maid"
           RL::Color.new(r: 255, g: 200, b: 100, a: 255) # Light Brown
-        when "scientist", "doctor", "librarian"
-          RL::Color.new(r: 100, g: 200, b: 255, a: 255) # Light blue
-        when "guard", "soldier"
+        when "scientist", "doctor", "professor", "librarian"
+          RL::Color.new(r: 100, g: 200, b: 255, a: 255) # Light Blue
+        when "guard", "soldier", "knight"
           RL::Color.new(r: 255, g: 100, b: 100, a: 255) # Light Red
-        when "merchant", "shopkeeper"
+        when "merchant", "shopkeeper", "trader"
           RL::Color.new(r: 255, g: 255, b: 100, a: 255) # Light Yellow
+        when "thief", "rogue", "bandit"
+          RL::Color.new(r: 150, g: 150, b: 150, a: 255) # Gray
+        when "king", "queen", "prince", "princess", "noble"
+          RL::Color.new(r: 255, g: 215, b: 0, a: 255)   # Gold
+        when "demon", "devil", "monster"
+          RL::Color.new(r: 255, g: 50, b: 50, a: 255)   # Dark Red
+        when "fairy", "pixie", "sprite"
+          RL::Color.new(r: 255, g: 182, b: 193, a: 255) # Pink
+        when "elf", "dwarf", "halfling"
+          RL::Color.new(r: 144, g: 238, b: 144, a: 255) # Light Green
+        when "ghost", "spirit", "phantom"
+          RL::Color.new(r: 230, g: 230, b: 250, a: 255) # Lavender
+        when "narrator", "voice", "system"
+          RL::Color.new(r: 255, g: 255, b: 200, a: 255) # Light Yellow (for narration)
+        when "unknown"
+          RL::Color.new(r: 200, g: 200, b: 200, a: 255) # Light gray for unknown characters
         else
-          RL::Color.new(r: 255, g: 255, b: 255, a: 255) # Default to white for visibility
+          RL::Color.new(r: 200, g: 200, b: 200, a: 255) # Default to light gray
         end
       end
 
@@ -341,7 +357,7 @@ module PointClickEngine
 
       # Show floating dialog for character
       def show_dialog(character_name : String, text : String, character_pos : RL::Vector2,
-                      duration : Float32? = nil, style : DialogStyle = DialogStyle::Bubble)
+                      duration : Float32? = nil, style : DialogStyle = DialogStyle::Bubble, color : RL::Color? = nil)
         puts "FloatingDialogManager.show_dialog called: #{character_name}, #{text}"
         return unless @enable_floating
 
@@ -351,7 +367,7 @@ module PointClickEngine
         end
 
         actual_duration = duration || calculate_duration(text)
-        dialog = FloatingDialog.new(text, character_name, character_pos, actual_duration)
+        dialog = FloatingDialog.new(text, character_name, character_pos, actual_duration, color)
         dialog.style = style
 
         @active_dialogs << dialog

@@ -137,7 +137,9 @@ describe PointClickEngine::UI::DialogManager do
 
       # Dialog should be at bottom of screen
       window_height = 600 # Default test height
-      dialog.position.y.should be > (window_height - 200)
+      dialog_height = 150 + (3 * 30) # Base height + 3 choices * 30 each
+      expected_y = window_height - dialog_height - 20
+      dialog.position.y.should eq(expected_y.to_f32)
     end
 
     it "calls callback with selected choice index" do

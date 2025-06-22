@@ -25,8 +25,9 @@ module PointClickEngine
         )
 
         bounds = obj.bounds
-        bounds.x.should eq(100f32)
-        bounds.y.should eq(200f32)
+        # Bounds are centered on position
+        bounds.x.should eq(75f32)     # 100 - 50/2
+        bounds.y.should eq(162.5f32)  # 200 - 75/2
         bounds.width.should eq(50f32)
         bounds.height.should eq(75f32)
       end

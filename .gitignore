@@ -1,4 +1,4 @@
-/docs/
+/docs/archive
 /lib/
 /bin/
 /crystal_mystery/assets
@@ -20,6 +20,7 @@ example/example
 scene_editor
 test
 main
+crystal_mystery*
 crystal_mystery/main
 /main
 
@@ -36,6 +37,19 @@ crystal_mystery/main
 *.aseprite
 *.txt
 saves/
+
+# Compiled binaries
+crystal_mystery_game
+crystal_mystery_game.dwarf
+
+# Third-party asset packs
+/crystal_mystery/2D_SL_Knight_v1.0/
+/crystal_mystery/Mana Seed Farmer Sprite Free Sample/
+/crystal_mystery/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/
+/crystal_mystery/oak_woods_v1.0/
+
+# Backup files
+*.backup
 
 # Test outputs
 test_results_summary.md

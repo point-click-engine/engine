@@ -42,9 +42,9 @@ module PointClickEngine
 
       # Show floating dialog above character position
       def show_floating_dialog(character_name : String, text : String, character_pos : RL::Vector2,
-                               duration : Float32? = nil, style : DialogStyle = DialogStyle::Bubble)
+                               duration : Float32? = nil, style : DialogStyle = DialogStyle::Bubble, color : RL::Color? = nil)
         return unless @enable_floating
-        @floating_manager.show_dialog(character_name, text, character_pos, duration, style)
+        @floating_manager.show_dialog(character_name, text, character_pos, duration, style, color)
       end
 
       # Show floating dialog for character (convenience method)

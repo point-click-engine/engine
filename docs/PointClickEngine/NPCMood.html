@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Crystal Docs 1.10.1">
+<meta name="crystal_docs.project_version" content="master-dev">
+<meta name="crystal_docs.project_name" content="point_click_engine">
+
+
+
+<link href="../css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="../js/doc.js"></script>
+
+  <meta name="repository-name" content="point_click_engine">
+  <title>PointClickEngine::NPCMood - point_click_engine master-dev</title>
+  <script type="text/javascript">
+    CrystalDocs.base_path = "../";
+  </script>
+</head>
+<body>
+
+<svg class="hidden">
+  <symbol id="octicon-link" viewBox="0 0 16 16">
+    <path fill="currentColor" fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+  </symbol>
+</svg>
+<input type="checkbox" id="sidebar-btn">
+<label for="sidebar-btn" id="sidebar-btn-label">
+  <svg class="open" xmlns="http://www.w3.org/2000/svg" height="2em" width="2em" viewBox="0 0 512 512"><title>Open Sidebar</title><path fill="currentColor" d="M80 96v64h352V96H80zm0 112v64h352v-64H80zm0 112v64h352v-64H80z"></path></svg>
+  <svg class="close" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 512 512"><title>Close Sidebar</title><path fill="currentColor" d="m118.6 73.4-45.2 45.2L210.7 256 73.4 393.4l45.2 45.2L256 301.3l137.4 137.3 45.2-45.2L301.3 256l137.3-137.4-45.2-45.2L256 210.7Z"></path></svg>
+</label>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="../index.html">
+          point_click_engine
+        </a>
+      </h1>
+
+      <span class="project-version">
+        master-dev
+      </span>
+    </div>
+  </div>
+
+  <div class="search-results hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <ul>
+  
+  <li class=" " data-id="point_click_engine/toplevel" data-name="top level namespace">
+      <a href="../toplevel.html">Top Level Namespace</a>
+      
+    </li>
+  
+  <li class="parent open current" data-id="point_click_engine/PointClickEngine" data-name="pointclickengine">
+      <a href="../PointClickEngine.html">PointClickEngine</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/AnimatedSprite" data-name="pointclickengine::animatedsprite">
+      <a href="../PointClickEngine/AnimatedSprite.html">AnimatedSprite</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/AnimationController" data-name="pointclickengine::animationcontroller">
+      <a href="../PointClickEngine/AnimationController.html">AnimationController</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/AnimationData" data-name="pointclickengine::animationdata">
+      <a href="../PointClickEngine/AnimationData.html">AnimationData</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/AnimationState" data-name="pointclickengine::animationstate">
+      <a href="../PointClickEngine/AnimationState.html">AnimationState</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/AssetLoader" data-name="pointclickengine::assetloader">
+      <a href="../PointClickEngine/AssetLoader.html">AssetLoader</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/AssetManager" data-name="pointclickengine::assetmanager">
+      <a href="../PointClickEngine/AssetManager.html">AssetManager</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/AssetManager/AssetData" data-name="pointclickengine::assetmanager::assetdata">
+      <a href="../PointClickEngine/AssetManager/AssetData.html">AssetData</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/AssetManager/AssetNotFoundError" data-name="pointclickengine::assetmanager::assetnotfounderror">
+      <a href="../PointClickEngine/AssetManager/AssetNotFoundError.html">AssetNotFoundError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Audio" data-name="pointclickengine::audio">
+      <a href="../PointClickEngine/Audio.html">Audio</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/AmbientSound" data-name="pointclickengine::audio::ambientsound">
+      <a href="../PointClickEngine/Audio/AmbientSound.html">AmbientSound</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/AmbientSoundConfig" data-name="pointclickengine::audio::ambientsoundconfig">
+      <a href="../PointClickEngine/Audio/AmbientSoundConfig.html">AmbientSoundConfig</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/AmbientSoundManager" data-name="pointclickengine::audio::ambientsoundmanager">
+      <a href="../PointClickEngine/Audio/AmbientSoundManager.html">AmbientSoundManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/AudioManager" data-name="pointclickengine::audio::audiomanager">
+      <a href="../PointClickEngine/Audio/AudioManager.html">AudioManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/CharacterFootsteps" data-name="pointclickengine::audio::characterfootsteps">
+      <a href="../PointClickEngine/Audio/CharacterFootsteps.html">CharacterFootsteps</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/FootstepConfig" data-name="pointclickengine::audio::footstepconfig">
+      <a href="../PointClickEngine/Audio/FootstepConfig.html">FootstepConfig</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/FootstepSystem" data-name="pointclickengine::audio::footstepsystem">
+      <a href="../PointClickEngine/Audio/FootstepSystem.html">FootstepSystem</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/Music" data-name="pointclickengine::audio::music">
+      <a href="../PointClickEngine/Audio/Music.html">Music</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/SoundEffect" data-name="pointclickengine::audio::soundeffect">
+      <a href="../PointClickEngine/Audio/SoundEffect.html">SoundEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/SurfaceArea" data-name="pointclickengine::audio::surfacearea">
+      <a href="../PointClickEngine/Audio/SurfaceArea.html">SurfaceArea</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Audio/SurfaceType" data-name="pointclickengine::audio::surfacetype">
+      <a href="../PointClickEngine/Audio/SurfaceType.html">SurfaceType</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/AudioManager" data-name="pointclickengine::audiomanager">
+      <a href="../PointClickEngine/AudioManager.html">AudioManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/CallbackAction" data-name="pointclickengine::callbackaction">
+      <a href="../PointClickEngine/CallbackAction.html">CallbackAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/CameraAction" data-name="pointclickengine::cameraaction">
+      <a href="../PointClickEngine/CameraAction.html">CameraAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ChangeSceneAction" data-name="pointclickengine::changesceneaction">
+      <a href="../PointClickEngine/ChangeSceneAction.html">ChangeSceneAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Character" data-name="pointclickengine::character">
+      <a href="../PointClickEngine/Character.html">Character</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/CharacterDialogue" data-name="pointclickengine::characterdialogue">
+      <a href="../PointClickEngine/CharacterDialogue.html">CharacterDialogue</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Characters" data-name="pointclickengine::characters">
+      <a href="../PointClickEngine/Characters.html">Characters</a>
+      
+        <ul>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Characters/AI" data-name="pointclickengine::characters::ai">
+      <a href="../PointClickEngine/Characters/AI.html">AI</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/AI/FollowBehavior" data-name="pointclickengine::characters::ai::followbehavior">
+      <a href="../PointClickEngine/Characters/AI/FollowBehavior.html">FollowBehavior</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/AI/IdleBehavior" data-name="pointclickengine::characters::ai::idlebehavior">
+      <a href="../PointClickEngine/Characters/AI/IdleBehavior.html">IdleBehavior</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/AI/NPCBehavior" data-name="pointclickengine::characters::ai::npcbehavior">
+      <a href="../PointClickEngine/Characters/AI/NPCBehavior.html">NPCBehavior</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/AI/PatrolBehavior" data-name="pointclickengine::characters::ai::patrolbehavior">
+      <a href="../PointClickEngine/Characters/AI/PatrolBehavior.html">PatrolBehavior</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/AI/RandomWalkBehavior" data-name="pointclickengine::characters::ai::randomwalkbehavior">
+      <a href="../PointClickEngine/Characters/AI/RandomWalkBehavior.html">RandomWalkBehavior</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/AnimationController" data-name="pointclickengine::characters::animationcontroller">
+      <a href="../PointClickEngine/Characters/AnimationController.html">AnimationController</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/AnimationData" data-name="pointclickengine::characters::animationdata">
+      <a href="../PointClickEngine/Characters/AnimationData.html">AnimationData</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/AnimationState" data-name="pointclickengine::characters::animationstate">
+      <a href="../PointClickEngine/Characters/AnimationState.html">AnimationState</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/Character" data-name="pointclickengine::characters::character">
+      <a href="../PointClickEngine/Characters/Character.html">Character</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/CharacterState" data-name="pointclickengine::characters::characterstate">
+      <a href="../PointClickEngine/Characters/CharacterState.html">CharacterState</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Characters/Dialogue" data-name="pointclickengine::characters::dialogue">
+      <a href="../PointClickEngine/Characters/Dialogue.html">Dialogue</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/Dialogue/CharacterDialogue" data-name="pointclickengine::characters::dialogue::characterdialogue">
+      <a href="../PointClickEngine/Characters/Dialogue/CharacterDialogue.html">CharacterDialogue</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/Dialogue/DialogChoice" data-name="pointclickengine::characters::dialogue::dialogchoice">
+      <a href="../PointClickEngine/Characters/Dialogue/DialogChoice.html">DialogChoice</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/Dialogue/DialogNode" data-name="pointclickengine::characters::dialogue::dialognode">
+      <a href="../PointClickEngine/Characters/Dialogue/DialogNode.html">DialogNode</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/Dialogue/DialogTree" data-name="pointclickengine::characters::dialogue::dialogtree">
+      <a href="../PointClickEngine/Characters/Dialogue/DialogTree.html">DialogTree</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/Direction" data-name="pointclickengine::characters::direction">
+      <a href="../PointClickEngine/Characters/Direction.html">Direction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/Direction8" data-name="pointclickengine::characters::direction8">
+      <a href="../PointClickEngine/Characters/Direction8.html">Direction8</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/EnhancedAnimationData" data-name="pointclickengine::characters::enhancedanimationdata">
+      <a href="../PointClickEngine/Characters/EnhancedAnimationData.html">EnhancedAnimationData</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/EnhancedCharacter" data-name="pointclickengine::characters::enhancedcharacter">
+      <a href="../PointClickEngine/Characters/EnhancedCharacter.html">EnhancedCharacter</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/NPC" data-name="pointclickengine::characters::npc">
+      <a href="../PointClickEngine/Characters/NPC.html">NPC</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/NPCMood" data-name="pointclickengine::characters::npcmood">
+      <a href="../PointClickEngine/Characters/NPCMood.html">NPCMood</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/Player" data-name="pointclickengine::characters::player">
+      <a href="../PointClickEngine/Characters/Player.html">Player</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/ScriptableCharacter" data-name="pointclickengine::characters::scriptablecharacter">
+      <a href="../PointClickEngine/Characters/ScriptableCharacter.html">ScriptableCharacter</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/SimpleNPC" data-name="pointclickengine::characters::simplenpc">
+      <a href="../PointClickEngine/Characters/SimpleNPC.html">SimpleNPC</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Characters/Talkable" data-name="pointclickengine::characters::talkable">
+      <a href="../PointClickEngine/Characters/Talkable.html">Talkable</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/CharacterState" data-name="pointclickengine::characterstate">
+      <a href="../PointClickEngine/CharacterState.html">CharacterState</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ConditionResult" data-name="pointclickengine::conditionresult">
+      <a href="../PointClickEngine/ConditionResult.html">ConditionResult</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Core" data-name="pointclickengine::core">
+      <a href="../PointClickEngine/Core.html">Core</a>
+      
+        <ul>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Core/AchievementManager" data-name="pointclickengine::core::achievementmanager">
+      <a href="../PointClickEngine/Core/AchievementManager.html">AchievementManager</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/AchievementManager/Achievement" data-name="pointclickengine::core::achievementmanager::achievement">
+      <a href="../PointClickEngine/Core/AchievementManager/Achievement.html">Achievement</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/ConditionResult" data-name="pointclickengine::core::conditionresult">
+      <a href="../PointClickEngine/Core/ConditionResult.html">ConditionResult</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/ConfigManager" data-name="pointclickengine::core::configmanager">
+      <a href="../PointClickEngine/Core/ConfigManager.html">ConfigManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/Drawable" data-name="pointclickengine::core::drawable">
+      <a href="../PointClickEngine/Core/Drawable.html">Drawable</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/Engine" data-name="pointclickengine::core::engine">
+      <a href="../PointClickEngine/Core/Engine.html">Engine</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Core/EngineComponents" data-name="pointclickengine::core::enginecomponents">
+      <a href="../PointClickEngine/Core/EngineComponents.html">EngineComponents</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/EngineComponents/InputHandler" data-name="pointclickengine::core::enginecomponents::inputhandler">
+      <a href="../PointClickEngine/Core/EngineComponents/InputHandler.html">InputHandler</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/EngineComponents/RenderCoordinator" data-name="pointclickengine::core::enginecomponents::rendercoordinator">
+      <a href="../PointClickEngine/Core/EngineComponents/RenderCoordinator.html">RenderCoordinator</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/EngineComponents/SystemManager" data-name="pointclickengine::core::enginecomponents::systemmanager">
+      <a href="../PointClickEngine/Core/EngineComponents/SystemManager.html">SystemManager</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/GameObject" data-name="pointclickengine::core::gameobject">
+      <a href="../PointClickEngine/Core/GameObject.html">GameObject</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/GameStateManager" data-name="pointclickengine::core::gamestatemanager">
+      <a href="../PointClickEngine/Core/GameStateManager.html">GameStateManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/GameValue" data-name="pointclickengine::core::gamevalue">
+      <a href="../PointClickEngine/Core/GameValue.html">GameValue</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/Quest" data-name="pointclickengine::core::quest">
+      <a href="../PointClickEngine/Core/Quest.html">Quest</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/QuestManager" data-name="pointclickengine::core::questmanager">
+      <a href="../PointClickEngine/Core/QuestManager.html">QuestManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/QuestObjective" data-name="pointclickengine::core::questobjective">
+      <a href="../PointClickEngine/Core/QuestObjective.html">QuestObjective</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/QuestReward" data-name="pointclickengine::core::questreward">
+      <a href="../PointClickEngine/Core/QuestReward.html">QuestReward</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/SaveData" data-name="pointclickengine::core::savedata">
+      <a href="../PointClickEngine/Core/SaveData.html">SaveData</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/SaveSystem" data-name="pointclickengine::core::savesystem">
+      <a href="../PointClickEngine/Core/SaveSystem.html">SaveSystem</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/StateChangeHandler" data-name="pointclickengine::core::statechangehandler">
+      <a href="../PointClickEngine/Core/StateChangeHandler.html">StateChangeHandler</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Core/StateValue" data-name="pointclickengine::core::statevalue">
+      <a href="../PointClickEngine/Core/StateValue.html">StateValue</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscene" data-name="pointclickengine::cutscene">
+      <a href="../PointClickEngine/Cutscene.html">Cutscene</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/CutsceneAction" data-name="pointclickengine::cutsceneaction">
+      <a href="../PointClickEngine/CutsceneAction.html">CutsceneAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/CutsceneManager" data-name="pointclickengine::cutscenemanager">
+      <a href="../PointClickEngine/CutsceneManager.html">CutsceneManager</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Cutscenes" data-name="pointclickengine::cutscenes">
+      <a href="../PointClickEngine/Cutscenes.html">Cutscenes</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/CallbackAction" data-name="pointclickengine::cutscenes::callbackaction">
+      <a href="../PointClickEngine/Cutscenes/CallbackAction.html">CallbackAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/CameraAction" data-name="pointclickengine::cutscenes::cameraaction">
+      <a href="../PointClickEngine/Cutscenes/CameraAction.html">CameraAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/CameraTransition" data-name="pointclickengine::cutscenes::cameratransition">
+      <a href="../PointClickEngine/Cutscenes/CameraTransition.html">CameraTransition</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/ChangeSceneAction" data-name="pointclickengine::cutscenes::changesceneaction">
+      <a href="../PointClickEngine/Cutscenes/ChangeSceneAction.html">ChangeSceneAction</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Cutscenes/Cutscene" data-name="pointclickengine::cutscenes::cutscene">
+      <a href="../PointClickEngine/Cutscenes/Cutscene.html">Cutscene</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/Cutscene/CutsceneBuilder" data-name="pointclickengine::cutscenes::cutscene::cutscenebuilder">
+      <a href="../PointClickEngine/Cutscenes/Cutscene/CutsceneBuilder.html">CutsceneBuilder</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/CutsceneAction" data-name="pointclickengine::cutscenes::cutsceneaction">
+      <a href="../PointClickEngine/Cutscenes/CutsceneAction.html">CutsceneAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/CutsceneCamera" data-name="pointclickengine::cutscenes::cutscenecamera">
+      <a href="../PointClickEngine/Cutscenes/CutsceneCamera.html">CutsceneCamera</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/CutsceneCheckpoint" data-name="pointclickengine::cutscenes::cutscenecheckpoint">
+      <a href="../PointClickEngine/Cutscenes/CutsceneCheckpoint.html">CutsceneCheckpoint</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/CutsceneManager" data-name="pointclickengine::cutscenes::cutscenemanager">
+      <a href="../PointClickEngine/Cutscenes/CutsceneManager.html">CutsceneManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/DialogAction" data-name="pointclickengine::cutscenes::dialogaction">
+      <a href="../PointClickEngine/Cutscenes/DialogAction.html">DialogAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/EasingFunctions" data-name="pointclickengine::cutscenes::easingfunctions">
+      <a href="../PointClickEngine/Cutscenes/EasingFunctions.html">EasingFunctions</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/EnhancedCutscene" data-name="pointclickengine::cutscenes::enhancedcutscene">
+      <a href="../PointClickEngine/Cutscenes/EnhancedCutscene.html">EnhancedCutscene</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/FadeAction" data-name="pointclickengine::cutscenes::fadeaction">
+      <a href="../PointClickEngine/Cutscenes/FadeAction.html">FadeAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/MoveCharacterAction" data-name="pointclickengine::cutscenes::movecharacteraction">
+      <a href="../PointClickEngine/Cutscenes/MoveCharacterAction.html">MoveCharacterAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/ParallelAction" data-name="pointclickengine::cutscenes::parallelaction">
+      <a href="../PointClickEngine/Cutscenes/ParallelAction.html">ParallelAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/PlayAnimationAction" data-name="pointclickengine::cutscenes::playanimationaction">
+      <a href="../PointClickEngine/Cutscenes/PlayAnimationAction.html">PlayAnimationAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/TimelineBuilder" data-name="pointclickengine::cutscenes::timelinebuilder">
+      <a href="../PointClickEngine/Cutscenes/TimelineBuilder.html">TimelineBuilder</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/TimelineEvent" data-name="pointclickengine::cutscenes::timelineevent">
+      <a href="../PointClickEngine/Cutscenes/TimelineEvent.html">TimelineEvent</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/UIVisibilityAction" data-name="pointclickengine::cutscenes::uivisibilityaction">
+      <a href="../PointClickEngine/Cutscenes/UIVisibilityAction.html">UIVisibilityAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Cutscenes/WaitAction" data-name="pointclickengine::cutscenes::waitaction">
+      <a href="../PointClickEngine/Cutscenes/WaitAction.html">WaitAction</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Dialog" data-name="pointclickengine::dialog">
+      <a href="../PointClickEngine/Dialog.html">Dialog</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/DialogAction" data-name="pointclickengine::dialogaction">
+      <a href="../PointClickEngine/DialogAction.html">DialogAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/DialogChoice" data-name="pointclickengine::dialogchoice">
+      <a href="../PointClickEngine/DialogChoice.html">DialogChoice</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/DialogNode" data-name="pointclickengine::dialognode">
+      <a href="../PointClickEngine/DialogNode.html">DialogNode</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/DialogStyle" data-name="pointclickengine::dialogstyle">
+      <a href="../PointClickEngine/DialogStyle.html">DialogStyle</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/DialogTree" data-name="pointclickengine::dialogtree">
+      <a href="../PointClickEngine/DialogTree.html">DialogTree</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Direction" data-name="pointclickengine::direction">
+      <a href="../PointClickEngine/Direction.html">Direction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Direction8" data-name="pointclickengine::direction8">
+      <a href="../PointClickEngine/Direction8.html">Direction8</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/DisplayManager" data-name="pointclickengine::displaymanager">
+      <a href="../PointClickEngine/DisplayManager.html">DisplayManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Drawable" data-name="pointclickengine::drawable">
+      <a href="../PointClickEngine/Drawable.html">Drawable</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/EdgeExit" data-name="pointclickengine::edgeexit">
+      <a href="../PointClickEngine/EdgeExit.html">EdgeExit</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Event" data-name="pointclickengine::event">
+      <a href="../PointClickEngine/Event.html">Event</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/EventHandler" data-name="pointclickengine::eventhandler">
+      <a href="../PointClickEngine/EventHandler.html">EventHandler</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/EventSystem" data-name="pointclickengine::eventsystem">
+      <a href="../PointClickEngine/EventSystem.html">EventSystem</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ExitZone" data-name="pointclickengine::exitzone">
+      <a href="../PointClickEngine/ExitZone.html">ExitZone</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/FadeAction" data-name="pointclickengine::fadeaction">
+      <a href="../PointClickEngine/FadeAction.html">FadeAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/FloatingDialog" data-name="pointclickengine::floatingdialog">
+      <a href="../PointClickEngine/FloatingDialog.html">FloatingDialog</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/FloatingDialogManager" data-name="pointclickengine::floatingdialogmanager">
+      <a href="../PointClickEngine/FloatingDialogManager.html">FloatingDialogManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/FollowBehavior" data-name="pointclickengine::followbehavior">
+      <a href="../PointClickEngine/FollowBehavior.html">FollowBehavior</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/FunctionEventHandler" data-name="pointclickengine::functioneventhandler">
+      <a href="../PointClickEngine/FunctionEventHandler.html">FunctionEventHandler</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Game" data-name="pointclickengine::game">
+      <a href="../PointClickEngine/Game.html">Game</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/GameObject" data-name="pointclickengine::gameobject">
+      <a href="../PointClickEngine/GameObject.html">GameObject</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/GameStateManager" data-name="pointclickengine::gamestatemanager">
+      <a href="../PointClickEngine/GameStateManager.html">GameStateManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/GameValue" data-name="pointclickengine::gamevalue">
+      <a href="../PointClickEngine/GameValue.html">GameValue</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Graphics" data-name="pointclickengine::graphics">
+      <a href="../PointClickEngine/Graphics.html">Graphics</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/AnimatedSprite" data-name="pointclickengine::graphics::animatedsprite">
+      <a href="../PointClickEngine/Graphics/AnimatedSprite.html">AnimatedSprite</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Graphics/DisplayManager" data-name="pointclickengine::graphics::displaymanager">
+      <a href="../PointClickEngine/Graphics/DisplayManager.html">DisplayManager</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/DisplayManager/ScalingMode" data-name="pointclickengine::graphics::displaymanager::scalingmode">
+      <a href="../PointClickEngine/Graphics/DisplayManager/ScalingMode.html">ScalingMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Particle" data-name="pointclickengine::graphics::particle">
+      <a href="../PointClickEngine/Graphics/Particle.html">Particle</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/ParticleSystem" data-name="pointclickengine::graphics::particlesystem">
+      <a href="../PointClickEngine/Graphics/ParticleSystem.html">ParticleSystem</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Graphics/Shaders" data-name="pointclickengine::graphics::shaders">
+      <a href="../PointClickEngine/Graphics/Shaders.html">Shaders</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Shaders/ShaderHelpers" data-name="pointclickengine::graphics::shaders::shaderhelpers">
+      <a href="../PointClickEngine/Graphics/Shaders/ShaderHelpers.html">ShaderHelpers</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Shaders/ShaderSystem" data-name="pointclickengine::graphics::shaders::shadersystem">
+      <a href="../PointClickEngine/Graphics/Shaders/ShaderSystem.html">ShaderSystem</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/TransitionEffect" data-name="pointclickengine::graphics::transitioneffect">
+      <a href="../PointClickEngine/Graphics/TransitionEffect.html">TransitionEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/TransitionManager" data-name="pointclickengine::graphics::transitionmanager">
+      <a href="../PointClickEngine/Graphics/TransitionManager.html">TransitionManager</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Graphics/Transitions" data-name="pointclickengine::graphics::transitions">
+      <a href="../PointClickEngine/Graphics/Transitions.html">Transitions</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/BaseTransitionEffect" data-name="pointclickengine::graphics::transitions::basetransitioneffect">
+      <a href="../PointClickEngine/Graphics/Transitions/BaseTransitionEffect.html">BaseTransitionEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/CheckerboardEffect" data-name="pointclickengine::graphics::transitions::checkerboardeffect">
+      <a href="../PointClickEngine/Graphics/Transitions/CheckerboardEffect.html">CheckerboardEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/CrossFadeEffect" data-name="pointclickengine::graphics::transitions::crossfadeeffect">
+      <a href="../PointClickEngine/Graphics/Transitions/CrossFadeEffect.html">CrossFadeEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/DissolveEffect" data-name="pointclickengine::graphics::transitions::dissolveeffect">
+      <a href="../PointClickEngine/Graphics/Transitions/DissolveEffect.html">DissolveEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/FadeEffect" data-name="pointclickengine::graphics::transitions::fadeeffect">
+      <a href="../PointClickEngine/Graphics/Transitions/FadeEffect.html">FadeEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/HeartWipeEffect" data-name="pointclickengine::graphics::transitions::heartwipeeffect">
+      <a href="../PointClickEngine/Graphics/Transitions/HeartWipeEffect.html">HeartWipeEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/IrisEffect" data-name="pointclickengine::graphics::transitions::iriseffect">
+      <a href="../PointClickEngine/Graphics/Transitions/IrisEffect.html">IrisEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/PixelateEffect" data-name="pointclickengine::graphics::transitions::pixelateeffect">
+      <a href="../PointClickEngine/Graphics/Transitions/PixelateEffect.html">PixelateEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/ShaderLoader" data-name="pointclickengine::graphics::transitions::shaderloader">
+      <a href="../PointClickEngine/Graphics/Transitions/ShaderLoader.html">ShaderLoader</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/SlideDirection" data-name="pointclickengine::graphics::transitions::slidedirection">
+      <a href="../PointClickEngine/Graphics/Transitions/SlideDirection.html">SlideDirection</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/SlideEffect" data-name="pointclickengine::graphics::transitions::slideeffect">
+      <a href="../PointClickEngine/Graphics/Transitions/SlideEffect.html">SlideEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/StarWipeEffect" data-name="pointclickengine::graphics::transitions::starwipeeffect">
+      <a href="../PointClickEngine/Graphics/Transitions/StarWipeEffect.html">StarWipeEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/TransitionEffect" data-name="pointclickengine::graphics::transitions::transitioneffect">
+      <a href="../PointClickEngine/Graphics/Transitions/TransitionEffect.html">TransitionEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Graphics/Transitions/TransitionManager" data-name="pointclickengine::graphics::transitions::transitionmanager">
+      <a href="../PointClickEngine/Graphics/Transitions/TransitionManager.html">TransitionManager</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Hotspot" data-name="pointclickengine::hotspot">
+      <a href="../PointClickEngine/Hotspot.html">Hotspot</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/IdleBehavior" data-name="pointclickengine::idlebehavior">
+      <a href="../PointClickEngine/IdleBehavior.html">IdleBehavior</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Inventory" data-name="pointclickengine::inventory">
+      <a href="../PointClickEngine/Inventory.html">Inventory</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Inventory/InventoryItem" data-name="pointclickengine::inventory::inventoryitem">
+      <a href="../PointClickEngine/Inventory/InventoryItem.html">InventoryItem</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Inventory/InventorySystem" data-name="pointclickengine::inventory::inventorysystem">
+      <a href="../PointClickEngine/Inventory/InventorySystem.html">InventorySystem</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/InventoryItem" data-name="pointclickengine::inventoryitem">
+      <a href="../PointClickEngine/InventoryItem.html">InventoryItem</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/InventoryUI" data-name="pointclickengine::inventoryui">
+      <a href="../PointClickEngine/InventoryUI.html">InventoryUI</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Locale" data-name="pointclickengine::locale">
+      <a href="../PointClickEngine/Locale.html">Locale</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Localization" data-name="pointclickengine::localization">
+      <a href="../PointClickEngine/Localization.html">Localization</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Localization/Locale" data-name="pointclickengine::localization::locale">
+      <a href="../PointClickEngine/Localization/Locale.html">Locale</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Localization/LocalizationManager" data-name="pointclickengine::localization::localizationmanager">
+      <a href="../PointClickEngine/Localization/LocalizationManager.html">LocalizationManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Localization/Translation" data-name="pointclickengine::localization::translation">
+      <a href="../PointClickEngine/Localization/Translation.html">Translation</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/LocalizationManager" data-name="pointclickengine::localizationmanager">
+      <a href="../PointClickEngine/LocalizationManager.html">LocalizationManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/MoveCharacterAction" data-name="pointclickengine::movecharacteraction">
+      <a href="../PointClickEngine/MoveCharacterAction.html">MoveCharacterAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Music" data-name="pointclickengine::music">
+      <a href="../PointClickEngine/Music.html">Music</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Navigation" data-name="pointclickengine::navigation">
+      <a href="../PointClickEngine/Navigation.html">Navigation</a>
+      
+        <ul>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Navigation/Pathfinding" data-name="pointclickengine::navigation::pathfinding">
+      <a href="../PointClickEngine/Navigation/Pathfinding.html">Pathfinding</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Navigation/Pathfinding/NavigationGrid" data-name="pointclickengine::navigation::pathfinding::navigationgrid">
+      <a href="../PointClickEngine/Navigation/Pathfinding/NavigationGrid.html">NavigationGrid</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Navigation/Pathfinding/Node" data-name="pointclickengine::navigation::pathfinding::node">
+      <a href="../PointClickEngine/Navigation/Pathfinding/Node.html">Node</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/NavigationGrid" data-name="pointclickengine::navigationgrid">
+      <a href="../PointClickEngine/NavigationGrid.html">NavigationGrid</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/NPC" data-name="pointclickengine::npc">
+      <a href="../PointClickEngine/NPC.html">NPC</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/NPCBehavior" data-name="pointclickengine::npcbehavior">
+      <a href="../PointClickEngine/NPCBehavior.html">NPCBehavior</a>
+      
+    </li>
+  
+  <li class=" current" data-id="point_click_engine/PointClickEngine/NPCMood" data-name="pointclickengine::npcmood">
+      <a href="../PointClickEngine/NPCMood.html">NPCMood</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ParallelAction" data-name="pointclickengine::parallelaction">
+      <a href="../PointClickEngine/ParallelAction.html">ParallelAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Particle" data-name="pointclickengine::particle">
+      <a href="../PointClickEngine/Particle.html">Particle</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ParticleSystem" data-name="pointclickengine::particlesystem">
+      <a href="../PointClickEngine/ParticleSystem.html">ParticleSystem</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Pathfinding" data-name="pointclickengine::pathfinding">
+      <a href="../PointClickEngine/Pathfinding.html">Pathfinding</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/PatrolBehavior" data-name="pointclickengine::patrolbehavior">
+      <a href="../PointClickEngine/PatrolBehavior.html">PatrolBehavior</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/PlayAnimationAction" data-name="pointclickengine::playanimationaction">
+      <a href="../PointClickEngine/PlayAnimationAction.html">PlayAnimationAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Player" data-name="pointclickengine::player">
+      <a href="../PointClickEngine/Player.html">Player</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/PolygonHotspot" data-name="pointclickengine::polygonhotspot">
+      <a href="../PointClickEngine/PolygonHotspot.html">PolygonHotspot</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/PolygonRegion" data-name="pointclickengine::polygonregion">
+      <a href="../PointClickEngine/PolygonRegion.html">PolygonRegion</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Quest" data-name="pointclickengine::quest">
+      <a href="../PointClickEngine/Quest.html">Quest</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/QuestManager" data-name="pointclickengine::questmanager">
+      <a href="../PointClickEngine/QuestManager.html">QuestManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/QuestObjective" data-name="pointclickengine::questobjective">
+      <a href="../PointClickEngine/QuestObjective.html">QuestObjective</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/QuestReward" data-name="pointclickengine::questreward">
+      <a href="../PointClickEngine/QuestReward.html">QuestReward</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/RandomWalkBehavior" data-name="pointclickengine::randomwalkbehavior">
+      <a href="../PointClickEngine/RandomWalkBehavior.html">RandomWalkBehavior</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/SaveData" data-name="pointclickengine::savedata">
+      <a href="../PointClickEngine/SaveData.html">SaveData</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/SaveSystem" data-name="pointclickengine::savesystem">
+      <a href="../PointClickEngine/SaveSystem.html">SaveSystem</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ScaleZone" data-name="pointclickengine::scalezone">
+      <a href="../PointClickEngine/ScaleZone.html">ScaleZone</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scene" data-name="pointclickengine::scene">
+      <a href="../PointClickEngine/Scene.html">Scene</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Scenes" data-name="pointclickengine::scenes">
+      <a href="../PointClickEngine/Scenes.html">Scenes</a>
+      
+        <ul>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Scenes/CombinedCondition" data-name="pointclickengine::scenes::combinedcondition">
+      <a href="../PointClickEngine/Scenes/CombinedCondition.html">CombinedCondition</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/CombinedCondition/LogicType" data-name="pointclickengine::scenes::combinedcondition::logictype">
+      <a href="../PointClickEngine/Scenes/CombinedCondition/LogicType.html">LogicType</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/ComparisonOperator" data-name="pointclickengine::scenes::comparisonoperator">
+      <a href="../PointClickEngine/Scenes/ComparisonOperator.html">ComparisonOperator</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/Condition" data-name="pointclickengine::scenes::condition">
+      <a href="../PointClickEngine/Scenes/Condition.html">Condition</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/DynamicHotspot" data-name="pointclickengine::scenes::dynamichotspot">
+      <a href="../PointClickEngine/Scenes/DynamicHotspot.html">DynamicHotspot</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/EdgeExit" data-name="pointclickengine::scenes::edgeexit">
+      <a href="../PointClickEngine/Scenes/EdgeExit.html">EdgeExit</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/ExitZone" data-name="pointclickengine::scenes::exitzone">
+      <a href="../PointClickEngine/Scenes/ExitZone.html">ExitZone</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Scenes/Hotspot" data-name="pointclickengine::scenes::hotspot">
+      <a href="../PointClickEngine/Scenes/Hotspot.html">Hotspot</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/Hotspot/CursorType" data-name="pointclickengine::scenes::hotspot::cursortype">
+      <a href="../PointClickEngine/Scenes/Hotspot/CursorType.html">CursorType</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/HotspotState" data-name="pointclickengine::scenes::hotspotstate">
+      <a href="../PointClickEngine/Scenes/HotspotState.html">HotspotState</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/InventoryCondition" data-name="pointclickengine::scenes::inventorycondition">
+      <a href="../PointClickEngine/Scenes/InventoryCondition.html">InventoryCondition</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/PolygonHotspot" data-name="pointclickengine::scenes::polygonhotspot">
+      <a href="../PointClickEngine/Scenes/PolygonHotspot.html">PolygonHotspot</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/PolygonRegion" data-name="pointclickengine::scenes::polygonregion">
+      <a href="../PointClickEngine/Scenes/PolygonRegion.html">PolygonRegion</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/ScaleZone" data-name="pointclickengine::scenes::scalezone">
+      <a href="../PointClickEngine/Scenes/ScaleZone.html">ScaleZone</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/Scene" data-name="pointclickengine::scenes::scene">
+      <a href="../PointClickEngine/Scenes/Scene.html">Scene</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/SceneLoader" data-name="pointclickengine::scenes::sceneloader">
+      <a href="../PointClickEngine/Scenes/SceneLoader.html">SceneLoader</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/StateCondition" data-name="pointclickengine::scenes::statecondition">
+      <a href="../PointClickEngine/Scenes/StateCondition.html">StateCondition</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/TransitionType" data-name="pointclickengine::scenes::transitiontype">
+      <a href="../PointClickEngine/Scenes/TransitionType.html">TransitionType</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/WalkableArea" data-name="pointclickengine::scenes::walkablearea">
+      <a href="../PointClickEngine/Scenes/WalkableArea.html">WalkableArea</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scenes/WalkBehindRegion" data-name="pointclickengine::scenes::walkbehindregion">
+      <a href="../PointClickEngine/Scenes/WalkBehindRegion.html">WalkBehindRegion</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ScriptableCharacter" data-name="pointclickengine::scriptablecharacter">
+      <a href="../PointClickEngine/ScriptableCharacter.html">ScriptableCharacter</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ScriptEngine" data-name="pointclickengine::scriptengine">
+      <a href="../PointClickEngine/ScriptEngine.html">ScriptEngine</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ScriptEventHandler" data-name="pointclickengine::scripteventhandler">
+      <a href="../PointClickEngine/ScriptEventHandler.html">ScriptEventHandler</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Scripting" data-name="pointclickengine::scripting">
+      <a href="../PointClickEngine/Scripting.html">Scripting</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scripting/Event" data-name="pointclickengine::scripting::event">
+      <a href="../PointClickEngine/Scripting/Event.html">Event</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scripting/EventHandler" data-name="pointclickengine::scripting::eventhandler">
+      <a href="../PointClickEngine/Scripting/EventHandler.html">EventHandler</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scripting/Events" data-name="pointclickengine::scripting::events">
+      <a href="../PointClickEngine/Scripting/Events.html">Events</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scripting/EventSystem" data-name="pointclickengine::scripting::eventsystem">
+      <a href="../PointClickEngine/Scripting/EventSystem.html">EventSystem</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scripting/FunctionEventHandler" data-name="pointclickengine::scripting::functioneventhandler">
+      <a href="../PointClickEngine/Scripting/FunctionEventHandler.html">FunctionEventHandler</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scripting/ScriptEngine" data-name="pointclickengine::scripting::scriptengine">
+      <a href="../PointClickEngine/Scripting/ScriptEngine.html">ScriptEngine</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Scripting/ScriptEventHandler" data-name="pointclickengine::scripting::scripteventhandler">
+      <a href="../PointClickEngine/Scripting/ScriptEventHandler.html">ScriptEventHandler</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ShaderHelpers" data-name="pointclickengine::shaderhelpers">
+      <a href="../PointClickEngine/ShaderHelpers.html">ShaderHelpers</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/ShaderSystem" data-name="pointclickengine::shadersystem">
+      <a href="../PointClickEngine/ShaderSystem.html">ShaderSystem</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/SimpleNPC" data-name="pointclickengine::simplenpc">
+      <a href="../PointClickEngine/SimpleNPC.html">SimpleNPC</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/SoundEffect" data-name="pointclickengine::soundeffect">
+      <a href="../PointClickEngine/SoundEffect.html">SoundEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/StatusBar" data-name="pointclickengine::statusbar">
+      <a href="../PointClickEngine/StatusBar.html">StatusBar</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/TransitionEffect" data-name="pointclickengine::transitioneffect">
+      <a href="../PointClickEngine/TransitionEffect.html">TransitionEffect</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/TransitionManager" data-name="pointclickengine::transitionmanager">
+      <a href="../PointClickEngine/TransitionManager.html">TransitionManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/TransitionType" data-name="pointclickengine::transitiontype">
+      <a href="../PointClickEngine/TransitionType.html">TransitionType</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Translation" data-name="pointclickengine::translation">
+      <a href="../PointClickEngine/Translation.html">Translation</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/UI" data-name="pointclickengine::ui">
+      <a href="../PointClickEngine/UI.html">UI</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/CursorManager" data-name="pointclickengine::ui::cursormanager">
+      <a href="../PointClickEngine/UI/CursorManager.html">CursorManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/Dialog" data-name="pointclickengine::ui::dialog">
+      <a href="../PointClickEngine/UI/Dialog.html">Dialog</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/DialogChoice" data-name="pointclickengine::ui::dialogchoice">
+      <a href="../PointClickEngine/UI/DialogChoice.html">DialogChoice</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/DialogManager" data-name="pointclickengine::ui::dialogmanager">
+      <a href="../PointClickEngine/UI/DialogManager.html">DialogManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/DialogPortrait" data-name="pointclickengine::ui::dialogportrait">
+      <a href="../PointClickEngine/UI/DialogPortrait.html">DialogPortrait</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/DialogStyle" data-name="pointclickengine::ui::dialogstyle">
+      <a href="../PointClickEngine/UI/DialogStyle.html">DialogStyle</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/FloatingDialog" data-name="pointclickengine::ui::floatingdialog">
+      <a href="../PointClickEngine/UI/FloatingDialog.html">FloatingDialog</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/FloatingDialogManager" data-name="pointclickengine::ui::floatingdialogmanager">
+      <a href="../PointClickEngine/UI/FloatingDialogManager.html">FloatingDialogManager</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/UI/GUIManager" data-name="pointclickengine::ui::guimanager">
+      <a href="../PointClickEngine/UI/GUIManager.html">GUIManager</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/GUIManager/Button" data-name="pointclickengine::ui::guimanager::button">
+      <a href="../PointClickEngine/UI/GUIManager/Button.html">Button</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/GUIManager/Label" data-name="pointclickengine::ui::guimanager::label">
+      <a href="../PointClickEngine/UI/GUIManager/Label.html">Label</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/ObjectType" data-name="pointclickengine::ui::objecttype">
+      <a href="../PointClickEngine/UI/ObjectType.html">ObjectType</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/PortraitExpression" data-name="pointclickengine::ui::portraitexpression">
+      <a href="../PointClickEngine/UI/PortraitExpression.html">PortraitExpression</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/PortraitFrame" data-name="pointclickengine::ui::portraitframe">
+      <a href="../PointClickEngine/UI/PortraitFrame.html">PortraitFrame</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/PortraitManager" data-name="pointclickengine::ui::portraitmanager">
+      <a href="../PointClickEngine/UI/PortraitManager.html">PortraitManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/PortraitPosition" data-name="pointclickengine::ui::portraitposition">
+      <a href="../PointClickEngine/UI/PortraitPosition.html">PortraitPosition</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/StatusBar" data-name="pointclickengine::ui::statusbar">
+      <a href="../PointClickEngine/UI/StatusBar.html">StatusBar</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/UIManager" data-name="pointclickengine::ui::uimanager">
+      <a href="../PointClickEngine/UI/UIManager.html">UIManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/VerbCoin" data-name="pointclickengine::ui::verbcoin">
+      <a href="../PointClickEngine/UI/VerbCoin.html">VerbCoin</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/VerbType" data-name="pointclickengine::ui::verbtype">
+      <a href="../PointClickEngine/UI/VerbType.html">VerbType</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UI/WrappedText" data-name="pointclickengine::ui::wrappedtext">
+      <a href="../PointClickEngine/UI/WrappedText.html">WrappedText</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UIManager" data-name="pointclickengine::uimanager">
+      <a href="../PointClickEngine/UIManager.html">UIManager</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/UIVisibilityAction" data-name="pointclickengine::uivisibilityaction">
+      <a href="../PointClickEngine/UIVisibilityAction.html">UIVisibilityAction</a>
+      
+    </li>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Utils" data-name="pointclickengine::utils">
+      <a href="../PointClickEngine/Utils.html">Utils</a>
+      
+        <ul>
+  
+  <li class="parent " data-id="point_click_engine/PointClickEngine/Utils/YAMLConverters" data-name="pointclickengine::utils::yamlconverters">
+      <a href="../PointClickEngine/Utils/YAMLConverters.html">YAMLConverters</a>
+      
+        <ul>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Utils/YAMLConverters/ColorConverter" data-name="pointclickengine::utils::yamlconverters::colorconverter">
+      <a href="../PointClickEngine/Utils/YAMLConverters/ColorConverter.html">ColorConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/Utils/YAMLConverters/Vector2Converter" data-name="pointclickengine::utils::yamlconverters::vector2converter">
+      <a href="../PointClickEngine/Utils/YAMLConverters/Vector2Converter.html">Vector2Converter</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/VerbCoin" data-name="pointclickengine::verbcoin">
+      <a href="../PointClickEngine/VerbCoin.html">VerbCoin</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/WaitAction" data-name="pointclickengine::waitaction">
+      <a href="../PointClickEngine/WaitAction.html">WaitAction</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/WalkableArea" data-name="pointclickengine::walkablearea">
+      <a href="../PointClickEngine/WalkableArea.html">WalkableArea</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/WalkBehindRegion" data-name="pointclickengine::walkbehindregion">
+      <a href="../PointClickEngine/WalkBehindRegion.html">WalkBehindRegion</a>
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/PointClickEngine/YAMLConverters" data-name="pointclickengine::yamlconverters">
+      <a href="../PointClickEngine/YAMLConverters.html">YAMLConverters</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="point_click_engine/RL" data-name="rl">
+      <a href="../RL.html">RL</a>
+      
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+
+<div class="main-content">
+<h1 class="type-name">
+
+  <span class="kind">
+    alias
+  </span> PointClickEngine::<wbr>NPCMood
+
+</h1>
+
+
+
+
+
+
+
+  <h2>
+    <a id="alias-definition" class="anchor" href="#alias-definition">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Alias Definition
+  </h2>
+  <code><a href="../PointClickEngine/Characters/NPCMood.html">PointClickEngine::Characters::NPCMood</a></code>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>
+    <a id="defined-in" class="anchor" href="#defined-in">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Defined in:
+  </h2>
+  
+    
+      point_click_engine.cr
+    
+    <br/>
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+
+  <div class="methods-inherited">
+    
+  </div>
+
+  
+
+  
+
+  
+
+  
+
+
+</div>
+
+</body>
+</html>

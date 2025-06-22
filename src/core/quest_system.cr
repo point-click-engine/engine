@@ -421,6 +421,7 @@ module PointClickEngine
           true
         rescue ex
           puts "Error loading quests: #{ex.message}"
+          puts "Stack trace: #{ex.backtrace.join("\n")}" if ex.responds_to?(:backtrace)
           false
         end
       end
