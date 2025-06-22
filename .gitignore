@@ -31,6 +31,12 @@ crystal_mystery/main
 *.swo
 *~
 
+# Image and asset source files
+*.psd
+*.aseprite
+*.txt
+saves/
+
 # Test outputs
 test_results_summary.md
 test_results_*.md

@@ -124,7 +124,6 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property render_coordinator : EngineComponents::RenderCoordinator
 
-
       # Whether the window is in fullscreen mode
       property fullscreen : Bool = false
 
@@ -135,7 +134,7 @@ module PointClickEngine
       # Cutscene management system (not serialized)
       @[YAML::Field(ignore: true)]
       property cutscene_manager : Cutscenes::CutsceneManager = Cutscenes::CutsceneManager.new
-      
+
       # Game-specific update callback
       @[YAML::Field(ignore: true)]
       property on_update : Proc(Float32, Nil)?
@@ -215,12 +214,12 @@ module PointClickEngine
 
         RL.init_window(@window_width, @window_height, @title)
         RL.set_target_fps(@target_fps)
-        
+
         # Disable ESC key from closing window (we use it for pause menu)
         RL.set_exit_key(RL::KeyboardKey::Null)
 
         @system_manager.initialize_systems(@window_width, @window_height)
-        
+
         # Initialize menu system after other systems
         @system_manager.menu_system = UI::MenuSystem.new(self)
 
@@ -409,13 +408,13 @@ module PointClickEngine
       def update(dt : Float32)
         # Process events first
         event_system.process_events
-        
+
         # Update systems
         @system_manager.update_systems(dt)
-        
+
         # Update menu system
         @system_manager.menu_system.try(&.update(dt))
-        
+
         # Skip game updates if menu is pausing the game
         if menu = @system_manager.menu_system
           return if menu.game_paused
@@ -440,7 +439,7 @@ module PointClickEngine
 
         # Update cursor
         @render_coordinator.update_cursor(@current_scene)
-        
+
         # Call game-specific update if provided
         @on_update.try &.call(dt)
       end
@@ -451,13 +450,13 @@ module PointClickEngine
 
         # Process events first
         event_system.process_events
-        
+
         # Update systems
         @system_manager.update_systems(dt)
-        
+
         # Update menu system
         @system_manager.menu_system.try(&.update(dt))
-        
+
         # Skip game updates if menu is pausing the game
         if menu = @system_manager.menu_system
           return if menu.game_paused
@@ -498,7 +497,7 @@ module PointClickEngine
 
         # Draw verb cursor if enabled
         @verb_input_system.try(&.draw(@system_manager.display_manager))
-        
+
         # Draw menu system on top of everything
         @system_manager.menu_system.try(&.draw)
 
@@ -546,7 +545,7 @@ module PointClickEngine
         @verb_input_system = EngineComponents::VerbInputSystem.new(self)
         @input_handler.handle_clicks = false # Disable default click handling
       end
-      
+
       # Show the main menu
       #
       # Displays the main menu and pauses the game. This is typically
@@ -558,7 +557,7 @@ module PointClickEngine
       def show_main_menu
         @system_manager.menu_system.try(&.show_main_menu)
       end
-      
+
       # Start a new game
       #
       # Hides the menu and enters game mode. This should be called

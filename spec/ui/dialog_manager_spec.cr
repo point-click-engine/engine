@@ -117,71 +117,71 @@ describe PointClickEngine::UI::DialogManager do
       manager.is_dialog_active?.should be_false
     end
   end
-  
+
   describe "#show_dialog_choices" do
     it "creates a dialog at bottom of screen" do
       manager = PointClickEngine::UI::DialogManager.new
-      
+
       choices_selected = [] of Int32
-      
+
       manager.show_dialog_choices("Choose an option:", ["Option 1", "Option 2", "Option 3"]) do |choice|
         choices_selected << choice
       end
-      
+
       manager.current_dialog.should_not be_nil
       dialog = manager.current_dialog.not_nil!
-      
+
       dialog.text.should eq("Choose an option:")
       dialog.choices.size.should eq(3)
       dialog.choices[0].text.should eq("Option 1")
-      
+
       # Dialog should be at bottom of screen
       window_height = 600 # Default test height
       dialog.position.y.should be > (window_height - 200)
     end
-    
+
     it "calls callback with selected choice index" do
       manager = PointClickEngine::UI::DialogManager.new
-      
+
       selected_choice = -1
-      
+
       manager.show_dialog_choices("Test", ["A", "B"]) do |choice|
         selected_choice = choice
       end
-      
+
       dialog = manager.current_dialog.not_nil!
-      
+
       # Simulate selecting first choice
       dialog.choices[0].action.call
-      
+
       selected_choice.should eq(0)
       manager.current_dialog.should be_nil # Should close after selection
     end
   end
-  
+
   describe "#show_dialog_choices_at" do
     it "creates dialog at custom position" do
       manager = PointClickEngine::UI::DialogManager.new
-      
+
       custom_pos = RL::Vector2.new(x: 200, y: 300)
       custom_size = RL::Vector2.new(x: 400, y: 200)
-      
+
       manager.show_dialog_choices_at("Custom dialog", ["Yes", "No"], custom_pos, custom_size) do |choice|
         # Callback
       end
-      
+
       dialog = manager.current_dialog.not_nil!
       dialog.position.should eq(custom_pos)
       dialog.size.should eq(custom_size)
     end
   end
-  
+
   describe "dialog styling" do
     it "sets black background for choice dialogs" do
       manager = PointClickEngine::UI::DialogManager.new
-      
+
       manager.show_dialog_choices("Test", ["Option"]) { |c| }
-      
+
       dialog = manager.current_dialog.not_nil!
       dialog.background_color.should eq(RL::Color.new(r: 0, g: 0, b: 0, a: 240))
       dialog.text_color.should eq(RL::WHITE)

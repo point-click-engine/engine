@@ -47,7 +47,7 @@ module PointClickEngine
         @description = "Exit to #{@target_scene}"
         @default_verb = UI::VerbType::Walk
         @object_type = UI::ObjectType::Exit
-        
+
         # Set up default click handler for non-verb systems
         @on_click = -> {
           if engine = Core::Engine.instance

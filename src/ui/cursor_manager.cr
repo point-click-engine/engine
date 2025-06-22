@@ -36,9 +36,11 @@ module PointClickEngine
       property current_hotspot : Hotspot? = nil
       property show_tooltip : Bool = true
       property tooltip_offset : RL::Vector2 = RL::Vector2.new(x: 20, y: 20)
+      property manual_verb_mode : Bool = false
 
       @default_cursor : RL::Texture2D?
       @cursor_hotspot : RL::Vector2 = RL::Vector2.new(x: 0, y: 0)
+      @available_verbs = [VerbType::Walk, VerbType::Look, VerbType::Talk, VerbType::Use, VerbType::Take, VerbType::Open]
 
       def initialize
         @cursors = {} of VerbType => RL::Texture2D
@@ -79,7 +81,9 @@ module PointClickEngine
         # Check if we're over inventory
         if inventory && inventory.visible
           if inventory.get_item_at_position(mouse_pos)
-            @current_verb = VerbType::Use
+            if !@manual_verb_mode
+              @current_verb = VerbType::Use
+            end
             return
           end
         end
@@ -87,10 +91,14 @@ module PointClickEngine
         # Check hotspots in scene
         if hotspot = scene.get_hotspot_at(mouse_pos)
           @current_hotspot = hotspot
-          @current_verb = determine_verb_for_hotspot(hotspot)
+          if !@manual_verb_mode
+            @current_verb = determine_verb_for_hotspot(hotspot)
+          end
         else
-          # Default to walk on background
-          @current_verb = VerbType::Walk
+          # Default to walk on background if not in manual mode
+          if !@manual_verb_mode
+            @current_verb = VerbType::Walk
+          end
         end
       end
 
@@ -186,6 +194,12 @@ module PointClickEngine
             draw_tooltip(mouse_pos, hotspot)
           end
         end
+        
+        # Draw current verb indicator if in manual mode
+        if @manual_verb_mode
+          verb_text = @current_verb.to_s.capitalize
+          RL.draw_text(verb_text, 10, RL.get_screen_height - 30, 20, RL::YELLOW)
+        end
       end
 
       # Draw simple cursor when textures aren't loaded
@@ -260,6 +274,33 @@ module PointClickEngine
       # Check if a specific verb is active
       def is_verb_active?(verb : VerbType) : Bool
         @current_verb == verb
+      end
+      
+      # Set verb manually
+      def set_verb(verb : VerbType)
+        @current_verb = verb
+        @manual_verb_mode = true
+      end
+      
+      # Cycle to next verb
+      def cycle_verb_forward
+        current_index = @available_verbs.index(@current_verb) || 0
+        next_index = (current_index + 1) % @available_verbs.size
+        @current_verb = @available_verbs[next_index]
+        @manual_verb_mode = true
+      end
+      
+      # Cycle to previous verb
+      def cycle_verb_backward
+        current_index = @available_verbs.index(@current_verb) || 0
+        prev_index = (current_index - 1 + @available_verbs.size) % @available_verbs.size
+        @current_verb = @available_verbs[prev_index]
+        @manual_verb_mode = true
+      end
+      
+      # Reset to automatic verb selection
+      def reset_manual_mode
+        @manual_verb_mode = false
       end
 
       # Clean up

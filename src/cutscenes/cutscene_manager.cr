@@ -48,7 +48,6 @@ module PointClickEngine
           end
         end
       end
-      
 
       def draw
         @current_cutscene.try(&.draw)

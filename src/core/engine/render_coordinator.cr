@@ -27,7 +27,7 @@ module PointClickEngine
             if display_manager = engine.display_manager
               # Begin rendering to game render texture
               display_manager.begin_game_rendering
-              
+
               # Use transition manager if available and active
               if transition_manager && transition_manager.transitioning?
                 transition_manager.render_with_transition do
@@ -36,13 +36,13 @@ module PointClickEngine
               else
                 render_scene_content(scene, dialogs, cutscene_manager)
               end
-              
+
               # End game rendering
               display_manager.end_game_rendering
-              
+
               # Now draw the render texture to screen
               display_manager.draw_to_screen
-              
+
               # Render UI overlay (always on top of display manager output)
               render_ui_overlay if @ui_visible
             else
@@ -71,7 +71,7 @@ module PointClickEngine
 
           # Render dialogs
           dialogs.each(&.draw)
-          
+
           # Render floating dialogs from dialog manager
           if engine = Core::Engine.instance
             engine.dialog_manager.try(&.draw)
@@ -292,7 +292,7 @@ module PointClickEngine
             if hotspot.responds_to?(:vertices) && hotspot.responds_to?(:draw_polygon)
               # Polygon hotspot
               vertices = hotspot.vertices
-              
+
               if vertices.size >= 3
                 # Draw filled polygon highlight
                 highlight_color = RL::Color.new(
@@ -302,7 +302,7 @@ module PointClickEngine
                   a: pulse_alpha
                 )
                 hotspot.draw_polygon(highlight_color)
-                
+
                 # Draw pulsing outline
                 outline_color = RL::Color.new(
                   r: @hotspot_highlight_color.r,
@@ -311,7 +311,7 @@ module PointClickEngine
                   a: 255
                 )
                 hotspot.draw_polygon_outline(outline_color, outline_size.to_i)
-                
+
                 # Draw glow effect on vertices
                 if @hotspot_highlight_pulse
                   glow_color = RL::Color.new(
@@ -328,7 +328,7 @@ module PointClickEngine
             else
               # Rectangle hotspot
               bounds = hotspot.bounds
-              
+
               # Draw outer glow
               if @hotspot_highlight_pulse
                 glow_color = RL::Color.new(
@@ -345,7 +345,7 @@ module PointClickEngine
                 )
                 RL.draw_rectangle_rec(expanded_bounds, glow_color)
               end
-              
+
               # Draw the main highlight
               highlight_color = RL::Color.new(
                 r: @hotspot_highlight_color.r,
@@ -354,7 +354,7 @@ module PointClickEngine
                 a: pulse_alpha
               )
               RL.draw_rectangle_rec(bounds, highlight_color)
-              
+
               # Draw outline
               outline_color = RL::Color.new(
                 r: @hotspot_highlight_color.r,

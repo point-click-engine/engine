@@ -97,7 +97,7 @@ module PointClickEngine
           RL.end_texture_mode
         end
       end
-      
+
       def draw_to_screen
         if rt = @render_texture
           source_rect = RL::Rectangle.new(

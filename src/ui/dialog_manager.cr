@@ -113,21 +113,21 @@ module PointClickEngine
         # Get window dimensions
         window_width = Raylib.get_screen_width
         window_height = Raylib.get_screen_height
-        
+
         # Create dialog at bottom of screen
         dialog_height = 150f32 + (choices.size * 30f32)
         dialog_y = window_height - dialog_height - 20
-        
+
         dialog = Dialog.new(
           prompt,
           Raylib::Vector2.new(x: 20f32, y: dialog_y),
           Raylib::Vector2.new(x: window_width - 40f32, y: dialog_height)
         )
-        
+
         # Set black background for dialog choices
         dialog.background_color = Raylib::Color.new(r: 0, g: 0, b: 0, a: 240)
         dialog.text_color = Raylib::WHITE
-        
+
         # Add choices
         choices.each_with_index do |choice_text, index|
           dialog.add_choice(choice_text) do
@@ -135,7 +135,7 @@ module PointClickEngine
             close_current_dialog
           end
         end
-        
+
         dialog.show
         @current_dialog = dialog
       end
@@ -143,7 +143,7 @@ module PointClickEngine
       # Show dialog choices with custom positioning
       def show_dialog_choices_at(prompt : String, choices : Array(String), position : RL::Vector2, size : RL::Vector2, &callback : Int32 ->)
         dialog = Dialog.new(prompt, position, size)
-        
+
         # Add choices
         choices.each_with_index do |choice_text, index|
           dialog.add_choice(choice_text) do
@@ -151,7 +151,7 @@ module PointClickEngine
             close_current_dialog
           end
         end
-        
+
         dialog.show
         @current_dialog = dialog
       end

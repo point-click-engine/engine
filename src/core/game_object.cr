@@ -61,7 +61,13 @@ module PointClickEngine
       #
       # Returns a Rectangle with the object's position and size
       def bounds : RL::Rectangle
-        RL::Rectangle.new(x: @position.x, y: @position.y, width: @size.x, height: @size.y)
+        # Center the bounds on the position
+        RL::Rectangle.new(
+          x: @position.x - @size.x / 2,
+          y: @position.y - @size.y / 2,
+          width: @size.x,
+          height: @size.y
+        )
       end
 
       # Checks if a point is inside this object's bounds

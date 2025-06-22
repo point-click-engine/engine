@@ -139,12 +139,12 @@ module PointClickEngine
           end
         end
       end
-      
+
       # Convenience method alias
       def trigger(type : String, data = {} of String => String)
         trigger_event(type, data)
       end
-      
+
       # Convenience method for registering simple event handlers
       def on(event_type : String, &handler : ->)
         handler_proc = ->(event : Event) do

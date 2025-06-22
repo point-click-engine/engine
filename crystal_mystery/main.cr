@@ -12,7 +12,7 @@ class CrystalMysteryGame
   def initialize
     @engine = PointClickEngine::Core::Engine.new(1024, 768, "The Crystal Mystery")
     @engine.init
-    
+
     # Enable verb-based input system
     @engine.enable_verb_input
 
@@ -35,7 +35,7 @@ class CrystalMysteryGame
     player = PointClickEngine::Characters::Player.new(
       "Detective",
       Raylib::Vector2.new(x: 500f32, y: 400f32),
-      Raylib::Vector2.new(x: 64f32, y: 128f32)
+      Raylib::Vector2.new(x: 56f32, y: 56f32)
     )
     player.load_enhanced_spritesheet("assets/sprites/player.png", 56, 56, 8, 4)
     @engine.player = player
@@ -67,7 +67,7 @@ class CrystalMysteryGame
 
     # Initialize game state and quests
     setup_game_state_and_quests
-    
+
     # Set up game update callback
     @engine.on_update = ->(dt : Float32) {
       # Update game-specific systems
@@ -75,10 +75,10 @@ class CrystalMysteryGame
       @game_state_manager.update_game_time(dt)
       @quest_manager.update_all_quests(@game_state_manager, dt)
     }
-    
+
     # Load an initial scene (even if just for background during menu)
     @engine.change_scene("library")
-    
+
     # Show main menu
     @engine.show_main_menu
   end
@@ -101,6 +101,25 @@ class CrystalMysteryGame
       config.set("game.debug", "false")
       config.set("audio.master_volume", "0.8")
       config.set("graphics.fullscreen", "false")
+      
+      # Load saved resolution if available
+      if config.has?("graphics.resolution_width") && config.has?("graphics.resolution_height")
+        width = config.get("graphics.resolution_width", "1024").to_i
+        height = config.get("graphics.resolution_height", "768").to_i
+        
+        # Apply saved resolution
+        RL.set_window_size(width, height)
+        @engine.window_width = width
+        @engine.window_height = height
+        
+        # Center window
+        monitor_width = RL.get_monitor_width(0)
+        monitor_height = RL.get_monitor_height(0)
+        RL.set_window_position((monitor_width - width) // 2, (monitor_height - height) // 2)
+        
+        # Update display manager
+        @engine.display_manager.try &.resize(width, height)
+      end
     end
   end
 
@@ -177,7 +196,7 @@ class CrystalMysteryGame
         width: 100
         height: 200
         target_scene: laboratory
-        target_position: {x: 100, y: 400}
+        target_position: {x: 150, y: 500}
         transition_type: fade
         auto_walk: true
         description: "Door to the laboratory"
@@ -219,6 +238,31 @@ class CrystalMysteryGame
     enable_pathfinding: true
     navigation_cell_size: 16
     script_path: scripts/laboratory.lua
+    walkable_areas:
+      regions:
+        - name: main_floor
+          walkable: true
+          vertices:
+            - {x: 100, y: 400}
+            - {x: 900, y: 400}
+            - {x: 900, y: 700}
+            - {x: 100, y: 700}
+        - name: workbench_area
+          walkable: false
+          vertices:
+            - {x: 180, y: 340}
+            - {x: 520, y: 340}
+            - {x: 520, y: 560}
+            - {x: 180, y: 560}
+      scale_zones:
+        - min_y: 400
+          max_y: 550
+          min_scale: 0.9
+          max_scale: 1.0
+        - min_y: 550
+          max_y: 700
+          min_scale: 1.0
+          max_scale: 1.1
     hotspots:
       - name: workbench
         x: 200
@@ -257,15 +301,15 @@ class CrystalMysteryGame
     characters:
       - name: scientist
         position:
-          x: 400
-          y: 400
+          x: 550
+          y: 500
         sprite_path: assets/sprites/scientist.png
         sprite_info:
           frame_width: 100
           frame_height: 100
     YAML
 
-    # Write YAML to temp file and load using SceneLoader  
+    # Write YAML to temp file and load using SceneLoader
     File.write("temp_laboratory.yaml", scene_yaml)
     scene = PointClickEngine::Scenes::SceneLoader.load_from_yaml("temp_laboratory.yaml")
     File.delete("temp_laboratory.yaml")
@@ -339,11 +383,23 @@ class CrystalMysteryGame
     scene.characters.each do |character|
       puts "  - #{character.name} at #{character.position}"
     end
-    
+
     # Debug: List all hotspots in scene
     puts "Hotspots in library scene:"
     scene.hotspots.each do |hotspot|
-      puts "  - #{hotspot.name} at #{hotspot.position} (#{hotspot.size})"
+      if hotspot.responds_to?(:vertices)
+        puts "  - #{hotspot.name} (polygon hotspot)"
+      else
+        puts "  - #{hotspot.name} at #{hotspot.position} (#{hotspot.size})"
+      end
+    end
+
+    # Set up butler animations
+    if butler = scene.get_character("butler")
+      # Butler sprite sheet has 6 frames of 100x100
+      butler.add_animation("idle", 0, 2, 0.5f32, true)  # First 2 frames for idle
+      butler.add_animation("talk", 2, 4, 0.15f32, true) # Frames 2-5 for talking
+      butler.play_animation("idle")
     end
 
     scene.hotspots.each do |hotspot|
@@ -402,6 +458,31 @@ class CrystalMysteryGame
   end
 
   private def setup_laboratory_interactions(scene : PointClickEngine::Scenes::Scene)
+    # Debug: Check player position
+    puts "Laboratory scene setup - checking player"
+    if player = @engine.player
+      puts "Player position: #{player.position}"
+      puts "Player visible: #{player.visible}"
+      puts "Player active: #{player.active}"
+    else
+      puts "No player found!"
+    end
+    
+    # Debug: List all characters
+    puts "Characters in laboratory:"
+    scene.characters.each do |char|
+      puts "  - #{char.name} at #{char.position}, visible: #{char.visible}"
+    end
+    
+    # Set up scientist animations
+    if scientist = scene.get_character("scientist")
+      # Scientist sprite sheet has 6 frames of 100x100
+      scientist.add_animation("idle", 0, 2, 0.4f32, true) # First 2 frames for idle
+      scientist.add_animation("work", 2, 3, 0.3f32, true) # Frames 2-4 for working
+      scientist.add_animation("talk", 4, 2, 0.2f32, true) # Last 2 frames for talking
+      scientist.play_animation("work")                    # Start with working animation
+    end
+
     scene.hotspots.each do |hotspot|
       case hotspot.name
       when "door_to_library"
@@ -475,7 +556,7 @@ class CrystalMysteryGame
 
   private def start_new_game
     puts "=== STARTING NEW GAME ==="
-    
+
     # Play door sound effect when starting game
     @engine.audio_manager.try &.play_sound_effect("door_open")
 
@@ -523,13 +604,14 @@ class CrystalMysteryGame
       gui.add_label("inventory_hint", "Press 'I' to toggle inventory", Raylib::Vector2.new(x: 10f32, y: 10f32), 16, Raylib::WHITE)
       gui.add_label("highlight_hint", "Press 'Tab' to highlight interactive areas", Raylib::Vector2.new(x: 10f32, y: 30f32), 16, Raylib::WHITE)
       gui.add_label("debug_hint", "Press 'F1' to toggle debug mode", Raylib::Vector2.new(x: 10f32, y: 50f32), 16, Raylib::WHITE)
-      gui.add_label("usage_hint", "Select item in inventory, then click where to use it", Raylib::Vector2.new(x: 10f32, y: 70f32), 16, Raylib::WHITE)
+      gui.add_label("verb_hint", "Use number keys 1-6 or mouse wheel to change actions", Raylib::Vector2.new(x: 10f32, y: 70f32), 16, Raylib::WHITE)
+      gui.add_label("verbs_hint", "1:Walk 2:Look 3:Talk 4:Use 5:Take 6:Open", Raylib::Vector2.new(x: 10f32, y: 90f32), 16, Raylib::WHITE)
     end
-    
+
     # Setup custom verb handlers
     setup_verb_handlers
     setup_character_handlers
-    
+
     # Start the game
     @engine.start_game
   end
@@ -604,7 +686,7 @@ class CrystalMysteryGame
       puts "game:new event received!"
       start_new_game
     end
-    
+
     @engine.event_system.on("game:main_menu") do
       # Clean up current game state
       @engine.gui.try &.clear_all
@@ -621,7 +703,7 @@ class CrystalMysteryGame
   # Custom verb handlers for game-specific interactions
   private def setup_verb_handlers
     return unless verb_system = @engine.verb_input_system
-    
+
     # Register custom handlers for specific game logic
     verb_system.register_verb_handler(PointClickEngine::UI::VerbType::Use) do |hotspot, pos|
       case hotspot.name
@@ -660,7 +742,7 @@ class CrystalMysteryGame
         hotspot.on_click.try &.call
       end
     end
-    
+
     verb_system.register_verb_handler(PointClickEngine::UI::VerbType::Take) do |hotspot, pos|
       case hotspot.name
       when "key_hotspot", "hidden_key"
@@ -678,7 +760,7 @@ class CrystalMysteryGame
   # Custom character verb handlers
   private def setup_character_handlers
     return unless verb_system = @engine.verb_input_system
-    
+
     verb_system.register_character_verb_handler(PointClickEngine::UI::VerbType::Talk) do |character|
       case character.name.downcase
       when "butler"
@@ -695,34 +777,35 @@ class CrystalMysteryGame
       end
     end
   end
-  
-  private def show_butler_dialog(character : PointClickEngine::Characters::Character)
-    # Butler dialog with floating text
-    show_character_dialog("butler", "Welcome to the mansion, Detective. The master is quite concerned about the missing crystal.", character.position)
 
-    # Show dialog choices after a delay
-    spawn do
-      sleep 3.seconds
-      @engine.dialog_manager.try &.show_dialog_choices("What would you like to ask the butler?", [
-        "Tell me about the crystal",
-        "Who else is in the mansion?",
-        "Where should I start looking?",
-        "That's all for now",
-      ]) do |choice|
-        case choice
-        when 0
-          show_character_dialog("butler", "The crystal has been in the family for generations. It has... unusual properties.", character.position)
-        when 1
-          show_character_dialog("butler", "The scientist is in the laboratory, and the gardener tends to the plants outside.", character.position)
-        when 2
-          show_character_dialog("butler", "Perhaps you should check the library. The master keeps many secrets there.", character.position)
-        when 3
-          show_character_dialog("detective", "Thank you, that's helpful.", @engine.player.try(&.position) || Raylib::Vector2.new(x: 400, y: 400))
-        end
+  private def show_butler_dialog(character : PointClickEngine::Characters::Character)
+    # Play butler talk animation
+    character.play_animation("talk")
+
+    # Show dialog choices immediately
+    @engine.dialog_manager.try &.show_dialog_choices("What would you like to ask the butler?", [
+      "Tell me about the crystal",
+      "Who else is in the mansion?",
+      "Where should I start looking?",
+      "That's all for now",
+    ]) do |choice|
+      case choice
+      when 0
+        show_character_dialog("butler", "The crystal has been in the family for generations. It has... unusual properties.", character.position)
+        @game_state_manager.set_flag("asked_about_crystal", true)
+      when 1
+        show_character_dialog("butler", "The scientist is in the laboratory, and the gardener tends to the plants outside.", character.position)
+      when 2
+        show_character_dialog("butler", "Perhaps you should check the library. The master keeps many secrets there.", character.position)
+        @game_state_manager.set_flag("butler_hint_library", true)
+      when 3
+        show_character_dialog("detective", "Thank you, that's helpful.", @engine.player.try(&.position) || Raylib::Vector2.new(x: 400, y: 400))
+        # Return butler to idle animation
+        character.play_animation("idle")
       end
     end
   end
-  
+
   private def show_librarian_dialog(character : PointClickEngine::Characters::Character)
     # Librarian dialog with floating text and choices
     show_character_dialog("librarian", "Ah, a visitor! Are you here about the mysterious crystal?", character.position)
@@ -761,18 +844,18 @@ class CrystalMysteryGame
       end
     end
   end
-  
+
   private def show_scientist_dialog(character : PointClickEngine::Characters::Character)
-    show_character_dialog("scientist", "I've been studying the crystal's properties. It's quite fascinating!", character.position)
-    
-    spawn do
-      sleep 3.seconds
-      @engine.dialog_manager.try &.show_dialog_choices("What would you like to ask the scientist?", [
-        "What have you discovered?",
-        "Is the crystal dangerous?",
-        "How does it work?",
-        "That's all for now",
-      ]) do |choice|
+    # Play scientist talk animation
+    character.play_animation("talk")
+
+    # Show dialog choices immediately
+    @engine.dialog_manager.try &.show_dialog_choices("What would you like to ask the scientist?", [
+      "What have you discovered?",
+      "Is the crystal dangerous?",
+      "How does it work?",
+      "That's all for now",
+    ]) do |choice|
         case choice
         when 0
           show_character_dialog("scientist", "The crystal resonates with certain frequencies. It seems to respond to intentions.", character.position)
@@ -783,10 +866,11 @@ class CrystalMysteryGame
           show_character_dialog("scientist", "It appears to amplify psychic energy. Quite remarkable, really!", character.position)
         when 3
           show_character_dialog("detective", "Thank you for the information.", @engine.player.try(&.position) || Raylib::Vector2.new(x: 400, y: 400))
+          # Return scientist to work animation
+          character.play_animation("work")
         end
       end
     end
-  end
 
   # Removed - now handled by engine's hotspot highlighting
 

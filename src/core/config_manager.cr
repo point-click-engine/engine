@@ -26,6 +26,10 @@ module PointClickEngine
       def set(key : String, value : String)
         @settings[key] = value
       end
+      
+      def has?(key : String) : Bool
+        @settings.has_key?(key)
+      end
 
       def get_int(key : String, default : Int32 = 0) : Int32
         value = get(key)

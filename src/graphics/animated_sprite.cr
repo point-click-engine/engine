@@ -83,9 +83,10 @@ module PointClickEngine
           width: @frame_width.to_f,
           height: @frame_height.to_f
         )
+        # Center the sprite on the position
         dest_rect = RL::Rectangle.new(
-          x: @position.x,
-          y: @position.y,
+          x: @position.x - (@frame_width * @scale / 2),
+          y: @position.y - (@frame_height * @scale / 2),
           width: @frame_width * @scale,
           height: @frame_height * @scale
         )
