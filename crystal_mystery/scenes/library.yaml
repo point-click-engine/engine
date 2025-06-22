@@ -1,5 +1,5 @@
 name: library
-background_path: assets/backgrounds/library.png
+background_path: crystal_mystery/assets/backgrounds/library.png
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/library.lua

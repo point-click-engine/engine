@@ -22,17 +22,35 @@ module PointClickEngine
                    dialogs : Array(UI::Dialog),
                    cutscene_manager : Cutscenes::CutsceneManager,
                    transition_manager : Graphics::TransitionManager?)
-          # Use transition manager if available and active
-          if transition_manager && transition_manager.transitioning?
-            transition_manager.render_with_transition do
+          # Get display manager from engine
+          if engine = Engine.instance
+            if display_manager = engine.display_manager
+              # Begin rendering to game render texture
+              display_manager.begin_game_rendering
+              
+              # Use transition manager if available and active
+              if transition_manager && transition_manager.transitioning?
+                transition_manager.render_with_transition do
+                  render_scene_content(scene, dialogs, cutscene_manager)
+                end
+              else
+                render_scene_content(scene, dialogs, cutscene_manager)
+              end
+              
+              # End game rendering
+              display_manager.end_game_rendering
+              
+              # Now draw the render texture to screen
+              display_manager.draw_to_screen
+              
+              # Render UI overlay (always on top of display manager output)
+              render_ui_overlay if @ui_visible
+            else
+              # Fallback if no display manager
               render_scene_content(scene, dialogs, cutscene_manager)
+              render_ui_overlay if @ui_visible
             end
-          else
-            render_scene_content(scene, dialogs, cutscene_manager)
           end
-
-          # Render UI overlay (always on top)
-          render_ui_overlay if @ui_visible
         end
 
         # Render scene and game content
@@ -53,6 +71,11 @@ module PointClickEngine
 
           # Render dialogs
           dialogs.each(&.draw)
+          
+          # Render floating dialogs from dialog manager
+          if engine = Core::Engine.instance
+            engine.dialog_manager.try(&.draw)
+          end
 
           # Render debug information if enabled
           render_debug_info(scene) if PointClickEngine::Core::Engine.debug_mode

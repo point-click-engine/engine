@@ -1,5 +1,5 @@
 name: laboratory
-background_path: assets/backgrounds/laboratory.png
+background_path: crystal_mystery/assets/backgrounds/laboratory.png
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/laboratory.lua

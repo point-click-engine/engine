@@ -37,7 +37,7 @@ class CrystalMysteryGame
       Raylib::Vector2.new(x: 500f32, y: 400f32),
       Raylib::Vector2.new(x: 64f32, y: 128f32)
     )
-    player.load_enhanced_spritesheet("crystal_mystery/assets/sprites/player.png", 56, 56, 8, 4)
+    player.load_enhanced_spritesheet("assets/sprites/player.png", 56, 56, 8, 4)
     @engine.player = player
 
     # Configure display settings
@@ -75,6 +75,9 @@ class CrystalMysteryGame
       @game_state_manager.update_game_time(dt)
       @quest_manager.update_all_quests(@game_state_manager, dt)
     }
+    
+    # Load an initial scene (even if just for background during menu)
+    @engine.change_scene("library")
     
     # Show main menu
     @engine.show_main_menu
@@ -192,14 +195,16 @@ class CrystalMysteryGame
         position:
           x: 300
           y: 450
-        sprite_path: crystal_mystery/assets/sprites/butler.png
+        sprite_path: assets/sprites/butler.png
         sprite_info:
           frame_width: 100
           frame_height: 100
     YAML
 
-    File.write("crystal_mystery/scenes/library.yaml", scene_yaml)
-    scene = PointClickEngine::Scenes::SceneLoader.load_from_yaml("crystal_mystery/scenes/library.yaml")
+    # Write YAML to temp file and load using SceneLoader
+    File.write("temp_library.yaml", scene_yaml)
+    scene = PointClickEngine::Scenes::SceneLoader.load_from_yaml("temp_library.yaml")
+    File.delete("temp_library.yaml")
 
     # Add scene-specific logic
     setup_library_interactions(scene)
@@ -254,14 +259,16 @@ class CrystalMysteryGame
         position:
           x: 400
           y: 400
-        sprite_path: crystal_mystery/assets/sprites/scientist.png
+        sprite_path: assets/sprites/scientist.png
         sprite_info:
           frame_width: 100
           frame_height: 100
     YAML
 
-    File.write("crystal_mystery/scenes/laboratory.yaml", scene_yaml)
-    scene = PointClickEngine::Scenes::SceneLoader.load_from_yaml("crystal_mystery/scenes/laboratory.yaml")
+    # Write YAML to temp file and load using SceneLoader  
+    File.write("temp_laboratory.yaml", scene_yaml)
+    scene = PointClickEngine::Scenes::SceneLoader.load_from_yaml("temp_laboratory.yaml")
+    File.delete("temp_laboratory.yaml")
 
     setup_laboratory_interactions(scene)
 
@@ -313,8 +320,10 @@ class CrystalMysteryGame
         description: "Back to the laboratory"
     YAML
 
-    File.write("crystal_mystery/scenes/garden.yaml", scene_yaml)
-    scene = PointClickEngine::Scenes::SceneLoader.load_from_yaml("crystal_mystery/scenes/garden.yaml")
+    # Write YAML to temp file and load using SceneLoader
+    File.write("temp_garden.yaml", scene_yaml)
+    scene = PointClickEngine::Scenes::SceneLoader.load_from_yaml("temp_garden.yaml")
+    File.delete("temp_garden.yaml")
 
     setup_garden_interactions(scene)
 
@@ -329,6 +338,12 @@ class CrystalMysteryGame
     puts "Characters in library scene:"
     scene.characters.each do |character|
       puts "  - #{character.name} at #{character.position}"
+    end
+    
+    # Debug: List all hotspots in scene
+    puts "Hotspots in library scene:"
+    scene.hotspots.each do |hotspot|
+      puts "  - #{hotspot.name} at #{hotspot.position} (#{hotspot.size})"
     end
 
     scene.hotspots.each do |hotspot|
@@ -453,12 +468,14 @@ class CrystalMysteryGame
       PointClickEngine::Graphics::Shaders::ShaderHelpers.create_vignette_shader(shader_system)
       PointClickEngine::Graphics::Shaders::ShaderHelpers.create_bloom_shader(shader_system)
 
-      # Apply vignette to game scenes
-      shader_system.set_active(:vignette)
+      # Don't apply vignette by default - it might be causing rendering issues
+      # shader_system.set_active(:vignette)
     end
   end
 
   private def start_new_game
+    puts "=== STARTING NEW GAME ==="
+    
     # Play door sound effect when starting game
     @engine.audio_manager.try &.play_sound_effect("door_open")
 
@@ -478,17 +495,24 @@ class CrystalMysteryGame
     @game_state_manager = PointClickEngine::GameStateManager.new
     setup_game_state_and_quests
 
-    # Start in library
-    @engine.change_scene("library")
+    # Start in library (but don't change if already there)
+    if @engine.current_scene_name != "library"
+      @engine.change_scene("library")
+    end
 
     # Change music when entering library
     @engine.audio_manager.try &.play_music("castle_ambient", true)
 
-    # Add player to the library scene
-    if library_scene = @engine.scenes["library"]?
+    # Add player to the current scene (not from scenes hash)
+    if current_scene = @engine.current_scene
       if player = @engine.player
-        library_scene.set_player(player)
+        current_scene.set_player(player)
+        puts "Player added to current scene (#{current_scene.name}) at position: #{player.position}"
+      else
+        puts "ERROR: No player found!"
       end
+    else
+      puts "ERROR: No current scene!"
     end
 
     # Show opening message
@@ -518,16 +542,16 @@ class CrystalMysteryGame
     audio = @engine.audio_manager.not_nil!
 
     # Load music tracks
-    audio.load_music("main_theme", "crystal_mystery/assets/music/main_theme.ogg")
-    audio.load_music("garden_theme", "crystal_mystery/assets/music/garden_theme.ogg")
-    audio.load_music("castle_ambient", "crystal_mystery/assets/sounds/music/castle_ambient.ogg")
+    audio.load_music("main_theme", "assets/music/main_theme.ogg")
+    audio.load_music("garden_theme", "assets/music/garden_theme.ogg")
+    audio.load_music("castle_ambient", "assets/sounds/music/castle_ambient.ogg")
 
     # Load sound effects
-    audio.load_sound_effect("click", "crystal_mystery/assets/sounds/effects/click.ogg")
-    audio.load_sound_effect("door_open", "crystal_mystery/assets/sounds/effects/door_open.ogg")
-    audio.load_sound_effect("footsteps", "crystal_mystery/assets/sounds/effects/footsteps.ogg")
-    audio.load_sound_effect("pickup", "crystal_mystery/assets/sounds/effects/pickup.ogg")
-    audio.load_sound_effect("success", "crystal_mystery/assets/sounds/effects/success.ogg")
+    audio.load_sound_effect("click", "assets/sounds/effects/click.ogg")
+    audio.load_sound_effect("door_open", "assets/sounds/effects/door_open.ogg")
+    audio.load_sound_effect("footsteps", "assets/sounds/effects/footsteps.ogg")
+    audio.load_sound_effect("pickup", "assets/sounds/effects/pickup.ogg")
+    audio.load_sound_effect("success", "assets/sounds/effects/success.ogg")
 
     # Play main menu music
     audio.play_music("main_theme", true)
@@ -536,30 +560,30 @@ class CrystalMysteryGame
   private def create_game_items
     # Create inventory items
     brass_key = PointClickEngine::Inventory::InventoryItem.new("brass_key", "An ornate brass key")
-    brass_key.load_icon("crystal_mystery/assets/items/brass_key.png")
+    brass_key.load_icon("assets/items/brass_key.png")
     brass_key.usable_on = ["cabinet"]
 
     crystal_item = PointClickEngine::Inventory::InventoryItem.new("crystal", "A mysterious glowing crystal")
-    crystal_item.load_icon("crystal_mystery/assets/items/crystal.png")
+    crystal_item.load_icon("assets/items/crystal.png")
 
     mysterious_note = PointClickEngine::Inventory::InventoryItem.new("mysterious_note", "A cryptic note with strange symbols")
-    mysterious_note.load_icon("crystal_mystery/assets/items/mysterious_note.png")
+    mysterious_note.load_icon("assets/items/mysterious_note.png")
     mysterious_note.usable_on = ["ancient_tome"]
 
     research_notes = PointClickEngine::Inventory::InventoryItem.new("research_notes", "Scientific research about crystal properties")
-    research_notes.load_icon("crystal_mystery/assets/items/research_notes.png")
+    research_notes.load_icon("assets/items/research_notes.png")
     research_notes.usable_on = ["microscope"]
 
     crystal_lens = PointClickEngine::Inventory::InventoryItem.new("crystal_lens", "A special lens for enhancing crystal energy")
-    crystal_lens.load_icon("crystal_mystery/assets/items/crystal_lens.png")
+    crystal_lens.load_icon("assets/items/crystal_lens.png")
     crystal_lens.usable_on = ["crystal", "statue"]
 
     lamp_item = PointClickEngine::Inventory::InventoryItem.new("lamp", "An ornate oil lamp")
-    lamp_item.load_icon("crystal_mystery/assets/items/lamp.png")
+    lamp_item.load_icon("assets/items/lamp.png")
     lamp_item.usable_on = ["painting", "ancient_tome"]
 
     sign_item = PointClickEngine::Inventory::InventoryItem.new("sign", "A wooden sign with directions")
-    sign_item.load_icon("crystal_mystery/assets/items/sign.png")
+    sign_item.load_icon("assets/items/sign.png")
 
     # Store items for later use
     @game_items = {
@@ -575,7 +599,9 @@ class CrystalMysteryGame
 
   private def setup_game_events
     # Set up event handlers for menu system
+    puts "Setting up game:new event handler"
     @engine.event_system.on("game:new") do
+      puts "game:new event received!"
       start_new_game
     end
     
@@ -777,7 +803,7 @@ class CrystalMysteryGame
 
   private def setup_game_state_and_quests
     # Load quest definitions - use the new comprehensive quest file
-    @quest_manager.load_quests_from_yaml("crystal_mystery/quests/main_quests.yaml")
+    @quest_manager.load_quests_from_yaml("quests/main_quests.yaml")
 
     # Set up state change handlers for enhanced quest integration
     @game_state_manager.add_change_handler(->(name : String, value : PointClickEngine::GameValue) {

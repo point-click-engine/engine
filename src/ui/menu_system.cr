@@ -5,8 +5,8 @@ require "../core/save_system"
 
 module PointClickEngine
   module UI
-    # Menu item structure
-    struct MenuItem
+    # Menu item class (changed from struct to class for mutable properties)
+    class MenuItem
       property text : String
       property action : Proc(Nil)?
       property enabled : Bool = true
@@ -125,6 +125,19 @@ module PointClickEngine
         # Draw menu items
         item_y = @position.y + 80f32
         @items.each_with_index do |item, index|
+          # Draw highlight background for selected item
+          if item.highlighted
+            highlight_rect = RL::Rectangle.new(
+              x: @position.x + 20,
+              y: item_y - 5,
+              width: @size.x - 40,
+              height: @font_size + 10
+            )
+            # Draw glowing background
+            RL.draw_rectangle_rec(highlight_rect, RL::Color.new(r: 255, g: 215, b: 0, a: 30))
+            RL.draw_rectangle_lines_ex(highlight_rect, 2, RL::Color.new(r: 255, g: 215, b: 0, a: 100))
+          end
+          
           color = if !item.enabled
                     RL::GRAY
                   elsif item.highlighted
@@ -133,9 +146,15 @@ module PointClickEngine
                     @text_color
                   end
           
-          text = item.highlighted ? "> #{item.text}" : "  #{item.text}"
+          text = item.highlighted ? "> #{item.text} <" : "  #{item.text}"
           text_width = RL.measure_text(text, @font_size)
           text_x = @position.x + (@size.x - text_width) / 2
+          
+          # Add subtle animation for highlighted item
+          if item.highlighted
+            offset = (Math.sin(RL.get_time * 3) * 2).to_f32
+            text_x += offset
+          end
           
           RL.draw_text(text, text_x.to_i, item_y.to_i, @font_size, color)
           item_y += @item_spacing
@@ -191,7 +210,13 @@ module PointClickEngine
       protected def select_current
         if @selected_index >= 0 && @selected_index < @items.size
           item = @items[@selected_index]
-          item.action.try &.call if item.enabled
+          puts "Menu: Selecting item #{@selected_index}: #{item.text}"
+          if item.enabled && item.action
+            puts "Menu: Calling action for #{item.text}"
+            item.action.not_nil!.call
+          else
+            puts "Menu: Item disabled or no action"
+          end
         end
       end
       
@@ -474,6 +499,7 @@ module PointClickEngine
       end
       
       def enter_game
+        puts "MenuSystem: Entering game"
         @in_game = true
         hide_current_menu
       end
@@ -486,7 +512,9 @@ module PointClickEngine
       private def setup_menu_callbacks
         # Main menu callbacks
         @main_menu.on_new_game = -> {
+          puts "MainMenu: New Game selected"
           enter_game
+          puts "MainMenu: Triggering game:new event"
           @engine.event_system.trigger("game:new")
         }
         

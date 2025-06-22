@@ -215,6 +215,9 @@ module PointClickEngine
 
         RL.init_window(@window_width, @window_height, @title)
         RL.set_target_fps(@target_fps)
+        
+        # Disable ESC key from closing window (we use it for pause menu)
+        RL.set_exit_key(RL::KeyboardKey::Null)
 
         @system_manager.initialize_systems(@window_width, @window_height)
         
@@ -404,8 +407,19 @@ module PointClickEngine
 
       # Public update method for external use
       def update(dt : Float32)
+        # Process events first
+        event_system.process_events
+        
         # Update systems
         @system_manager.update_systems(dt)
+        
+        # Update menu system
+        @system_manager.menu_system.try(&.update(dt))
+        
+        # Skip game updates if menu is pausing the game
+        if menu = @system_manager.menu_system
+          return if menu.game_paused
+        end
 
         # Update current scene
         @current_scene.try(&.update(dt))
@@ -418,7 +432,11 @@ module PointClickEngine
         # @dialogs.reject!(&.completed?) # Dialog doesn't have completed? method
 
         # Process input
-        @input_handler.process_input(@current_scene, @player)
+        if verb_system = @verb_input_system
+          verb_system.process_input(@current_scene, @player, @system_manager.display_manager)
+        else
+          @input_handler.process_input(@current_scene, @player)
+        end
 
         # Update cursor
         @render_coordinator.update_cursor(@current_scene)
@@ -431,6 +449,9 @@ module PointClickEngine
       private def update
         dt = RL.get_frame_time
 
+        # Process events first
+        event_system.process_events
+        
         # Update systems
         @system_manager.update_systems(dt)
         
@@ -466,6 +487,7 @@ module PointClickEngine
       # Render game
       private def render
         RL.begin_drawing
+        RL.clear_background(RL::BLACK)
 
         @render_coordinator.render(
           @current_scene,

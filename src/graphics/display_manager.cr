@@ -95,10 +95,11 @@ module PointClickEngine
       def end_game_rendering
         if rt = @render_texture
           RL.end_texture_mode
-
-          RL.begin_drawing
-          RL.clear_background(RL::BLACK)
-
+        end
+      end
+      
+      def draw_to_screen
+        if rt = @render_texture
           source_rect = RL::Rectangle.new(
             x: 0, y: 0,
             width: REFERENCE_WIDTH,
@@ -127,8 +128,6 @@ module PointClickEngine
           if Core::Engine.debug_mode
             draw_debug_info
           end
-
-          RL.end_drawing
         end
       end
 

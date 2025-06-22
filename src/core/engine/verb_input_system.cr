@@ -35,6 +35,9 @@ module PointClickEngine
           return unless scene
           return unless display_manager
           
+          # Handle keyboard input first
+          handle_keyboard_input
+          
           raw_mouse = RL.get_mouse_position
           return unless display_manager.is_in_game_area(raw_mouse)
           
@@ -318,6 +321,36 @@ module PointClickEngine
         
         private def setup_default_handlers
           # Games can override these handlers as needed
+        end
+        
+        # Handle keyboard input for debug and UI toggles
+        private def handle_keyboard_input
+          # Handle common keyboard shortcuts
+          if RL.key_pressed?(RL::KeyboardKey::Escape)
+            # Toggle pause menu instead of exiting game
+            if menu_system = @engine.system_manager.menu_system
+              menu_system.toggle_pause_menu
+            end
+          end
+
+          if RL.key_pressed?(RL::KeyboardKey::F11)
+            @engine.toggle_fullscreen
+          end
+
+          if RL.key_pressed?(RL::KeyboardKey::F1)
+            # Toggle debug mode
+            PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
+            puts "Debug mode: #{PointClickEngine::Core::Engine.debug_mode}"
+          end
+
+          if RL.key_pressed?(RL::KeyboardKey::Tab)
+            @engine.toggle_hotspot_highlight
+            puts "Hotspot highlight: #{@engine.render_coordinator.hotspot_highlight_enabled}"
+          end
+          
+          if RL.key_pressed?(RL::KeyboardKey::I)
+            @engine.inventory.toggle_visibility
+          end
         end
         
         # Clean up resources
