@@ -85,6 +85,77 @@ module PointClickEngine
         show_dialog("", prompt, choices)
       end
 
+      # Show dialog choices at bottom of screen
+      #
+      # Displays a dialog box with multiple choices at the bottom of the screen.
+      # This is useful for branching conversations and interactive dialogs.
+      #
+      # *prompt* - The question or prompt to display
+      # *choices* - Array of choice texts
+      # *callback* - Proc called with the index of the selected choice
+      # *position* - Optional position override (defaults to bottom of screen)
+      # *size* - Optional size override (defaults to wide dialog box)
+      #
+      # ```
+      # dialog_manager.show_dialog_choices(
+      #   "What would you like to ask?",
+      #   ["Tell me about the crystal", "Who else is here?", "Goodbye"],
+      #   ->(choice : Int32) {
+      #     case choice
+      #     when 0 then show_crystal_info
+      #     when 1 then show_character_list
+      #     when 2 then end_conversation
+      #     end
+      #   }
+      # )
+      # ```
+      def show_dialog_choices(prompt : String, choices : Array(String), &callback : Int32 ->)
+        # Get window dimensions
+        window_width = Raylib.get_screen_width
+        window_height = Raylib.get_screen_height
+        
+        # Create dialog at bottom of screen
+        dialog_height = 150f32 + (choices.size * 30f32)
+        dialog_y = window_height - dialog_height - 20
+        
+        dialog = Dialog.new(
+          prompt,
+          Raylib::Vector2.new(x: 20f32, y: dialog_y),
+          Raylib::Vector2.new(x: window_width - 40f32, y: dialog_height)
+        )
+        
+        # Set black background for dialog choices
+        dialog.background_color = Raylib::Color.new(r: 0, g: 0, b: 0, a: 240)
+        dialog.text_color = Raylib::WHITE
+        
+        # Add choices
+        choices.each_with_index do |choice_text, index|
+          dialog.add_choice(choice_text) do
+            callback.call(index)
+            close_current_dialog
+          end
+        end
+        
+        dialog.show
+        @current_dialog = dialog
+      end
+
+      # Show dialog choices with custom positioning
+      def show_dialog_choices_at(prompt : String, choices : Array(String), position : RL::Vector2, size : RL::Vector2, &callback : Int32 ->)
+        dialog = Dialog.new(prompt, position, size)
+        
+        # Add choices
+        choices.each_with_index do |choice_text, index|
+          dialog.add_choice(choice_text) do
+            callback.call(index)
+            close_current_dialog
+          end
+        end
+        
+        dialog.show
+        @current_dialog = dialog
+      end
+
       def update(dt : Float32)
         if @showing_message && @message_timer > 0
           @message_timer -= dt

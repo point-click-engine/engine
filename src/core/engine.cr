@@ -15,6 +15,7 @@ require "yaml"
 require "./state_value"
 require "./engine/system_manager"
 require "./engine/input_handler"
+require "./engine/verb_input_system"
 require "./engine/render_coordinator"
 
 module PointClickEngine
@@ -115,21 +116,14 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property input_handler : EngineComponents::InputHandler
 
+      # Handles verb-based input for point-and-click interactions
+      @[YAML::Field(ignore: true)]
+      property verb_input_system : EngineComponents::VerbInputSystem?
+
       # Coordinates rendering and debug visualization
       @[YAML::Field(ignore: true)]
       property render_coordinator : EngineComponents::RenderCoordinator
 
-      # Legacy properties for backwards compatibility
-
-      # Path to custom cursor texture file
-      property cursor_texture_path : String?
-
-      # Loaded cursor texture (not serialized)
-      @[YAML::Field(ignore: true)]
-      property cursor_texture : RL::Texture2D?
-
-      # Default mouse cursor type
-      property default_cursor : RL::MouseCursor = RL::MouseCursor::Default
 
       # Whether the window is in fullscreen mode
       property fullscreen : Bool = false
@@ -141,6 +135,10 @@ module PointClickEngine
       # Cutscene management system (not serialized)
       @[YAML::Field(ignore: true)]
       property cutscene_manager : Cutscenes::CutsceneManager = Cutscenes::CutsceneManager.new
+      
+      # Game-specific update callback
+      @[YAML::Field(ignore: true)]
+      property on_update : Proc(Float32, Nil)?
 
       # Creates a new Engine instance with specified window dimensions
       #
@@ -219,6 +217,9 @@ module PointClickEngine
         RL.set_target_fps(@target_fps)
 
         @system_manager.initialize_systems(@window_width, @window_height)
+        
+        # Initialize menu system after other systems
+        @system_manager.menu_system = UI::MenuSystem.new(self)
 
         @initialized = true
         puts "Engine initialized with #{@system_manager.initialized_systems_count} systems"
@@ -376,7 +377,7 @@ module PointClickEngine
         @running = true
         puts "Starting game loop..."
 
-        while @running && !RL.window_should_close?
+        while @running && !RL.close_window?
           update
           render
         end
@@ -421,6 +422,9 @@ module PointClickEngine
 
         # Update cursor
         @render_coordinator.update_cursor(@current_scene)
+        
+        # Call game-specific update if provided
+        @on_update.try &.call(dt)
       end
 
       # Update game state
@@ -429,6 +433,14 @@ module PointClickEngine
 
         # Update systems
         @system_manager.update_systems(dt)
+        
+        # Update menu system
+        @system_manager.menu_system.try(&.update(dt))
+        
+        # Skip game updates if menu is pausing the game
+        if menu = @system_manager.menu_system
+          return if menu.game_paused
+        end
 
         # Update current scene
         @current_scene.try(&.update(dt))
@@ -441,7 +453,11 @@ module PointClickEngine
         # @dialogs.reject!(&.completed?) # Dialog doesn't have completed? method
 
         # Process input
-        @input_handler.process_input(@current_scene, @player)
+        if verb_system = @verb_input_system
+          verb_system.process_input(@current_scene, @player, @system_manager.display_manager)
+        else
+          @input_handler.process_input(@current_scene, @player)
+        end
 
         # Update cursor
         @render_coordinator.update_cursor(@current_scene)
@@ -457,6 +473,12 @@ module PointClickEngine
           @cutscene_manager,
           @system_manager.transition_manager
         )
+
+        # Draw verb cursor if enabled
+        @verb_input_system.try(&.draw(@system_manager.display_manager))
+        
+        # Draw menu system on top of everything
+        @system_manager.menu_system.try(&.draw)
 
         RL.end_drawing
       end
@@ -485,6 +507,85 @@ module PointClickEngine
 
       def set_scaling_mode(mode : Graphics::DisplayManager::ScalingMode)
         @system_manager.display_manager.try(&.set_scaling_mode(mode))
+      end
+
+      # Enable verb-based input system
+      #
+      # Activates the verb-based input system for point-and-click interactions.
+      # This replaces the default input handler with a more sophisticated system
+      # that supports verbs like Walk, Look, Talk, Use, Take, Open, etc.
+      #
+      # ```
+      # engine.enable_verb_input
+      # # Now left-click executes the current verb
+      # # Right-click always performs "Look"
+      # ```
+      def enable_verb_input
+        @verb_input_system = EngineComponents::VerbInputSystem.new(self)
+        @input_handler.handle_clicks = false # Disable default click handling
+      end
+      
+      # Show the main menu
+      #
+      # Displays the main menu and pauses the game. This is typically
+      # called at game startup or when returning to the main menu.
+      #
+      # ```
+      # engine.show_main_menu
+      # ```
+      def show_main_menu
+        @system_manager.menu_system.try(&.show_main_menu)
+      end
+      
+      # Start a new game
+      #
+      # Hides the menu and enters game mode. This should be called
+      # after initializing the game scene.
+      #
+      # ```
+      # # After setting up initial scene
+      # engine.start_game
+      # ```
+      def start_game
+        @system_manager.menu_system.try(&.enter_game)
+      end
+
+      # Get the verb input system if enabled
+      def verb_input_system : EngineComponents::VerbInputSystem?
+        @verb_input_system
+      end
+
+      # Toggle hotspot highlighting
+      #
+      # Enables or disables visual highlighting of interactive hotspots.
+      # When enabled, hotspots will be outlined with a pulsing golden glow
+      # and character names will be displayed above them.
+      #
+      # ```
+      # # Toggle hotspot highlighting on Tab key
+      # if RL.key_pressed?(RL::KeyboardKey::Tab)
+      #   engine.toggle_hotspot_highlight
+      # end
+      # ```
+      def toggle_hotspot_highlight
+        @render_coordinator.hotspot_highlight_enabled = !@render_coordinator.hotspot_highlight_enabled
+      end
+
+      # Set hotspot highlight settings
+      #
+      # Configures the appearance of hotspot highlighting.
+      #
+      # *enabled* - Whether highlighting is enabled
+      # *color* - The color to use for highlighting (default: golden)
+      # *pulse* - Whether the highlight should pulse (default: true)
+      #
+      # ```
+      # engine.set_hotspot_highlight(true, RL::BLUE, false)
+      # ```
+      def set_hotspot_highlight(enabled : Bool, color : RL::Color? = nil, pulse : Bool? = nil)
+        @render_coordinator.hotspot_highlight_enabled = enabled
+        @render_coordinator.hotspot_highlight_color = color if color
+        @render_coordinator.hotspot_highlight_pulse = pulse unless pulse.nil?
       end
 
       # Archive support
@@ -565,8 +666,8 @@ module PointClickEngine
         nil
       end
 
-      # Delegated properties for backwards compatibility
-      {% for prop in %w[display_manager achievement_manager audio_manager shader_system gui script_engine event_system dialog_manager config transition_manager] %}
+      # Delegated properties for system access
+      {% for prop in %w[display_manager achievement_manager audio_manager shader_system gui script_engine event_system dialog_manager config transition_manager menu_system] %}
         def {{prop.id}}
           @system_manager.{{prop.id}}
         end

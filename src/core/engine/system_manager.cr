@@ -10,6 +10,7 @@ require "../../ui/dialog_manager"
 require "../config_manager"
 require "../../graphics/display_manager"
 require "../../graphics/transitions"
+require "../../ui/menu_system"
 
 module PointClickEngine
   module Core
@@ -26,6 +27,7 @@ module PointClickEngine
         property config : ConfigManager?
         property display_manager : Graphics::DisplayManager?
         property transition_manager : Graphics::TransitionManager?
+        property menu_system : UI::MenuSystem?
 
         def initialize
           @event_system = Scripting::EventSystem.new
@@ -82,13 +84,21 @@ module PointClickEngine
 
         # Cleanup all systems
         def cleanup_systems
-          @achievement_manager.try(&.cleanup)
-          @audio_manager.try(&.finalize)
-          @shader_system.try(&.cleanup)
-          @gui.try(&.cleanup)
-          @script_engine.try(&.cleanup)
-          @dialog_manager.try(&.cleanup)
-          @transition_manager.try(&.cleanup)
+          # Cleanup systems that have cleanup methods
+          @audio_manager.try(&.finalize)      # Has finalize method
+          @shader_system.try(&.cleanup)       # Has cleanup method
+          # @gui.try(&.cleanup)               # No cleanup method - GUI::GUIManager
+          @script_engine.try(&.cleanup)       # Has cleanup method
+          @dialog_manager.try(&.cleanup)      # Has cleanup method
+          @transition_manager.try(&.cleanup)  # Has cleanup method
+          @display_manager.try(&.cleanup)     # Has cleanup method
+          
+          # Systems without cleanup methods:
+          # - @achievement_manager (no cleanup method)
+          # - @gui (no cleanup method)
+          # - @event_system (no cleanup method)
+          # - @config (no cleanup method)
+          # - @menu_system (no cleanup method)
         end
 
         # Get initialized systems count for debugging

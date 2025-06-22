@@ -139,6 +139,20 @@ module PointClickEngine
           end
         end
       end
+      
+      # Convenience method alias
+      def trigger(type : String, data = {} of String => String)
+        trigger_event(type, data)
+      end
+      
+      # Convenience method for registering simple event handlers
+      def on(event_type : String, &handler : ->)
+        handler_proc = ->(event : Event) do
+          handler.call
+          true
+        end
+        add_handler(FunctionEventHandler.new(handler_proc, [event_type]))
+      end
     end
 
     # Common game events

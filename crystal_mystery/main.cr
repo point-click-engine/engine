@@ -5,18 +5,16 @@ require "../src/point_click_engine"
 # The Crystal Mystery - A Point & Click Adventure Game
 class CrystalMysteryGame
   property engine : PointClickEngine::Core::Engine
-  property current_scene : String = "main_menu"
   property game_items : Hash(String, PointClickEngine::Inventory::InventoryItem) = {} of String => PointClickEngine::Inventory::InventoryItem
-  property hotspot_highlight_enabled : Bool = false
-  property cursor_manager : PointClickEngine::UI::CursorManager
-  property ui_manager : PointClickEngine::UI::UIManager
   property game_state_manager : PointClickEngine::GameStateManager
   property quest_manager : PointClickEngine::QuestManager
 
   def initialize
-    @engine = PointClickEngine::Core::Engine.new
-    @engine.init(1024, 768, "The Crystal Mystery")
-    @engine.handle_clicks = false # We handle clicks ourselves
+    @engine = PointClickEngine::Core::Engine.new(1024, 768, "The Crystal Mystery")
+    @engine.init
+    
+    # Enable verb-based input system
+    @engine.enable_verb_input
 
     # Enable all engine systems
     @engine.script_engine = PointClickEngine::Scripting::ScriptEngine.new
@@ -26,8 +24,6 @@ class CrystalMysteryGame
     @engine.config = PointClickEngine::Core::ConfigManager.new
     @engine.gui = PointClickEngine::UI::GUIManager.new
     @engine.shader_system = PointClickEngine::Graphics::Shaders::ShaderSystem.new
-    @cursor_manager = PointClickEngine::UI::CursorManager.new
-    @ui_manager = PointClickEngine::UI::UIManager.new(1024, 768)
     @game_state_manager = PointClickEngine::GameStateManager.new
     @quest_manager = PointClickEngine::QuestManager.new
 
@@ -60,290 +56,40 @@ class CrystalMysteryGame
     # Create game items
     create_game_items
 
-    # Create scenes
-    create_main_menu
+    # Create game scenes
     create_game_scenes
 
     # Initialize shaders
     setup_shaders
 
-    # Start with main menu
-    @engine.change_scene("main_menu")
-
-    # Set up global input handler
-    setup_global_input
+    # Set up game events
+    setup_game_events
 
     # Initialize game state and quests
     setup_game_state_and_quests
-  end
-
-  def run
-    @engine.init
-    @engine.running = true
-    @engine.current_scene.try &.enter
-
-    while @engine.running && !Raylib.close_window?
-      # Handle global input before engine update
-      handle_global_input
-
-      # Update cursor manager
-      if scene = @engine.current_scene
-        mouse_pos = Raylib.get_mouse_position
-        # Convert screen coordinates to game coordinates
-        if dm = @engine.display_manager
-          game_mouse = dm.screen_to_game(mouse_pos)
-          @cursor_manager.update(game_mouse, scene, @engine.inventory)
-        end
-      end
-
-      # Update engine (let it handle its own timing)
-      dt = Raylib.get_frame_time
-
-      # Update the engine - this updates scenes, characters, etc.
-      @engine.update(dt)
-
-      # Update game state and quests
+    
+    # Set up game update callback
+    @engine.on_update = ->(dt : Float32) {
+      # Update game-specific systems
       @game_state_manager.update_timers(dt)
       @game_state_manager.update_game_time(dt)
       @quest_manager.update_all_quests(@game_state_manager, dt)
-
-      # Update transitions
-      @engine.transition_manager.try(&.update(dt))
-
-      # Update GUI
-      @engine.gui.try(&.update(dt))
-
-      # Draw with custom hotspot highlighting
-      draw_with_highlighting
-    end
-
-    @cursor_manager.cleanup
-    # Engine cleanup is handled automatically
+    }
+    
+    # Show main menu
+    @engine.show_main_menu
   end
 
-  private def draw_with_highlighting
-    return unless dm = @engine.display_manager
-
-    dm.begin_game_rendering
-
-    # Clear screen first
-    Raylib.clear_background(Raylib::BLACK)
-
-    # Wrap scene rendering with transition manager for proper effects
-    if tm = @engine.transition_manager
-      tm.render_with_transition do
-        # Draw the current scene
-        @engine.current_scene.try &.draw
-
-        # Draw highlighted hotspots if enabled (but not in main menu)
-        if @hotspot_highlight_enabled && @engine.current_scene
-          current_scene_name = @engine.current_scene.try(&.name)
-          if current_scene_name && current_scene_name != "main_menu"
-            draw_highlighted_hotspots
-          end
-        end
-      end
-    else
-      # Fallback to direct rendering if no transition manager
-      @engine.current_scene.try &.draw
-
-      # Draw highlighted hotspots
-      if @hotspot_highlight_enabled && @engine.current_scene
-        current_scene_name = @engine.current_scene.try(&.name)
-        if current_scene_name && current_scene_name != "main_menu"
-          draw_highlighted_hotspots
-        end
-      end
-    end
-
-    # Draw UI elements (these should be outside transition effect)
-    @engine.inventory.draw
-    @engine.dialog_manager.try &.draw
-    @engine.gui.try &.draw
-
-    # Draw other elements
-    @engine.achievement_manager.try &.draw
-
-    # Draw cursor with verb system
-    raw_mouse = Raylib.get_mouse_position
-    if dm.is_in_game_area(raw_mouse)
-      game_mouse = dm.screen_to_game(raw_mouse)
-      @cursor_manager.draw(game_mouse)
-    end
-
-    # Cutscene handling would go here if implemented
-
-    # Draw debug info BEFORE ending game rendering but after all game elements
-    if PointClickEngine::Core::Engine.debug_mode
-      puts "DEBUG: Drawing debug info - debug_mode is ON"
-      draw_debug_info
-    else
-      puts "DEBUG: Not drawing debug info - debug_mode is OFF"
-    end
-
-    dm.end_game_rendering
+  def run
+    # The engine handles the main game loop
+    @engine.run
   end
 
-  private def draw_highlighted_hotspots
-    return unless scene = @engine.current_scene
+  # Removed - now handled by engine's render system
 
-    # Calculate pulsing effect
-    time = Raylib.get_time
-    pulse = ((Math.sin(time * 3.0) + 1.0) / 2.0).to_f32
-    outline_size = 2.0f32 + pulse * 2.0f32
+  # Removed - now handled by engine's RenderCoordinator
 
-    # Update shader parameters for pulsing effect
-    if shader_system = @engine.shader_system
-      shader_system.set_value(:outline, "outlineSize", outline_size)
-
-      # Adjust alpha for pulsing
-      golden_color = Raylib::Color.new(
-        r: 255,
-        g: 215,
-        b: 0,
-        a: (200 + pulse * 55).to_u8
-      )
-      color_array = [
-        golden_color.r.to_f32 / 255.0f32,
-        golden_color.g.to_f32 / 255.0f32,
-        golden_color.b.to_f32 / 255.0f32,
-        golden_color.a.to_f32 / 255.0f32,
-      ]
-      shader_system.set_value(:outline, "outlineColor", color_array)
-    end
-
-    # Draw hotspots with highlighting effect
-    scene.hotspots.each do |hotspot|
-      next unless hotspot.active && hotspot.visible
-
-      # Different rendering for polygon vs rectangle hotspots
-      if hotspot.is_a?(PointClickEngine::Scenes::PolygonHotspot)
-        polygon_hotspot = hotspot.as(PointClickEngine::Scenes::PolygonHotspot)
-        vertices = polygon_hotspot.get_outline_points
-
-        if vertices.size >= 3
-          # Draw filled polygon highlight
-          highlight_color = Raylib::Color.new(r: 255, g: 215, b: 0, a: (80 + pulse * 40).to_u8)
-          polygon_hotspot.draw_polygon(highlight_color)
-
-          # Draw pulsing outline
-          outline_color = Raylib::Color.new(r: 255, g: 255, b: 100, a: 255)
-          polygon_hotspot.draw_polygon_outline(outline_color, outline_size.to_i)
-
-          # Draw glow effect on vertices
-          glow_color = Raylib::Color.new(r: 255, g: 215, b: 0, a: (50 * pulse).to_u8)
-          vertices.each do |vertex|
-            Raylib.draw_circle(vertex.x.to_i, vertex.y.to_i, outline_size * 2, glow_color)
-          end
-        end
-      else
-        # Rectangle hotspot (existing code)
-        bounds = hotspot.bounds
-
-        # Draw outer glow
-        glow_color = Raylib::Color.new(r: 255, g: 215, b: 0, a: (30 * pulse).to_u8)
-        expanded_bounds = Raylib::Rectangle.new(
-          x: bounds.x - outline_size,
-          y: bounds.y - outline_size,
-          width: bounds.width + outline_size * 2,
-          height: bounds.height + outline_size * 2
-        )
-        Raylib.draw_rectangle_rec(expanded_bounds, glow_color)
-
-        # Draw the main highlight
-        highlight_color = Raylib::Color.new(r: 255, g: 215, b: 0, a: (80 + pulse * 40).to_u8)
-        Raylib.draw_rectangle_rec(bounds, highlight_color)
-
-        # Draw outline
-        outline_color = Raylib::Color.new(r: 255, g: 255, b: 100, a: 255)
-        Raylib.draw_rectangle_lines_ex(bounds, outline_size.to_i, outline_color)
-      end
-    end
-
-    # Also highlight characters
-    scene.characters.each do |character|
-      next unless character.visible
-
-      # Create bounds around character
-      char_bounds = Raylib::Rectangle.new(
-        x: character.position.x - character.size.x / 2,
-        y: character.position.y - character.size.y,
-        width: character.size.x,
-        height: character.size.y
-      )
-
-      # Draw character highlight with different color (blue-ish)
-      char_highlight_color = Raylib::Color.new(r: 100, g: 200, b: 255, a: (80 + pulse * 40).to_u8)
-      Raylib.draw_rectangle_rec(char_bounds, char_highlight_color)
-
-      # Draw character outline
-      char_outline_color = Raylib::Color.new(r: 150, g: 220, b: 255, a: 255)
-      Raylib.draw_rectangle_lines_ex(char_bounds, outline_size.to_i, char_outline_color)
-
-      # Draw character name above
-      name_text = character.name
-      text_width = Raylib.measure_text(name_text, 16)
-      text_x = character.position.x - text_width / 2
-      text_y = character.position.y - character.size.y - 20
-
-      # Draw text background
-      text_bg = Raylib::Rectangle.new(
-        x: text_x - 4,
-        y: text_y - 2,
-        width: text_width + 8,
-        height: 20
-      )
-      Raylib.draw_rectangle_rec(text_bg, Raylib::Color.new(r: 0, g: 0, b: 0, a: 180))
-
-      # Draw character name
-      Raylib.draw_text(name_text, text_x.to_i, text_y.to_i, 16, Raylib::WHITE)
-    end
-  end
-
-  private def draw_debug_info
-    y_offset = 10
-
-    # FPS and Frame Time
-    Raylib.draw_text("FPS: #{Raylib.get_fps}", 10, y_offset, 20, Raylib::GREEN)
-    y_offset += 25
-
-    frame_time = Raylib.get_frame_time
-    Raylib.draw_text("Frame Time: #{(frame_time * 1000).round(2)}ms", 10, y_offset, 20, Raylib::GREEN)
-    y_offset += 25
-
-    if dm = @engine.display_manager
-      # Mouse coordinates
-      raw_mouse = Raylib.get_mouse_position
-      game_mouse = dm.screen_to_game(raw_mouse)
-      Raylib.draw_text("Screen Mouse: #{raw_mouse.x.to_i}, #{raw_mouse.y.to_i}", 10, y_offset, 20, Raylib::GREEN)
-      y_offset += 25
-      Raylib.draw_text("Game Mouse: #{game_mouse.x.to_i}, #{game_mouse.y.to_i}", 10, y_offset, 20, Raylib::GREEN)
-      y_offset += 25
-
-      # Resolution and window info
-      Raylib.draw_text("Window: #{Raylib.get_screen_width}x#{Raylib.get_screen_height}", 10, y_offset, 20, Raylib::GREEN)
-      y_offset += 25
-      Raylib.draw_text("Game Resolution: 1024x768", 10, y_offset, 20, Raylib::GREEN)
-      y_offset += 25
-    end
-
-    # Current scene
-    if scene = @engine.current_scene
-      Raylib.draw_text("Scene: #{scene.name}", 10, y_offset, 20, Raylib::GREEN)
-      y_offset += 25
-
-      # Player position
-      if player = @engine.player
-        Raylib.draw_text("Player: #{player.position.x.to_i}, #{player.position.y.to_i}", 10, y_offset, 20, Raylib::GREEN)
-        y_offset += 25
-      end
-    end
-
-    # Toggle states
-    Raylib.draw_text("Hotspot Highlight: #{@hotspot_highlight_enabled ? "ON" : "OFF"} (Tab)", 10, y_offset, 20, Raylib::GREEN)
-    y_offset += 25
-    Raylib.draw_text("Debug Mode: ON (F1 to toggle)", 10, y_offset, 20, Raylib::GREEN)
-  end
+  # Removed - now handled by engine's debug overlay
 
   private def load_configuration
     # Load game settings
@@ -355,48 +101,7 @@ class CrystalMysteryGame
     end
   end
 
-  private def create_main_menu
-    menu_scene = PointClickEngine::Scenes::Scene.new("main_menu")
-
-    # Create UI elements for main menu
-    if gui = @engine.gui
-      # Title
-      title_pos = Raylib::Vector2.new(x: 512f32, y: 200f32)
-      gui.add_label("title", "The Crystal Mystery", title_pos, 48, Raylib::WHITE)
-
-      # Buttons
-      new_game_pos = Raylib::Vector2.new(x: 412f32, y: 350f32)
-      new_game_size = Raylib::Vector2.new(x: 200f32, y: 50f32)
-
-      gui.add_button("new_game", "New Game", new_game_pos, new_game_size) do
-        @engine.audio_manager.try &.play_sound_effect("click")
-        start_new_game
-      end
-
-      load_pos = Raylib::Vector2.new(x: 412f32, y: 420f32)
-
-      gui.add_button("load_game", "Load Game", load_pos, new_game_size) do
-        @engine.audio_manager.try &.play_sound_effect("click")
-        show_load_menu
-      end
-
-      options_pos = Raylib::Vector2.new(x: 412f32, y: 490f32)
-
-      gui.add_button("options", "Options", options_pos, new_game_size) do
-        @engine.audio_manager.try &.play_sound_effect("click")
-        show_options_menu
-      end
-
-      quit_pos = Raylib::Vector2.new(x: 412f32, y: 560f32)
-
-      gui.add_button("quit", "Quit", quit_pos, new_game_size) do
-        @engine.audio_manager.try &.play_sound_effect("click")
-        @engine.running = false
-      end
-    end
-
-    @engine.add_scene(menu_scene)
-  end
+  # Removed - now using engine's MenuSystem
 
   private def create_game_scenes
     # Create library scene
@@ -770,27 +475,8 @@ class CrystalMysteryGame
     @engine.inventory.clear
 
     # Reset game state
-    @engine.script_engine.try do |scripting|
-      scripting.execute_script(<<-LUA)
-        -- Initialize game state
-        game_state = {
-          has_key = false,
-          cabinet_unlocked = false,
-          crystal_found = false,
-          talked_to_butler = false,
-          talked_to_scientist = false,
-          puzzle_solved = false
-        }
-        
-        function get_game_state(key)
-          return game_state[key]
-        end
-        
-        function set_game_state(key, value)
-          game_state[key] = value
-        end
-      LUA
-    end
+    @game_state_manager = PointClickEngine::GameStateManager.new
+    setup_game_state_and_quests
 
     # Start in library
     @engine.change_scene("library")
@@ -815,184 +501,16 @@ class CrystalMysteryGame
       gui.add_label("debug_hint", "Press 'F1' to toggle debug mode", Raylib::Vector2.new(x: 10f32, y: 50f32), 16, Raylib::WHITE)
       gui.add_label("usage_hint", "Select item in inventory, then click where to use it", Raylib::Vector2.new(x: 10f32, y: 70f32), 16, Raylib::WHITE)
     end
+    
+    # Setup custom verb handlers
+    setup_verb_handlers
+    setup_character_handlers
+    
+    # Start the game
+    @engine.start_game
   end
 
-  private def show_load_menu
-    # Clear current GUI elements
-    @engine.gui.try &.clear_all
-
-    # Get available save files
-    save_files = PointClickEngine::Core::SaveSystem.get_save_files
-
-    if gui = @engine.gui
-      # Title
-      gui.add_label("load_title", "Load Game", Raylib::Vector2.new(x: 512f32, y: 150f32), 36, Raylib::WHITE)
-
-      if save_files.empty?
-        gui.add_label("no_saves", "No saved games found", Raylib::Vector2.new(x: 512f32, y: 300f32), 24, Raylib::GRAY)
-      else
-        y_offset = 250f32
-        save_files.each_with_index do |save_name, i|
-          button_pos = Raylib::Vector2.new(x: 412f32, y: y_offset + (i * 60f32))
-          button_size = Raylib::Vector2.new(x: 200f32, y: 50f32)
-
-          gui.add_button("load_#{i}", save_name, button_pos, button_size) do
-            load_game(save_name)
-          end
-        end
-      end
-
-      # Back button
-      back_pos = Raylib::Vector2.new(x: 412f32, y: 600f32)
-      back_size = Raylib::Vector2.new(x: 200f32, y: 50f32)
-
-      gui.add_button("back_to_menu", "Back to Menu", back_pos, back_size) do
-        back_to_main_menu
-      end
-    end
-  end
-
-  private def show_options_menu
-    # Clear current GUI elements
-    @engine.gui.try &.clear_all
-
-    if gui = @engine.gui
-      # Title
-      gui.add_label("options_title", "Options", Raylib::Vector2.new(x: 512f32, y: 150f32), 36, Raylib::WHITE)
-
-      # Audio Settings
-      gui.add_label("audio_label", "Audio Settings", Raylib::Vector2.new(x: 300f32, y: 250f32), 24, Raylib::WHITE)
-
-      # Master Volume
-      current_volume = @engine.config.try(&.get("audio.master_volume", "0.8").to_f32) || 0.8f32
-      volume_text = "Master Volume: #{(current_volume * 100).to_i}%"
-      gui.add_label("volume_label", volume_text, Raylib::Vector2.new(x: 300f32, y: 290f32), 20, Raylib::LIGHTGRAY)
-
-      # Volume buttons
-      vol_down_pos = Raylib::Vector2.new(x: 250f32, y: 320f32)
-      vol_up_pos = Raylib::Vector2.new(x: 350f32, y: 320f32)
-      vol_button_size = Raylib::Vector2.new(x: 50f32, y: 30f32)
-
-      gui.add_button("vol_down", "- ", vol_down_pos, vol_button_size) do
-        decrease_volume
-      end
-
-      gui.add_button("vol_up", "+ ", vol_up_pos, vol_button_size) do
-        increase_volume
-      end
-
-      # Graphics Settings
-      gui.add_label("graphics_label", "Graphics Settings", Raylib::Vector2.new(x: 300f32, y: 400f32), 24, Raylib::WHITE)
-
-      # Fullscreen toggle
-      is_fullscreen = @engine.config.try(&.get("graphics.fullscreen", "false")) == "true"
-      fullscreen_text = "Fullscreen: #{is_fullscreen ? "ON" : "OFF"}"
-      gui.add_label("fullscreen_label", fullscreen_text, Raylib::Vector2.new(x: 300f32, y: 440f32), 20, Raylib::LIGHTGRAY)
-
-      fullscreen_pos = Raylib::Vector2.new(x: 300f32, y: 470f32)
-      fullscreen_size = Raylib::Vector2.new(x: 150f32, y: 30f32)
-
-      gui.add_button("toggle_fullscreen", "Toggle", fullscreen_pos, fullscreen_size) do
-        toggle_fullscreen
-      end
-
-      # Debug Mode
-      is_debug = PointClickEngine::Core::Engine.debug_mode
-      debug_text = "Debug Mode: #{is_debug ? "ON" : "OFF"}"
-      gui.add_label("debug_label", debug_text, Raylib::Vector2.new(x: 300f32, y: 520f32), 20, Raylib::LIGHTGRAY)
-
-      debug_pos = Raylib::Vector2.new(x: 300f32, y: 550f32)
-      debug_size = Raylib::Vector2.new(x: 150f32, y: 30f32)
-
-      gui.add_button("toggle_debug", "Toggle", debug_pos, debug_size) do
-        toggle_debug_mode
-      end
-
-      # Back button
-      back_pos = Raylib::Vector2.new(x: 412f32, y: 650f32)
-      back_size = Raylib::Vector2.new(x: 200f32, y: 50f32)
-
-      gui.add_button("back_to_menu", "Back to Menu", back_pos, back_size) do
-        back_to_main_menu
-      end
-    end
-  end
-
-  private def save_game(slot_name : String = "quicksave")
-    success = PointClickEngine::Core::SaveSystem.save_game(@engine, slot_name)
-    message = success ? "Game saved successfully!" : "Failed to save game."
-    @engine.dialog_manager.try &.show_message(message)
-  end
-
-  private def load_game(slot_name : String)
-    success = PointClickEngine::Core::SaveSystem.load_game(@engine, slot_name)
-    if success
-      @engine.dialog_manager.try &.show_message("Game loaded successfully!")
-      @current_scene = @engine.current_scene.try(&.name) || "library"
-    else
-      @engine.dialog_manager.try &.show_message("Failed to load game.")
-    end
-  end
-
-  private def decrease_volume
-    if config = @engine.config
-      current_volume = config.get("audio.master_volume", "0.8").to_f32
-      new_volume = Math.max(0.0f32, current_volume - 0.1f32)
-      config.set("audio.master_volume", new_volume.to_s)
-      @engine.audio_manager.try &.set_master_volume(new_volume)
-      update_options_display
-    end
-  end
-
-  private def increase_volume
-    if config = @engine.config
-      current_volume = config.get("audio.master_volume", "0.8").to_f32
-      new_volume = Math.min(1.0f32, current_volume + 0.1f32)
-      config.set("audio.master_volume", new_volume.to_s)
-      @engine.audio_manager.try &.set_master_volume(new_volume)
-      update_options_display
-    end
-  end
-
-  private def toggle_fullscreen
-    if config = @engine.config
-      is_fullscreen = config.get("graphics.fullscreen", "false") == "true"
-      new_fullscreen = !is_fullscreen
-      config.set("graphics.fullscreen", new_fullscreen.to_s)
-
-      # Toggle the actual window mode
-      Raylib.toggle_fullscreen
-
-      update_options_display
-    end
-  end
-
-  private def toggle_debug_mode
-    PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
-    update_options_display
-  end
-
-  private def update_options_display
-    # Update the option labels with new values
-    if gui = @engine.gui
-      # Update volume label
-      if config = @engine.config
-        current_volume = config.get("audio.master_volume", "0.8").to_f32
-        volume_text = "Master Volume: #{(current_volume * 100).to_i}%"
-        gui.update_label("volume_label", volume_text)
-
-        # Update fullscreen label
-        is_fullscreen = config.get("graphics.fullscreen", "false") == "true"
-        fullscreen_text = "Fullscreen: #{is_fullscreen ? "ON" : "OFF"}"
-        gui.update_label("fullscreen_label", fullscreen_text)
-      end
-
-      # Update debug label
-      is_debug = PointClickEngine::Core::Engine.debug_mode
-      debug_text = "Debug Mode: #{is_debug ? "ON" : "OFF"}"
-      gui.update_label("debug_label", debug_text)
-    end
-  end
+  # Removed - now handled by MenuSystem
 
   private def load_audio_assets
     return unless @engine.audio_manager
@@ -1055,241 +573,43 @@ class CrystalMysteryGame
     }
   end
 
-  private def setup_global_input
-    # Note: Global input handling would be implemented in the engine's main loop
-    # For now, shortcuts are handled per-scene in the game logic
-    # F5 = Quick Save, F9 = Quick Load, ESC = Main Menu
-  end
-
-  def handle_global_input
-    # Check F1 first
-    if Raylib.key_pressed?(290) # F1 key code
-      PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
-      puts "DEBUG: F1 pressed! Debug mode is now: #{PointClickEngine::Core::Engine.debug_mode}"
+  private def setup_game_events
+    # Set up event handlers for menu system
+    @engine.event_system.on("game:new") do
+      start_new_game
     end
-
-    # Handle verb-based mouse clicks
-    if Raylib.mouse_button_pressed?(Raylib::MouseButton::Left.to_i)
-      puts "DEBUG: Left mouse clicked"
-      handle_verb_click
-    elsif Raylib.mouse_button_pressed?(Raylib::MouseButton::Right.to_i)
-      puts "DEBUG: Right mouse clicked"
-      handle_look_click
-    end
-
-    # I = Toggle inventory
-    if Raylib.key_pressed?(Raylib::KeyboardKey::I.to_i)
-      @engine.inventory.visible = !@engine.inventory.visible
-    end
-
-    # F1 = Toggle debug mode
-    if Raylib.key_pressed?(Raylib::KeyboardKey::F1.to_i)
-      PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
-      puts "DEBUG: F1 pressed! Debug mode toggled: #{PointClickEngine::Core::Engine.debug_mode}"
-
-      # Show feedback to user
-      if @engine.dialog_manager
-        message = PointClickEngine::Core::Engine.debug_mode ? "Debug mode ON" : "Debug mode OFF"
-        @engine.dialog_manager.try &.show_message(message)
-      end
-    end
-
-    # F2 = Toggle walkable area debug (when debug mode is on)
-    if Raylib.key_pressed?(Raylib::KeyboardKey::F2.to_i) && PointClickEngine::Core::Engine.debug_mode
-      # This is handled automatically by debug mode
-    end
-
-    # Tab = Toggle hotspot highlighting
-    if Raylib.key_pressed?(Raylib::KeyboardKey::Tab.to_i)
-      toggle_hotspot_highlight
-    end
-
-    # F5 = Quick Save
-    if Raylib.key_pressed?(Raylib::KeyboardKey::F5.to_i)
-      save_game("quicksave")
-    end
-
-    # F9 = Quick Load
-    if Raylib.key_pressed?(Raylib::KeyboardKey::F9.to_i)
-      if PointClickEngine::Core::SaveSystem.save_exists?("quicksave")
-        load_game("quicksave")
-      else
-        @engine.dialog_manager.try &.show_message("No quicksave found!")
-      end
-    end
-
-    # ESC = Back to main menu (if in game)
-    if Raylib.key_pressed?(Raylib::KeyboardKey::Escape.to_i)
-      current_scene_name = @engine.current_scene.try(&.name)
-      if current_scene_name != "main_menu"
-        back_to_main_menu
-      end
+    
+    @engine.event_system.on("game:main_menu") do
+      # Clean up current game state
+      @engine.gui.try &.clear_all
+      @engine.change_scene("library") # Keep a scene loaded
     end
   end
 
-  private def handle_verb_click
-    return unless dm = @engine.display_manager
-    return unless scene = @engine.current_scene
+  # Removed - now handled by engine's input systems
 
-    mouse_pos = Raylib.get_mouse_position
-    return unless dm.is_in_game_area(mouse_pos)
+  # Removed - now handled by VerbInputSystem
 
-    game_mouse = dm.screen_to_game(mouse_pos)
-    verb = @cursor_manager.get_current_action
+  # Removed - now handled by VerbInputSystem
 
-    # Check inventory first
-    if @engine.inventory.visible
-      if item = @engine.inventory.get_item_at_position(game_mouse)
-        # Handle inventory verb actions
-        case verb
-        when .look?
-          @engine.dialog_manager.try &.show_message(item.description)
-        when .use?
-          # Use item - will be handled by inventory system
-          return
-        end
-        return
-      end
-    end
-
-    # Debug: List all characters in scene
-    puts "DEBUG: Characters in scene:"
-    scene.characters.each do |char|
-      puts "  - #{char.name} at #{char.position}, size: #{char.size}, active: #{char.active}"
-      bounds = RL::Rectangle.new(
-        x: char.position.x - char.size.x / 2,
-        y: char.position.y - char.size.y,
-        width: char.size.x,
-        height: char.size.y
-      )
-      puts "    Bounds: x=#{bounds.x}, y=#{bounds.y}, w=#{bounds.width}, h=#{bounds.height}"
-      collision = RL.check_collision_point_rec?(game_mouse, bounds)
-      puts "    Contains mouse? #{collision}"
-    end
-
-    # Check hotspots
-    if hotspot = scene.get_hotspot_at(game_mouse)
-      puts "DEBUG: Found hotspot: #{hotspot.name} (#{hotspot.class})"
-      execute_verb_on_hotspot(verb, hotspot, game_mouse)
-    elsif character = scene.get_character_at(game_mouse)
-      puts "DEBUG: Found character: #{character.name} at #{character.position}"
-      puts "DEBUG: Current verb: #{verb}"
-      execute_verb_on_character(verb, character)
-    else
-      puts "DEBUG: No hotspot or character at #{game_mouse}"
-      # No hotspot - handle walk
-      if verb.walk?
-        if player = scene.player
-          puts "DEBUG: Walking to #{game_mouse}, player at #{player.position}"
-          puts "DEBUG: Is target walkable? #{scene.is_walkable?(game_mouse)}"
-          if player.use_pathfinding && scene.enable_pathfinding
-            if path = scene.find_path(player.position.x, player.position.y, game_mouse.x, game_mouse.y)
-              puts "DEBUG: Found path with #{path.size} waypoints"
-              player.walk_to_with_path(path)
-            else
-              puts "DEBUG: No path found, direct walk"
-              player.walk_to(game_mouse)
-            end
-          else
-            puts "DEBUG: Using handle_click"
-            if player.responds_to?(:handle_click)
-              player.handle_click(game_mouse, scene)
-            else
-              player.walk_to(game_mouse)
-            end
-          end
-        end
-      end
-    end
-  end
-
-  private def handle_look_click
-    return unless dm = @engine.display_manager
-    return unless scene = @engine.current_scene
-
-    mouse_pos = Raylib.get_mouse_position
-    return unless dm.is_in_game_area(mouse_pos)
-
-    game_mouse = dm.screen_to_game(mouse_pos)
-
-    # Always look, regardless of current verb
-    if hotspot = scene.get_hotspot_at(game_mouse)
-      @engine.dialog_manager.try &.show_message(hotspot.description)
-    elsif character = scene.get_character_at(game_mouse)
-      desc = "It's #{character.name}."
-      @engine.dialog_manager.try &.show_message(desc)
-    else
-      @engine.dialog_manager.try &.show_message("Nothing interesting here.")
-    end
-  end
-
-  private def execute_verb_on_hotspot(verb : PointClickEngine::UI::VerbType, hotspot : PointClickEngine::Scenes::Hotspot, pos : RL::Vector2)
-    case verb
-    when .walk?
-      if hotspot.is_a?(PointClickEngine::Scenes::ExitZone)
-        exit_zone = hotspot.as(PointClickEngine::Scenes::ExitZone)
-
-        # Check if exit is accessible
-        if !exit_zone.is_accessible?(@engine.inventory)
-          if msg = exit_zone.locked_message
-            @engine.dialog_manager.try &.show_message(msg)
-          else
-            @engine.dialog_manager.try &.show_message("You can't go there yet.")
-          end
-          return
-        end
-
-        # Perform the transition
-        if exit_zone.auto_walk && (player = @engine.current_scene.try(&.player))
-          # Walk to exit position first
-          walk_target = exit_zone.get_walk_target
-          player.walk_to(walk_target)
-
-          # Set up callback for when walking is complete
-          player.on_walk_complete = -> {
-            perform_exit_transition(exit_zone)
-          }
+  # Custom verb handlers for game-specific interactions
+  private def setup_verb_handlers
+    return unless verb_system = @engine.verb_input_system
+    
+    # Register custom handlers for specific game logic
+    verb_system.register_verb_handler(PointClickEngine::UI::VerbType::Use) do |hotspot, pos|
+      case hotspot.name
+      when "cabinet"
+        if @engine.inventory.has_item?("brass_key")
+          @engine.inventory.remove_item("brass_key")
+          @engine.inventory.add_item(@game_items["crystal"])
+          @engine.dialog_manager.try &.show_message("You unlock the cabinet with the key and find a glowing crystal!")
+          @engine.audio_manager.try &.play_sound_effect("success")
+          @game_state_manager.set_flag("cabinet_unlocked", true)
         else
-          # Immediate transition
-          perform_exit_transition(exit_zone)
+          @engine.dialog_manager.try &.show_message("The cabinet is locked. You need a key.")
         end
-      elsif player = @engine.current_scene.try(&.player)
-        player.walk_to(pos)
-      end
-    when .look?
-      # Play examine animation
-      if player = @engine.current_scene.try(&.player)
-        if player.is_a?(PointClickEngine::Characters::Player)
-          enhanced_player = player.as(PointClickEngine::Characters::Player)
-          enhanced_player.examine_object(pos)
-        end
-        # Show floating dialog for examination
-        show_character_dialog("detective", hotspot.description, player.position)
-      else
-        @engine.dialog_manager.try &.show_message(hotspot.description)
-      end
-    when .talk?
-      @engine.dialog_manager.try &.show_message("I can't talk to that.")
-    when .use?
-      # Play use animation
-      if player = @engine.current_scene.try(&.player)
-        if player.is_a?(PointClickEngine::Characters::Player)
-          enhanced_player = player.as(PointClickEngine::Characters::Player)
-          enhanced_player.use_item_on_target(pos)
-        end
-      end
-
-      # Check if it's an exit zone
-      if hotspot.is_a?(PointClickEngine::Scenes::ExitZone)
-        # Treat use on exit as walk
-        execute_verb_on_hotspot(PointClickEngine::UI::VerbType::Walk, hotspot, pos)
-        # Check if it's the cabinet and player has key
-      elsif hotspot.name == "cabinet" && @engine.inventory.has_item?("key")
-        @engine.inventory.remove_item("key")
-        @engine.inventory.add_item(@game_items["crystal"])
-        @engine.dialog_manager.try &.show_message("You unlock the cabinet with the key and find a glowing crystal!")
-        @engine.audio_manager.try &.play_sound_effect("success")
-      elsif hotspot.name == "magical_plant"
+      when "magical_plant"
         # Water the plant
         state_val = @game_state_manager.get_variable("plant_watered")
         current_water = state_val.is_a?(Int32) ? state_val : 0
@@ -1305,163 +625,146 @@ class CrystalMysteryGame
         else
           @engine.dialog_manager.try &.show_message("The plant is fully grown now.")
         end
-      elsif hotspot.name == "puzzle_button"
+      when "puzzle_button"
         # Solve the puzzle
         @game_state_manager.set_variable("puzzle_solved", true)
         @engine.dialog_manager.try &.show_message("You press the button and hear a click. Something has changed...")
       else
+        # Default use behavior
         hotspot.on_click.try &.call
       end
-    when .take?
-      # Handle pickable items with animation
-      if player = @engine.current_scene.try(&.player)
-        if player.is_a?(PointClickEngine::Characters::Player)
-          enhanced_player = player.as(PointClickEngine::Characters::Player)
-          enhanced_player.pick_up_item(pos)
-        end
-      end
-
-      if hotspot.name == "key_hotspot"
-        @engine.inventory.add_item(@game_items["key"])
+    end
+    
+    verb_system.register_verb_handler(PointClickEngine::UI::VerbType::Take) do |hotspot, pos|
+      case hotspot.name
+      when "key_hotspot", "hidden_key"
+        @engine.inventory.add_item(@game_items["brass_key"])
         hotspot.active = false # Hide the hotspot
-        @engine.dialog_manager.try &.show_message("You picked up the key.")
+        @engine.dialog_manager.try &.show_message("You found a brass key!")
         @engine.audio_manager.try &.play_sound_effect("pickup")
-      elsif hotspot.name == "hidden_key"
-        @engine.inventory.add_item(@game_items["key"])
-        hotspot.active = false # Hide the hotspot
-        @engine.dialog_manager.try &.show_message("You found a hidden key!")
-        @engine.audio_manager.try &.play_sound_effect("pickup")
+        @game_state_manager.set_flag("has_key", true)
       else
         @engine.dialog_manager.try &.show_message("I can't take that.")
       end
-    when .open?
-      if hotspot.name == "cabinet"
-        if @engine.inventory.has_item?("key")
-          execute_verb_on_hotspot(PointClickEngine::UI::VerbType::Use, hotspot, pos)
-        else
-          @engine.dialog_manager.try &.show_message("It's locked. I need a key.")
-        end
-      else
-        @engine.dialog_manager.try &.show_message("I can't open that.")
-      end
-    else
-      @engine.dialog_manager.try &.show_message("I can't do that.")
     end
   end
 
-  private def execute_verb_on_character(verb : PointClickEngine::UI::VerbType, character : PointClickEngine::Characters::Character)
-    puts "DEBUG: execute_verb_on_character called - verb: #{verb}, character: #{character.name}"
-    case verb
-    when .talk?
-      puts "DEBUG: Talk verb detected for character: #{character.name}"
+  # Custom character verb handlers
+  private def setup_character_handlers
+    return unless verb_system = @engine.verb_input_system
+    
+    verb_system.register_character_verb_handler(PointClickEngine::UI::VerbType::Talk) do |character|
       case character.name.downcase
       when "butler"
-        puts "DEBUG: Showing butler dialog"
-        # Butler dialog with floating text
-        show_character_dialog("butler", "Welcome to the mansion, Detective. The master is quite concerned about the missing crystal.", character.position)
-
-        # Show dialog choices after a delay
-        spawn do
-          sleep 3.seconds
-          show_dialog_choices("What would you like to ask the butler?", [
-            "Tell me about the crystal",
-            "Who else is in the mansion?",
-            "Where should I start looking?",
-            "That's all for now",
-          ]) do |choice|
-            case choice
-            when 0
-              show_character_dialog("butler", "The crystal has been in the family for generations. It has... unusual properties.", character.position)
-            when 1
-              show_character_dialog("butler", "The librarian is in the library, and the gardener tends to the plants outside.", character.position)
-            when 2
-              show_character_dialog("butler", "Perhaps you should check the library. The master keeps many secrets there.", character.position)
-            when 3
-              show_character_dialog("detective", "Thank you, that's helpful.", @engine.player.try(&.position) || Raylib::Vector2.new(x: 400, y: 400))
-            end
-          end
-        end
+        show_butler_dialog(character)
       when "librarian"
-        # Librarian dialog with floating text and choices
-        show_character_dialog("librarian", "Ah, a visitor! Are you here about the mysterious crystal?", character.position)
-
-        spawn do
-          sleep 3.seconds
-          show_dialog_choices("What would you like to discuss with the librarian?", [
-            "What do you know about the crystal?",
-            "Have you seen anything suspicious?",
-            "Can I look at some books?",
-            "Do you have a key to the cabinet?",
-            "Goodbye",
-          ]) do |choice|
-            case choice
-            when 0
-              show_character_dialog("librarian", "The crystal is mentioned in several ancient texts. It's said to have the power to reveal hidden truths.", character.position)
-              # Update quest state
-              @game_state_manager.set_flag("learned_about_crystal", true)
-            when 1
-              show_character_dialog("librarian", "I did notice the butler acting strangely near the garden last night...", character.position)
-            when 2
-              show_character_dialog("librarian", "Of course! The ancient texts are on the top shelf. Be careful with them.", character.position)
-              # Enable book interaction
-              @game_state_manager.set_variable("can_read_books", true)
-            when 3
-              if @game_state_manager.get_variable("talked_to_gardener") == true
-                show_character_dialog("librarian", "Ah yes, I do have a spare key. The gardener mentioned you might need it. Here you go.", character.position)
-                @engine.inventory.add_item(@game_items["brass_key"])
-                @engine.audio_manager.try &.play_sound_effect("pickup")
-              else
-                show_character_dialog("librarian", "A key? I might have one, but you should speak to the gardener first.", character.position)
-              end
-            when 4
-              show_character_dialog("detective", "Thank you for your help.", @engine.player.try(&.position) || Raylib::Vector2.new(x: 400, y: 400))
-            end
-          end
-        end
+        show_librarian_dialog(character)
+      when "scientist"
+        show_scientist_dialog(character)
       else
         # Default character interaction
-        if player = @engine.current_scene.try(&.player)
+        if player = @engine.player
           character.on_interact(player)
         end
       end
-    when .look?
-      case character.name.downcase
-      when "butler"
-        show_character_dialog("detective", "The butler looks very formal and professional.", @engine.player.try(&.position) || Raylib::Vector2.new(x: 400, y: 400))
-      when "librarian"
-        show_character_dialog("detective", "The librarian seems knowledgeable and friendly.", @engine.player.try(&.position) || Raylib::Vector2.new(x: 400, y: 400))
-      else
-        desc = "It's #{character.name}."
-        @engine.dialog_manager.try &.show_message(desc)
-      end
-    else
-      @engine.dialog_manager.try &.show_message("I can't do that to #{character.name}.")
     end
   end
+  
+  private def show_butler_dialog(character : PointClickEngine::Characters::Character)
+    # Butler dialog with floating text
+    show_character_dialog("butler", "Welcome to the mansion, Detective. The master is quite concerned about the missing crystal.", character.position)
 
-  private def toggle_hotspot_highlight
-    @hotspot_highlight_enabled = !@hotspot_highlight_enabled
-
-    if @hotspot_highlight_enabled
-      # Create a pulsing outline shader effect for hotspots
-      if shader_system = @engine.shader_system
-        # Create outline shader with a nice golden color
-        golden_color = Raylib::Color.new(r: 255, g: 215, b: 0, a: 255)
-        PointClickEngine::Graphics::Shaders::ShaderHelpers.create_outline_shader(
-          shader_system,
-          golden_color,
-          3.0f32
-        )
+    # Show dialog choices after a delay
+    spawn do
+      sleep 3.seconds
+      @engine.dialog_manager.try &.show_dialog_choices("What would you like to ask the butler?", [
+        "Tell me about the crystal",
+        "Who else is in the mansion?",
+        "Where should I start looking?",
+        "That's all for now",
+      ]) do |choice|
+        case choice
+        when 0
+          show_character_dialog("butler", "The crystal has been in the family for generations. It has... unusual properties.", character.position)
+        when 1
+          show_character_dialog("butler", "The scientist is in the laboratory, and the gardener tends to the plants outside.", character.position)
+        when 2
+          show_character_dialog("butler", "Perhaps you should check the library. The master keeps many secrets there.", character.position)
+        when 3
+          show_character_dialog("detective", "Thank you, that's helpful.", @engine.player.try(&.position) || Raylib::Vector2.new(x: 400, y: 400))
+        end
       end
     end
   end
+  
+  private def show_librarian_dialog(character : PointClickEngine::Characters::Character)
+    # Librarian dialog with floating text and choices
+    show_character_dialog("librarian", "Ah, a visitor! Are you here about the mysterious crystal?", character.position)
 
-  private def back_to_main_menu
-    @engine.gui.try &.clear_all
-    @engine.change_scene("main_menu")
-    create_main_menu # Recreate main menu GUI
-    @engine.audio_manager.try &.play_music("main_theme", true)
+    spawn do
+      sleep 3.seconds
+      @engine.dialog_manager.try &.show_dialog_choices("What would you like to discuss with the librarian?", [
+        "What do you know about the crystal?",
+        "Have you seen anything suspicious?",
+        "Can I look at some books?",
+        "Do you have a key to the cabinet?",
+        "Goodbye",
+      ]) do |choice|
+        case choice
+        when 0
+          show_character_dialog("librarian", "The crystal is mentioned in several ancient texts. It's said to have the power to reveal hidden truths.", character.position)
+          # Update quest state
+          @game_state_manager.set_flag("learned_about_crystal", true)
+        when 1
+          show_character_dialog("librarian", "I did notice the butler acting strangely near the garden last night...", character.position)
+        when 2
+          show_character_dialog("librarian", "Of course! The ancient texts are on the top shelf. Be careful with them.", character.position)
+          # Enable book interaction
+          @game_state_manager.set_variable("can_read_books", true)
+        when 3
+          if @game_state_manager.get_variable("talked_to_gardener") == true
+            show_character_dialog("librarian", "Ah yes, I do have a spare key. The gardener mentioned you might need it. Here you go.", character.position)
+            @engine.inventory.add_item(@game_items["brass_key"])
+            @engine.audio_manager.try &.play_sound_effect("pickup")
+          else
+            show_character_dialog("librarian", "A key? I might have one, but you should speak to the gardener first.", character.position)
+          end
+        when 4
+          show_character_dialog("detective", "Thank you for your help.", @engine.player.try(&.position) || Raylib::Vector2.new(x: 400, y: 400))
+        end
+      end
+    end
   end
+  
+  private def show_scientist_dialog(character : PointClickEngine::Characters::Character)
+    show_character_dialog("scientist", "I've been studying the crystal's properties. It's quite fascinating!", character.position)
+    
+    spawn do
+      sleep 3.seconds
+      @engine.dialog_manager.try &.show_dialog_choices("What would you like to ask the scientist?", [
+        "What have you discovered?",
+        "Is the crystal dangerous?",
+        "How does it work?",
+        "That's all for now",
+      ]) do |choice|
+        case choice
+        when 0
+          show_character_dialog("scientist", "The crystal resonates with certain frequencies. It seems to respond to intentions.", character.position)
+          @game_state_manager.set_flag("learned_crystal_science", true)
+        when 1
+          show_character_dialog("scientist", "Not dangerous per se, but it can be... unpredictable in the wrong hands.", character.position)
+        when 2
+          show_character_dialog("scientist", "It appears to amplify psychic energy. Quite remarkable, really!", character.position)
+        when 3
+          show_character_dialog("detective", "Thank you for the information.", @engine.player.try(&.position) || Raylib::Vector2.new(x: 400, y: 400))
+        end
+      end
+    end
+  end
+
+  # Removed - now handled by engine's hotspot highlighting
+
+  # Removed - now handled by menu system
 
   # Helper method to show floating dialog for a character
   private def show_character_dialog(character_name : String, text : String, position : Raylib::Vector2)
@@ -1470,98 +773,7 @@ class CrystalMysteryGame
     end
   end
 
-  # Helper method to show dialog choices at bottom of screen
-  private def show_dialog_choices(prompt : String, choices : Array(String), &callback : Int32 ->)
-    puts "DEBUG: show_dialog_choices called with prompt: #{prompt}"
-    puts "DEBUG: choices: #{choices}"
-
-    if dm = @engine.dialog_manager
-      # Create a dialog box at the bottom of the screen for choices
-      dialog_height = 150f32
-      dialog_y = @engine.window_height - dialog_height - 20
-
-      dialog = PointClickEngine::UI::Dialog.new(
-        prompt,
-        Raylib::Vector2.new(x: 20f32, y: dialog_y),
-        Raylib::Vector2.new(x: @engine.window_width - 40f32, y: dialog_height)
-      )
-
-      # Set black background for dialog choices
-      dialog.background_color = Raylib::Color.new(r: 0, g: 0, b: 0, a: 240)
-      dialog.text_color = Raylib::WHITE
-
-      # Add choices
-      choices.each_with_index do |choice_text, index|
-        dialog.add_choice(choice_text) do
-          callback.call(index)
-        end
-      end
-
-      dialog.show
-      dm.current_dialog = dialog
-    end
-  end
-
-  private def perform_exit_transition(exit_zone : PointClickEngine::Scenes::ExitZone)
-    # DEBUG: Performing exit transition
-    # Map transition types to graphics transition effects
-    effect = case exit_zone.transition_type
-             when .fade?
-               PointClickEngine::Graphics::TransitionEffect::Fade
-             when .slide?
-               # Choose slide direction based on exit position
-               if exit_zone.position.x < 100
-                 PointClickEngine::Graphics::TransitionEffect::SlideLeft
-               elsif exit_zone.position.x > 900
-                 PointClickEngine::Graphics::TransitionEffect::SlideRight
-               elsif exit_zone.position.y < 100
-                 PointClickEngine::Graphics::TransitionEffect::SlideUp
-               else
-                 PointClickEngine::Graphics::TransitionEffect::SlideDown
-               end
-             when .iris?
-               PointClickEngine::Graphics::TransitionEffect::Iris
-             else
-               # Use fade as default for now
-               PointClickEngine::Graphics::TransitionEffect::Fade
-             end
-
-    # Start the transition
-    if tm = @engine.transition_manager
-      puts "Starting transition: #{effect} for 2.5 seconds (long and cheesy!)"
-
-      # Start long cheesy transition
-      tm.start_transition(effect, 2.5f32) { }
-    else
-      puts "ERROR: No transition manager available!"
-    end
-
-    # Change scene after a delay
-    spawn do
-      sleep 1.25.seconds # Wait for half of the transition to complete
-      puts "Transition callback: changing to #{exit_zone.target_scene}"
-      @engine.change_scene(exit_zone.target_scene)
-
-      # Set player position in new scene
-      if (pos = exit_zone.target_position) && (player = @engine.player)
-        player.position = pos
-        player.stop_walking
-      end
-
-      # Add player to the new scene
-      if new_scene = @engine.current_scene
-        if player = @engine.player
-          new_scene.set_player(player)
-        end
-      end
-
-      # Start fade in transition
-      sleep 0.1.seconds # Small delay to ensure scene is loaded
-      if transition_mgr = @engine.transition_manager
-        transition_mgr.start_transition(PointClickEngine::Graphics::TransitionEffect::Fade, 0.5f32) { }
-      end
-    end
-  end
+  # Removed - now handled by VerbInputSystem
 
   private def setup_game_state_and_quests
     # Load quest definitions - use the new comprehensive quest file

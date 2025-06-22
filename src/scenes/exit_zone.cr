@@ -47,6 +47,13 @@ module PointClickEngine
         @description = "Exit to #{@target_scene}"
         @default_verb = UI::VerbType::Walk
         @object_type = UI::ObjectType::Exit
+        
+        # Set up default click handler for non-verb systems
+        @on_click = -> {
+          if engine = Core::Engine.instance
+            on_click_exit(engine)
+          end
+        }
       end
 
       # Check if the exit is accessible
@@ -82,20 +89,9 @@ module PointClickEngine
           return
         end
 
-        # Start exit sequence
-        if @auto_walk && (player = engine.player)
-          # Walk to exit position first
-          walk_target = get_walk_target
-          player.walk_to(walk_target)
-
-          # Set up callback for when walking is complete
-          player.on_walk_complete = -> {
-            perform_transition(engine)
-          }
-        else
-          # Immediate transition
-          perform_transition(engine)
-        end
+        # Verb system should handle this
+        # This is just a fallback for direct calls
+        perform_transition(engine)
       end
 
       # Perform the actual scene transition

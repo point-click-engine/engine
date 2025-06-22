@@ -50,6 +50,10 @@ module PointClickEngine
           if RL.key_pressed?(RL::KeyboardKey::F1)
             handle_debug_toggle
           end
+
+          if RL.key_pressed?(RL::KeyboardKey::Tab)
+            handle_hotspot_highlight_toggle
+          end
         end
 
         # Handle right-click for context menu/verb selection
@@ -74,8 +78,10 @@ module PointClickEngine
         end
 
         private def handle_escape_key
-          # Could open pause menu, exit dialog, etc.
-          puts "Escape key pressed"
+          # Toggle pause menu instead of exiting
+          if menu_system = Engine.instance.menu_system
+            menu_system.toggle_pause_menu
+          end
         end
 
         private def handle_fullscreen_toggle
@@ -92,6 +98,11 @@ module PointClickEngine
         private def handle_hotspot_context_menu(hotspot, position : RL::Vector2)
           # Show context menu for hotspot
           puts "Right-clicked on hotspot: #{hotspot.name}"
+        end
+
+        private def handle_hotspot_highlight_toggle
+          # Toggle hotspot highlighting
+          Engine.instance.toggle_hotspot_highlight
         end
       end
     end
