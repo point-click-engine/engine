@@ -1,0 +1,5 @@
+game:
+  title: "Missing Scene Test"
+
+assets:
+  scenes: ["nonexistent/*.yaml"]

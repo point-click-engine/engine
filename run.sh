@@ -21,6 +21,20 @@ case "$1" in
     shift
     crystal run "$@" -Dwith_audio
     ;;
+  "test-comprehensive")
+    # Run comprehensive testing suite
+    ./test_comprehensive.sh
+    ;;
+  "test-stress")
+    # Run stress tests only
+    shift
+    crystal spec spec/integration "$@" -Dwith_audio
+    ;;
+  "test-memory")
+    # Run memory-focused tests
+    shift
+    crystal spec spec/core/performance* spec/integration "$@" -Dwith_audio
+    ;;
   *)
     # Default to run if no command specified
     crystal run "$@" -Dwith_audio

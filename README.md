@@ -224,9 +224,12 @@ This means the library path isn't set correctly. There are several solutions:
 This project includes a `run.sh` script that handles all audio library setup automatically:
 
 ```bash
-./run.sh main.cr          # Run your game
-./run.sh spec             # Run tests  
-./run.sh build main.cr    # Build your game
+./run.sh main.cr                # Run your game
+./run.sh spec                   # Run standard tests  
+./run.sh build main.cr         # Build your game
+./run.sh test-comprehensive    # Run comprehensive test suite
+./run.sh test-stress          # Run stress tests only
+./run.sh test-memory          # Run memory-focused tests
 ```
 
 For other projects using this engine, copy the `run.sh` script to your project root.

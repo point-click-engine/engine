@@ -1,0 +1,18 @@
+game:
+  title: "Test Game"
+  version: "1.0.0"
+
+window:
+  width: 800
+  height: 600
+  
+player:
+  name: "TestPlayer"
+  sprite_path: "test_player.png"
+  sprite:
+    frame_width: 32
+    frame_height: 32
+    columns: 4
+    rows: 4
+  
+start_scene: "intro"
