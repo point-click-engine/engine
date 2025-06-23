@@ -147,7 +147,15 @@ module PointClickEngine
       # scene.load_background("assets/backgrounds/room.png", 1.5)
       # ```
       def load_background(path : String, scale : Float32 = 1.0)
+        # Store the original path, not the resolved one
         @background_path = path
+        @background = PointClickEngine::AssetLoader.load_texture(path)
+        @scale = scale
+      end
+
+      # Alternative method that stores a specific path
+      def load_background(path : String, original_path : String, scale : Float32 = 1.0)
+        @background_path = original_path
         @background = PointClickEngine::AssetLoader.load_texture(path)
         @scale = scale
       end

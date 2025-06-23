@@ -163,8 +163,8 @@ describe PointClickEngine::Core::ErrorHelpers do
       result.failure?.should be_true
       result.error.should be_a(PointClickEngine::Core::FileError)
       error_message = result.error.message || ""
-      error_message.should contain("Test operation")
-      error_message.should contain("Test exception")
+      error_message.includes?("Test operation").should be_true
+      error_message.includes?("Test exception").should be_true
     end
   end
 
@@ -321,6 +321,241 @@ describe PointClickEngine::Core::ErrorLogger do
 
       PointClickEngine::Core::ErrorLogger.set_log_level(PointClickEngine::Core::ErrorLogger::LogLevel::Warning)
       PointClickEngine::Core::ErrorLogger.set_log_level(original_level)
+    end
+  end
+end
+
+describe PointClickEngine::Core do
+  describe "Exception hierarchy" do
+    it "creates specific error types" do
+      # ConfigError
+      config_error = PointClickEngine::Core::ConfigError.new("Invalid config", "config.yaml", "window.width")
+      (config_error.message || "").includes?("Invalid config").should be_true
+      config_error.filename.should eq("config.yaml")
+      config_error.field.should eq("window.width")
+
+      # AssetError
+      asset_error = PointClickEngine::Core::AssetError.new("Asset not found", "sprite.png", "scene1.yaml")
+      (asset_error.message || "").includes?("Asset not found").should be_true
+      asset_error.asset_path.should eq("sprite.png")
+      asset_error.filename.should eq("scene1.yaml")
+
+      # SceneError
+      scene_error = PointClickEngine::Core::SceneError.new("Invalid hotspot", "intro_scene", "hotspots[0]")
+      (scene_error.message || "").includes?("Invalid hotspot").should be_true
+      scene_error.scene_name.should eq("intro_scene")
+      scene_error.field.should eq("hotspots[0]")
+
+      # ValidationError
+      validation_errors = ["Missing field", "Invalid value"]
+      validation_error = PointClickEngine::Core::ValidationError.new(validation_errors, "test.yaml")
+      validation_error.errors.should eq(validation_errors)
+      validation_error.filename.should eq("test.yaml")
+    end
+
+    it "creates engine-specific errors" do
+      # FileError
+      file_error = PointClickEngine::Core::FileError.new("Permission denied", "/restricted/file.txt")
+      (file_error.message || "").includes?("Permission denied").should be_true
+      file_error.filename.should eq("/restricted/file.txt")
+
+      # LoadingError
+      loading_error = PointClickEngine::Core::LoadingError.new("Failed to load", "config.yaml", "textures")
+      (loading_error.message || "").includes?("Failed to load").should be_true
+      loading_error.filename.should eq("config.yaml")
+      loading_error.field.should eq("textures")
+
+      # RenderError
+      render_error = PointClickEngine::Core::RenderError.new("Shader compilation failed")
+      (render_error.message || "").includes?("Shader compilation failed").should be_true
+    end
+  end
+
+  describe "Error recovery mechanisms" do
+    describe "fallback strategies" do
+      it "handles asset loading failures gracefully" do
+        # Test fallback asset loading
+        begin
+          result = PointClickEngine::Core::ErrorHelpers.safe_execute(
+            PointClickEngine::Core::AssetError,
+            "Loading missing texture"
+          ) do
+            raise "File not found: missing_texture.png"
+          end
+
+          result.failure?.should be_true
+          result.error.should be_a(PointClickEngine::Core::AssetError)
+        end
+      end
+
+      it "provides default configurations on config errors" do
+        result = PointClickEngine::Core::ErrorHelpers.safe_execute(
+          PointClickEngine::Core::ConfigError,
+          "Loading invalid config"
+        ) do
+          "valid_config" # This would be the actual config content
+        end
+
+        if result.success?
+          result.value.should eq("valid_config")
+        end
+
+        # Test with an actual failure
+        failure_result = PointClickEngine::Core::ErrorHelpers.safe_execute(
+          PointClickEngine::Core::ConfigError,
+          "Loading invalid config"
+        ) do
+          raise "Invalid YAML syntax"
+          "never_reached"
+        end
+
+        failure_result.failure?.should be_true
+
+        # Test fallback to default value
+        default_value = failure_result.value_or("default_config")
+        default_value.should eq("default_config")
+      end
+
+      it "handles scene loading errors with recovery" do
+        result = PointClickEngine::Core::ErrorHelpers.safe_execute(
+          PointClickEngine::Core::SceneError,
+          "Loading corrupted scene"
+        ) do
+          raise "Malformed scene data"
+        end
+
+        result.failure?.should be_true
+        result.error.should be_a(PointClickEngine::Core::SceneError)
+
+        # Test error chaining for recovery
+        recovery_result = result.map_error do |error|
+          PointClickEngine::Core::LoadingError.new("Scene recovery initiated", "scene")
+        end
+
+        recovery_result.failure?.should be_true
+        recovery_result.error.should be_a(PointClickEngine::Core::LoadingError)
+      end
+    end
+
+    describe "error propagation" do
+      it "chains errors through Result operations" do
+        # Start with a successful result
+        initial = PointClickEngine::Core::Result(Int32, String).success(42)
+
+        # Chain operations that might fail
+        result = initial
+          .and_then { |x| PointClickEngine::Core::Result(String, String).success(x.to_s) }
+          .and_then { |s| PointClickEngine::Core::Result(Float32, String).failure("Conversion failed") }
+          .and_then { |f| PointClickEngine::Core::Result(Bool, String).success(true) }
+
+        result.failure?.should be_true
+        result.error.should eq("Conversion failed")
+      end
+
+      it "preserves error context through transformations" do
+        original_error = PointClickEngine::Core::ConfigError.new("Invalid window size", "game.yaml", "window.width")
+        result = PointClickEngine::Core::Result(String, PointClickEngine::Core::ConfigError).failure(original_error)
+
+        # Transform error while preserving context
+        mapped_result = result.map_error do |error|
+          PointClickEngine::Core::ValidationError.new([error.message || "Unknown error"], error.filename || "unknown")
+        end
+
+        mapped_result.failure?.should be_true
+        mapped_result.error.should be_a(PointClickEngine::Core::ValidationError)
+        mapped_result.error.filename.should eq("game.yaml")
+      end
+    end
+
+    describe "error aggregation" do
+      it "collects multiple validation errors" do
+        errors = [] of String
+
+        # Simulate multiple validation failures
+        validation_result_1 = PointClickEngine::Core::ErrorHelpers.validate_not_empty("", "field1")
+        if validation_result_1.failure?
+          error_msg = validation_result_1.error.message
+          errors << (error_msg || "Unknown error")
+        end
+
+        validation_result_2 = PointClickEngine::Core::ErrorHelpers.validate_range(-5, 0, 100, "field2")
+        if validation_result_2.failure?
+          error_msg = validation_result_2.error.message
+          errors << (error_msg || "Unknown error")
+        end
+
+        validation_result_3 = PointClickEngine::Core::ErrorHelpers.validate_not_nil(nil, "field3")
+        if validation_result_3.failure?
+          error_msg = validation_result_3.error.message
+          errors << (error_msg || "Unknown error")
+        end
+
+        errors.size.should eq(3)
+
+        # Create aggregated error
+        aggregated_error = PointClickEngine::Core::ValidationError.new(errors, "test_validation")
+        aggregated_error.errors.size.should eq(3)
+      end
+    end
+
+    describe "graceful degradation" do
+      it "continues operation with partial failures" do
+        # Simulate loading multiple assets where some fail
+        asset_results = [] of PointClickEngine::Core::Result(String, PointClickEngine::Core::AssetError)
+
+        # Successful loads
+        asset_results << PointClickEngine::Core::Result(String, PointClickEngine::Core::AssetError).success("texture1.png")
+        asset_results << PointClickEngine::Core::Result(String, PointClickEngine::Core::AssetError).success("texture2.png")
+
+        # Failed load
+        asset_results << PointClickEngine::Core::Result(String, PointClickEngine::Core::AssetError).failure(
+          PointClickEngine::Core::AssetError.new("File not found", "missing.png")
+        )
+
+        # Successful load
+        asset_results << PointClickEngine::Core::Result(String, PointClickEngine::Core::AssetError).success("texture3.png")
+
+        # Count successful vs failed loads
+        successful_loads = asset_results.count(&.success?)
+        failed_loads = asset_results.count(&.failure?)
+
+        successful_loads.should eq(3)
+        failed_loads.should eq(1)
+
+        # System should continue with successfully loaded assets
+        loaded_assets = asset_results.select(&.success?).map(&.value)
+        loaded_assets.size.should eq(3)
+        loaded_assets.includes?("texture1.png").should be_true
+        loaded_assets.includes?("texture2.png").should be_true
+        loaded_assets.includes?("texture3.png").should be_true
+      end
+    end
+  end
+
+  describe "Error reporting integration" do
+    it "formats error reports consistently" do
+      config_error = PointClickEngine::Core::ConfigError.new("Invalid resolution", "config.yaml", "window.height")
+      asset_error = PointClickEngine::Core::AssetError.new("Texture not found", "player.png", "player_scene.yaml")
+
+      errors = [config_error, asset_error] of Exception
+
+      # Should not crash when reporting multiple errors
+      PointClickEngine::Core::ErrorReporter.report_multiple_errors(errors, "Initialization Failed")
+    end
+
+    it "handles different error severity levels" do
+      # Info level
+      PointClickEngine::Core::ErrorReporter.report_info("Game initialization started")
+
+      # Warning level
+      PointClickEngine::Core::ErrorReporter.report_warning("Using fallback renderer", "Graphics Setup")
+
+      # Error level
+      error = PointClickEngine::Core::RenderError.new("Failed to create OpenGL context")
+      PointClickEngine::Core::ErrorReporter.report_loading_error(error, "Graphics Initialization")
+
+      # Success level
+      PointClickEngine::Core::ErrorReporter.report_success("All systems initialized successfully")
     end
   end
 end

@@ -37,9 +37,11 @@ module PointClickEngine
 
     describe "#contains_point?" do
       it "returns true when point is inside" do
+        # Hotspot at center (50,50) with size 100x100
+        # This creates bounds from (0,0) to (100,100)
         hotspot = Scenes::Hotspot.new(
           "test",
-          Raylib::Vector2.new(x: 0f32, y: 0f32),
+          Raylib::Vector2.new(x: 50f32, y: 50f32),
           Raylib::Vector2.new(x: 100f32, y: 100f32)
         )
 
@@ -49,9 +51,11 @@ module PointClickEngine
       end
 
       it "returns false when point is outside" do
+        # Hotspot at center (50,50) with size 100x100
+        # This creates bounds from (0,0) to (100,100)
         hotspot = Scenes::Hotspot.new(
           "test",
-          Raylib::Vector2.new(x: 0f32, y: 0f32),
+          Raylib::Vector2.new(x: 50f32, y: 50f32),
           Raylib::Vector2.new(x: 100f32, y: 100f32)
         )
 

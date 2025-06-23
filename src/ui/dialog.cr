@@ -10,7 +10,7 @@ module PointClickEngine
 
       property text : String
       @[YAML::Field(ignore: true)]
-      property action : Proc(Nil)
+      property action : Proc(Nil) = -> { }
 
       def initialize
         @text = ""

@@ -36,8 +36,9 @@ module PointClickEngine
 
         if background_path = scene_data["background_path"]?
           # Resolve asset path relative to scene directory
-          full_background_path = File.join(File.dirname(scene_dir), background_path.as_s)
-          scene.load_background(full_background_path, scene.scale)
+          original_path = background_path.as_s
+          full_background_path = File.join(File.dirname(scene_dir), original_path)
+          scene.load_background(full_background_path, original_path, scene.scale)
         end
 
         if enable_pathfinding = scene_data["enable_pathfinding"]?
@@ -55,13 +56,19 @@ module PointClickEngine
             hotspot = case hotspot_type
                       when "dynamic"
                         # Load dynamic hotspot
+                        x = hotspot_data["x"]?.try(&.as_f.to_f32) || 0f32
+                        y = hotspot_data["y"]?.try(&.as_f.to_f32) || 0f32
+                        width = hotspot_data["width"]?.try(&.as_f.to_f32) || 100f32
+                        height = hotspot_data["height"]?.try(&.as_f.to_f32) || 100f32
+
+                        # Convert top-left to center position
                         pos = Raylib::Vector2.new(
-                          x: hotspot_data["x"]?.try(&.as_f.to_f32) || 0f32,
-                          y: hotspot_data["y"]?.try(&.as_f.to_f32) || 0f32
+                          x: x + width / 2,
+                          y: y + height / 2
                         )
                         size = Raylib::Vector2.new(
-                          x: hotspot_data["width"]?.try(&.as_f.to_f32) || 100f32,
-                          y: hotspot_data["height"]?.try(&.as_f.to_f32) || 100f32
+                          x: width,
+                          y: height
                         )
 
                         dynamic_hotspot = DynamicHotspot.new(
@@ -107,13 +114,19 @@ module PointClickEngine
                         dynamic_hotspot
                       when "exit"
                         # Load exit zone
+                        x = hotspot_data["x"]?.try(&.as_f.to_f32) || 0f32
+                        y = hotspot_data["y"]?.try(&.as_f.to_f32) || 0f32
+                        width = hotspot_data["width"]?.try(&.as_f.to_f32) || 100f32
+                        height = hotspot_data["height"]?.try(&.as_f.to_f32) || 100f32
+
+                        # Convert top-left to center position
                         pos = Raylib::Vector2.new(
-                          x: hotspot_data["x"]?.try(&.as_f.to_f32) || 0f32,
-                          y: hotspot_data["y"]?.try(&.as_f.to_f32) || 0f32
+                          x: x + width / 2,
+                          y: y + height / 2
                         )
                         size = Raylib::Vector2.new(
-                          x: hotspot_data["width"]?.try(&.as_f.to_f32) || 100f32,
-                          y: hotspot_data["height"]?.try(&.as_f.to_f32) || 100f32
+                          x: width,
+                          y: height
                         )
 
                         exit_zone = ExitZone.new(
@@ -167,14 +180,22 @@ module PointClickEngine
                         PolygonHotspot.new(hotspot_data["name"].as_s, vertices)
                       else
                         # Load rectangle hotspot (default)
+                        # The hotspot position is the top-left corner in YAML,
+                        # but GameObject expects center position
+                        x = hotspot_data["x"].as_f.to_f32
+                        y = hotspot_data["y"].as_f.to_f32
+                        width = hotspot_data["width"].as_f.to_f32
+                        height = hotspot_data["height"].as_f.to_f32
+
+                        # Convert top-left to center position
                         pos = Raylib::Vector2.new(
-                          x: hotspot_data["x"].as_f.to_f32,
-                          y: hotspot_data["y"].as_f.to_f32
+                          x: x + width / 2,
+                          y: y + height / 2
                         )
 
                         size = Raylib::Vector2.new(
-                          x: hotspot_data["width"].as_f.to_f32,
-                          y: hotspot_data["height"].as_f.to_f32
+                          x: width,
+                          y: height
                         )
 
                         Hotspot.new(hotspot_data["name"].as_s, pos, size)
@@ -441,12 +462,16 @@ module PointClickEngine
                 end,
               })
             else
+              # Convert center position back to top-left for saving
+              x = hotspot.position.x - hotspot.size.x / 2
+              y = hotspot.position.y - hotspot.size.y / 2
+
               base_data.merge({
                 "type"   => "rectangle",
-                "x"      => hotspot.bounds.x,
-                "y"      => hotspot.bounds.y,
-                "width"  => hotspot.bounds.width,
-                "height" => hotspot.bounds.height,
+                "x"      => x,
+                "y"      => y,
+                "width"  => hotspot.size.x,
+                "height" => hotspot.size.y,
               })
             end
           end,

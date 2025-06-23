@@ -380,6 +380,16 @@ module PointClickEngine
                 errors << "#{prefix}: Dialog name cannot be empty"
               end
             end
+
+            # Validate scale if present
+            if scale = char["scale"]?
+              scale_val = scale.as_f.to_f32
+              if scale_val <= 0
+                errors << "#{prefix}: Scale must be greater than 0 (got #{scale_val})"
+              elsif scale_val > 10
+                errors << "#{prefix}: Scale is unusually large (#{scale_val}), may cause rendering issues"
+              end
+            end
           end
 
           errors

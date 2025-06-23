@@ -208,6 +208,8 @@ describe "YAML Scene Loading" do
 
   describe "scene validation" do
     it "validates required scene properties" do
+      Dir.mkdir_p("test_scenes")
+
       invalid_scene = <<-YAML
       # Missing name
       background_path: bg.png

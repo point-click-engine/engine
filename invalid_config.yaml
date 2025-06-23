@@ -1,0 +1,5 @@
+game:
+  title: "Invalid Scene Test"
+
+assets:
+  scenes: ["test_scenes/invalid.yaml"]

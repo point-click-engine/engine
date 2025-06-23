@@ -1,5 +1,6 @@
 require "spec"
 require "json" # Fix for luajit.cr JSON::Any issue
+require "file_utils"
 
 # Load mock Raylib if in headless mode
 {% if env("HEADLESS_MODE") == "true" %}

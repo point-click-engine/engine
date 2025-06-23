@@ -143,11 +143,11 @@ module PointClickEngine
 
       # Manages all engine subsystems (audio, graphics, GUI, etc.)
       @[YAML::Field(ignore: true)]
-      property system_manager : EngineComponents::SystemManager
+      property system_manager : EngineComponents::SystemManager = EngineComponents::SystemManager.new
 
       # Handles input processing and click coordination
       @[YAML::Field(ignore: true)]
-      property input_handler : EngineComponents::InputHandler
+      property input_handler : EngineComponents::InputHandler = EngineComponents::InputHandler.new
 
       # Handles verb-based input for point-and-click interactions
       @[YAML::Field(ignore: true)]
@@ -155,25 +155,25 @@ module PointClickEngine
 
       # Coordinates rendering and debug visualization
       @[YAML::Field(ignore: true)]
-      property render_coordinator : EngineComponents::RenderCoordinator
+      property render_coordinator : EngineComponents::RenderCoordinator = EngineComponents::RenderCoordinator.new
 
       # New refactored managers
 
       # Manages scene loading, transitions, and caching
       @[YAML::Field(ignore: true)]
-      property scene_manager : SceneManager
+      property scene_manager : SceneManager = SceneManager.new
 
       # Manages input processing and event coordination
       @[YAML::Field(ignore: true)]
-      property input_manager : InputManager
+      property input_manager : InputManager = InputManager.new
 
       # Manages rendering layers and visual effects
       @[YAML::Field(ignore: true)]
-      property render_manager : RenderManager
+      property render_manager : RenderManager = RenderManager.new
 
       # Manages asset loading, caching, and cleanup
       @[YAML::Field(ignore: true)]
-      property resource_manager : ResourceManager
+      property resource_manager : ResourceManager = ResourceManager.new
 
       # Whether the window is in fullscreen mode
       property fullscreen : Bool = false
@@ -266,24 +266,6 @@ module PointClickEngine
         @input_manager = container.resolve_input_manager.as(InputManager)
         @render_manager = container.resolve_render_manager.as(RenderManager)
         @resource_manager = container.resolve_resource_loader.as(ResourceManager)
-
-        @@instance = self
-      end
-
-      # Called automatically after deserializing from YAML
-      #
-      # Reconstructs non-serialized components like system managers.
-      # This is used internally by the save/load system.
-      def after_yaml_deserialize(ctx : YAML::ParseContext)
-        @system_manager = EngineComponents::SystemManager.new
-        @input_handler = EngineComponents::InputHandler.new
-        @render_coordinator = EngineComponents::RenderCoordinator.new
-
-        # Reconstruct new refactored managers
-        @scene_manager = SceneManager.new
-        @input_manager = InputManager.new
-        @render_manager = RenderManager.new
-        @resource_manager = ResourceManager.new
 
         @@instance = self
       end
@@ -721,12 +703,12 @@ module PointClickEngine
       # Render game
       private def render
         dt = RL.get_frame_time
-        
+
         # The new RenderManager uses a layer-based system
         # For now, use the old rendering approach directly
         RL.begin_drawing
         RL.clear_background(RL::BLACK)
-        
+
         # Only pass camera if current scene has scrolling enabled
         camera_to_use = if scene = @current_scene
                           scene.enable_camera_scrolling ? @camera : nil
@@ -742,7 +724,7 @@ module PointClickEngine
           @system_manager.transition_manager,
           camera_to_use
         )
-        
+
         RL.end_drawing
       end
 
@@ -1038,12 +1020,28 @@ module PointClickEngine
 
         yaml_content = File.read(filepath)
         engine = Engine.from_yaml(yaml_content)
+        engine.after_load
         engine.init
         puts "Game loaded from #{filepath}"
         engine
       rescue ex
         puts "Failed to load game: #{ex.message}"
         nil
+      end
+
+      # Called after deserializing from YAML
+      def after_load
+        @system_manager = EngineComponents::SystemManager.new
+        @input_handler = EngineComponents::InputHandler.new
+        @render_coordinator = EngineComponents::RenderCoordinator.new
+        @scene_manager = SceneManager.new
+        @input_manager = InputManager.new
+        @render_manager = RenderManager.new
+        @resource_manager = ResourceManager.new
+        @camera = Graphics::Camera.new(@window_width, @window_height)
+
+        # Restore singleton reference
+        @@instance = self
       end
 
       # Delegated properties for system access
