@@ -84,9 +84,8 @@ module PointClickEngine
         end
 
         def make_choice(choice_index : Int32)
-          puts "DialogTree.make_choice: called with index #{choice_index}"
           return unless current_node = get_current_node
-          
+
           # Get available choices and use the index on the filtered list
           available_choices = current_node.choices.select(&.available?)
           return unless choice = available_choices[choice_index]?
@@ -101,17 +100,14 @@ module PointClickEngine
 
           # Move to target node
           @current_node_id = choice.target_node_id
-          puts "DialogTree: Moving to node '#{@current_node_id}'"
 
           if target_node = get_current_node
-            puts "DialogTree: Found target node, is_end = #{target_node.is_end}"
             if target_node.is_end
               end_conversation
             else
               show_current_node
             end
           else
-            puts "DialogTree: Target node '#{@current_node_id}' not found!"
             end_conversation
           end
         end
@@ -131,47 +127,70 @@ module PointClickEngine
         end
 
         private def show_current_node
-          puts "DialogTree.show_current_node: called for node '#{@current_node_id}'"
           return unless current_node = get_current_node
 
           # Execute node actions
           execute_actions(current_node.actions)
 
+          # Show character's spoken line as floating text
+          show_character_speech(current_node)
+
           # Get available choices
           available_choices = current_node.choices.select(&.available?)
-          puts "DialogTree: Found #{available_choices.size} available choices"
 
           if available_choices.empty?
-            # No choices, end conversation
-            puts "DialogTree: No choices available, ending conversation"
+            # No choices, end conversation after a delay
             end_conversation
             return
           end
 
-          # Build dialog with choices
-          choice_tuples = available_choices.map_with_index do |choice, index|
-            {choice.text, -> { make_choice(index) }}
-          end
-
-          # Show dialog with choices
+          # Show dialog choices (without the spoken text, just choices)
           if dm = Core::Engine.instance.dialog_manager
-            puts "DialogTree: Showing dialog with text: '#{current_node.text}'"
-            dm.show_dialog_choices(current_node.text, available_choices.map(&.text)) do |choice_index|
-              puts "DialogTree: Choice callback triggered with index #{choice_index}"
+            dm.show_dialog_choices("", available_choices.map(&.text)) do |choice_index|
               make_choice(choice_index)
             end
-          else
-            # Fallback to simple dialog
-            dialog_pos = RL::Vector2.new(x: 100, y: Core::Engine.instance.window_height - 200)
-            dialog_size = RL::Vector2.new(x: Core::Engine.instance.window_width - 200, y: 150)
-            dialog = UI::Dialog.new(current_node.text, dialog_pos, dialog_size)
-            dialog.character_name = current_node.character_name || "Unknown"
+          end
+        end
 
-            choice_tuples.each do |choice_text, action|
-              dialog.add_choice(choice_text, &action)
+        private def show_character_speech(node : DialogNode)
+          return unless dm = Core::Engine.instance.dialog_manager
+          return if node.text.empty?
+
+          # Clear any previous floating dialogs
+          dm.floating_manager.clear_all
+
+          # Find the speaking character
+          character_name = node.character_name || @name
+
+          if scene = Core::Engine.instance.current_scene
+            if character = scene.get_character(character_name)
+              # Position above character's head
+              position = RL::Vector2.new(
+                x: character.position.x + character.size.x / 2,
+                y: character.position.y - 20
+              )
+
+              # Determine color based on character
+              color = case character_name.downcase
+                      when "butler"    then RL::Color.new(r: 200, g: 200, b: 255, a: 255) # Light blue
+                      when "scientist" then RL::Color.new(r: 255, g: 200, b: 200, a: 255) # Light red
+                      else                  RL::WHITE
+                      end
+
+              dm.show_floating_text(
+                node.text, # Just the text, no character name prefix
+                position,
+                color: color,
+                duration: 30.0
+              )
+            else
+              # Fallback: show at center of screen if character not found
+              dm.show_floating_text(
+                node.text,
+                RL::Vector2.new(x: 512, y: 100),
+                duration: 30.0
+              )
             end
-
-            Core::Engine.instance.show_dialog(dialog)
           end
         end
 

@@ -594,13 +594,6 @@ module PointClickEngine
           dialog_active ||= dm.is_dialog_active?
         end
 
-        if RL.mouse_button_pressed?(RL::MouseButton::Left)
-          puts "=== FRAME WITH MOUSE CLICK ==="
-          puts "Engine.update: dialog_active = #{dialog_active}"
-          puts "  @dialogs visible: #{@dialogs.select(&.visible).size}"
-          puts "  dialog_manager active: #{@system_manager.dialog_manager.try(&.is_dialog_active?) || false}"
-        end
-
         # Process input only if no dialog is active
         if !dialog_active
           camera_for_input = if scene = @current_scene

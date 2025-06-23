@@ -56,7 +56,6 @@ module PointClickEngine
 
           # Handle left click - execute current verb
           if !Core::InputState.mouse_consumed? && RL.mouse_button_pressed?(RL::MouseButton::Left)
-            puts "VerbInputSystem: Left click detected!"
             handle_verb_click(scene, player, world_mouse)
           end
 

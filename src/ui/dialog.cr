@@ -103,22 +103,14 @@ module PointClickEngine
                       end
 
           if Core::InputState.consume_mouse_click
-            puts "Dialog: Consumed mouse click at #{mouse_pos.x}, #{mouse_pos.y} (raw: #{raw_mouse.x}, #{raw_mouse.y})"
-            clicked_choice = false
             @choices.each_with_index do |choice, index|
               choice_rect = get_choice_rect(index)
-              puts "Dialog: Choice #{index} rect: #{choice_rect.x}, #{choice_rect.y}, #{choice_rect.width}, #{choice_rect.height}"
               if RL.check_collision_point_rec?(mouse_pos, choice_rect)
                 @consumed_input = true
-                puts "Dialog: Choice #{index} clicked! Text: #{choice.text}"
                 choice.action.call
-                clicked_choice = true
                 hide
                 break
               end
-            end
-            if !clicked_choice
-              puts "Dialog: Click was not on any choice"
             end
           end
         end

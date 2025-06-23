@@ -135,7 +135,6 @@ module PointClickEngine
         # Add choices
         choices.each_with_index do |choice_text, index|
           dialog.add_choice(choice_text) do
-            puts "DialogManager: Choice #{index} clicked, calling callback"
             callback.call(index)
             # Don't close dialog here - let the callback handle it or replace it
           end
@@ -152,7 +151,6 @@ module PointClickEngine
         # Add choices
         choices.each_with_index do |choice_text, index|
           dialog.add_choice(choice_text) do
-            puts "DialogManager: Choice #{index} clicked, calling callback"
             callback.call(index)
             # Don't close dialog here - let the callback handle it or replace it
           end
@@ -197,6 +195,14 @@ module PointClickEngine
         @current_dialog = nil
         @portrait_manager.stop_talking
         @portrait_manager.hide_portrait
+      end
+
+      # Show floating text at a specific position
+      def show_floating_text(text : String, position : RL::Vector2,
+                             color : RL::Color = RL::WHITE,
+                             duration : Float32 = 3.0)
+        # Show as floating dialog with no character name
+        @floating_manager.show_dialog("", text, position, duration, DialogStyle::Rectangle, color)
       end
 
       # Add a character portrait
@@ -247,12 +253,8 @@ module PointClickEngine
 
       # Start a conversation with a dialog tree
       def start_dialog_tree(tree_name : String, starting_node : String = "greeting")
-        puts "DialogManager: Starting dialog tree '#{tree_name}' at node '#{starting_node}'"
         if tree = get_dialog_tree(tree_name)
-          puts "DialogManager: Found dialog tree, starting conversation"
           tree.start_conversation(starting_node)
-        else
-          puts "DialogManager: Dialog tree '#{tree_name}' not found!"
         end
       end
     end
