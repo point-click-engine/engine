@@ -26,7 +26,7 @@ describe PointClickEngine::Core::GameConstants do
     it "has scaled speed greater than default speed" do
       scaled = PointClickEngine::Core::GameConstants::SCALED_WALKING_SPEED
       default = PointClickEngine::Core::GameConstants::DEFAULT_WALKING_SPEED
-      
+
       scaled.should be > default
     end
   end
@@ -51,7 +51,7 @@ describe PointClickEngine::Core::GameConstants do
       fast = PointClickEngine::Core::GameConstants::FAST_ANIMATION_SPEED
       default = PointClickEngine::Core::GameConstants::DEFAULT_ANIMATION_SPEED
       slow = PointClickEngine::Core::GameConstants::SLOW_ANIMATION_SPEED
-      
+
       fast.should be < default
       default.should be < slow
     end
@@ -116,7 +116,7 @@ describe PointClickEngine::Core::GameConstants do
       min_scale = PointClickEngine::Core::GameConstants::MIN_CHARACTER_SCALE
       default_scale = PointClickEngine::Core::GameConstants::DEFAULT_CHARACTER_SCALE
       max_scale = PointClickEngine::Core::GameConstants::MAX_CHARACTER_SCALE
-      
+
       min_scale.should be < default_scale
       default_scale.should be < max_scale
     end
@@ -131,10 +131,10 @@ describe PointClickEngine::Core::GameConstants do
     it "defines debug visualization constants" do
       PointClickEngine::Core::GameConstants::DEBUG_LINE_THICKNESS.should be_a(Float32)
       PointClickEngine::Core::GameConstants::DEBUG_LINE_THICKNESS.should be > 0.0_f32
-      
+
       PointClickEngine::Core::GameConstants::DEBUG_CIRCLE_RADIUS.should be_a(Float32)
       PointClickEngine::Core::GameConstants::DEBUG_CIRCLE_RADIUS.should be > 0.0_f32
-      
+
       PointClickEngine::Core::GameConstants::DEBUG_WAYPOINT_RADIUS.should be_a(Float32)
       PointClickEngine::Core::GameConstants::DEBUG_WAYPOINT_RADIUS.should be > 0.0_f32
     end
@@ -151,7 +151,7 @@ describe PointClickEngine::Core::GameConstants do
       master = PointClickEngine::Core::GameConstants::DEFAULT_MASTER_VOLUME
       music = PointClickEngine::Core::GameConstants::DEFAULT_MUSIC_VOLUME
       sfx = PointClickEngine::Core::GameConstants::DEFAULT_SFX_VOLUME
-      
+
       master.should be >= 0.0_f32
       master.should be <= 1.0_f32
       music.should be >= 0.0_f32
@@ -170,11 +170,11 @@ describe PointClickEngine::Core::GameConstants do
     it "defines performance cache limits" do
       PointClickEngine::Core::GameConstants::MAX_VECTOR_POOL_SIZE.should be_a(Int32)
       PointClickEngine::Core::GameConstants::MAX_VECTOR_POOL_SIZE.should be > 0
-      
+
       PointClickEngine::Core::GameConstants::MAX_CACHED_ANIMATIONS.should be_a(Int32)
       PointClickEngine::Core::GameConstants::MAX_CACHED_ANIMATIONS.should be > 0
     end
-    
+
     it "defines auto save interval" do
       PointClickEngine::Core::GameConstants::AUTO_SAVE_INTERVAL.should be_a(Float32)
       PointClickEngine::Core::GameConstants::AUTO_SAVE_INTERVAL.should be > 0.0_f32
@@ -186,15 +186,15 @@ describe PointClickEngine::Core::GameConstants do
       # Movement speeds should be reasonable for gameplay
       PointClickEngine::Core::GameConstants::DEFAULT_WALKING_SPEED.should be >= 50.0_f32
       PointClickEngine::Core::GameConstants::DEFAULT_WALKING_SPEED.should be <= 500.0_f32
-      
-      # Animation speeds should be reasonable  
+
+      # Animation speeds should be reasonable
       PointClickEngine::Core::GameConstants::DEFAULT_ANIMATION_SPEED.should be >= 0.05_f32
       PointClickEngine::Core::GameConstants::DEFAULT_ANIMATION_SPEED.should be <= 1.0_f32
-      
+
       # Input timing should be reasonable
       PointClickEngine::Core::GameConstants::DOUBLE_CLICK_TIME.should be >= 0.1_f32
       PointClickEngine::Core::GameConstants::DOUBLE_CLICK_TIME.should be <= 1.0_f32
-      
+
       PointClickEngine::Core::GameConstants::LONG_PRESS_TIME.should be >= 0.5_f32
       PointClickEngine::Core::GameConstants::LONG_PRESS_TIME.should be <= 2.0_f32
     end
@@ -203,7 +203,7 @@ describe PointClickEngine::Core::GameConstants do
       # Arrival threshold should be smaller than waypoint threshold
       arrival = PointClickEngine::Core::GameConstants::MOVEMENT_ARRIVAL_THRESHOLD
       waypoint = PointClickEngine::Core::GameConstants::PATHFINDING_WAYPOINT_THRESHOLD
-      
+
       arrival.should be <= waypoint
     end
 
@@ -216,7 +216,7 @@ describe PointClickEngine::Core::GameConstants do
         PointClickEngine::Core::GameConstants::DEFAULT_ANIMATION_SPEED,
         PointClickEngine::Core::GameConstants::DOUBLE_CLICK_TIME,
       ]
-      
+
       constants.each do |constant|
         constant.should be_a(Float32)
       end

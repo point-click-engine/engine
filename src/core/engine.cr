@@ -224,7 +224,7 @@ module PointClickEngine
 
         # Initialize new refactored managers via DI
         container = @@dependency_container.not_nil!
-        
+
         # Resolve managers - these must be initialized
         @scene_manager = container.resolve_scene_manager.as(SceneManager)
         @input_manager = container.resolve_input_manager.as(InputManager)
@@ -260,7 +260,7 @@ module PointClickEngine
 
         # Initialize new refactored managers via DI
         container = @@dependency_container.not_nil!
-        
+
         # Resolve managers - these must be initialized
         @scene_manager = container.resolve_scene_manager.as(SceneManager)
         @input_manager = container.resolve_input_manager.as(InputManager)
@@ -367,12 +367,12 @@ module PointClickEngine
       def add_scene(scene : Scenes::Scene)
         # Validate scene before adding
         result = @scene_manager.add_scene(scene)
-        
+
         # Only add to engine's scene registry if successful
         if result.success?
           @scenes[scene.name] = scene
         end
-        
+
         result
       end
 
@@ -566,7 +566,7 @@ module PointClickEngine
         # Update new refactored managers
         # @resource_manager.update(dt)  # ResourceManager doesn't need regular updates
         # @scene_manager.update(dt)     # SceneManager doesn't need regular updates
-        @input_manager.update(dt)       # InputManager has update method
+        @input_manager.update(dt) # InputManager has update method
         # @render_manager.update(dt)    # RenderManager doesn't need regular updates
 
         # Update menu system
@@ -657,7 +657,7 @@ module PointClickEngine
         # Update new refactored managers
         # @resource_manager.update(dt)  # ResourceManager doesn't need regular updates
         # @scene_manager.update(dt)     # SceneManager doesn't need regular updates
-        @input_manager.update(dt)       # InputManager has update method
+        @input_manager.update(dt) # InputManager has update method
         # @render_manager.update(dt)    # RenderManager doesn't need regular updates
 
         # Update menu system
@@ -1063,17 +1063,17 @@ module PointClickEngine
         # Create a global dependency container instance
         container = SimpleDependencyContainer.new
         @@dependency_container = container
-        
+
         # Register concrete implementations
         container.register_resource_loader(ResourceManager.new)
         container.register_scene_manager(SceneManager.new)
         container.register_input_manager(InputManager.new)
         container.register_render_manager(RenderManager.new)
-        
+
         # Register singletons
         container.register_config_manager(ConfigManager.new("config/game.yml"))
         container.register_performance_monitor(PerformanceMonitor.new)
-        
+
         ErrorLogger.info("Dependencies registered")
       end
 

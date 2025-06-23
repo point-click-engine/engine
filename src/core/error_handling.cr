@@ -44,7 +44,7 @@ module PointClickEngine
         Result(T, E).new(value, nil, true)
       end
 
-      # Create a failed result  
+      # Create a failed result
       def self.failure(error : E) : Result(T, E) forall T, E
         Result(T, E).new(nil, error, false)
       end

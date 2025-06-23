@@ -51,10 +51,10 @@ module PointClickEngine
 
       # Input handlers ordered by priority (higher priority first)
       @input_handlers : Array(InputHandler) = [] of InputHandler
-      
+
       # Named input handlers for easier management
       @named_handlers : Hash(String, NamedInputHandler) = {} of String => NamedInputHandler
-      
+
       # Track input consumption by handler
       @consumed_inputs : Hash(String, String) = {} of String => String
 
@@ -122,12 +122,12 @@ module PointClickEngine
         handler_proc = handler
         named_handler = NamedInputHandler.new(name, handler_proc, priority, enabled)
         @named_handlers[name] = named_handler
-        
+
         # Also add to the main handlers array for processing
         input_handler = InputHandler.new(handler_proc, priority, enabled)
         @input_handlers << input_handler
         @input_handlers.sort_by! { |h| -h.priority }
-        
+
         ErrorLogger.debug("Named input handler '#{name}' registered with priority #{priority}")
       end
 
@@ -143,12 +143,12 @@ module PointClickEngine
         handler_proc = ->(dt : Float32) { false }
         named_handler = NamedInputHandler.new(name, handler_proc, priority, enabled)
         @named_handlers[name] = named_handler
-        
+
         # Also add to the main handlers array for processing
         input_handler = InputHandler.new(handler_proc, priority, enabled)
         @input_handlers << input_handler
         @input_handlers.sort_by! { |h| -h.priority }
-        
+
         ErrorLogger.debug("Named input handler '#{name}' registered with priority #{priority}")
       end
 
@@ -269,7 +269,7 @@ module PointClickEngine
         # Reset frame-based consumption flags
         @mouse_consumed_this_frame = false
         @keyboard_consumed_this_frame = false
-        
+
         # Reset consumed inputs for next frame
         @consumed_inputs.clear
       end

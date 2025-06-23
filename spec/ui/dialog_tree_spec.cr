@@ -16,7 +16,7 @@ describe PointClickEngine::Characters::Dialogue::DialogTree do
     tree.add_node(response)
 
     # Start conversation
-    tree.current_node_id = "greeting"  # Set directly to avoid Engine dependency
+    tree.current_node_id = "greeting" # Set directly to avoid Engine dependency
     tree.current_node_id.should eq("greeting")
 
     # Make a choice manually to avoid Engine dependency
@@ -49,7 +49,7 @@ describe PointClickEngine::Characters::Dialogue::DialogTree do
     tree.add_node(PointClickEngine::Characters::Dialogue::DialogNode.new("next2", "End"))
     tree.add_node(PointClickEngine::Characters::Dialogue::DialogNode.new("next3", "End"))
 
-    tree.current_node_id = "test"  # Set directly to avoid Engine dependency
+    tree.current_node_id = "test" # Set directly to avoid Engine dependency
 
     # First time: all choices available
     current = tree.get_current_node.not_nil!

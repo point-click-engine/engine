@@ -5,21 +5,21 @@ describe PointClickEngine::Core::ErrorReporter do
   describe ".report_loading_error" do
     it "reports a ConfigError" do
       error = PointClickEngine::Core::ConfigError.new("Invalid window size", "game.yaml", "window.width")
-      
+
       # Just verify it doesn't crash - we can't easily capture output in Crystal tests
       PointClickEngine::Core::ErrorReporter.report_loading_error(error, "Loading configuration")
     end
 
     it "reports an AssetError" do
       error = PointClickEngine::Core::AssetError.new("File not found", "sprites/missing.png", "scene1.yaml")
-      
+
       # Just verify it doesn't crash
       PointClickEngine::Core::ErrorReporter.report_loading_error(error)
     end
 
     it "reports a SceneError" do
       error = PointClickEngine::Core::SceneError.new("Invalid hotspot definition", "intro_scene", "hotspots[0]")
-      
+
       # Just verify it doesn't crash
       PointClickEngine::Core::ErrorReporter.report_loading_error(error)
     end
@@ -27,23 +27,23 @@ describe PointClickEngine::Core::ErrorReporter do
     it "reports a ValidationError" do
       errors = ["Error 1", "Error 2", "Error 3"]
       error = PointClickEngine::Core::ValidationError.new(errors, "config.yaml")
-      
+
       # Just verify it doesn't crash
       PointClickEngine::Core::ErrorReporter.report_loading_error(error)
     end
 
     it "reports generic exceptions" do
       error = Exception.new("Something went wrong")
-      
+
       # Just verify it doesn't crash
       PointClickEngine::Core::ErrorReporter.report_loading_error(error)
     end
 
     it "handles DEBUG environment variable" do
       error = Exception.new("Test error")
-      
+
       ENV.delete("DEBUG") # Ensure DEBUG is not set
-      
+
       # Just verify it doesn't crash
       PointClickEngine::Core::ErrorReporter.report_loading_error(error)
     end
@@ -92,7 +92,7 @@ describe PointClickEngine::Core::ErrorReporter do
   describe ".format_list" do
     it "formats a list of items" do
       items = ["Item 1", "Item 2", "Item 3"]
-      
+
       # Just verify it doesn't crash
       PointClickEngine::Core::ErrorReporter.format_list("Found issues", items)
     end
@@ -117,7 +117,7 @@ describe PointClickEngine::Core::ErrorReporter do
         PointClickEngine::Core::AssetError.new("Not found", "sprite.png"),
         Exception.new("Generic error"),
       ]
-      
+
       # Just verify it doesn't crash
       PointClickEngine::Core::ErrorReporter.report_multiple_errors(errors, "Validation Failed")
     end

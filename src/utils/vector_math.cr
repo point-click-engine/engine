@@ -11,7 +11,7 @@ module PointClickEngine
     # Mathematical utilities for 2D vector operations
     module VectorMath
       extend self
-      
+
       # Calculate distance between two points
       #
       # Simple distance calculation using Raylib's optimized function.
@@ -25,7 +25,7 @@ module PointClickEngine
       def distance(from : RL::Vector2, to : RL::Vector2) : Float32
         Raymath.vector2_distance(from, to)
       end
-      
+
       # Calculate squared distance between two points
       #
       # More efficient than distance() when you only need to compare distances
@@ -42,7 +42,7 @@ module PointClickEngine
       def distance_squared(from : RL::Vector2, to : RL::Vector2) : Float32
         Raymath.vector2_distance_sqr(from, to)
       end
-      
+
       # Calculate direction vector and distance between two points
       #
       # Returns a tuple of {direction_vector, distance}. The direction vector
@@ -59,7 +59,7 @@ module PointClickEngine
         distance = Raymath.vector2_length(direction)
         {direction, distance}
       end
-      
+
       # Calculate normalized direction vector between two points
       #
       # Returns a unit vector pointing from 'from' to 'to'. If the points
@@ -75,7 +75,7 @@ module PointClickEngine
         direction = Raymath.vector2_subtract(to, from)
         Raymath.vector2_normalize(direction)
       end
-      
+
       # Normalize a vector
       #
       # Returns a unit vector in the same direction. If the vector is zero,
@@ -89,7 +89,7 @@ module PointClickEngine
       def normalize(vector : RL::Vector2) : RL::Vector2
         Raymath.vector2_normalize(vector)
       end
-      
+
       # Normalize a vector given its length
       #
       # More efficient than recalculating the length when it's already known.
@@ -106,14 +106,14 @@ module PointClickEngine
         return RL::Vector2.new if length < 0.001_f32 # Avoid division by zero
         Raymath.vector2_scale(vector, 1.0_f32 / length)
       end
-      
+
       # Move a point towards a target by a specified distance
       #
       # Moves 'from' towards 'to' by 'step' units. If the step is larger
       # than the distance to target, returns the target position.
       #
       # - *from* : Starting position
-      # - *to* : Target position  
+      # - *to* : Target position
       # - *step* : Maximum distance to move
       #
       # ```
@@ -122,7 +122,7 @@ module PointClickEngine
       def move_towards(from : RL::Vector2, to : RL::Vector2, step : Float32) : RL::Vector2
         Raymath.vector2_move_towards(from, to, step)
       end
-      
+
       # Interpolate between two points
       #
       # Linear interpolation between 'from' and 'to' by factor 't'.
@@ -140,7 +140,7 @@ module PointClickEngine
         clamped_t = t.clamp(0.0_f32, 1.0_f32)
         Raymath.vector2_lerp(from, to, clamped_t)
       end
-      
+
       # Add two vectors
       #
       # - *a* : First vector
@@ -152,7 +152,7 @@ module PointClickEngine
       def add(a : RL::Vector2, b : RL::Vector2) : RL::Vector2
         Raymath.vector2_add(a, b)
       end
-      
+
       # Subtract two vectors
       #
       # - *a* : First vector
@@ -164,7 +164,7 @@ module PointClickEngine
       def subtract(a : RL::Vector2, b : RL::Vector2) : RL::Vector2
         Raymath.vector2_subtract(a, b)
       end
-      
+
       # Scale a vector by a scalar
       #
       # - *vector* : Vector to scale
@@ -176,7 +176,7 @@ module PointClickEngine
       def scale(vector : RL::Vector2, scale : Float32) : RL::Vector2
         Raymath.vector2_scale(vector, scale)
       end
-      
+
       # Calculate dot product of two vectors
       #
       # Useful for determining the angle between vectors or projections.
@@ -190,7 +190,7 @@ module PointClickEngine
       def dot_product(a : RL::Vector2, b : RL::Vector2) : Float32
         Raymath.vector2_dot_product(a, b)
       end
-      
+
       # Clamp a vector to maximum magnitude
       #
       # If the vector's length exceeds max_length, it's scaled down to that length.
@@ -205,7 +205,7 @@ module PointClickEngine
       def clamp_magnitude(vector : RL::Vector2, max_length : Float32) : RL::Vector2
         Raymath.vector2_clamp_value(vector, 0.0_f32, max_length)
       end
-      
+
       # Check if a point is within a rectangular area
       #
       # - *point* : Point to test
@@ -223,7 +223,7 @@ module PointClickEngine
           point.y >= rect_pos.y &&
           point.y <= rect_pos.y + rect_size.y
       end
-      
+
       # Check if a point is within a circle
       #
       # - *point* : Point to test
@@ -238,7 +238,7 @@ module PointClickEngine
       def point_in_circle?(point : RL::Vector2, center : RL::Vector2, radius : Float32) : Bool
         distance_squared(point, center) <= radius ** 2
       end
-      
+
       # Calculate the angle between two points in radians
       #
       # Returns the angle from 'from' to 'to' in radians.
@@ -256,7 +256,7 @@ module PointClickEngine
         diff = Raymath.vector2_subtract(to, from)
         Math.atan2(diff.y, diff.x).to_f32
       end
-      
+
       # Convert angle to direction vector
       #
       # Creates a unit vector pointing in the direction of the given angle.
@@ -272,7 +272,7 @@ module PointClickEngine
           y: Math.sin(angle).to_f32
         )
       end
-      
+
       # Rotate a vector by an angle
       #
       # - *vector* : Vector to rotate
@@ -284,7 +284,7 @@ module PointClickEngine
       def rotate(vector : RL::Vector2, angle : Float32) : RL::Vector2
         Raymath.vector2_rotate(vector, angle)
       end
-      
+
       # Get the length/magnitude of a vector
       #
       # - *vector* : Vector to measure
@@ -295,7 +295,7 @@ module PointClickEngine
       def length(vector : RL::Vector2) : Float32
         Raymath.vector2_length(vector)
       end
-      
+
       # Get the squared length of a vector
       #
       # More efficient than length() when comparing magnitudes.
@@ -310,7 +310,7 @@ module PointClickEngine
       def length_squared(vector : RL::Vector2) : Float32
         Raymath.vector2_length_sqr(vector)
       end
-      
+
       # Negate a vector (reverse direction)
       #
       # - *vector* : Vector to negate
@@ -321,7 +321,7 @@ module PointClickEngine
       def negate(vector : RL::Vector2) : RL::Vector2
         Raymath.vector2_negate(vector)
       end
-      
+
       # Get zero vector
       #
       # ```
@@ -330,7 +330,7 @@ module PointClickEngine
       def zero : RL::Vector2
         Raymath.vector2_zero
       end
-      
+
       # Get one vector (1, 1)
       #
       # ```
@@ -339,7 +339,7 @@ module PointClickEngine
       def one : RL::Vector2
         Raymath.vector2_one
       end
-      
+
       # Reflect a vector off a normal
       #
       # - *vector* : Incoming vector
@@ -351,7 +351,7 @@ module PointClickEngine
       def reflect(vector : RL::Vector2, normal : RL::Vector2) : RL::Vector2
         Raymath.vector2_reflect(vector, normal)
       end
-      
+
       # Check if two vectors are equal
       #
       # - *a* : First vector

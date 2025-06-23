@@ -23,7 +23,7 @@ module PointClickEngine
     # Interface for scene management operations
     module ISceneManager
       abstract def add_scene(scene : Scenes::Scene) : Result(Nil, SceneError)
-      abstract def change_scene(name : String) : Result(Scenes::Scene, SceneError)  
+      abstract def change_scene(name : String) : Result(Scenes::Scene, SceneError)
       abstract def get_scene(name : String) : Result(Scenes::Scene, SceneError)
       abstract def remove_scene(name : String) : Result(Nil, SceneError)
       abstract def scene_names : Array(String)
@@ -48,7 +48,7 @@ module PointClickEngine
       abstract def add_render_layer(name : String, priority : Int32, enabled : Bool = true) : Result(Nil, RenderError)
       abstract def set_layer_enabled(layer_name : String, enabled : Bool) : Result(Nil, RenderError)
       abstract def show_ui
-      abstract def hide_ui  
+      abstract def hide_ui
       abstract def ui_visible? : Bool
       abstract def debug_mode? : Bool
       abstract def get_render_stats : {objects_rendered: Int32, objects_culled: Int32, draw_calls: Int32, render_time: Float32, fps: Float32}

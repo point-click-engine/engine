@@ -173,8 +173,8 @@ module PointClickEngine
   alias Direction8 = Characters::Direction8
   alias AnimationState = Characters::AnimationState
   alias AnimationController = Characters::AnimationController
-  alias NPCMood = Characters::CharacterMood  # Legacy alias for backward compatibility
-alias CharacterMood = Characters::CharacterMood
+  alias NPCMood = Characters::CharacterMood # Legacy alias for backward compatibility
+  alias CharacterMood = Characters::CharacterMood
   alias AnimationData = Characters::AnimationData
   alias CharacterDialogue = Characters::Dialogue::CharacterDialogue
   alias DialogTree = Characters::Dialogue::DialogTree

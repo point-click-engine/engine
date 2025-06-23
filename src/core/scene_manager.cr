@@ -36,31 +36,31 @@ module PointClickEngine
 
       # Currently active scene
       getter current_scene : Scenes::Scene?
-      
+
       # Collection of all loaded scenes
       getter scenes : Hash(String, Scenes::Scene) = {} of String => Scenes::Scene
-      
-      # Scene transition callbacks  
+
+      # Scene transition callbacks
       getter transition_callbacks : Hash(String, Array(Proc(Nil))) = {} of String => Array(Proc(Nil))
-      
+
       # Scene enter callbacks (called when scene becomes active)
       getter scene_enter_callbacks : Hash(String, Array(Proc(Nil))) = {} of String => Array(Proc(Nil))
-      
+
       # Scene exit callbacks (called when scene becomes inactive)
       getter scene_exit_callbacks : Hash(String, Array(Proc(Nil))) = {} of String => Array(Proc(Nil))
-      
+
       # Cache for preloaded scenes
       @scene_cache : Hash(String, Scenes::Scene) = {} of String => Scenes::Scene
-      
+
       # Maximum number of scenes to keep in cache
       @max_cache_size : Int32 = 5
-      
+
       # Track scene load times for performance monitoring
       @scene_load_times : Hash(String, Time::Span) = {} of String => Time::Span
-      
+
       def initialize
       end
-      
+
       # Add a scene to the manager
       #
       # Validates the scene and adds it to the available scenes collection.
@@ -72,11 +72,11 @@ module PointClickEngine
       def add_scene(scene : Scenes::Scene) : Result(Nil, SceneError)
         validation_result = validate_scene(scene)
         return Result(Nil, SceneError).failure(validation_result.error) if validation_result.failure?
-        
+
         @scenes[scene.name] = scene
         Result(Nil, SceneError).success(nil)
       end
-      
+
       # Add multiple scenes at once
       #
       # Validates and adds multiple scenes to the manager. If any scene
@@ -89,12 +89,12 @@ module PointClickEngine
           validation_result = validate_scene(scene)
           return Result(Nil, SceneError).failure(validation_result.error) if validation_result.failure?
         end
-        
+
         # Add all scenes
         scenes.each { |scene| @scenes[scene.name] = scene }
         Result(Nil, SceneError).success(nil)
       end
-      
+
       # Change to a different scene
       #
       # Transitions from the current scene to the specified scene. Handles
@@ -121,7 +121,7 @@ module PointClickEngine
       def change_scene(name : String) : Result(Scenes::Scene, SceneError)
         change_scene_with_reload(name, false)
       end
-      
+
       def change_scene_with_reload(name : String, force_reload : Bool = false) : Result(Scenes::Scene, SceneError)
         # Validate scene exists
         unless @scenes.has_key?(name)
@@ -135,11 +135,11 @@ module PointClickEngine
 
         # Load scene from cache or create new instance
         target_scene = if force_reload
-          @scene_cache.delete(name)
-          @scenes[name].dup
-        else
-          @scene_cache[name] ||= @scenes[name].dup
-        end
+                         @scene_cache.delete(name)
+                         @scenes[name].dup
+                       else
+                         @scene_cache[name] ||= @scenes[name].dup
+                       end
 
         # Execute transition callbacks
         execute_transition_callbacks(name)
@@ -156,7 +156,7 @@ module PointClickEngine
 
         Result(Scenes::Scene, SceneError).success(target_scene)
       end
-      
+
       # Preload a scene without activating it
       #
       # Loads a scene into the cache for faster switching later. Useful
@@ -182,7 +182,7 @@ module PointClickEngine
 
         Result(Scenes::Scene, SceneError).success(scene)
       end
-      
+
       # Reload a scene from its definition
       #
       # Forces a scene to reload, clearing any cached state. Useful for
@@ -207,7 +207,7 @@ module PointClickEngine
 
         Result(Scenes::Scene, SceneError).success(original_scene)
       end
-      
+
       # Remove a scene from the manager
       #
       # Removes a scene from the available scenes. Cannot remove the
@@ -234,7 +234,7 @@ module PointClickEngine
 
         Result(Nil, SceneError).success(nil)
       end
-      
+
       # Get a scene by name
       #
       # Returns the scene if found, or an error if not found.
@@ -247,19 +247,19 @@ module PointClickEngine
           Result(Scenes::Scene, SceneError).failure(SceneError.new("Scene not found: #{name}", name))
         end
       end
-      
+
       # Check if a scene exists
       #
       # - *name* : Name of the scene to check
       def has_scene?(name : String) : Bool
         @scenes.has_key?(name)
       end
-      
+
       # Get list of all scene names
       def scene_names : Array(String)
         @scenes.keys.to_a
       end
-      
+
       # Add a callback to be executed during scene transition
       #
       # - *name* : Name of the scene
@@ -268,7 +268,7 @@ module PointClickEngine
         @transition_callbacks[name] ||= [] of Proc(Nil)
         @transition_callbacks[name] << block
       end
-      
+
       # Add a callback to be executed when entering a scene
       #
       # - *name* : Name of the scene
@@ -277,7 +277,7 @@ module PointClickEngine
         @scene_enter_callbacks[name] ||= [] of Proc(Nil)
         @scene_enter_callbacks[name] << block
       end
-      
+
       # Add a callback to be executed when exiting a scene
       #
       # - *name* : Name of the scene
@@ -286,20 +286,20 @@ module PointClickEngine
         @scene_exit_callbacks[name] ||= [] of Proc(Nil)
         @scene_exit_callbacks[name] << block
       end
-      
+
       # Clear all cached scenes
       def clear_cache
         @scene_cache.clear
       end
-      
+
       # Get cache statistics
       def cache_stats : NamedTuple(size: Int32, scenes: Array(String))
         {
-          size: @scene_cache.size,
-          scenes: @scene_cache.keys.to_a
+          size:   @scene_cache.size,
+          scenes: @scene_cache.keys.to_a,
         }
       end
-      
+
       # Set maximum cache size
       #
       # - *size* : Maximum number of scenes to keep cached
@@ -307,7 +307,7 @@ module PointClickEngine
         @max_cache_size = size
         trim_cache_if_needed
       end
-      
+
       # Validate a scene before adding
       #
       # Ensures scene has required properties and doesn't conflict
@@ -332,28 +332,28 @@ module PointClickEngine
           Result(Scenes::Scene, SceneError).failure(SceneError.new("Scene validation failed: #{ex.message}"))
         end
       end
-      
+
       # Execute transition callbacks for a scene
       private def execute_transition_callbacks(name : String)
         if callbacks = @transition_callbacks[name]?
           callbacks.each(&.call)
         end
       end
-      
+
       # Execute enter callbacks for a scene
       private def execute_scene_enter_callbacks(scene : Scenes::Scene)
         if callbacks = @scene_enter_callbacks[scene.name]?
           callbacks.each(&.call)
         end
       end
-      
+
       # Execute exit callbacks for a scene
       private def execute_scene_exit_callbacks(scene : Scenes::Scene)
         if callbacks = @scene_exit_callbacks[scene.name]?
           callbacks.each(&.call)
         end
       end
-      
+
       # Trim cache to maximum size
       private def trim_cache_if_needed
         while @scene_cache.size > @max_cache_size
@@ -363,11 +363,11 @@ module PointClickEngine
         end
       end
     end
-    
+
     # Scene-related error class
     class SceneError < LoadingError
       getter scene_name : String?
-      
+
       def initialize(message : String, @scene_name : String? = nil)
         super(message, @scene_name)
       end

@@ -353,22 +353,22 @@ module PointClickEngine
       def stop_walking
         @movement_controller.try(&.stop_movement)
       end
-      
+
       # Check if character is currently moving
       def moving? : Bool
         @movement_controller.try(&.moving?) || false
       end
-      
+
       # Check if character is following a pathfinding route
       def following_path? : Bool
         @movement_controller.try(&.following_path?) || false
       end
-      
+
       # Get remaining distance to movement target
       def distance_to_target : Float32
         @movement_controller.try(&.distance_to_target) || 0.0_f32
       end
-      
+
       # Set movement completion callback
       def on_movement_complete(&block : -> Nil)
         @movement_controller.try(&.on_movement_complete = block)
