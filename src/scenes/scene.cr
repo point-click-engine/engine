@@ -4,6 +4,7 @@ require "yaml"
 require "../navigation/pathfinding"
 require "../assets/asset_loader"
 require "./walkable_area"
+require "../graphics/camera"
 
 module PointClickEngine
   module Scenes
@@ -94,6 +95,9 @@ module PointClickEngine
       # Walkable area definition for character movement constraints
       @[YAML::Field(ignore: true)]
       property walkable_area : WalkableArea?
+
+      # Whether camera scrolling is enabled for this scene
+      property enable_camera_scrolling : Bool = true
 
       # Creates a new scene with empty name and collections
       def initialize
@@ -220,14 +224,19 @@ module PointClickEngine
       # Handles background rendering with automatic scaling, depth-sorted
       # character drawing, walk-behind regions, and debug visualization.
       # Characters are automatically sorted by Y position for proper depth.
-      def draw
+      def draw(camera : Graphics::Camera? = nil)
         if bg = @background
-          # Calculate scale to fit screen (1024x768)
-          scale_x = 1024.0f32 / bg.width
-          scale_y = 768.0f32 / bg.height
-          scale = Math.max(scale_x, scale_y) # Use the larger scale to fill screen
+          if camera
+            # Draw background with camera offset
+            RL.draw_texture_ex(bg, RL::Vector2.new(x: -camera.position.x, y: -camera.position.y), 0.0, 1.0, RL::WHITE)
+          else
+            # Legacy mode: Calculate scale to fit screen (1024x768)
+            scale_x = 1024.0f32 / bg.width
+            scale_y = 768.0f32 / bg.height
+            scale = Math.max(scale_x, scale_y) # Use the larger scale to fill screen
 
-          RL.draw_texture_ex(bg, RL::Vector2.new(x: 0, y: 0), 0.0, scale, RL::WHITE)
+            RL.draw_texture_ex(bg, RL::Vector2.new(x: 0, y: 0), 0.0, scale, RL::WHITE)
+          end
         end
 
         # Sort characters by Y position for proper depth
@@ -237,8 +246,14 @@ module PointClickEngine
         end
         sorted_characters = all_characters.sort_by(&.position.y)
 
-        # Draw scene elements with proper depth sorting
-        @hotspots.each(&.draw)
+        # Draw scene elements with camera offset
+        camera_offset = camera ? RL::Vector2.new(x: -camera.position.x, y: -camera.position.y) : RL::Vector2.new(x: 0, y: 0)
+
+        # Draw hotspots with camera offset
+        @hotspots.each do |hotspot|
+          draw_with_camera_offset(hotspot, camera_offset) if camera
+          hotspot.draw if !camera
+        end
 
         # Draw objects and characters with walk-behind support
         if walkable = @walkable_area
@@ -246,8 +261,9 @@ module PointClickEngine
             # Draw walk-behind regions that should appear in front
             behind_regions = walkable.get_walk_behind_at_y(character.position.y)
 
-            # Draw the character
-            character.draw
+            # Draw the character with camera offset
+            draw_with_camera_offset(character, camera_offset) if camera
+            character.draw if !camera
 
             # Draw walk-behind regions on top if needed
             # (In a full implementation, we'd draw masked background parts here)
@@ -255,26 +271,96 @@ module PointClickEngine
 
           # Draw other objects
           @objects.each do |obj|
-            obj.draw unless obj.is_a?(Characters::Character)
+            unless obj.is_a?(Characters::Character)
+              draw_with_camera_offset(obj, camera_offset) if camera
+              obj.draw if !camera
+            end
           end
         else
           # No walkable area defined, use simple drawing
           # Draw objects that aren't characters first
           @objects.each do |obj|
-            obj.draw unless obj.is_a?(Characters::Character)
+            unless obj.is_a?(Characters::Character)
+              draw_with_camera_offset(obj, camera_offset) if camera
+              obj.draw if !camera
+            end
           end
           # Then draw all characters in sorted order
-          sorted_characters.each(&.draw)
+          sorted_characters.each do |character|
+            draw_with_camera_offset(character, camera_offset) if camera
+            character.draw if !camera
+          end
         end
 
         # Draw navigation debug if enabled
         if Core::Engine.debug_mode
-          if @navigation_grid
+          if @navigation_grid && camera
+            draw_navigation_debug_with_offset(camera_offset)
+          elsif @navigation_grid
             draw_navigation_debug
           end
 
           # Draw walkable area debug
-          @walkable_area.try(&.draw_debug)
+          if camera && (walkable = @walkable_area)
+            draw_walkable_debug_with_offset(walkable, camera_offset)
+          else
+            @walkable_area.try(&.draw_debug)
+          end
+        end
+      end
+
+      # Helper method to draw objects with camera offset by temporarily modifying their position
+      private def draw_with_camera_offset(obj : Core::GameObject, offset : RL::Vector2)
+        # Save original position
+        original_pos = obj.position
+
+        # Apply camera offset
+        obj.position = RL::Vector2.new(
+          x: original_pos.x + offset.x,
+          y: original_pos.y + offset.y
+        )
+
+        # Draw the object
+        obj.draw
+
+        # Restore original position
+        obj.position = original_pos
+      end
+
+      # Draw navigation debug with camera offset
+      private def draw_navigation_debug_with_offset(offset : RL::Vector2)
+        return unless pf = @pathfinder
+        return unless grid = @navigation_grid
+
+        cell_size = @navigation_cell_size
+
+        grid.walkable.each_with_index do |row, y|
+          row.each_with_index do |walkable, x|
+            screen_x = (x * cell_size).to_i + offset.x.to_i
+            screen_y = (y * cell_size).to_i + offset.y.to_i
+
+            color = walkable ? RL::Color.new(r: 0, g: 255, b: 0, a: 50) : RL::Color.new(r: 255, g: 0, b: 0, a: 50)
+            RL.draw_rectangle(screen_x, screen_y, cell_size, cell_size, color)
+          end
+        end
+      end
+
+      # Draw walkable area debug with camera offset
+      private def draw_walkable_debug_with_offset(walkable : WalkableArea, offset : RL::Vector2)
+        walkable.regions.each do |region|
+          next unless region.vertices.size >= 3
+
+          # Draw polygon outline
+          (0...region.vertices.size).each do |i|
+            v1 = region.vertices[i]
+            v2 = region.vertices[(i + 1) % region.vertices.size]
+
+            start_pos = RL::Vector2.new(x: v1.x + offset.x, y: v1.y + offset.y)
+            end_pos = RL::Vector2.new(x: v2.x + offset.x, y: v2.y + offset.y)
+
+            color = region.walkable ? RL::GREEN : RL::RED
+            RL.draw_line_v(start_pos, end_pos, color)
+          end
         end
       end
 

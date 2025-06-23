@@ -65,6 +65,16 @@ module PointClickEngine
 
       def on_talk
         return if @state == CharacterState::Talking
+        
+        # Try to start dialog tree conversation first
+        if dm = Core::Engine.instance.dialog_manager
+          if dialog_tree = dm.get_dialog_tree(@name)
+            dm.start_dialog_tree(@name, "greeting")
+            return
+          end
+        end
+        
+        # Fallback to simple dialogues
         start_conversation(nil)
       end
 

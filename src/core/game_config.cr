@@ -7,6 +7,7 @@ require "../characters/player"
 require "../scenes/scene_loader"
 require "../graphics/display_manager"
 require "../graphics/shaders/shader_helpers"
+require "../characters/dialogue/dialog_tree"
 
 module PointClickEngine
   module Core
@@ -250,10 +251,19 @@ module PointClickEngine
           end
         end)
 
-        # Load dialogs (when implemented)
+        # Load dialogs
         assets.try(&.dialogs.each do |pattern|
           Dir.glob(pattern).each do |path|
-            puts "Dialog loading not yet implemented: #{path}"
+            begin
+              dialog_tree = Characters::Dialogue::DialogTree.load_from_file(path)
+              # Store dialog tree in engine for character access
+              if dm = engine.dialog_manager
+                dm.add_dialog_tree(dialog_tree)
+              end
+              puts "Loaded dialog: #{dialog_tree.name} from #{path}"
+            rescue ex
+              puts "Failed to load dialog from #{path}: #{ex.message}"
+            end
           end
         end)
 

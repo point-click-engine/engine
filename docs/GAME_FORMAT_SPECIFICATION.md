@@ -194,6 +194,9 @@ script_path: String?      # Associated Lua script
 enable_pathfinding: Bool  # Enable A* pathfinding
 navigation_cell_size: Int32 # Grid cell size for pathfinding
 
+# Camera scrolling configuration
+enable_camera_scrolling: Bool # Enable camera scrolling for larger scenes (default: true)
+
 # Walkable area definition
 walkable_areas:
   regions: Array(Region)  # Walkable polygons

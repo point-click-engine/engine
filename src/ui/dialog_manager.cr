@@ -2,6 +2,7 @@ require "./dialog"
 require "./dialog_portrait"
 require "./floating_dialog"
 require "./floating_text"
+require "../characters/dialogue/dialog_tree"
 
 module PointClickEngine
   module UI
@@ -13,6 +14,7 @@ module PointClickEngine
       property floating_manager : FloatingDialogManager
       property enable_portraits : Bool = false
       property enable_floating : Bool = true
+      property dialog_trees : Hash(String, Characters::Dialogue::DialogTree) = {} of String => Characters::Dialogue::DialogTree
 
       def initialize
         @current_dialog = nil
@@ -212,6 +214,23 @@ module PointClickEngine
 
       def is_dialog_active? : Bool
         !@current_dialog.nil?
+      end
+
+      # Add a dialog tree
+      def add_dialog_tree(dialog_tree : Characters::Dialogue::DialogTree)
+        @dialog_trees[dialog_tree.name] = dialog_tree
+      end
+
+      # Get a dialog tree by name
+      def get_dialog_tree(name : String) : Characters::Dialogue::DialogTree?
+        @dialog_trees[name]?
+      end
+
+      # Start a conversation with a dialog tree
+      def start_dialog_tree(tree_name : String, starting_node : String = "greeting")
+        if tree = get_dialog_tree(tree_name)
+          tree.start_conversation(starting_node)
+        end
       end
     end
   end

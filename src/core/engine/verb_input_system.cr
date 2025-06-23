@@ -7,6 +7,7 @@ require "../../characters/character"
 require "../../inventory/inventory_system"
 require "../../ui/dialog_manager"
 require "../../audio/sound_system"
+require "../../graphics/camera"
 
 module PointClickEngine
   module Core
@@ -30,7 +31,7 @@ module PointClickEngine
         end
 
         # Process verb-based input
-        def process_input(scene : Scenes::Scene?, player : Characters::Character?, display_manager : Graphics::DisplayManager?)
+        def process_input(scene : Scenes::Scene?, player : Characters::Character?, display_manager : Graphics::DisplayManager?, camera : Graphics::Camera? = nil)
           return unless @enabled
           return unless scene
           return unless display_manager
@@ -43,17 +44,24 @@ module PointClickEngine
 
           game_mouse = display_manager.screen_to_game(raw_mouse)
 
-          # Update cursor manager
+          # Convert to world coordinates if camera exists
+          world_mouse = if camera
+                          camera.screen_to_world(game_mouse.x.to_i, game_mouse.y.to_i)
+                        else
+                          game_mouse
+                        end
+
+          # Update cursor manager (use screen coordinates for UI)
           @cursor_manager.update(game_mouse, scene, @engine.inventory)
 
           # Handle left click - execute current verb
           if RL.mouse_button_pressed?(RL::MouseButton::Left)
-            handle_verb_click(scene, player, game_mouse)
+            handle_verb_click(scene, player, world_mouse)
           end
 
           # Handle right click - always look
           if RL.mouse_button_pressed?(RL::MouseButton::Right)
-            handle_look_click(scene, game_mouse)
+            handle_look_click(scene, world_mouse)
           end
         end
 

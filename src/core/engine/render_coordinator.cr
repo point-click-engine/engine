@@ -3,6 +3,7 @@
 require "../../scenes/scene"
 require "../../ui/dialog"
 require "../../cutscenes/cutscene_manager"
+require "../../graphics/camera"
 
 module PointClickEngine
   module Core
@@ -21,7 +22,8 @@ module PointClickEngine
         def render(scene : Scenes::Scene?,
                    dialogs : Array(UI::Dialog),
                    cutscene_manager : Cutscenes::CutsceneManager,
-                   transition_manager : Graphics::TransitionManager?)
+                   transition_manager : Graphics::TransitionManager?,
+                   camera : Graphics::Camera? = nil)
           # Get display manager from engine
           if engine = Engine.instance
             if display_manager = engine.display_manager
@@ -31,10 +33,10 @@ module PointClickEngine
               # Use transition manager if available and active
               if transition_manager && transition_manager.transitioning?
                 transition_manager.render_with_transition do
-                  render_scene_content(scene, dialogs, cutscene_manager)
+                  render_scene_content(scene, dialogs, cutscene_manager, camera)
                 end
               else
-                render_scene_content(scene, dialogs, cutscene_manager)
+                render_scene_content(scene, dialogs, cutscene_manager, camera)
               end
 
               # End game rendering
@@ -47,7 +49,7 @@ module PointClickEngine
               render_ui_overlay if @ui_visible
             else
               # Fallback if no display manager
-              render_scene_content(scene, dialogs, cutscene_manager)
+              render_scene_content(scene, dialogs, cutscene_manager, camera)
               render_ui_overlay if @ui_visible
             end
           end
@@ -56,12 +58,13 @@ module PointClickEngine
         # Render scene and game content
         private def render_scene_content(scene : Scenes::Scene?,
                                          dialogs : Array(UI::Dialog),
-                                         cutscene_manager : Cutscenes::CutsceneManager)
+                                         cutscene_manager : Cutscenes::CutsceneManager,
+                                         camera : Graphics::Camera? = nil)
           # Clear background
           RL.clear_background(RL::BLACK)
 
           # Render current scene
-          scene.try(&.draw)
+          scene.try(&.draw(camera))
 
           # Render highlighted hotspots if enabled
           render_highlighted_hotspots(scene) if @hotspot_highlight_enabled && scene

@@ -2,6 +2,7 @@
 
 require "../../scenes/scene"
 require "../../characters/character"
+require "../../graphics/camera"
 
 module PointClickEngine
   module Core
@@ -14,23 +15,30 @@ module PointClickEngine
         end
 
         # Process mouse clicks in the current scene
-        def handle_click(scene : Scenes::Scene?, player : Characters::Character?)
+        def handle_click(scene : Scenes::Scene?, player : Characters::Character?, camera : Graphics::Camera? = nil)
           return unless @handle_clicks
           return unless scene
           return unless RL.mouse_button_pressed?(RL::MouseButton::Left)
 
           mouse_pos = RL.get_mouse_position
 
-          # Check if any hotspot was clicked
-          clicked_hotspot = scene.get_hotspot_at(mouse_pos)
+          # Convert screen coordinates to world coordinates if camera exists
+          world_pos = if camera
+                        camera.screen_to_world(mouse_pos.x.to_i, mouse_pos.y.to_i)
+                      else
+                        mouse_pos
+                      end
+
+          # Check if any hotspot was clicked (using world coordinates)
+          clicked_hotspot = scene.get_hotspot_at(world_pos)
 
           if clicked_hotspot
             clicked_hotspot.on_click.try(&.call)
           else
-            # Move player to clicked position if no hotspot
+            # Move player to clicked position if no hotspot (using world coordinates)
             if player
               if player.responds_to?(:handle_click)
-                player.handle_click(mouse_pos, scene)
+                player.handle_click(world_pos, scene)
               end
             end
           end
@@ -54,15 +62,28 @@ module PointClickEngine
           if RL.key_pressed?(RL::KeyboardKey::Tab)
             handle_hotspot_highlight_toggle
           end
+
+          # Camera edge scrolling toggle (F5)
+          if RL.key_pressed?(RL::KeyboardKey::F5)
+            handle_edge_scroll_toggle
+          end
         end
 
         # Handle right-click for context menu/verb selection
-        def handle_right_click(scene : Scenes::Scene?)
+        def handle_right_click(scene : Scenes::Scene?, camera : Graphics::Camera? = nil)
           return unless scene
           return unless RL.mouse_button_pressed?(RL::MouseButton::Right)
 
           mouse_pos = RL.get_mouse_position
-          clicked_hotspot = scene.get_hotspot_at(mouse_pos)
+
+          # Convert screen coordinates to world coordinates if camera exists
+          world_pos = if camera
+                        camera.screen_to_world(mouse_pos.x.to_i, mouse_pos.y.to_i)
+                      else
+                        mouse_pos
+                      end
+
+          clicked_hotspot = scene.get_hotspot_at(world_pos)
 
           if clicked_hotspot
             # Show context menu or verb selection for hotspot
@@ -71,10 +92,10 @@ module PointClickEngine
         end
 
         # Process all input types
-        def process_input(scene : Scenes::Scene?, player : Characters::Character?)
+        def process_input(scene : Scenes::Scene?, player : Characters::Character?, camera : Graphics::Camera? = nil)
           handle_keyboard_input
-          handle_click(scene, player)
-          handle_right_click(scene)
+          handle_click(scene, player, camera)
+          handle_right_click(scene, camera)
         end
 
         private def handle_escape_key
@@ -103,6 +124,15 @@ module PointClickEngine
         private def handle_hotspot_highlight_toggle
           # Toggle hotspot highlighting
           Engine.instance.toggle_hotspot_highlight
+        end
+
+        private def handle_edge_scroll_toggle
+          if engine = Engine.instance
+            if camera = engine.camera
+              camera.edge_scroll_enabled = !camera.edge_scroll_enabled
+              puts "Camera edge scrolling: #{camera.edge_scroll_enabled ? "enabled" : "disabled"}"
+            end
+          end
         end
       end
     end

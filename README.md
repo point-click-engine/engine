@@ -6,6 +6,7 @@ A modern, data-driven adventure game engine written in Crystal, designed for cre
 
 - **YAML-Based Configuration** - Define your entire game through configuration files
 - **Visual Scene System** - Hotspots, walkable areas, character scaling
+- **Camera Scrolling** - Support for scenes larger than the viewport with smooth scrolling
 - **Lua Scripting** - Powerful scripting for game logic
 - **Dialog Trees** - Branching conversations with conditions
 - **Quest System** - Complex multi-objective quests

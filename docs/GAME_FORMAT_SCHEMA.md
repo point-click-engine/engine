@@ -265,6 +265,11 @@ This document provides JSON Schema definitions for all game format files. These 
       "maximum": 64,
       "default": 16
     },
+    "enable_camera_scrolling": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable camera scrolling for scenes larger than the viewport"
+    },
     "walkable_areas": {
       "type": "object",
       "properties": {

@@ -17,6 +17,7 @@ require "./engine/system_manager"
 require "./engine/input_handler"
 require "./engine/verb_input_system"
 require "./engine/render_coordinator"
+require "../graphics/camera"
 
 module PointClickEngine
   # Core engine functionality, game loop, and state management
@@ -153,6 +154,10 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property cutscene_manager : Cutscenes::CutsceneManager = Cutscenes::CutsceneManager.new
 
+      # Main game camera for scene scrolling (not serialized)
+      @[YAML::Field(ignore: true)]
+      property camera : Graphics::Camera?
+
       # Game-specific update callback
       @[YAML::Field(ignore: true)]
       property on_update : Proc(Float32, Nil)?
@@ -241,6 +246,9 @@ module PointClickEngine
         # Initialize menu system after other systems
         @system_manager.menu_system = UI::MenuSystem.new(self)
 
+        # Initialize camera for scene scrolling
+        @camera = Graphics::Camera.new(@window_width, @window_height)
+
         @initialized = true
         puts "Engine initialized with #{@system_manager.initialized_systems_count} systems"
       end
@@ -311,6 +319,26 @@ module PointClickEngine
         if scene = @scenes[name]?
           @current_scene = scene
           @current_scene_name = name
+
+          # Update camera for new scene
+          if camera = @camera
+            if bg = scene.background
+              if scene.enable_camera_scrolling
+                camera.set_scene_size(bg.width, bg.height)
+                # Center camera on player if present
+                if player = @player
+                  camera.center_on(player.position.x, player.position.y)
+                else
+                  camera.center_on((bg.width / 2).to_f32, (bg.height / 2).to_f32)
+                end
+              else
+                # Disable scrolling for this scene by setting scene size to viewport size
+                camera.set_scene_size(camera.viewport_width, camera.viewport_height)
+                camera.center_on((camera.viewport_width / 2).to_f32, (camera.viewport_height / 2).to_f32)
+              end
+            end
+          end
+
           scene.on_enter.try(&.call)
         else
           puts "Warning: Scene '#{name}' not found"
@@ -441,6 +469,22 @@ module PointClickEngine
         # Update current scene
         @current_scene.try(&.update(dt))
 
+        # Update camera if it exists
+        if camera = @camera
+          if scene = @current_scene
+            if scene.enable_camera_scrolling
+              # Update camera with mouse position for edge scrolling
+              mouse_pos = RL.get_mouse_position
+              camera.update(dt, mouse_pos.x.to_i, mouse_pos.y.to_i)
+
+              # Follow player if one exists
+              if player = @player
+                camera.follow(player)
+              end
+            end
+          end
+        end
+
         # Update cutscenes
         @cutscene_manager.update(dt)
 
@@ -449,10 +493,16 @@ module PointClickEngine
         # @dialogs.reject!(&.completed?) # Dialog doesn't have completed? method
 
         # Process input
+        camera_for_input = if scene = @current_scene
+                             scene.enable_camera_scrolling ? @camera : nil
+                           else
+                             nil
+                           end
+
         if verb_system = @verb_input_system
-          verb_system.process_input(@current_scene, @player, @system_manager.display_manager)
+          verb_system.process_input(@current_scene, @player, @system_manager.display_manager, camera_for_input)
         else
-          @input_handler.process_input(@current_scene, @player)
+          @input_handler.process_input(@current_scene, @player, camera_for_input)
         end
 
         # Update cursor
@@ -494,6 +544,22 @@ module PointClickEngine
         # Update current scene
         @current_scene.try(&.update(dt))
 
+        # Update camera if it exists
+        if camera = @camera
+          if scene = @current_scene
+            if scene.enable_camera_scrolling
+              # Update camera with mouse position for edge scrolling
+              mouse_pos = RL.get_mouse_position
+              camera.update(dt, mouse_pos.x.to_i, mouse_pos.y.to_i)
+
+              # Follow player if one exists
+              if player = @player
+                camera.follow(player)
+              end
+            end
+          end
+        end
+
         # Update cutscenes
         @cutscene_manager.update(dt)
 
@@ -502,10 +568,16 @@ module PointClickEngine
         # @dialogs.reject!(&.completed?) # Dialog doesn't have completed? method
 
         # Process input
+        camera_for_input = if scene = @current_scene
+                             scene.enable_camera_scrolling ? @camera : nil
+                           else
+                             nil
+                           end
+
         if verb_system = @verb_input_system
-          verb_system.process_input(@current_scene, @player, @system_manager.display_manager)
+          verb_system.process_input(@current_scene, @player, @system_manager.display_manager, camera_for_input)
         else
-          @input_handler.process_input(@current_scene, @player)
+          @input_handler.process_input(@current_scene, @player, camera_for_input)
         end
 
         # Update cursor
@@ -517,11 +589,19 @@ module PointClickEngine
         RL.begin_drawing
         RL.clear_background(RL::BLACK)
 
+        # Only pass camera if current scene has scrolling enabled
+        camera_to_use = if scene = @current_scene
+                          scene.enable_camera_scrolling ? @camera : nil
+                        else
+                          nil
+                        end
+
         @render_coordinator.render(
           @current_scene,
           @dialogs,
           @cutscene_manager,
-          @system_manager.transition_manager
+          @system_manager.transition_manager,
+          camera_to_use
         )
 
         # Draw verb cursor if enabled

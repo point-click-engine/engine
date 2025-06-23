@@ -32,6 +32,21 @@ Welcome to the Point & Click Engine documentation! This engine uses a modern, da
 - **[Refactoring Guide](REFACTORING_GUIDE.md)** - How the YAML system was implemented
 - **[Refactoring Summary](REFACTORING_SUMMARY.md)** - Summary of improvements
 
+## Key Features
+
+- **Scene Scrolling** - Support for scenes larger than the viewport with smooth camera movement
+- **Data-Driven Design** - Define entire games through YAML configuration
+- **Lua Scripting** - Powerful scripting API for game logic
+- **A* Pathfinding** - Automatic character navigation
+- **Dialog System** - Branching conversations with conditions
+- **Quest System** - Multi-objective quests with dependencies
+- **Inventory Management** - Item interactions and combinations
+- **Save/Load System** - Complete game state persistence
+- **Audio System** - Music and sound effects with positional audio
+- **Visual Effects** - Particle systems, transitions, and shaders
+- **Cutscene System** - Scripted sequences with camera control
+- **Localization** - Multi-language support
+
 ## Key Concepts
 
 ### Data-Driven Design

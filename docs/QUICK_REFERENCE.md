@@ -51,6 +51,7 @@ engine.run
 name: room_name
 background_path: assets/backgrounds/room.png
 script_path: scripts/room.lua
+enable_camera_scrolling: true  # For scenes larger than viewport (default: true)
 
 hotspots:
   - name: object
@@ -297,6 +298,21 @@ crystal build main.cr --debug
 - Validate YAML structure
 - Check node IDs match
 - Ensure start_node exists
+
+## Keyboard Controls
+
+### General
+- `ESC` - Pause menu / Cancel
+- `F1` - Toggle debug mode
+- `F5` - Toggle camera edge scrolling
+- `F11` - Toggle fullscreen
+- `Tab` - Toggle hotspot highlights
+- `I` - Show/hide inventory
+- `Space` - Skip dialog
+
+### Camera Controls (when scrolling enabled)
+- Mouse to screen edges - Scroll camera
+- Camera automatically follows player character
 
 ## Resources
 
