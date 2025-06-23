@@ -337,6 +337,652 @@ describe PointClickEngine::Core::PreflightCheck do
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
     end
+
+    it "validates rendering and player setup" do
+      temp_dir = File.tempname("rendering_test")
+      Dir.mkdir_p("#{temp_dir}/assets/sprites")
+      Dir.mkdir_p("#{temp_dir}/assets/backgrounds")
+      Dir.mkdir_p("#{temp_dir}/scenes")
+
+      begin
+        # Create player sprite file
+        File.write("#{temp_dir}/assets/sprites/player.png", "fake png")
+
+        # Create background files
+        File.write("#{temp_dir}/assets/backgrounds/scene1.png", "fake bg")
+        File.write("#{temp_dir}/assets/backgrounds/small_bg.png", "small bg")
+
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        window:
+          width: 1024
+          height: 768
+        player:
+          name: "Hero"
+          sprite_path: "assets/sprites/player.png"
+          sprite:
+            frame_width: 32
+            frame_height: 48
+            columns: 4
+            rows: 4
+          start_position:
+            x: 100.0
+            y: 200.0
+        assets:
+          scenes:
+            - "scenes/*.yaml"
+        start_scene: "scene1"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Create scene with valid background
+        scene1_yaml = <<-YAML
+        name: scene1
+        background_path: assets/backgrounds/scene1.png
+        walkable_areas:
+          regions:
+            - name: main_area
+              walkable: true
+              vertices:
+                - {x: 50, y: 150}
+                - {x: 300, y: 150}
+                - {x: 300, y: 400}
+                - {x: 50, y: 400}
+        YAML
+        File.write("#{temp_dir}/scenes/scene1.yaml", scene1_yaml)
+
+        # Create scene with missing background
+        scene2_yaml = <<-YAML
+        name: scene2
+        background_path: assets/backgrounds/missing.png
+        YAML
+        File.write("#{temp_dir}/scenes/scene2.yaml", scene2_yaml)
+
+        # Create scene with potentially small background
+        scene3_yaml = <<-YAML
+        name: scene3
+        background_path: assets/backgrounds/small_320x180_bg.png
+        YAML
+        File.write("#{temp_dir}/scenes/scene3.yaml", scene3_yaml)
+
+        # Suppress output
+        original_stdout = STDOUT
+        captured = IO::Memory.new
+
+        begin
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(captured)
+          {% end %}
+
+          result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+          # Should detect player sprite correctly
+          result.info.should contain("✓ Player sprite found: assets/sprites/player.png")
+
+          # Should detect valid backgrounds
+          result.info.should contain("✓ Background found for scene 'scene1': assets/backgrounds/scene1.png")
+
+          # Should detect missing background
+          result.errors.should contain("Background image not found for scene 'scene2.yaml': assets/backgrounds/missing.png")
+
+          # Should warn about potentially small backgrounds
+          result.warnings.any? { |w| w.includes?("background may be too small") && w.includes?("320x180") }.should be_true
+
+        ensure
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(original_stdout)
+          {% end %}
+        end
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "detects missing player sprite" do
+      temp_dir = File.tempname("player_sprite_test")
+      Dir.mkdir_p(temp_dir)
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        player:
+          name: "Hero"
+          sprite_path: "assets/sprites/missing_player.png"
+          sprite:
+            frame_width: 32
+            frame_height: 48
+            columns: 4
+            rows: 4
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Suppress output
+        original_stdout = STDOUT
+        captured = IO::Memory.new
+
+        begin
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(captured)
+          {% end %}
+
+          result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+          result.passed.should be_false
+          result.errors.should contain("Player sprite not found: assets/sprites/missing_player.png")
+
+        ensure
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(original_stdout)
+          {% end %}
+        end
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "warns about missing player sprite path" do
+      temp_dir = File.tempname("no_sprite_path_test")
+      Dir.mkdir_p(temp_dir)
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        player:
+          name: "Hero"
+          sprite:
+            frame_width: 32
+            frame_height: 48
+            columns: 4
+            rows: 4
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Suppress output
+        original_stdout = STDOUT
+        captured = IO::Memory.new
+
+        begin
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(captured)
+          {% end %}
+
+          result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+          result.warnings.should contain("No player sprite path specified - player will be invisible")
+
+        ensure
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(original_stdout)
+          {% end %}
+        end
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "validates player sprite dimensions" do
+      temp_dir = File.tempname("sprite_dimensions_test")
+      Dir.mkdir_p("#{temp_dir}/assets/sprites")
+
+      begin
+        # Create player sprite file
+        File.write("#{temp_dir}/assets/sprites/player.png", "fake png")
+
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        player:
+          name: "Hero"
+          sprite_path: "assets/sprites/player.png"
+          sprite:
+            frame_width: 0
+            frame_height: -10
+            columns: 4
+            rows: 4
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Suppress output
+        original_stdout = STDOUT
+        captured = IO::Memory.new
+
+        begin
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(captured)
+          {% end %}
+
+          result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+          result.passed.should be_false
+          result.errors.should contain("Invalid player sprite dimensions: 0x-10")
+
+        ensure
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(original_stdout)
+          {% end %}
+        end
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "warns about missing player sprite dimensions" do
+      temp_dir = File.tempname("no_sprite_dims_test")
+      Dir.mkdir_p("#{temp_dir}/assets/sprites")
+
+      begin
+        # Create player sprite file
+        File.write("#{temp_dir}/assets/sprites/player.png", "fake png")
+
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        player:
+          name: "Hero"
+          sprite_path: "assets/sprites/player.png"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Suppress output
+        original_stdout = STDOUT
+        captured = IO::Memory.new
+
+        begin
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(captured)
+          {% end %}
+
+          result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+          result.warnings.should contain("No player sprite dimensions specified - may cause rendering issues")
+
+        ensure
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(original_stdout)
+          {% end %}
+        end
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "detects missing player configuration" do
+      temp_dir = File.tempname("no_player_test")
+      Dir.mkdir_p(temp_dir)
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Suppress output
+        original_stdout = STDOUT
+        captured = IO::Memory.new
+
+        begin
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(captured)
+          {% end %}
+
+          result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+          result.passed.should be_false
+          result.errors.should contain("No player configuration found")
+
+        ensure
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(original_stdout)
+          {% end %}
+        end
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "warns about start scene spawn positions" do
+      temp_dir = File.tempname("spawn_position_test")
+      Dir.mkdir_p("#{temp_dir}/scenes")
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        start_scene: "main"
+        assets:
+          scenes:
+            - "scenes/*.yaml"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Create start scene without spawn position
+        scene_yaml = <<-YAML
+        name: main
+        background_path: bg.png
+        YAML
+        File.write("#{temp_dir}/scenes/main.yaml", scene_yaml)
+
+        # Suppress output
+        original_stdout = STDOUT
+        captured = IO::Memory.new
+
+        begin
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(captured)
+          {% end %}
+
+          result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+          result.warnings.should contain("Start scene 'main' may not have proper player spawn position defined")
+
+        ensure
+          {% if flag?(:darwin) || flag?(:linux) %}
+            STDOUT.reopen(original_stdout)
+          {% end %}
+        end
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "detects player starting in non-walkable area" do
+      temp_dir = File.tempname("walkable_area_test")
+      Dir.mkdir_p("#{temp_dir}/scenes")
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        player:
+          name: "Hero"
+          sprite_path: "player.png"
+          sprite:
+            frame_width: 32
+            frame_height: 48
+            columns: 4
+            rows: 4
+          start_position:
+            x: 500.0
+            y: 400.0
+        start_scene: "library"
+        assets:
+          scenes:
+            - "scenes/*.yaml"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Create scene with walkable areas where player starts in non-walkable area
+        scene_yaml = <<-YAML
+        name: library
+        background_path: bg.png
+        walkable_areas:
+          regions:
+            - name: main_floor
+              walkable: true
+              vertices:
+                - {x: 100, y: 350}
+                - {x: 900, y: 350}
+                - {x: 900, y: 700}
+                - {x: 100, y: 700}
+            - name: desk_area
+              walkable: false
+              vertices:
+                - {x: 380, y: 380}
+                - {x: 620, y: 380}
+                - {x: 620, y: 550}
+                - {x: 380, y: 550}
+        YAML
+        File.write("#{temp_dir}/scenes/library.yaml", scene_yaml)
+
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+        result.passed.should be_false
+        result.errors.should contain("Player starting position (500.0, 400.0) is in a non-walkable area in scene 'library'")
+
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "validates player starting in walkable area" do
+      temp_dir = File.tempname("valid_walkable_test")
+      Dir.mkdir_p("#{temp_dir}/scenes")
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        player:
+          name: "Hero"
+          sprite_path: "player.png"
+          sprite:
+            frame_width: 32
+            frame_height: 48
+            columns: 4
+            rows: 4
+          start_position:
+            x: 300.0
+            y: 450.0
+        start_scene: "library"
+        assets:
+          scenes:
+            - "scenes/*.yaml"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Create scene with walkable areas where player starts in walkable area
+        scene_yaml = <<-YAML
+        name: library
+        background_path: bg.png
+        walkable_areas:
+          regions:
+            - name: main_floor
+              walkable: true
+              vertices:
+                - {x: 100, y: 350}
+                - {x: 900, y: 350}
+                - {x: 900, y: 700}
+                - {x: 100, y: 700}
+            - name: desk_area
+              walkable: false
+              vertices:
+                - {x: 380, y: 380}
+                - {x: 620, y: 380}
+                - {x: 620, y: 550}
+                - {x: 380, y: 550}
+        YAML
+        File.write("#{temp_dir}/scenes/library.yaml", scene_yaml)
+
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+        result.info.should contain("✓ Player starting position is in walkable area in scene 'library'")
+
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "warns when player starts outside any walkable area" do
+      temp_dir = File.tempname("outside_walkable_test")
+      Dir.mkdir_p("#{temp_dir}/scenes")
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        player:
+          name: "Hero"
+          sprite_path: "player.png"
+          sprite:
+            frame_width: 32
+            frame_height: 48
+            columns: 4
+            rows: 4
+          start_position:
+            x: 50.0
+            y: 200.0
+        start_scene: "test_scene"
+        assets:
+          scenes:
+            - "scenes/*.yaml"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Create scene with walkable areas where player is completely outside
+        scene_yaml = <<-YAML
+        name: test_scene
+        background_path: bg.png
+        walkable_areas:
+          regions:
+            - name: main_area
+              walkable: true
+              vertices:
+                - {x: 100, y: 300}
+                - {x: 500, y: 300}
+                - {x: 500, y: 600}
+                - {x: 100, y: 600}
+        YAML
+        File.write("#{temp_dir}/scenes/test_scene.yaml", scene_yaml)
+
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+        result.warnings.should contain("Player starting position (50.0, 200.0) may not be in any walkable area in scene 'test_scene'")
+
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "handles scenes without walkable areas" do
+      temp_dir = File.tempname("no_walkable_areas_test")
+      Dir.mkdir_p("#{temp_dir}/scenes")
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        player:
+          name: "Hero"
+          sprite_path: "player.png"
+          sprite:
+            frame_width: 32
+            frame_height: 48
+            columns: 4
+            rows: 4
+          start_position:
+            x: 300.0
+            y: 400.0
+        start_scene: "simple_scene"
+        assets:
+          scenes:
+            - "scenes/*.yaml"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Create scene without walkable areas
+        scene_yaml = <<-YAML
+        name: simple_scene
+        background_path: bg.png
+        hotspots:
+          - name: test_hotspot
+            x: 100
+            y: 100
+            width: 50
+            height: 50
+        YAML
+        File.write("#{temp_dir}/scenes/simple_scene.yaml", scene_yaml)
+
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+        # Should not produce walkable area warnings for scenes without walkable areas
+        result.warnings.none? { |w| w.includes?("walkable area") }.should be_true
+        result.errors.none? { |e| e.includes?("walkable area") }.should be_true
+
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "handles complex polygon walkable areas" do
+      temp_dir = File.tempname("complex_polygon_test")
+      Dir.mkdir_p("#{temp_dir}/scenes")
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        player:
+          name: "Hero"
+          sprite_path: "player.png"
+          sprite:
+            frame_width: 32
+            frame_height: 48
+            columns: 4
+            rows: 4
+          start_position:
+            x: 250.0
+            y: 300.0
+        start_scene: "complex_scene"
+        assets:
+          scenes:
+            - "scenes/*.yaml"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Create scene with complex polygon walkable area
+        scene_yaml = <<-YAML
+        name: complex_scene
+        background_path: bg.png
+        walkable_areas:
+          regions:
+            - name: L_shaped_area
+              walkable: true
+              vertices:
+                - {x: 100, y: 200}
+                - {x: 400, y: 200}
+                - {x: 400, y: 350}
+                - {x: 300, y: 350}
+                - {x: 300, y: 500}
+                - {x: 100, y: 500}
+        YAML
+        File.write("#{temp_dir}/scenes/complex_scene.yaml", scene_yaml)
+
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+        result.info.should contain("✓ Player starting position is in walkable area in scene 'complex_scene'")
+
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
   end
 
   describe ".run!" do

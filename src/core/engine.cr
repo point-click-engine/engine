@@ -320,6 +320,11 @@ module PointClickEngine
           @current_scene = scene
           @current_scene_name = name
 
+          # Add player to the new scene if player exists
+          if player = @player
+            scene.set_player(player)
+          end
+
           # Update camera for new scene
           if camera = @camera
             if bg = scene.background

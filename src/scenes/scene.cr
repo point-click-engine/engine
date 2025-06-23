@@ -227,8 +227,13 @@ module PointClickEngine
       def draw(camera : Graphics::Camera? = nil)
         if bg = @background
           if camera
-            # Draw background with camera offset
-            RL.draw_texture_ex(bg, RL::Vector2.new(x: -camera.position.x, y: -camera.position.y), 0.0, 1.0, RL::WHITE)
+            # Calculate scale to fit screen while maintaining aspect ratio
+            scale_x = 1024.0f32 / bg.width
+            scale_y = 768.0f32 / bg.height
+            scale = Math.max(scale_x, scale_y) # Use the larger scale to fill screen
+            
+            # Draw background with camera offset and proper scaling
+            RL.draw_texture_ex(bg, RL::Vector2.new(x: -camera.position.x, y: -camera.position.y), 0.0, scale, RL::WHITE)
           else
             # Legacy mode: Calculate scale to fit screen (1024x768)
             scale_x = 1024.0f32 / bg.width
