@@ -123,8 +123,11 @@ describe "YAML Scene Loading" do
       # Cleanup
       RL.close_window
       File.delete("multi_pattern_config.yaml")
+      File.delete("test_scenes/main/main.yaml")
+      File.delete("test_scenes/bonus/bonus.yaml")
       Dir.delete("test_scenes/main")
       Dir.delete("test_scenes/bonus")
+      Dir.delete("test_scenes")
     end
 
     it "handles missing scene files gracefully" do

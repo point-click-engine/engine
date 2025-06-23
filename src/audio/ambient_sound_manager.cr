@@ -38,6 +38,7 @@ module PointClickEngine
         property fade_duration : Float32 = 0.0f32
         property fading_in : Bool = false
         property fading_out : Bool = false
+        property fade_start_volume : Float32 = 0.0f32
 
         def initialize(@config : AmbientSoundConfig)
           load_sound
@@ -77,24 +78,26 @@ module PointClickEngine
         end
 
         def update(dt : Float32, listener_position : RL::Vector2? = nil)
-          return unless sound = @sound
-          return unless @playing
-
-          # Update fading
+          # Update fading always (even without sound loaded)
           update_fade(dt)
 
-          # Update spatial audio if enabled
-          if @config.spatial && listener_position
-            update_spatial_audio(listener_position)
-          end
+          # Only do audio-specific updates if sound is loaded
+          if sound = @sound
+            if @playing
+              # Update spatial audio if enabled
+              if @config.spatial && listener_position
+                update_spatial_audio(listener_position)
+              end
 
-          # Set volume
-          RAudio.set_sound_volume(sound, @current_volume)
+              # Set volume
+              RAudio.set_sound_volume(sound, @current_volume)
 
-          # Check if sound finished (for non-looping sounds)
-          unless @config.loop
-            if !RAudio.is_sound_playing(sound)
-              @playing = false
+              # Check if sound finished (for non-looping sounds)
+              unless @config.loop
+                if !RAudio.sound_playing?(sound)
+                  @playing = false
+                end
+              end
             end
           end
         end
@@ -105,6 +108,7 @@ module PointClickEngine
           if fade_duration > 0.0f32
             @fade_duration = fade_duration
             @fade_timer = 0.0f32
+            @fade_start_volume = @current_volume
             @fading_in = @target_volume > @current_volume
             @fading_out = @target_volume < @current_volume
           else
@@ -115,6 +119,7 @@ module PointClickEngine
         private def start_fade_in
           @fade_duration = @config.fade_in_duration
           @fade_timer = 0.0f32
+          @fade_start_volume = @current_volume
           @fading_in = true
           @fading_out = false
         end
@@ -123,6 +128,7 @@ module PointClickEngine
           @target_volume = 0.0f32
           @fade_duration = @config.fade_out_duration
           @fade_timer = 0.0f32
+          @fade_start_volume = @current_volume
           @fading_in = false
           @fading_out = true
         end
@@ -134,10 +140,9 @@ module PointClickEngine
           progress = (@fade_timer / @fade_duration).clamp(0.0f32, 1.0f32)
 
           if @fading_in
-            @current_volume = progress * @target_volume
+            @current_volume = @fade_start_volume + (progress * (@target_volume - @fade_start_volume))
           elsif @fading_out
-            start_volume = @current_volume
-            @current_volume = start_volume * (1.0f32 - progress)
+            @current_volume = @fade_start_volume + (progress * (@target_volume - @fade_start_volume))
           end
 
           # Check if fade complete
@@ -293,6 +298,7 @@ module PointClickEngine
         property fade_duration : Float32 = 0.0f32
         property fading_in : Bool = false
         property fading_out : Bool = false
+        property fade_start_volume : Float32 = 0.0f32
 
         def initialize(@config : AmbientSoundConfig)
         end

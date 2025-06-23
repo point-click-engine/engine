@@ -13,7 +13,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
 
       # Verify monitoring is enabled by checking if timing works
       monitor.start_timing("test")
-      sleep(0.001) # Small delay
+      sleep(1.milliseconds) # Small delay
       monitor.end_timing("test")
 
       metrics = monitor.get_metrics
@@ -51,7 +51,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
       monitor.disable_monitoring
 
       monitor.start_timing("test")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("test")
 
       metrics = monitor.get_metrics
@@ -64,7 +64,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
       monitor = PointClickEngine::Core::PerformanceMonitor.new
 
       monitor.start_timing("test")
-      sleep(0.001) # Small delay to ensure measurable time
+      sleep(1.milliseconds) # Small delay to ensure measurable time
       monitor.end_timing("test")
 
       metrics = monitor.get_metrics
@@ -87,14 +87,14 @@ describe PointClickEngine::Core::PerformanceMonitor do
 
       # First measurement
       monitor.start_timing("test")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("test")
 
       first_measurement = monitor.get_metrics["test"]
 
       # Second measurement
       monitor.start_timing("test")
-      sleep(0.002) # Slightly longer delay
+      sleep(2.milliseconds) # Slightly longer delay
       monitor.end_timing("test")
 
       second_measurement = monitor.get_metrics["test"]
@@ -128,7 +128,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
       monitor = PointClickEngine::Core::PerformanceMonitor.new
 
       monitor.start_timing("test")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("test")
 
       metrics1 = monitor.get_metrics
@@ -148,7 +148,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
 
       categories.each do |category|
         monitor.start_timing(category)
-        sleep(0.001)
+        sleep(1.milliseconds)
         monitor.end_timing(category)
       end
 
@@ -166,11 +166,11 @@ describe PointClickEngine::Core::PerformanceMonitor do
 
       # Add some metrics
       monitor.start_timing("test1")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("test1")
 
       monitor.start_timing("test2")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("test2")
 
       metrics_before = monitor.get_metrics
@@ -202,13 +202,13 @@ describe PointClickEngine::Core::PerformanceMonitor do
 
       # Add and reset metrics
       monitor.start_timing("test")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("test")
       monitor.reset_metrics
 
       # Add new metrics
       monitor.start_timing("new_test")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("new_test")
 
       metrics = monitor.get_metrics
@@ -224,7 +224,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
 
       # Start enabled
       monitor.start_timing("test1")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("test1")
 
       initial_metrics = monitor.get_metrics
@@ -234,7 +234,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
       monitor.disable_monitoring
 
       monitor.start_timing("test2")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("test2")
 
       disabled_metrics = monitor.get_metrics
@@ -245,7 +245,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
       monitor.enable_monitoring
 
       monitor.start_timing("test3")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("test3")
 
       final_metrics = monitor.get_metrics
@@ -256,7 +256,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
       monitor = PointClickEngine::Core::PerformanceMonitor.new
 
       monitor.start_timing("preserved")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("preserved")
 
       original_value = monitor.get_metrics["preserved"]
@@ -278,7 +278,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
 
       5.times do |i|
         monitor.start_timing("average_test")
-        sleep(0.001 * (i + 1)) # Varying delays
+        sleep((i + 1).milliseconds) # Varying delays
         monitor.end_timing("average_test")
 
         measurements << monitor.get_metrics["average_test"]
@@ -297,14 +297,14 @@ describe PointClickEngine::Core::PerformanceMonitor do
 
       # First measurement (becomes initial average)
       monitor.start_timing("weight_test")
-      sleep(0.010) # 10ms
+      sleep(10.milliseconds) # 10ms
       monitor.end_timing("weight_test")
 
       first_value = monitor.get_metrics["weight_test"]
 
       # Second measurement (much smaller)
       monitor.start_timing("weight_test")
-      sleep(0.001) # 1ms
+      sleep(1.milliseconds) # 1ms
       monitor.end_timing("weight_test")
 
       second_value = monitor.get_metrics["weight_test"]
@@ -362,7 +362,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
       monitor = PointClickEngine::Core::PerformanceMonitor.new
 
       monitor.start_timing("")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("")
 
       metrics = monitor.get_metrics
@@ -374,7 +374,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
       long_name = "a" * 1000
 
       monitor.start_timing(long_name)
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing(long_name)
 
       metrics = monitor.get_metrics
@@ -385,9 +385,9 @@ describe PointClickEngine::Core::PerformanceMonitor do
       monitor = PointClickEngine::Core::PerformanceMonitor.new
 
       monitor.start_timing("multi_start")
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.start_timing("multi_start") # Should overwrite first start time
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("multi_start")
 
       metrics = monitor.get_metrics
@@ -402,10 +402,10 @@ describe PointClickEngine::Core::PerformanceMonitor do
       monitor.start_timing("operation_a")
       monitor.start_timing("operation_b")
 
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("operation_a")
 
-      sleep(0.001)
+      sleep(1.milliseconds)
       monitor.end_timing("operation_b")
 
       metrics = monitor.get_metrics

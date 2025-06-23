@@ -99,8 +99,14 @@ end)
 ### 5. Build and Run
 
 ```bash
-crystal build main.cr
-./main
+./run.sh build main.cr
+./run.sh main.cr
+```
+
+Or for development:
+```bash
+./run.sh spec              # Run tests
+./run.sh crystal_mystery/main.cr  # Run example game
 ```
 
 That's it! You have a working adventure game.
@@ -203,6 +209,30 @@ Comprehensive documentation is available in the `docs` directory:
 2. Clone this repository
 3. Run `shards install`
 
+### Audio Support Setup
+
+The engine uses raylib-cr which includes audio support via miniaudiohelpers. If you encounter linking errors like:
+
+```
+ld: library 'miniaudiohelpers' not found
+```
+
+This means the library path isn't set correctly. There are several solutions:
+
+#### Solution: Use the run.sh script
+
+This project includes a `run.sh` script that handles all audio library setup automatically:
+
+```bash
+./run.sh main.cr          # Run your game
+./run.sh spec             # Run tests  
+./run.sh build main.cr    # Build your game
+```
+
+For other projects using this engine, copy the `run.sh` script to your project root.
+
+**Note**: Always use `./run.sh` instead of calling `crystal` directly. This ensures proper audio library linking and compatibility.
+
 ## Creating Your Game
 
 1. Copy the `templates/game_config_template.yaml`
@@ -215,12 +245,12 @@ Comprehensive documentation is available in the `docs` directory:
 
 ### Development Build
 ```bash
-crystal build main.cr
+./run.sh build main.cr
 ```
 
 ### Release Build
 ```bash
-crystal build main.cr --release
+./run.sh build main.cr --release
 ```
 
 ### Platform-Specific Builds
