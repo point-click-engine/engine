@@ -55,7 +55,8 @@ module PointClickEngine
           @cursor_manager.update(game_mouse, scene, @engine.inventory)
 
           # Handle left click - execute current verb
-          if RL.mouse_button_pressed?(RL::MouseButton::Left)
+          if !Core::InputState.mouse_consumed? && RL.mouse_button_pressed?(RL::MouseButton::Left)
+            puts "VerbInputSystem: Left click detected!"
             handle_verb_click(scene, player, world_mouse)
           end
 
@@ -156,11 +157,23 @@ module PointClickEngine
           # Default character verb handling
           case verb
           when .talk?
-            if player
+            if character.responds_to?(:on_talk)
+              character.on_talk
+            elsif player
               character.on_interact(player)
             end
           when .look?
-            show_description("It's #{character.name}.")
+            if character.responds_to?(:on_look)
+              character.on_look
+            else
+              show_description("It's #{character.name}.")
+            end
+          when .use?
+            if character.responds_to?(:on_use)
+              character.on_use
+            else
+              show_message("I can't do that to #{character.name}.")
+            end
           else
             show_message("I can't do that to #{character.name}.")
           end

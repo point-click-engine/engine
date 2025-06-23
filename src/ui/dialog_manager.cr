@@ -22,6 +22,7 @@ module PointClickEngine
         @showing_message = false
         @portrait_manager = PortraitManager.new
         @floating_manager = FloatingDialogManager.new
+        @consumed_input_this_frame = false
       end
 
       def show_dialog(character_name : String, text : String, choices : Array(DialogChoice)? = nil, expression : PortraitExpression = PortraitExpression::Neutral)
@@ -112,9 +113,10 @@ module PointClickEngine
       # )
       # ```
       def show_dialog_choices(prompt : String, choices : Array(String), &callback : Int32 ->)
-        # Get window dimensions
-        window_width = Raylib.get_screen_width
-        window_height = Raylib.get_screen_height
+        # Use game reference dimensions, not screen dimensions
+        # Dialogs are rendered in game space which uses reference resolution
+        window_width = 1024f32 # Reference width
+        window_height = 768f32 # Reference height
 
         # Create dialog at bottom of screen
         dialog_height = 150f32 + (choices.size * 30f32)
@@ -133,8 +135,9 @@ module PointClickEngine
         # Add choices
         choices.each_with_index do |choice_text, index|
           dialog.add_choice(choice_text) do
+            puts "DialogManager: Choice #{index} clicked, calling callback"
             callback.call(index)
-            close_current_dialog
+            # Don't close dialog here - let the callback handle it or replace it
           end
         end
 
@@ -149,8 +152,9 @@ module PointClickEngine
         # Add choices
         choices.each_with_index do |choice_text, index|
           dialog.add_choice(choice_text) do
+            puts "DialogManager: Choice #{index} clicked, calling callback"
             callback.call(index)
-            close_current_dialog
+            # Don't close dialog here - let the callback handle it or replace it
           end
         end
 
@@ -159,11 +163,22 @@ module PointClickEngine
       end
 
       def update(dt : Float32)
+        # Reset consumed input flag at start of frame
+        @consumed_input_this_frame = false
+
         if @showing_message && @message_timer > 0
           @message_timer -= dt
           if @message_timer <= 0
             close_current_dialog
             @showing_message = false
+          end
+        end
+
+        # Check if dialog will consume input before updating
+        if dialog = @current_dialog
+          if dialog.visible && dialog.ready_to_process_input && RL.mouse_button_pressed?(RL::MouseButton::Left)
+            @consumed_input_this_frame = true
+            puts "DialogManager: Will consume input this frame"
           end
         end
 
@@ -216,6 +231,10 @@ module PointClickEngine
         !@current_dialog.nil?
       end
 
+      def dialog_consumed_input? : Bool
+        @consumed_input_this_frame || @current_dialog.try(&.consumed_input) || false
+      end
+
       # Add a dialog tree
       def add_dialog_tree(dialog_tree : Characters::Dialogue::DialogTree)
         @dialog_trees[dialog_tree.name] = dialog_tree
@@ -228,8 +247,12 @@ module PointClickEngine
 
       # Start a conversation with a dialog tree
       def start_dialog_tree(tree_name : String, starting_node : String = "greeting")
+        puts "DialogManager: Starting dialog tree '#{tree_name}' at node '#{starting_node}'"
         if tree = get_dialog_tree(tree_name)
+          puts "DialogManager: Found dialog tree, starting conversation"
           tree.start_conversation(starting_node)
+        else
+          puts "DialogManager: Dialog tree '#{tree_name}' not found!"
         end
       end
     end

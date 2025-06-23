@@ -84,9 +84,12 @@ module PointClickEngine
         end
 
         def make_choice(choice_index : Int32)
+          puts "DialogTree.make_choice: called with index #{choice_index}"
           return unless current_node = get_current_node
-          return unless choice = current_node.choices[choice_index]?
-          return unless choice.available?
+          
+          # Get available choices and use the index on the filtered list
+          available_choices = current_node.choices.select(&.available?)
+          return unless choice = available_choices[choice_index]?
 
           # Mark choice as used if it's once only
           if choice.once_only
@@ -98,14 +101,17 @@ module PointClickEngine
 
           # Move to target node
           @current_node_id = choice.target_node_id
+          puts "DialogTree: Moving to node '#{@current_node_id}'"
 
           if target_node = get_current_node
+            puts "DialogTree: Found target node, is_end = #{target_node.is_end}"
             if target_node.is_end
               end_conversation
             else
               show_current_node
             end
           else
+            puts "DialogTree: Target node '#{@current_node_id}' not found!"
             end_conversation
           end
         end
@@ -125,6 +131,7 @@ module PointClickEngine
         end
 
         private def show_current_node
+          puts "DialogTree.show_current_node: called for node '#{@current_node_id}'"
           return unless current_node = get_current_node
 
           # Execute node actions
@@ -132,9 +139,11 @@ module PointClickEngine
 
           # Get available choices
           available_choices = current_node.choices.select(&.available?)
+          puts "DialogTree: Found #{available_choices.size} available choices"
 
           if available_choices.empty?
             # No choices, end conversation
+            puts "DialogTree: No choices available, ending conversation"
             end_conversation
             return
           end
@@ -144,9 +153,13 @@ module PointClickEngine
             {choice.text, -> { make_choice(index) }}
           end
 
-          # Show dialog using character dialogue system
-          if character = Core::Engine.instance.current_scene.try(&.get_character(current_node.character_name || ""))
-            character.ask(current_node.text, choice_tuples)
+          # Show dialog with choices
+          if dm = Core::Engine.instance.dialog_manager
+            puts "DialogTree: Showing dialog with text: '#{current_node.text}'"
+            dm.show_dialog_choices(current_node.text, available_choices.map(&.text)) do |choice_index|
+              puts "DialogTree: Choice callback triggered with index #{choice_index}"
+              make_choice(choice_index)
+            end
           else
             # Fallback to simple dialog
             dialog_pos = RL::Vector2.new(x: 100, y: Core::Engine.instance.window_height - 200)

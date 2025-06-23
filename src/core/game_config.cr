@@ -299,6 +299,7 @@ module PointClickEngine
             begin
               ErrorReporter.report_progress("Loading dialog '#{File.basename(path)}'")
               dialog_tree = Characters::Dialogue::DialogTree.load_from_file(path)
+              puts "Loaded dialog tree '#{dialog_tree.name}' with #{dialog_tree.nodes.size} nodes"
               # Store dialog tree in engine for character access
               if dm = engine.dialog_manager
                 dm.add_dialog_tree(dialog_tree)

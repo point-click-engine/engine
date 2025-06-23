@@ -40,9 +40,11 @@ module PointClickEngine
         # Get current verb from cursor manager
         @current_verb = cursor_manager.get_current_action
 
-        # Get current object from hotspot
+        # Get current object from hotspot or character
         if hotspot = cursor_manager.current_hotspot
           @current_object = hotspot.name
+        elsif character = cursor_manager.current_character
+          @current_object = character.name
         else
           @current_object = ""
         end

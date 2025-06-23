@@ -15,7 +15,7 @@ class DebugPlayer < PointClickEngine::Characters::Player
     puts "\n🖱️  DEBUG: Mouse clicked at (#{mouse_pos.x}, #{mouse_pos.y})"
     puts "🧭 DEBUG: Player current position: (#{@position.x}, #{@position.y})"
     puts "🚶 DEBUG: Movement enabled: #{@movement_enabled}"
-    
+
     unless @movement_enabled
       puts "❌ DEBUG: Movement is disabled!"
       return
@@ -24,7 +24,7 @@ class DebugPlayer < PointClickEngine::Characters::Player
     # Check if the target is walkable
     walkable = scene.is_walkable?(mouse_pos)
     puts "🚶 DEBUG: Is position walkable? #{walkable}"
-    
+
     if walkable_area = scene.walkable_area
       puts "🔧 DEBUG: Scene has walkable area defined"
       puts "🔧 DEBUG: Walkable area regions: #{walkable_area.regions.size}"
@@ -41,7 +41,7 @@ class DebugPlayer < PointClickEngine::Characters::Player
     end
 
     puts "✅ DEBUG: Starting movement to (#{mouse_pos.x}, #{mouse_pos.y})"
-    
+
     # Start walking with enhanced animations
     walk_to(mouse_pos)
     puts "🎯 DEBUG: walk_to() called successfully"
@@ -50,9 +50,9 @@ class DebugPlayer < PointClickEngine::Characters::Player
   def walk_to(target : RL::Vector2)
     puts "🚶 DEBUG: walk_to() called with target (#{target.x}, #{target.y})"
     puts "🎯 DEBUG: Setting target position and state"
-    
-    super(target)  # Call parent implementation
-    
+
+    super(target) # Call parent implementation
+
     puts "🔄 DEBUG: Character state set to: #{@state}"
     puts "🎯 DEBUG: Target position set to: #{@target_position}"
     puts "🧭 DEBUG: Direction set to: #{@direction}"
@@ -66,7 +66,7 @@ class DebugPlayer < PointClickEngine::Characters::Player
         puts "🔄 DEBUG: Walking... Distance to target: #{distance.round(2)}"
       end
     end
-    
+
     super(dt)
   end
 
@@ -87,7 +87,7 @@ class DebugScene < PointClickEngine::Scenes::Scene
 
   def is_walkable?(point : RL::Vector2) : Bool
     puts "🔍 DEBUG: Checking if point (#{point.x}, #{point.y}) is walkable"
-    
+
     if walkable = @walkable_area
       result = walkable.is_point_walkable?(point)
       puts "🔍 DEBUG: Walkable area check result: #{result}"
@@ -107,35 +107,35 @@ class PlayerMovementTest
 
   def initialize
     puts "🚀 Starting Player Movement Debug Test"
-    
+
     # Create engine
     @engine = PointClickEngine::Core::Engine.new(800, 600, "Player Movement Test")
-    
+
     # Enable debug mode
     PointClickEngine::Core::Engine.debug_mode = true
     puts "🔧 DEBUG: Debug mode enabled"
-    
+
     # Initialize engine
     @engine.init
     puts "✅ Engine initialized"
-    
+
     # Create test scene
     @scene = DebugScene.new("test_room")
-    
+
     # Create simple walkable area (optional - comment out to test without walkable area)
     setup_walkable_area
-    
+
     # Create debug player
     @player = DebugPlayer.new("TestPlayer", RL::Vector2.new(x: 100, y: 200), RL::Vector2.new(x: 32, y: 64))
-    
+
     # Set up player in scene
     @scene.set_player(@player)
     @engine.player = @player
-    
+
     # Add scene to engine
     @engine.add_scene(@scene)
     @engine.change_scene("test_room")
-    
+
     puts "🎮 Test setup complete!"
     puts "🖱️  Click anywhere to test player movement"
     puts "📊 Debug output will show mouse clicks, walkable checks, and movement commands"
@@ -145,33 +145,33 @@ class PlayerMovementTest
 
   def setup_walkable_area
     puts "🏠 DEBUG: Setting up walkable area"
-    
+
     # Create a simple rectangular walkable area
     walkable_area = PointClickEngine::Scenes::WalkableArea.new
-    
+
     # Define a large walkable rectangle (most of the screen)
     walkable_region = PointClickEngine::Scenes::PolygonRegion.new("walkable_main", true)
     walkable_region.vertices = [
-      RL::Vector2.new(x: 50, y: 150),   # top-left
-      RL::Vector2.new(x: 750, y: 150),  # top-right
-      RL::Vector2.new(x: 750, y: 550),  # bottom-right
-      RL::Vector2.new(x: 50, y: 550)    # bottom-left
+      RL::Vector2.new(x: 50, y: 150),  # top-left
+      RL::Vector2.new(x: 750, y: 150), # top-right
+      RL::Vector2.new(x: 750, y: 550), # bottom-right
+      RL::Vector2.new(x: 50, y: 550),  # bottom-left
     ]
-    
+
     walkable_area.regions << walkable_region
-    
+
     # Add a small non-walkable obstacle in the middle
     obstacle_region = PointClickEngine::Scenes::PolygonRegion.new("obstacle", false)
     obstacle_region.vertices = [
-      RL::Vector2.new(x: 350, y: 250),  # top-left
-      RL::Vector2.new(x: 450, y: 250),  # top-right
-      RL::Vector2.new(x: 450, y: 350),  # bottom-right
-      RL::Vector2.new(x: 350, y: 350)   # bottom-left
+      RL::Vector2.new(x: 350, y: 250), # top-left
+      RL::Vector2.new(x: 450, y: 250), # top-right
+      RL::Vector2.new(x: 450, y: 350), # bottom-right
+      RL::Vector2.new(x: 350, y: 350), # bottom-left
     ]
-    
+
     walkable_area.regions << obstacle_region
     @scene.walkable_area = walkable_area
-    
+
     puts "✅ DEBUG: Walkable area created with #{walkable_area.regions.size} regions"
   end
 
@@ -189,11 +189,11 @@ class DebugInputHandler < PointClickEngine::Core::EngineComponents::InputHandler
     puts "🏠 DEBUG: Scene present: #{scene ? "Yes" : "No"}"
     puts "🎮 DEBUG: Player present: #{player ? "Yes" : "No"}"
     puts "🖱️  DEBUG: Left mouse button pressed: #{RL.mouse_button_pressed?(RL::MouseButton::Left)}"
-    
+
     if scene && player && RL.mouse_button_pressed?(RL::MouseButton::Left)
       mouse_pos = RL.get_mouse_position
       puts "🖱️  DEBUG: Raw mouse position: (#{mouse_pos.x}, #{mouse_pos.y})"
-      
+
       # Convert screen coordinates to world coordinates if camera exists
       world_pos = if camera
                     converted = camera.screen_to_world(mouse_pos.x.to_i, mouse_pos.y.to_i)
@@ -220,7 +220,7 @@ class DebugInputHandler < PointClickEngine::Core::EngineComponents::InputHandler
         end
       end
     end
-    
+
     # Call parent implementation for other functionality
     super
   end

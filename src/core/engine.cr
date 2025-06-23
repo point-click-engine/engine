@@ -18,6 +18,7 @@ require "./engine/input_handler"
 require "./engine/verb_input_system"
 require "./engine/render_coordinator"
 require "../graphics/camera"
+require "./input_state"
 
 module PointClickEngine
   # Core engine functionality, game loop, and state management
@@ -83,6 +84,10 @@ module PointClickEngine
       # Whether the game loop is currently running
       @[YAML::Field(ignore: true)]
       property running : Bool = false
+
+      # Input blocking after dialog
+      @[YAML::Field(ignore: true)]
+      property block_input_frames : Int32 = 0
 
       # Whether to show FPS counter
       property show_fps : Bool = false
@@ -497,17 +502,25 @@ module PointClickEngine
         @dialogs.each(&.update(dt))
         # @dialogs.reject!(&.completed?) # Dialog doesn't have completed? method
 
-        # Process input
-        camera_for_input = if scene = @current_scene
-                             scene.enable_camera_scrolling ? @camera : nil
-                           else
-                             nil
-                           end
+        # Check if any dialog is visible or dialog manager has active dialog
+        dialog_active = @dialogs.any? { |d| d.visible }
+        if dm = @system_manager.dialog_manager
+          dialog_active ||= dm.is_dialog_active?
+        end
 
-        if verb_system = @verb_input_system
-          verb_system.process_input(@current_scene, @player, @system_manager.display_manager, camera_for_input)
-        else
-          @input_handler.process_input(@current_scene, @player, camera_for_input)
+        # Process input only if no dialog is active
+        if !dialog_active
+          camera_for_input = if scene = @current_scene
+                               scene.enable_camera_scrolling ? @camera : nil
+                             else
+                               nil
+                             end
+
+          if verb_system = @verb_input_system
+            verb_system.process_input(@current_scene, @player, @system_manager.display_manager, camera_for_input)
+          else
+            @input_handler.process_input(@current_scene, @player, camera_for_input)
+          end
         end
 
         # Update cursor
@@ -531,6 +544,9 @@ module PointClickEngine
       # Update game state
       private def update
         dt = RL.get_frame_time
+
+        # Reset input state for new frame
+        InputState.reset
 
         # Process events first
         event_system.process_events
@@ -572,17 +588,32 @@ module PointClickEngine
         @dialogs.each(&.update(dt))
         # @dialogs.reject!(&.completed?) # Dialog doesn't have completed? method
 
-        # Process input
-        camera_for_input = if scene = @current_scene
-                             scene.enable_camera_scrolling ? @camera : nil
-                           else
-                             nil
-                           end
+        # Check if any dialog is visible or dialog manager has active dialog
+        dialog_active = @dialogs.any? { |d| d.visible }
+        if dm = @system_manager.dialog_manager
+          dialog_active ||= dm.is_dialog_active?
+        end
 
-        if verb_system = @verb_input_system
-          verb_system.process_input(@current_scene, @player, @system_manager.display_manager, camera_for_input)
-        else
-          @input_handler.process_input(@current_scene, @player, camera_for_input)
+        if RL.mouse_button_pressed?(RL::MouseButton::Left)
+          puts "=== FRAME WITH MOUSE CLICK ==="
+          puts "Engine.update: dialog_active = #{dialog_active}"
+          puts "  @dialogs visible: #{@dialogs.select(&.visible).size}"
+          puts "  dialog_manager active: #{@system_manager.dialog_manager.try(&.is_dialog_active?) || false}"
+        end
+
+        # Process input only if no dialog is active
+        if !dialog_active
+          camera_for_input = if scene = @current_scene
+                               scene.enable_camera_scrolling ? @camera : nil
+                             else
+                               nil
+                             end
+
+          if verb_system = @verb_input_system
+            verb_system.process_input(@current_scene, @player, @system_manager.display_manager, camera_for_input)
+          else
+            @input_handler.process_input(@current_scene, @player, camera_for_input)
+          end
         end
 
         # Update cursor

@@ -7,37 +7,37 @@ require "./src/point_click_engine"
 class SimpleMovementTest
   def initialize
     puts "🚀 Simple Movement Test Starting..."
-    
+
     # Create minimal engine setup
     @engine = PointClickEngine::Core::Engine.new(800, 600, "Simple Movement Test")
     PointClickEngine::Core::Engine.debug_mode = true
     @engine.init
-    
+
     # Create simple scene without walkable areas
     @scene = PointClickEngine::Scenes::Scene.new("simple_room")
-    
+
     # Create player
-    @player = PointClickEngine::Characters::Player.new("TestPlayer", 
-                                                        RL::Vector2.new(x: 400, y: 300), 
-                                                        RL::Vector2.new(x: 32, y: 64))
-    
+    @player = PointClickEngine::Characters::Player.new("TestPlayer",
+      RL::Vector2.new(x: 400, y: 300),
+      RL::Vector2.new(x: 32, y: 64))
+
     # Load a simple sprite for the player (optional - will work without)
     # @player.load_spritesheet("assets/player.png", 32, 64)
-    
+
     # Set up basic animations
     @player.add_animation("idle", 0, 1, 0.5, true)
     @player.add_animation("walk_left", 0, 4, 0.15, true)
     @player.add_animation("walk_right", 4, 4, 0.15, true)
-    
+
     # Add player to scene and engine
     @scene.set_player(@player)
     @engine.player = @player
     @engine.add_scene(@scene)
     @engine.change_scene("simple_room")
-    
+
     # Enable click handling explicitly
     @engine.handle_clicks = true
-    
+
     puts "✅ Simple setup complete - click anywhere to move!"
     puts "🎮 Player at: (#{@player.position.x}, #{@player.position.y})"
     puts "🎯 Movement enabled: #{@player.movement_enabled}"
@@ -65,7 +65,7 @@ module PointClickEngine
             puts "  Player state: #{player ? player.state : "N/A"}"
             puts "  Handle clicks: #{@handle_clicks}"
           end
-          
+
           # Check for mouse input with detailed logging
           if RL.mouse_button_pressed?(RL::MouseButton::Left)
             mouse_pos = RL.get_mouse_position
@@ -74,18 +74,18 @@ module PointClickEngine
             puts "  Handle clicks enabled: #{@handle_clicks}"
             puts "  Scene present: #{scene ? "Yes" : "No"}"
             puts "  Player present: #{player ? "Yes" : "No"}"
-            
+
             if !@handle_clicks
               puts "  ❌ Click handling is DISABLED"
             end
-            
+
             if scene && player && @handle_clicks
               puts "  ✅ Conditions met for movement"
-              
+
               # Check walkable area
               walkable = scene.is_walkable?(mouse_pos)
               puts "  Walkable check: #{walkable}"
-              
+
               if walkable
                 puts "  🎯 Calling player.handle_click"
                 if player.responds_to?(:handle_click)
@@ -99,7 +99,7 @@ module PointClickEngine
               end
             end
           end
-          
+
           # Call original method
           handle_keyboard_input
           handle_click(scene, player, camera)

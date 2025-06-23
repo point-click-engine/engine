@@ -42,6 +42,10 @@ module PointClickEngine
 
       property ready_to_process_input : Bool = false
 
+      # Track if dialog consumed input this frame
+      @[YAML::Field(ignore: true)]
+      property consumed_input : Bool = false
+
       def initialize
         @text = ""
         @position = RL::Vector2.new
@@ -70,6 +74,9 @@ module PointClickEngine
       end
 
       def update(dt : Float32)
+        # Reset consumed input flag each frame
+        @consumed_input = false
+
         return unless @visible
         unless @ready_to_process_input
           @ready_to_process_input = true
@@ -77,19 +84,41 @@ module PointClickEngine
         end
 
         if @choices.empty?
-          if RL::MouseButton::Left.pressed? || RL::KeyboardKey::Space.pressed?
+          if Core::InputState.consume_mouse_click || RL::KeyboardKey::Space.pressed?
+            @consumed_input = true
             hide
           end
         else
-          mouse_pos = RL.get_mouse_position
-          if RL::MouseButton::Left.pressed?
+          raw_mouse = RL.get_mouse_position
+
+          # Convert screen coordinates to game coordinates if display manager exists
+          mouse_pos = if engine = Core::Engine.instance
+                        if dm = engine.display_manager
+                          dm.screen_to_game(raw_mouse)
+                        else
+                          raw_mouse
+                        end
+                      else
+                        raw_mouse
+                      end
+
+          if Core::InputState.consume_mouse_click
+            puts "Dialog: Consumed mouse click at #{mouse_pos.x}, #{mouse_pos.y} (raw: #{raw_mouse.x}, #{raw_mouse.y})"
+            clicked_choice = false
             @choices.each_with_index do |choice, index|
               choice_rect = get_choice_rect(index)
+              puts "Dialog: Choice #{index} rect: #{choice_rect.x}, #{choice_rect.y}, #{choice_rect.width}, #{choice_rect.height}"
               if RL.check_collision_point_rec?(mouse_pos, choice_rect)
+                @consumed_input = true
+                puts "Dialog: Choice #{index} clicked! Text: #{choice.text}"
                 choice.action.call
+                clicked_choice = true
                 hide
                 break
               end
+            end
+            if !clicked_choice
+              puts "Dialog: Click was not on any choice"
             end
           end
         end

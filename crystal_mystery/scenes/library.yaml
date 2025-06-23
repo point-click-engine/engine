@@ -92,7 +92,7 @@ characters:
   - name: butler
     position:
       x: 300
-      y: 450
+      y: 500
     sprite_path: assets/sprites/butler.png
     sprite_info:
       frame_width: 100

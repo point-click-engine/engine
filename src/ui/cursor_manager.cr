@@ -1,6 +1,7 @@
 # Cursor management system for context-sensitive interactions
 
 require "../scenes/hotspot"
+require "../characters/character"
 
 module PointClickEngine
   module UI
@@ -34,6 +35,7 @@ module PointClickEngine
       property cursors : Hash(VerbType, RL::Texture2D)
       property current_verb : VerbType = VerbType::Walk
       property current_hotspot : Hotspot? = nil
+      property current_character : Characters::Character? = nil
       property show_tooltip : Bool = true
       property tooltip_offset : RL::Vector2 = RL::Vector2.new(x: 20, y: 20)
       property manual_verb_mode : Bool = false
@@ -77,6 +79,7 @@ module PointClickEngine
       # Update cursor based on what's under the mouse
       def update(mouse_pos : RL::Vector2, scene : Scenes::Scene, inventory : Inventory::InventorySystem? = nil)
         @current_hotspot = nil
+        @current_character = nil
 
         # Check if we're over inventory
         if inventory && inventory.visible
@@ -93,6 +96,12 @@ module PointClickEngine
           @current_hotspot = hotspot
           if !@manual_verb_mode
             @current_verb = determine_verb_for_hotspot(hotspot)
+          end
+        elsif character = scene.get_character_at(mouse_pos)
+          # Check if we're over a character
+          @current_character = character
+          if !@manual_verb_mode
+            @current_verb = VerbType::Talk
           end
         else
           # Default to walk on background if not in manual mode
@@ -191,7 +200,9 @@ module PointClickEngine
         # Draw tooltip if enabled
         if @show_tooltip
           if hotspot = @current_hotspot
-            draw_tooltip(mouse_pos, hotspot)
+            draw_tooltip(mouse_pos, hotspot.name)
+          elsif character = @current_character
+            draw_tooltip(mouse_pos, character.name)
           end
         end
 
@@ -232,9 +243,9 @@ module PointClickEngine
       end
 
       # Draw tooltip showing verb and object
-      private def draw_tooltip(mouse_pos : RL::Vector2, hotspot : Hotspot)
+      private def draw_tooltip(mouse_pos : RL::Vector2, object_name : String)
         verb_text = @current_verb.to_s.capitalize
-        object_text = hotspot.name
+        object_text = object_name
         tooltip_text = "#{verb_text} #{object_text}"
 
         text_width = RL.measure_text(tooltip_text, 16)

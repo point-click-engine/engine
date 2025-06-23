@@ -12,7 +12,7 @@ class DebugEngine < PointClickEngine::Core::Engine
 
   private def update
     dt = RL.get_frame_time
-    
+
     # Check for mouse clicks at the engine level
     if RL.mouse_button_pressed?(RL::MouseButton::Left)
       mouse_pos = RL.get_mouse_position
@@ -38,9 +38,9 @@ engine.init
 scene = PointClickEngine::Scenes::Scene.new("debug_room")
 
 # Create player
-player = PointClickEngine::Characters::Player.new("DebugPlayer", 
-                                                  RL::Vector2.new(x: 400, y: 300), 
-                                                  RL::Vector2.new(x: 32, y: 64))
+player = PointClickEngine::Characters::Player.new("DebugPlayer",
+  RL::Vector2.new(x: 400, y: 300),
+  RL::Vector2.new(x: 32, y: 64))
 
 puts "🎮 Player created at: (#{player.position.x}, #{player.position.y})"
 puts "🎮 Player movement enabled: #{player.movement_enabled}"

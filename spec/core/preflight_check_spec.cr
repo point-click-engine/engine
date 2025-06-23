@@ -430,7 +430,6 @@ describe PointClickEngine::Core::PreflightCheck do
 
           # Should warn about potentially small backgrounds
           result.warnings.any? { |w| w.includes?("background may be too small") && w.includes?("320x180") }.should be_true
-
         ensure
           {% if flag?(:darwin) || flag?(:linux) %}
             STDOUT.reopen(original_stdout)
@@ -475,7 +474,6 @@ describe PointClickEngine::Core::PreflightCheck do
 
           result.passed.should be_false
           result.errors.should contain("Player sprite not found: assets/sprites/missing_player.png")
-
         ensure
           {% if flag?(:darwin) || flag?(:linux) %}
             STDOUT.reopen(original_stdout)
@@ -518,7 +516,6 @@ describe PointClickEngine::Core::PreflightCheck do
           result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
           result.warnings.should contain("No player sprite path specified - player will be invisible")
-
         ensure
           {% if flag?(:darwin) || flag?(:linux) %}
             STDOUT.reopen(original_stdout)
@@ -566,7 +563,6 @@ describe PointClickEngine::Core::PreflightCheck do
 
           result.passed.should be_false
           result.errors.should contain("Invalid player sprite dimensions: 0x-10")
-
         ensure
           {% if flag?(:darwin) || flag?(:linux) %}
             STDOUT.reopen(original_stdout)
@@ -608,7 +604,6 @@ describe PointClickEngine::Core::PreflightCheck do
           result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
           result.warnings.should contain("No player sprite dimensions specified - may cause rendering issues")
-
         ensure
           {% if flag?(:darwin) || flag?(:linux) %}
             STDOUT.reopen(original_stdout)
@@ -645,7 +640,6 @@ describe PointClickEngine::Core::PreflightCheck do
 
           result.passed.should be_false
           result.errors.should contain("No player configuration found")
-
         ensure
           {% if flag?(:darwin) || flag?(:linux) %}
             STDOUT.reopen(original_stdout)
@@ -692,7 +686,6 @@ describe PointClickEngine::Core::PreflightCheck do
           result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
           result.warnings.should contain("Start scene 'main' may not have proper player spawn position defined")
-
         ensure
           {% if flag?(:darwin) || flag?(:linux) %}
             STDOUT.reopen(original_stdout)
@@ -758,7 +751,6 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result.passed.should be_false
         result.errors.should contain("Player starting position (500.0, 400.0) is in a non-walkable area in scene 'library'")
-
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -818,7 +810,6 @@ describe PointClickEngine::Core::PreflightCheck do
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
         result.info.should contain("✓ Player starting position is in walkable area in scene 'library'")
-
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -871,7 +862,6 @@ describe PointClickEngine::Core::PreflightCheck do
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
         result.warnings.should contain("Player starting position (50.0, 200.0) may not be in any walkable area in scene 'test_scene'")
-
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -923,7 +913,6 @@ describe PointClickEngine::Core::PreflightCheck do
         # Should not produce walkable area warnings for scenes without walkable areas
         result.warnings.none? { |w| w.includes?("walkable area") }.should be_true
         result.errors.none? { |e| e.includes?("walkable area") }.should be_true
-
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -978,7 +967,97 @@ describe PointClickEngine::Core::PreflightCheck do
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
         result.info.should contain("✓ Player starting position is in walkable area in scene 'complex_scene'")
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
 
+    it "detects overlapping hotspots" do
+      temp_dir = File.tempname("overlapping_hotspots_test")
+      Dir.mkdir_p("#{temp_dir}/scenes")
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        assets:
+          scenes:
+            - "scenes/*.yaml"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Create scene with overlapping hotspots
+        scene_yaml = <<-YAML
+        name: test_scene
+        background_path: bg.png
+        hotspots:
+          - name: hotspot1
+            x: 100
+            y: 100
+            width: 200
+            height: 150
+            actions:
+              look: "First hotspot"
+          - name: hotspot2
+            x: 150
+            y: 120
+            width: 180
+            height: 120
+            actions:
+              look: "Second hotspot"
+        YAML
+        File.write("#{temp_dir}/scenes/test_scene.yaml", scene_yaml)
+
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+        result.warnings.should contain("Scene 'test_scene': Hotspots 'hotspot1' and 'hotspot2' overlap - may cause interaction issues")
+      ensure
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+      end
+    end
+
+    it "detects character blocked by hotspot" do
+      temp_dir = File.tempname("character_blocked_test")
+      Dir.mkdir_p("#{temp_dir}/scenes")
+
+      begin
+        config_yaml = <<-YAML
+        game:
+          title: "Test Game"
+        assets:
+          scenes:
+            - "scenes/*.yaml"
+        YAML
+
+        config_path = "#{temp_dir}/config.yaml"
+        File.write(config_path, config_yaml)
+
+        # Create scene where character is blocked by hotspot
+        scene_yaml = <<-YAML
+        name: test_scene
+        background_path: bg.png
+        hotspots:
+          - name: desk
+            x: 380
+            y: 380
+            width: 240
+            height: 170
+            actions:
+              look: "A large desk"
+        characters:
+          - name: butler
+            position:
+              x: 400
+              y: 450
+            sprite_path: butler.png
+        YAML
+        File.write("#{temp_dir}/scenes/test_scene.yaml", scene_yaml)
+
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
+
+        result.warnings.should contain("Scene 'test_scene': Character 'butler' at (400.0, 450.0) may be blocked by hotspot 'desk'")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end

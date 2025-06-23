@@ -35,10 +35,28 @@ module PointClickEngine
           if clicked_hotspot
             clicked_hotspot.on_click.try(&.call)
           else
-            # Move player to clicked position if no hotspot (using world coordinates)
-            if player
-              if player.responds_to?(:handle_click)
-                player.handle_click(world_pos, scene)
+            # Check if any character was clicked (using world coordinates)
+            clicked_character = scene.get_character_at(world_pos)
+
+            if clicked_character
+              # Handle character interaction (e.g., talk to character)
+              if player && clicked_character.responds_to?(:on_interact)
+                # Character interaction with player as interactor
+                clicked_character.on_interact(player)
+              elsif clicked_character.responds_to?(:on_talk)
+                # Fallback to talk interaction
+                clicked_character.on_talk
+              else
+                # Default character interaction - could show dialog or description
+                puts "Clicked on character: #{clicked_character.name}"
+                # TODO: Implement character dialog system integration
+              end
+            else
+              # Move player to clicked position if no hotspot or character (using world coordinates)
+              if player
+                if player.responds_to?(:handle_click)
+                  player.handle_click(world_pos, scene)
+                end
               end
             end
           end
