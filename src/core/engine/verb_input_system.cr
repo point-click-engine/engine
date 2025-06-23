@@ -351,7 +351,7 @@ module PointClickEngine
           if RL.key_pressed?(RL::KeyboardKey::I)
             @engine.inventory.toggle_visibility
           end
-          
+
           # Verb selection with number keys
           if RL.key_pressed?(RL::KeyboardKey::One)
             @cursor_manager.set_verb(UI::VerbType::Walk)
@@ -366,7 +366,7 @@ module PointClickEngine
           elsif RL.key_pressed?(RL::KeyboardKey::Six)
             @cursor_manager.set_verb(UI::VerbType::Open)
           end
-          
+
           # Mouse wheel to cycle through verbs
           if RL.get_mouse_wheel_move > 0
             @cursor_manager.cycle_verb_forward

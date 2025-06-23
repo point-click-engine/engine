@@ -286,9 +286,9 @@ module PointClickEngine
     # Options menu
     class OptionsMenu < BaseMenu
       property on_back : Proc(Nil)?
-      
+
       @current_resolution_index : Int32 = 0
-      
+
       RESOLUTION_OPTIONS = [
         {800, 600},
         {1024, 768},
@@ -376,20 +376,20 @@ module PointClickEngine
       private def toggle_debug
         Core::Engine.debug_mode = !Core::Engine.debug_mode
       end
-      
+
       private def find_current_resolution_index : Int32
         current_width = RL.get_screen_width
         current_height = RL.get_screen_height
-        
+
         RESOLUTION_OPTIONS.each_with_index do |res, index|
           if res[0] == current_width && res[1] == current_height
             return index
           end
         end
-        
+
         return -1 # Custom resolution
       end
-      
+
       private def previous_resolution
         if @current_resolution_index > 0
           @current_resolution_index -= 1
@@ -399,40 +399,40 @@ module PointClickEngine
           apply_resolution
         end
       end
-      
+
       private def next_resolution
         if @current_resolution_index >= 0 && @current_resolution_index < RESOLUTION_OPTIONS.size - 1
           @current_resolution_index += 1
           apply_resolution
         end
       end
-      
+
       private def apply_resolution
         return if @engine.fullscreen # Don't change resolution in fullscreen
-        
+
         if @current_resolution_index >= 0 && @current_resolution_index < RESOLUTION_OPTIONS.size
           res = RESOLUTION_OPTIONS[@current_resolution_index]
           width = res[0]
           height = res[1]
-          
+
           # Set window size
           RL.set_window_size(width, height)
-          
+
           # Update engine window dimensions
           @engine.window_width = width
           @engine.window_height = height
-          
+
           # Update display manager
           if dm = @engine.display_manager
             dm.resize(width, height)
           end
-          
+
           # Save to config
           if config = @engine.config
             config.set("graphics.resolution_width", width.to_s)
             config.set("graphics.resolution_height", height.to_s)
           end
-          
+
           # Center window on screen
           monitor_width = RL.get_monitor_width(0)
           monitor_height = RL.get_monitor_height(0)

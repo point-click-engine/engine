@@ -3,6 +3,31 @@ background_path: crystal_mystery/assets/backgrounds/garden.png
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/garden.lua
+walkable_areas:
+  regions:
+    - name: main_garden
+      walkable: true
+      vertices:
+        - {x: 50, y: 250}
+        - {x: 950, y: 250}
+        - {x: 950, y: 700}
+        - {x: 50, y: 700}
+    - name: fountain_center
+      walkable: false
+      vertices:
+        - {x: 420, y: 340}
+        - {x: 580, y: 340}
+        - {x: 580, y: 480}
+        - {x: 420, y: 480}
+  scale_zones:
+    - min_y: 250
+      max_y: 450
+      min_scale: 0.7
+      max_scale: 0.9
+    - min_y: 450
+      max_y: 700
+      min_scale: 0.9
+      max_scale: 1.1
 hotspots:
   - name: fountain
     x: 400

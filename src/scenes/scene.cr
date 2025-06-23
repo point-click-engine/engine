@@ -259,7 +259,11 @@ module PointClickEngine
           end
         else
           # No walkable area defined, use simple drawing
-          @objects.each(&.draw)
+          # Draw objects that aren't characters first
+          @objects.each do |obj|
+            obj.draw unless obj.is_a?(Characters::Character)
+          end
+          # Then draw all characters in sorted order
           sorted_characters.each(&.draw)
         end
 

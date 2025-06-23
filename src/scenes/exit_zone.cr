@@ -128,6 +128,13 @@ module PointClickEngine
               player.position = pos
               player.stop_walking
             end
+
+            # Add player to the new scene
+            if new_scene = engine.current_scene
+              if player = engine.player
+                new_scene.set_player(player)
+              end
+            end
           end
         else
           # Fallback if no transition manager
@@ -135,6 +142,13 @@ module PointClickEngine
           if (pos = @target_position) && (player = engine.player)
             player.position = pos
             player.stop_walking
+          end
+
+          # Add player to the new scene
+          if new_scene = engine.current_scene
+            if player = engine.player
+              new_scene.set_player(player)
+            end
           end
         end
       end

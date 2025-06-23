@@ -194,7 +194,7 @@ module PointClickEngine
             draw_tooltip(mouse_pos, hotspot)
           end
         end
-        
+
         # Draw current verb indicator if in manual mode
         if @manual_verb_mode
           verb_text = @current_verb.to_s.capitalize
@@ -275,13 +275,13 @@ module PointClickEngine
       def is_verb_active?(verb : VerbType) : Bool
         @current_verb == verb
       end
-      
+
       # Set verb manually
       def set_verb(verb : VerbType)
         @current_verb = verb
         @manual_verb_mode = true
       end
-      
+
       # Cycle to next verb
       def cycle_verb_forward
         current_index = @available_verbs.index(@current_verb) || 0
@@ -289,7 +289,7 @@ module PointClickEngine
         @current_verb = @available_verbs[next_index]
         @manual_verb_mode = true
       end
-      
+
       # Cycle to previous verb
       def cycle_verb_backward
         current_index = @available_verbs.index(@current_verb) || 0
@@ -297,7 +297,7 @@ module PointClickEngine
         @current_verb = @available_verbs[prev_index]
         @manual_verb_mode = true
       end
-      
+
       # Reset to automatic verb selection
       def reset_manual_mode
         @manual_verb_mode = false

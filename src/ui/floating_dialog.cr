@@ -200,9 +200,9 @@ module PointClickEngine
         when "thief", "rogue", "bandit"
           RL::Color.new(r: 150, g: 150, b: 150, a: 255) # Gray
         when "king", "queen", "prince", "princess", "noble"
-          RL::Color.new(r: 255, g: 215, b: 0, a: 255)   # Gold
+          RL::Color.new(r: 255, g: 215, b: 0, a: 255) # Gold
         when "demon", "devil", "monster"
-          RL::Color.new(r: 255, g: 50, b: 50, a: 255)   # Dark Red
+          RL::Color.new(r: 255, g: 50, b: 50, a: 255) # Dark Red
         when "fairy", "pixie", "sprite"
           RL::Color.new(r: 255, g: 182, b: 193, a: 255) # Pink
         when "elf", "dwarf", "halfling"

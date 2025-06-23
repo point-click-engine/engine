@@ -3,6 +3,31 @@ background_path: crystal_mystery/assets/backgrounds/laboratory.png
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/laboratory.lua
+walkable_areas:
+  regions:
+    - name: main_floor
+      walkable: true
+      vertices:
+        - {x: 50, y: 300}
+        - {x: 950, y: 300}
+        - {x: 950, y: 700}
+        - {x: 50, y: 700}
+    - name: workbench_area
+      walkable: false
+      vertices:
+        - {x: 180, y: 350}
+        - {x: 520, y: 350}
+        - {x: 520, y: 550}
+        - {x: 180, y: 550}
+  scale_zones:
+    - min_y: 300
+      max_y: 500
+      min_scale: 0.8
+      max_scale: 1.0
+    - min_y: 500
+      max_y: 700
+      min_scale: 1.0
+      max_scale: 1.2
 hotspots:
   - name: workbench
     x: 200

@@ -26,7 +26,7 @@ module PointClickEngine
       def set(key : String, value : String)
         @settings[key] = value
       end
-      
+
       def has?(key : String) : Bool
         @settings.has_key?(key)
       end

@@ -82,13 +82,13 @@ module PointClickEngine
       # Whether the game loop is currently running
       @[YAML::Field(ignore: true)]
       property running : Bool = false
-      
+
       # Whether to show FPS counter
       property show_fps : Bool = false
-      
+
       # Auto-save interval in seconds (0 = disabled)
       property auto_save_interval : Float32 = 0.0f32
-      
+
       # Time since last auto-save
       @[YAML::Field(ignore: true)]
       property auto_save_timer : Float32 = 0.0f32
@@ -115,11 +115,11 @@ module PointClickEngine
 
       # Global game state variables (flags, counters, etc.)
       property state_variables : Hash(String, StateValue) = {} of String => StateValue
-      
+
       # Game state manager for complex state handling
       @[YAML::Field(ignore: true)]
       property game_state_manager : GameStateManager?
-      
+
       # Quest manager for quest tracking
       @[YAML::Field(ignore: true)]
       property quest_manager : QuestManager?
@@ -460,7 +460,7 @@ module PointClickEngine
 
         # Call game-specific update if provided
         @on_update.try &.call(dt)
-        
+
         # Handle auto-save
         if @auto_save_interval > 0
           @auto_save_timer += dt
@@ -529,7 +529,7 @@ module PointClickEngine
 
         # Draw menu system on top of everything
         @system_manager.menu_system.try(&.draw)
-        
+
         # Draw FPS counter if enabled
         if @show_fps
           RL.draw_fps(10, 10)
@@ -685,11 +685,11 @@ module PointClickEngine
         File.write(filepath, to_yaml)
         puts "Game saved to #{filepath}"
       end
-      
+
       # Enable automatic saving at regular intervals
       #
       # Configures the engine to automatically save the game state at
-      # specified intervals. The save file will be written to 
+      # specified intervals. The save file will be written to
       # "saves/autosave.yml" by default.
       #
       # *interval* - Time between saves in seconds (0 to disable)
