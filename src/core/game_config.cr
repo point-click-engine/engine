@@ -59,6 +59,7 @@ module PointClickEngine
         property name : String = "Player"
         property sprite_path : String
         property sprite : SpriteInfo
+        property scale : Float32 = 1.0f32
         property start_position : Position?
       end
 
@@ -237,6 +238,13 @@ module PointClickEngine
             player_config.sprite.columns,
             player_config.sprite.rows
           )
+
+          # Apply scale from config
+          player_obj.manual_scale = player_config.scale
+          player_obj.scale = player_config.scale
+
+          # Increase walking speed to compensate for larger appearance
+          player_obj.walking_speed = 200.0
 
           engine.player = player_obj
         end

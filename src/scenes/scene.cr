@@ -208,13 +208,19 @@ module PointClickEngine
         # Update character scales based on position
         if walkable = @walkable_area
           @characters.each do |character|
-            scale = walkable.get_scale_at_y(character.position.y)
-            character.scale = scale
+            # Only apply dynamic scaling if no manual scale is set
+            if character.manual_scale.nil?
+              scale = walkable.get_scale_at_y(character.position.y)
+              character.scale = scale
+            end
           end
 
           @player.try do |p|
-            scale = walkable.get_scale_at_y(p.position.y)
-            p.scale = scale
+            # Only apply dynamic scaling if no manual scale is set
+            if p.manual_scale.nil?
+              scale = walkable.get_scale_at_y(p.position.y)
+              p.scale = scale
+            end
           end
         end
       end

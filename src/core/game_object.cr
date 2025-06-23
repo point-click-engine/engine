@@ -61,12 +61,15 @@ module PointClickEngine
       #
       # Returns a Rectangle with the object's position and size
       def bounds : RL::Rectangle
-        # Center the bounds on the position
+        # Center the bounds on the position and account for scale
+        scaled_width = @size.x * @scale
+        scaled_height = @size.y * @scale
+
         RL::Rectangle.new(
-          x: @position.x - @size.x / 2,
-          y: @position.y - @size.y / 2,
-          width: @size.x,
-          height: @size.y
+          x: @position.x - scaled_width / 2,
+          y: @position.y - scaled_height / 2,
+          width: scaled_width,
+          height: scaled_height
         )
       end
 

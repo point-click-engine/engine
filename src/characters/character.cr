@@ -172,6 +172,9 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property conversation_partner : Character?
 
+      # Manual scale override from configuration (overrides dynamic scaling)
+      property manual_scale : Float32?
+
       # Creates a character with empty properties
       #
       # Initializes all collections and sets up dialogue system.
@@ -489,13 +492,35 @@ module PointClickEngine
       #
       # Returns: true if the point is within the character's bounds
       def contains_point?(point : RL::Vector2) : Bool
-        bounds = RL::Rectangle.new(
-          x: @position.x - @size.x / 2,
-          y: @position.y - @size.y,
-          width: @size.x,
-          height: @size.y
-        )
-        RL.check_collision_point_rec?(point, bounds)
+        # Use base frame size for hitbox calculation to avoid double-scaling
+        if sprite = @sprite_data
+          base_width = sprite.frame_width.to_f32
+          base_height = sprite.frame_height.to_f32
+
+          # Apply only the character scale, not the sprite's internal scale
+          scaled_width = base_width * @scale
+          scaled_height = base_height * @scale
+
+          bounds = RL::Rectangle.new(
+            x: @position.x - scaled_width / 2,
+            y: @position.y - scaled_height,
+            width: scaled_width,
+            height: scaled_height
+          )
+          RL.check_collision_point_rec?(point, bounds)
+        else
+          # Fallback to original calculation if no sprite data
+          scaled_width = @size.x * @scale
+          scaled_height = @size.y * @scale
+
+          bounds = RL::Rectangle.new(
+            x: @position.x - scaled_width / 2,
+            y: @position.y - scaled_height,
+            width: scaled_width,
+            height: scaled_height
+          )
+          RL.check_collision_point_rec?(point, bounds)
+        end
       end
 
       # Get the current scene from the engine
@@ -534,14 +559,19 @@ module PointClickEngine
           if scene = get_current_scene
             if scene.is_walkable?(new_position)
               @position = new_position
-              # Update character scale based on Y position
-              @scale = scene.get_character_scale(@position.y)
+              # Update character scale based on Y position (only if no manual scale set)
+              if @manual_scale.nil?
+                @scale = scene.get_character_scale(@position.y)
+              end
             else
               # Try to slide along the boundary
               constrained_pos = scene.walkable_area.try(&.constrain_to_walkable(@position, new_position))
               if constrained_pos
                 @position = constrained_pos
-                @scale = scene.get_character_scale(@position.y)
+                # Update character scale based on Y position (only if no manual scale set)
+                if @manual_scale.nil?
+                  @scale = scene.get_character_scale(@position.y)
+                end
               end
             end
           else

@@ -247,6 +247,13 @@ module PointClickEngine
               character.load_spritesheet(full_sprite_path, frame_width, frame_height)
             end
 
+            # Apply scale from YAML if specified
+            if char_scale = char_data["scale"]?
+              scale_value = char_scale.as_f.to_f32
+              character.manual_scale = scale_value
+              character.scale = scale_value
+            end
+
             scene.add_character(character)
           end
         end

@@ -88,3 +88,4 @@ characters:
     sprite_info:
       frame_width: 100
       frame_height: 100
+    scale: 3.0

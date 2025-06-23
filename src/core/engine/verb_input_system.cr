@@ -36,8 +36,13 @@ module PointClickEngine
           return unless scene
           return unless display_manager
 
-          # Handle keyboard input first
+          # Always handle keyboard input for verb selection (this should work even during dialogs)
           handle_keyboard_input
+
+          # Additional safety check: ensure no dialog is consuming mouse input
+          if dm = @engine.dialog_manager
+            return if dm.dialog_consumed_input?
+          end
 
           raw_mouse = RL.get_mouse_position
           return unless display_manager.is_in_game_area(raw_mouse)
@@ -59,8 +64,9 @@ module PointClickEngine
             handle_verb_click(scene, player, world_mouse)
           end
 
-          # Handle right click - always look
+          # Handle right click - always look (this works even if dialogs are up)
           if RL.mouse_button_pressed?(RL::MouseButton::Right)
+            # Right-click should work even during dialogs for examining things
             handle_look_click(scene, world_mouse)
           end
         end

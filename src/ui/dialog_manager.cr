@@ -234,7 +234,10 @@ module PointClickEngine
       end
 
       def is_dialog_active? : Bool
-        !@current_dialog.nil?
+        if dialog = @current_dialog
+          return dialog.visible
+        end
+        false
       end
 
       def dialog_consumed_input? : Bool

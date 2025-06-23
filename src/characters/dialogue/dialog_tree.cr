@@ -139,7 +139,7 @@ module PointClickEngine
           available_choices = current_node.choices.select(&.available?)
 
           if available_choices.empty?
-            # No choices, end conversation after a delay
+            # No choices, end conversation immediately
             end_conversation
             return
           end
@@ -209,6 +209,12 @@ module PointClickEngine
 
         private def end_conversation
           @current_node_id = nil
+
+          # Clear dialog manager's current dialog to ensure input processing resumes
+          if dm = Core::Engine.instance.dialog_manager
+            dm.close_current_dialog
+          end
+
           @on_complete.try(&.call)
         end
 
