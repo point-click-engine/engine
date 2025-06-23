@@ -1,12 +1,23 @@
 require "../src/point_click_engine"
+require "../src/core/preflight_check"
 
 # The Crystal Mystery - Simplified with YAML configuration
 class CrystalMysteryGame
   property engine : PointClickEngine::Core::Engine
 
   def initialize
+    config_path = "crystal_mystery/game_config.yaml"
+    
+    # Run pre-flight checks first
+    begin
+      PointClickEngine::Core::PreflightCheck.run!(config_path)
+    rescue ex : PointClickEngine::Core::ValidationError
+      puts "\n❌ Game failed pre-flight checks. Please fix these issues before running."
+      exit(1)
+    end
+
     # Load entire game configuration from YAML
-    config = PointClickEngine::Core::GameConfig.from_file("crystal_mystery/game_config.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file(config_path)
 
     # Create engine with all settings from config
     @engine = config.create_engine

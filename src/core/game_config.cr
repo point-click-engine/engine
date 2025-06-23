@@ -8,6 +8,9 @@ require "../scenes/scene_loader"
 require "../graphics/display_manager"
 require "../graphics/shaders/shader_helpers"
 require "../characters/dialogue/dialog_tree"
+require "./exceptions"
+require "./validators/config_validator"
+require "./error_reporter"
 
 module PointClickEngine
   module Core
@@ -114,8 +117,28 @@ module PointClickEngine
 
       # Load configuration from YAML file
       def self.from_file(path : String) : GameConfig
-        yaml_content = File.read(path)
-        from_yaml(yaml_content)
+        unless File.exists?(path)
+          raise ConfigError.new("Configuration file not found", path)
+        end
+
+        begin
+          yaml_content = File.read(path)
+          config = from_yaml(yaml_content)
+          
+          # Validate configuration
+          errors = Validators::ConfigValidator.validate(config, path)
+          unless errors.empty?
+            raise ValidationError.new(errors, path)
+          end
+          
+          config
+        rescue ex : YAML::ParseException
+          raise ConfigError.new("Invalid YAML syntax: #{ex.message}", path)
+        rescue ex : ValidationError
+          raise ex
+        rescue ex
+          raise ConfigError.new("Failed to load configuration: #{ex.message}", path)
+        end
       end
 
       # Create and configure engine from this config
@@ -244,9 +267,19 @@ module PointClickEngine
         assets.try(&.scenes.each do |pattern|
           Dir.glob(pattern).each do |path|
             if File.exists?(path)
-              scene = Scenes::SceneLoader.load_from_yaml(path)
-              engine.add_scene(scene)
-              puts "Loaded scene: #{scene.name}"
+              begin
+                ErrorReporter.report_progress("Loading scene '#{File.basename(path)}'")
+                scene = Scenes::SceneLoader.load_from_yaml(path)
+                engine.add_scene(scene)
+                ErrorReporter.report_progress_done(true)
+              rescue ex : SceneError
+                ErrorReporter.report_progress_done(false)
+                ErrorReporter.report_loading_error(ex, "Loading scenes")
+                raise ex
+              rescue ex
+                ErrorReporter.report_progress_done(false)
+                raise SceneError.new("Failed to load scene: #{ex.message}", File.basename(path, ".yaml"))
+              end
             end
           end
         end)
@@ -255,14 +288,16 @@ module PointClickEngine
         assets.try(&.dialogs.each do |pattern|
           Dir.glob(pattern).each do |path|
             begin
+              ErrorReporter.report_progress("Loading dialog '#{File.basename(path)}'")
               dialog_tree = Characters::Dialogue::DialogTree.load_from_file(path)
               # Store dialog tree in engine for character access
               if dm = engine.dialog_manager
                 dm.add_dialog_tree(dialog_tree)
               end
-              puts "Loaded dialog: #{dialog_tree.name} from #{path}"
+              ErrorReporter.report_progress_done(true)
             rescue ex
-              puts "Failed to load dialog from #{path}: #{ex.message}"
+              ErrorReporter.report_progress_done(false)
+              ErrorReporter.report_warning("Failed to load dialog from #{path}: #{ex.message}", "Loading dialogs")
             end
           end
         end)
@@ -272,8 +307,12 @@ module PointClickEngine
           assets.try(&.quests.each do |pattern|
             Dir.glob(pattern).each do |path|
               if File.exists?(path)
+                ErrorReporter.report_progress("Loading quests '#{File.basename(path)}'")
                 success = qm.load_quests_from_yaml(path)
-                puts "Loaded quests from: #{path} (success: #{success})"
+                ErrorReporter.report_progress_done(success)
+                unless success
+                  ErrorReporter.report_warning("Failed to load some quests from #{path}", "Loading quests")
+                end
               end
             end
           end)

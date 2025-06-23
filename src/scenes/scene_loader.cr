@@ -8,14 +8,25 @@ require "./walkable_area"
 require "../characters/character"
 require "../assets/asset_loader"
 require "../ui/cursor_manager"
+require "../core/exceptions"
 
 module PointClickEngine
   module Scenes
     class SceneLoader
       def self.load_from_yaml(path : String) : Scene
-        yaml_content = PointClickEngine::AssetLoader.read_yaml(path)
-        scene_data = YAML.parse(yaml_content)
+        scene_name = File.basename(path, ".yaml")
+        
+        begin
+          yaml_content = PointClickEngine::AssetLoader.read_yaml(path)
+          scene_data = YAML.parse(yaml_content)
+        rescue ex
+          raise Core::SceneError.new("Failed to load scene file: #{ex.message}", scene_name)
+        end
 
+        unless scene_data["name"]?
+          raise Core::SceneError.new("Missing required field 'name'", scene_name)
+        end
+        
         scene = Scene.new(scene_data["name"].as_s)
 
         if scale = scene_data["scale"]?

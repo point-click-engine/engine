@@ -1,4 +1,5 @@
 require "compress/zip"
+require "../core/exceptions"
 
 module PointClickEngine
   # Asset management system with ZIP archive support
@@ -35,7 +36,15 @@ module PointClickEngine
   # ```
   class AssetManager
     # Exception raised when a requested asset cannot be found
-    class AssetNotFoundError < Exception; end
+    class AssetNotFoundError < Core::AssetError
+      def initialize(asset_path : String, searched_locations : Array(String) = [] of String)
+        message = "Asset not found: #{asset_path}"
+        unless searched_locations.empty?
+          message += "\nSearched in:\n" + searched_locations.map { |loc| "  - #{loc}" }.join("\n")
+        end
+        super(message, asset_path)
+      end
+    end
 
     # Alias for cached asset data (can be binary or text)
     alias AssetData = Bytes | String
