@@ -45,29 +45,13 @@ describe PointClickEngine::Core::PreflightCheck do
         # Create the background asset
         File.write("#{temp_dir}/assets/bg.png", "fake png")
 
-        # Capture output to avoid cluttering test output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          # Redirect stdout temporarily
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.passed.should be_true
-          result.errors.should be_empty
-          result.info.should contain("✓ Configuration loaded successfully")
-          result.info.should contain("✓ All assets validated")
-          result.info.should contain("✓ 1 scene(s) validated")
-        ensure
-          # Restore stdout
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.passed.should be_true
+        result.errors.should be_empty
+        result.info.should contain("✓ Configuration loaded successfully")
+        result.info.should contain("✓ All assets validated")
+        result.info.should contain("✓ 1 scene(s) validated")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -78,25 +62,11 @@ describe PointClickEngine::Core::PreflightCheck do
       File.write(temp_file, "invalid yaml content:")
 
       begin
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(temp_file)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(temp_file)
-
-          result.passed.should be_false
-          result.errors.should_not be_empty
-          result.errors.first.should contain("Configuration Error")
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.passed.should be_false
+        result.errors.should_not be_empty
+        result.errors.first.should contain("Configuration Error")
       ensure
         File.delete(temp_file) if File.exists?(temp_file)
       end
@@ -119,25 +89,11 @@ describe PointClickEngine::Core::PreflightCheck do
         config_path = "#{temp_dir}/config.yaml"
         File.write(config_path, config_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.passed.should be_false
-          result.errors.should contain("Game title cannot be empty")
-          result.errors.should contain("Window width must be positive (got -100)")
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.passed.should be_false
+        result.errors.should contain("Game title cannot be empty")
+        result.errors.should contain("Window width must be positive (got -100)")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -168,25 +124,11 @@ describe PointClickEngine::Core::PreflightCheck do
         config_path = "#{temp_dir}/config.yaml"
         File.write(config_path, config_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.passed.should be_false
-          result.errors.any? { |e| e.includes?("Missing sprite: missing_player.png") }.should be_true
-          result.errors.any? { |e| e.includes?("Missing music: missing_theme.ogg") }.should be_true
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.passed.should be_false
+        result.errors.any? { |e| e.includes?("Missing sprite: missing_player.png") }.should be_true
+        result.errors.any? { |e| e.includes?("Missing music: missing_theme.ogg") }.should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -214,25 +156,11 @@ describe PointClickEngine::Core::PreflightCheck do
         YAML
         File.write("#{temp_dir}/scenes/test_scene.yaml", scene_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.passed.should be_false
-          result.errors.any? { |e| e.includes?("Scene 'test_scene.yaml':") }.should be_true
-          result.errors.any? { |e| e.includes?("Missing required field 'background_path'") }.should be_true
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.passed.should be_false
+        result.errors.any? { |e| e.includes?("Scene 'test_scene.yaml':") }.should be_true
+        result.errors.any? { |e| e.includes?("Missing required field 'background_path'") }.should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -257,26 +185,12 @@ describe PointClickEngine::Core::PreflightCheck do
         config_path = "#{temp_dir}/config.yaml"
         File.write(config_path, config_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          # Should pass but with warnings
-          result.passed.should be_true
-          result.warnings.should contain("Window size (4096x2160) is larger than 1920x1080 - may cause performance issues")
-          result.warnings.should contain("Start scene 'missing_scene' not found in scene files")
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        # Should pass but with warnings
+        result.passed.should be_true
+        result.warnings.should contain("Window size (4096x2160) is larger than 1920x1080 - may cause performance issues")
+        result.warnings.should contain("Start scene 'missing_scene' not found in scene files")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -314,25 +228,11 @@ describe PointClickEngine::Core::PreflightCheck do
         config_path = "#{temp_dir}/config.yaml"
         File.write(config_path, config_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.warnings.any? { |w| w.includes?("Large assets detected") }.should be_true
-          result.warnings.any? { |w| w.includes?("Music 'theme': 15.0 MB") }.should be_true
-          result.warnings.should contain("Large number of scenes (60) may increase loading time")
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.warnings.any? { |w| w.includes?("Large assets detected") }.should be_true
+        result.warnings.any? { |w| w.includes?("Music 'theme': 15.0 MB") }.should be_true
+        result.warnings.should contain("Large number of scenes (60) may increase loading time")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -408,33 +308,19 @@ describe PointClickEngine::Core::PreflightCheck do
         YAML
         File.write("#{temp_dir}/scenes/scene3.yaml", scene3_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
+        # Should detect player sprite correctly
+        result.info.should contain("✓ Player sprite found: assets/sprites/player.png")
 
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
+        # Should detect valid backgrounds
+        result.info.should contain("✓ Background found for scene 'scene1': assets/backgrounds/scene1.png")
 
-          # Should detect player sprite correctly
-          result.info.should contain("✓ Player sprite found: assets/sprites/player.png")
+        # Should detect missing background
+        result.errors.should contain("Background image not found for scene 'scene2.yaml': assets/backgrounds/missing.png")
 
-          # Should detect valid backgrounds
-          result.info.should contain("✓ Background found for scene 'scene1': assets/backgrounds/scene1.png")
-
-          # Should detect missing background
-          result.errors.should contain("Background image not found for scene 'scene2.yaml': assets/backgrounds/missing.png")
-
-          # Should warn about potentially small backgrounds
-          result.warnings.any? { |w| w.includes?("background may be too small") && w.includes?("320x180") }.should be_true
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        # Should warn about potentially small backgrounds
+        result.warnings.any? { |w| w.includes?("background may be too small") && w.includes?("320x180") }.should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -461,24 +347,10 @@ describe PointClickEngine::Core::PreflightCheck do
         config_path = "#{temp_dir}/config.yaml"
         File.write(config_path, config_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.passed.should be_false
-          result.errors.should contain("Player sprite not found: assets/sprites/missing_player.png")
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.passed.should be_false
+        result.errors.should contain("Player sprite not found: assets/sprites/missing_player.png")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -504,23 +376,9 @@ describe PointClickEngine::Core::PreflightCheck do
         config_path = "#{temp_dir}/config.yaml"
         File.write(config_path, config_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.warnings.should contain("No player sprite path specified - player will be invisible")
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.warnings.should contain("No player sprite path specified - player will be invisible")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -550,24 +408,10 @@ describe PointClickEngine::Core::PreflightCheck do
         config_path = "#{temp_dir}/config.yaml"
         File.write(config_path, config_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.passed.should be_false
-          result.errors.should contain("Invalid player sprite dimensions: 0x-10")
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.passed.should be_false
+        result.errors.should contain("Invalid player sprite dimensions: 0x-10")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -592,23 +436,9 @@ describe PointClickEngine::Core::PreflightCheck do
         config_path = "#{temp_dir}/config.yaml"
         File.write(config_path, config_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.warnings.should contain("No player sprite dimensions specified - may cause rendering issues")
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.warnings.should contain("No player sprite dimensions specified - may cause rendering issues")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -627,24 +457,10 @@ describe PointClickEngine::Core::PreflightCheck do
         config_path = "#{temp_dir}/config.yaml"
         File.write(config_path, config_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.passed.should be_false
-          result.errors.should contain("No player configuration found")
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.passed.should be_false
+        result.errors.should contain("No player configuration found")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -674,23 +490,9 @@ describe PointClickEngine::Core::PreflightCheck do
         YAML
         File.write("#{temp_dir}/scenes/main.yaml", scene_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
+        result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          result = PointClickEngine::Core::PreflightCheck.run(config_path)
-
-          result.warnings.should contain("Start scene 'main' may not have proper player spawn position defined")
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        result.warnings.should contain("Start scene 'main' may not have proper player spawn position defined")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -1070,22 +872,8 @@ describe PointClickEngine::Core::PreflightCheck do
       File.write(temp_file, "invalid yaml:")
 
       begin
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
-
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          expect_raises(PointClickEngine::Core::ValidationError) do
-            PointClickEngine::Core::PreflightCheck.run!(temp_file)
-          end
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
+        expect_raises(PointClickEngine::Core::ValidationError) do
+          PointClickEngine::Core::PreflightCheck.run!(temp_file)
         end
       ensure
         File.delete(temp_file) if File.exists?(temp_file)
@@ -1105,22 +893,8 @@ describe PointClickEngine::Core::PreflightCheck do
         config_path = "#{temp_dir}/config.yaml"
         File.write(config_path, config_yaml)
 
-        # Suppress output
-        original_stdout = STDOUT
-        captured = IO::Memory.new
-
-        begin
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(captured)
-          {% end %}
-
-          # Should not raise
-          PointClickEngine::Core::PreflightCheck.run!(config_path)
-        ensure
-          {% if flag?(:darwin) || flag?(:linux) %}
-            STDOUT.reopen(original_stdout)
-          {% end %}
-        end
+        # Should not raise
+        PointClickEngine::Core::PreflightCheck.run!(config_path)
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end

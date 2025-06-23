@@ -1,9 +1,0 @@
-name: room2
-background_path: bg2.png
-hotspots:
-  - name: object2
-    x: 30
-    y: 30
-    width: 40
-    height: 40
-    description: "Object 2"

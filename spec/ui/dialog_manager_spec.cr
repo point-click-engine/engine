@@ -136,7 +136,7 @@ describe PointClickEngine::UI::DialogManager do
       dialog.choices[0].text.should eq("Option 1")
 
       # Dialog should be at bottom of screen
-      window_height = 600            # Default test height
+      window_height = 768            # Reference height used by dialog manager
       dialog_height = 150 + (3 * 30) # Base height + 3 choices * 30 each
       expected_y = window_height - dialog_height - 20
       dialog.position.y.should eq(expected_y.to_f32)
@@ -157,7 +157,8 @@ describe PointClickEngine::UI::DialogManager do
       dialog.choices[0].action.call
 
       selected_choice.should eq(0)
-      manager.current_dialog.should be_nil # Should close after selection
+      # Dialog no longer closes automatically - the callback should handle it
+      manager.current_dialog.should_not be_nil
     end
   end
 

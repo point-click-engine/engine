@@ -113,28 +113,9 @@ module PointClickEngine
 
       # Determine appropriate verb for a hotspot
       private def determine_verb_for_hotspot(hotspot : Hotspot) : VerbType
-        # Check if hotspot has explicit default verb
-        if hotspot.responds_to?(:default_verb)
-          if verb = hotspot.default_verb
-            return verb
-          end
-        end
-
-        # Use object type if available
-        if hotspot.responds_to?(:object_type)
-          case hotspot.object_type
-          when .item?      then VerbType::Take
-          when .character? then VerbType::Talk
-          when .door?      then VerbType::Open
-          when .container? then VerbType::Open
-          when .device?    then VerbType::Use
-          when .exit?      then VerbType::Walk
-          else                  VerbType::Look
-          end
-        else
-          # Fallback detection based on hotspot properties
-          detect_verb_from_properties(hotspot)
-        end
+        # Always use property-based detection for now
+        # (Crystal doesn't have runtime responds_to? like Ruby)
+        detect_verb_from_properties(hotspot)
       end
 
       # Smart detection based on hotspot properties
@@ -159,14 +140,14 @@ module PointClickEngine
         end
 
         # Item detection
-        if name.includes?("key") || name.includes?("book") ||
+        if name.includes?("key") || (name == "book") ||
            name.includes?("crystal") || desc.includes?("pick up")
           return VerbType::Take
         end
 
         # Container detection
         if name.includes?("chest") || name.includes?("cabinet") ||
-           name.includes?("drawer") || desc.includes?("open")
+           name.includes?("drawer") || name.includes?("desk") || desc.includes?("open")
           return VerbType::Open
         end
 

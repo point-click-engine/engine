@@ -15,7 +15,7 @@ module PointClickEngine
       # Check if mouse input is available and consume it
       def self.consume_mouse_click : Bool
         return false if @@mouse_consumed
-        return false unless RL.mouse_button_pressed?(RL::MouseButton::Left)
+        return false unless RL.mouse_button_pressed?(Raylib::MouseButton::Left)
 
         @@mouse_consumed = true
         true
@@ -28,7 +28,7 @@ module PointClickEngine
 
       # Just check if mouse is pressed without consuming
       def self.mouse_pressed? : Bool
-        RL.mouse_button_pressed?(RL::MouseButton::Left)
+        RL.mouse_button_pressed?(Raylib::MouseButton::Left)
       end
     end
   end

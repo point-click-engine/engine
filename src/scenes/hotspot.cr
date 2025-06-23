@@ -48,6 +48,10 @@ module PointClickEngine
       # Classification of this object for interaction purposes
       property object_type : UI::ObjectType = UI::ObjectType::Background
 
+      # Optional script file path for this hotspot's behavior
+      # If nil, the hotspot will use the scene's default script
+      property script_path : String?
+
       # Callback executed when the hotspot is clicked (runtime only)
       @[YAML::Field(ignore: true)]
       property on_click : Proc(Nil)?
@@ -141,6 +145,18 @@ module PointClickEngine
           RL::Vector2.new(x: @position.x + @size.x, y: @position.y + @size.y),
           RL::Vector2.new(x: @position.x, y: @position.y + @size.y),
         ]
+      end
+
+      # Gets the effective script path for this hotspot
+      #
+      # Returns the hotspot's specific script path if set, otherwise
+      # falls back to the scene's default script path.
+      #
+      # - *scene* : The scene containing this hotspot
+      #
+      # Returns: The script path to use, or nil if no script is available
+      def get_effective_script_path(scene) : String?
+        @script_path || scene.try(&.script_path)
       end
     end
   end

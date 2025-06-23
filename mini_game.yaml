@@ -1,0 +1,19 @@
+game:
+  title: "Mini Adventure"
+
+player:
+  name: "Hero"
+  sprite_path: "assets/hero.png"
+  sprite:
+    frame_width: 32
+    frame_height: 32
+    columns: 4
+    rows: 1
+
+features:
+  - verbs
+
+assets:
+  scenes: ["mini_game/scenes/*.yaml"]
+
+start_scene: "start"

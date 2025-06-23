@@ -1,0 +1,11 @@
+name: test_room
+background_path: "test_minimal_game/assets/bg.png"
+script_path: "test_minimal_game/scripts/test_room.lua"
+
+hotspots:
+  - name: test_object
+    x: 100
+    y: 100
+    width: 50
+    height: 50
+    description: "A test object"

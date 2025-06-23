@@ -4,16 +4,6 @@ require "yaml"
 
 module PointClickEngine
   module Characters
-    # NPC moods
-    enum NPCMood
-      Friendly
-      Neutral
-      Hostile
-      Sad
-      Happy
-      Angry
-    end
-
     # Non-Player Character class
     class NPC < Character
       property dialogues : Array(String) = [] of String
@@ -25,7 +15,7 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       delegate ai_behavior, to: @ai_behavior_data
 
-      property mood : NPCMood = NPCMood::Neutral
+      # Note: mood property is now inherited from base Character class
 
       def initialize
         super()
@@ -82,10 +72,7 @@ module PointClickEngine
         @ai_behavior_data = behavior
       end
 
-      def set_mood(mood : NPCMood)
-        @mood = mood
-        update_mood_animation
-      end
+      # Note: set_mood method is now inherited from base Character class
 
       def update(dt : Float32)
         super(dt)
@@ -120,26 +107,8 @@ module PointClickEngine
         @conversation_partner_name = nil
       end
 
-      private def update_mood_animation
-        mood_anim = case @mood
-                    when NPCMood::Happy then "happy"
-                    when NPCMood::Sad   then "sad"
-                    when NPCMood::Angry then "angry"
-                    else                     "idle"
-                    end
-
-        directional_idle = if mood_anim == "idle"
-                             @direction == Direction::Left ? "idle_left" : "idle_right"
-                           else
-                             nil
-                           end
-
-        if directional_idle && @animations.has_key?(directional_idle)
-          play_animation(directional_idle, force_restart: false)
-        elsif @animations.has_key?(mood_anim)
-          play_animation(mood_anim, force_restart: false)
-        end
-      end
+      # Note: update_mood_animation method is now inherited from base Character class
+      # The base implementation provides more mood states and better fallback behavior
 
       private def setup_default_animations
         unless @animations.has_key?("idle_right")

@@ -7,6 +7,8 @@ require "json" # Fix for luajit.cr JSON::Any issue
 {% end %}
 
 require "../src/point_click_engine"
+
+# RL alias is defined in individual source files that need Raylib types
 require "../src/core/game_config"
 
 # Helper to create test vectors

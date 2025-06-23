@@ -27,10 +27,8 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
         height: 768
       YAML
 
-      # Create a config without game section by manipulating the parsed data
-      yaml_data = YAML.parse(config_yaml)
-      config = PointClickEngine::Core::GameConfig.new
-      config.window = PointClickEngine::Core::GameConfig::WindowConfig.from_yaml(yaml_data["window"].to_yaml)
+      # Try to parse incomplete config - should work since fields are nilable
+      config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
 

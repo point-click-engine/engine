@@ -38,10 +38,10 @@ module PointClickEngine
       property visible : Bool = true
 
       # World position of the object (x, y coordinates)
-      property position : RL::Vector2 = RL::Vector2.new
+      property position : Raylib::Vector2 = Raylib::Vector2.new
 
       # Size of the object (width, height)
-      property size : RL::Vector2 = RL::Vector2.new
+      property size : Raylib::Vector2 = Raylib::Vector2.new
 
       # Scaling factor applied during rendering (1.0 = normal size)
       property scale : Float32 = 1.0f32
@@ -60,12 +60,12 @@ module PointClickEngine
       # detection and spatial queries.
       #
       # Returns a Rectangle with the object's position and size
-      def bounds : RL::Rectangle
+      def bounds : Raylib::Rectangle
         # Center the bounds on the position and account for scale
         scaled_width = @size.x * @scale
         scaled_height = @size.y * @scale
 
-        RL::Rectangle.new(
+        Raylib::Rectangle.new(
           x: @position.x - scaled_width / 2,
           y: @position.y - scaled_height / 2,
           width: scaled_width,
@@ -88,7 +88,7 @@ module PointClickEngine
       #   puts "Object clicked!"
       # end
       # ```
-      def contains_point?(point : RL::Vector2) : Bool
+      def contains_point?(point : Raylib::Vector2) : Bool
         bounds = self.bounds
         point.x >= bounds.x &&
           point.x <= bounds.x + bounds.width &&
@@ -100,7 +100,7 @@ module PointClickEngine
         # Override in subclasses to reload assets
       end
 
-      def draw_at_screen_pos(screen_pos : RL::Vector2)
+      def draw_at_screen_pos(screen_pos : Raylib::Vector2)
         if engine = Core::Engine.instance
           if dm = engine.display_manager
             game_pos = dm.screen_to_game(screen_pos)
@@ -129,11 +129,11 @@ module PointClickEngine
       property active : Bool = true
 
       def initialize
-        @position = RL::Vector2.new
-        @size = RL::Vector2.new
+        @position = Raylib::Vector2.new
+        @size = Raylib::Vector2.new
       end
 
-      def initialize(@position : RL::Vector2, @size : RL::Vector2)
+      def initialize(@position : Raylib::Vector2, @size : Raylib::Vector2)
       end
 
       abstract def update(dt : Float32)

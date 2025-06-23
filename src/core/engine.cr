@@ -19,6 +19,14 @@ require "./engine/verb_input_system"
 require "./engine/render_coordinator"
 require "../graphics/camera"
 require "./input_state"
+require "./error_handling"
+require "./scene_manager"
+require "./input_manager"
+require "./render_manager"
+require "./resource_manager"
+require "./dependency_container_simple"
+require "./config_manager"
+require "./performance_monitor"
 
 module PointClickEngine
   # Core engine functionality, game loop, and state management
@@ -48,6 +56,7 @@ module PointClickEngine
       class_property debug_mode : Bool = false
 
       @@instance : Engine?
+      @@dependency_container : SimpleDependencyContainer?
 
       # Returns the singleton Engine instance
       #
@@ -148,6 +157,24 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property render_coordinator : EngineComponents::RenderCoordinator
 
+      # New refactored managers
+
+      # Manages scene loading, transitions, and caching
+      @[YAML::Field(ignore: true)]
+      property scene_manager : SceneManager
+
+      # Manages input processing and event coordination
+      @[YAML::Field(ignore: true)]
+      property input_manager : InputManager
+
+      # Manages rendering layers and visual effects
+      @[YAML::Field(ignore: true)]
+      property render_manager : RenderManager
+
+      # Manages asset loading, caching, and cleanup
+      @[YAML::Field(ignore: true)]
+      property resource_manager : ResourceManager
+
       # Whether the window is in fullscreen mode
       property fullscreen : Bool = false
 
@@ -166,6 +193,9 @@ module PointClickEngine
       # Game-specific update callback
       @[YAML::Field(ignore: true)]
       property on_update : Proc(Float32, Nil)?
+
+      # Cursor texture path (serialized for save/load)
+      property cursor_texture_path : String?
 
       # Creates a new Engine instance with specified window dimensions
       #
@@ -188,6 +218,19 @@ module PointClickEngine
         @system_manager = EngineComponents::SystemManager.new
         @input_handler = EngineComponents::InputHandler.new
         @render_coordinator = EngineComponents::RenderCoordinator.new
+
+        # Initialize dependency injection
+        setup_dependencies
+
+        # Initialize new refactored managers via DI
+        container = @@dependency_container.not_nil!
+        
+        # Resolve managers - these must be initialized
+        @scene_manager = container.resolve_scene_manager.as(SceneManager)
+        @input_manager = container.resolve_input_manager.as(InputManager)
+        @render_manager = container.resolve_render_manager.as(RenderManager)
+        @resource_manager = container.resolve_resource_loader.as(ResourceManager)
+
         @@instance = self
       end
 
@@ -211,6 +254,19 @@ module PointClickEngine
         @system_manager = EngineComponents::SystemManager.new
         @input_handler = EngineComponents::InputHandler.new
         @render_coordinator = EngineComponents::RenderCoordinator.new
+
+        # Initialize dependency injection
+        setup_dependencies
+
+        # Initialize new refactored managers via DI
+        container = @@dependency_container.not_nil!
+        
+        # Resolve managers - these must be initialized
+        @scene_manager = container.resolve_scene_manager.as(SceneManager)
+        @input_manager = container.resolve_input_manager.as(InputManager)
+        @render_manager = container.resolve_render_manager.as(RenderManager)
+        @resource_manager = container.resolve_resource_loader.as(ResourceManager)
+
         @@instance = self
       end
 
@@ -222,6 +278,13 @@ module PointClickEngine
         @system_manager = EngineComponents::SystemManager.new
         @input_handler = EngineComponents::InputHandler.new
         @render_coordinator = EngineComponents::RenderCoordinator.new
+
+        # Reconstruct new refactored managers
+        @scene_manager = SceneManager.new
+        @input_manager = InputManager.new
+        @render_manager = RenderManager.new
+        @resource_manager = ResourceManager.new
+
         @@instance = self
       end
 
@@ -302,7 +365,15 @@ module PointClickEngine
       # NOTE: If a scene with the same name already exists, it will be
       # replaced with the new scene.
       def add_scene(scene : Scenes::Scene)
-        @scenes[scene.name] = scene
+        # Validate scene before adding
+        result = @scene_manager.add_scene(scene)
+        
+        # Only add to engine's scene registry if successful
+        if result.success?
+          @scenes[scene.name] = scene
+        end
+        
+        result
       end
 
       # Activates a registered scene as the current scene
@@ -321,7 +392,11 @@ module PointClickEngine
       # NOTE: If the specified scene doesn't exist, a warning is printed
       # and the current scene remains unchanged.
       def change_scene(name : String)
-        if scene = @scenes[name]?
+        # Try to change scene via SceneManager first
+        result = @scene_manager.change_scene(name)
+        case result
+        when .success?
+          scene = result.value
           @current_scene = scene
           @current_scene_name = name
 
@@ -349,10 +424,30 @@ module PointClickEngine
             end
           end
 
-          scene.on_enter.try(&.call)
-        else
-          puts "Warning: Scene '#{name}' not found"
+          scene.enter
+        when .failure?
+          ErrorLogger.error("Failed to change scene: #{result.error.message}")
         end
+      end
+
+      # Additional scene management delegation
+      def preload_scene(name : String, path : String)
+        @scene_manager.preload_scene(name, path)
+      end
+
+      def unload_scene(name : String)
+        result = @scene_manager.unload_scene(name)
+        # Also remove from engine's local registry
+        @scenes.delete(name)
+        result
+      end
+
+      def get_scene(name : String)
+        @scene_manager.get_scene(name)
+      end
+
+      def get_scene_names
+        @scene_manager.get_scene_names
       end
 
       # Dialog management
@@ -468,6 +563,12 @@ module PointClickEngine
         # Update systems
         @system_manager.update_systems(dt)
 
+        # Update new refactored managers
+        # @resource_manager.update(dt)  # ResourceManager doesn't need regular updates
+        # @scene_manager.update(dt)     # SceneManager doesn't need regular updates
+        @input_manager.update(dt)       # InputManager has update method
+        # @render_manager.update(dt)    # RenderManager doesn't need regular updates
+
         # Update menu system
         @system_manager.menu_system.try(&.update(dt))
 
@@ -516,15 +617,14 @@ module PointClickEngine
                                nil
                              end
 
-          if verb_system = @verb_input_system
-            verb_system.process_input(@current_scene, @player, @system_manager.display_manager, camera_for_input)
-          else
-            @input_handler.process_input(@current_scene, @player, camera_for_input)
-          end
+          # Delegate input processing to InputManager
+          # TODO: Update this to use new InputManager API
+          # @input_manager.process_input(@current_scene, @player, camera_for_input, @verb_input_system, @input_handler, @system_manager.display_manager)
         end
 
-        # Update cursor
-        @render_coordinator.update_cursor(@current_scene)
+        # Update cursor via RenderManager
+        # TODO: Update this to use new RenderManager API
+        # @render_manager.update_cursor(@current_scene)
 
         # Call game-specific update if provided
         @on_update.try &.call(dt)
@@ -554,6 +654,12 @@ module PointClickEngine
         # Update systems
         @system_manager.update_systems(dt)
 
+        # Update new refactored managers
+        # @resource_manager.update(dt)  # ResourceManager doesn't need regular updates
+        # @scene_manager.update(dt)     # SceneManager doesn't need regular updates
+        @input_manager.update(dt)       # InputManager has update method
+        # @render_manager.update(dt)    # RenderManager doesn't need regular updates
+
         # Update menu system
         @system_manager.menu_system.try(&.update(dt))
 
@@ -602,22 +708,18 @@ module PointClickEngine
                                nil
                              end
 
-          if verb_system = @verb_input_system
-            verb_system.process_input(@current_scene, @player, @system_manager.display_manager, camera_for_input)
-          else
-            @input_handler.process_input(@current_scene, @player, camera_for_input)
-          end
+          # Delegate input processing to InputManager
+          # TODO: Update this to use new InputManager API
+          # @input_manager.process_input(@current_scene, @player, camera_for_input, @verb_input_system, @input_handler, @system_manager.display_manager)
         end
 
-        # Update cursor
-        @render_coordinator.update_cursor(@current_scene)
+        # Update cursor via RenderManager
+        # TODO: Update this to use new RenderManager API
+        # @render_manager.update_cursor(@current_scene)
       end
 
       # Render game
       private def render
-        RL.begin_drawing
-        RL.clear_background(RL::BLACK)
-
         # Only pass camera if current scene has scrolling enabled
         camera_to_use = if scene = @current_scene
                           scene.enable_camera_scrolling ? @camera : nil
@@ -625,26 +727,18 @@ module PointClickEngine
                           nil
                         end
 
-        @render_coordinator.render(
+        # Delegate rendering to RenderManager
+        @render_manager.render(
           @current_scene,
           @dialogs,
           @cutscene_manager,
           @system_manager.transition_manager,
-          camera_to_use
+          camera_to_use,
+          @verb_input_system,
+          @system_manager.display_manager,
+          @system_manager.menu_system,
+          @show_fps
         )
-
-        # Draw verb cursor if enabled
-        @verb_input_system.try(&.draw(@system_manager.display_manager))
-
-        # Draw menu system on top of everything
-        @system_manager.menu_system.try(&.draw)
-
-        # Draw FPS counter if enabled
-        if @show_fps
-          RL.draw_fps(10, 10)
-        end
-
-        RL.end_drawing
       end
 
       # Display settings
@@ -764,8 +858,106 @@ module PointClickEngine
 
       # Cursor management
       def load_cursor(path : String)
-        @cursor_texture_path = path
-        # Load cursor texture implementation
+        result = @resource_manager.load_texture(path)
+        case result
+        when .success?
+          @cursor_texture_path = path
+          ErrorLogger.info("Cursor texture loaded: #{path}")
+        when .failure?
+          ErrorLogger.error("Failed to load cursor texture: #{result.error.message}")
+        end
+      end
+
+      # Get the loaded cursor texture
+      def get_cursor_texture
+        if path = @cursor_texture_path
+          @resource_manager.get_texture(path)
+        else
+          nil
+        end
+      end
+
+      # Resource management delegation
+      def load_texture(path : String)
+        @resource_manager.load_texture(path)
+      end
+
+      def load_sound(path : String)
+        @resource_manager.load_sound(path)
+      end
+
+      def load_music(path : String)
+        @resource_manager.load_music(path)
+      end
+
+      def load_font(path : String, size : Int32 = 16)
+        @resource_manager.load_font(path, size)
+      end
+
+      def preload_assets(asset_list : Array(String))
+        @resource_manager.preload_assets(asset_list)
+      end
+
+      def get_memory_usage
+        @resource_manager.get_memory_usage
+      end
+
+      def set_memory_limit(limit_bytes : Int64)
+        @resource_manager.set_memory_limit(limit_bytes)
+      end
+
+      def enable_hot_reload
+        @resource_manager.enable_hot_reload
+      end
+
+      def disable_hot_reload
+        @resource_manager.disable_hot_reload
+      end
+
+      # Input management delegation
+      def register_input_handler(handler_name : String, priority : Int32 = 0)
+        @input_manager.register_handler(handler_name, priority)
+      end
+
+      def unregister_input_handler(handler_name : String)
+        @input_manager.unregister_handler(handler_name)
+      end
+
+      def is_input_consumed(input_type : String) : Bool
+        @input_manager.is_consumed(input_type)
+      end
+
+      def consume_input(input_type : String, handler_name : String)
+        @input_manager.consume_input(input_type, handler_name)
+      end
+
+      # Rendering management delegation
+      def add_render_layer(name : String, z_order : Int32 = 0)
+        @render_manager.add_layer(name, z_order)
+      end
+
+      def remove_render_layer(name : String)
+        @render_manager.remove_layer(name)
+      end
+
+      def set_render_layer_z_order(name : String, z_order : Int32)
+        @render_manager.set_layer_z_order(name, z_order)
+      end
+
+      def set_render_layer_visible(name : String, visible : Bool)
+        @render_manager.set_layer_visible(name, visible)
+      end
+
+      def enable_performance_tracking
+        @render_manager.enable_performance_tracking
+      end
+
+      def disable_performance_tracking
+        @render_manager.disable_performance_tracking
+      end
+
+      def get_render_stats
+        @render_manager.get_render_stats
       end
 
       # Save/Load system
@@ -866,8 +1058,30 @@ module PointClickEngine
         @input_handler.handle_clicks = value
       end
 
+      # Setup dependency injection container
+      private def setup_dependencies
+        # Create a global dependency container instance
+        container = SimpleDependencyContainer.new
+        @@dependency_container = container
+        
+        # Register concrete implementations
+        container.register_resource_loader(ResourceManager.new)
+        container.register_scene_manager(SceneManager.new)
+        container.register_input_manager(InputManager.new)
+        container.register_render_manager(RenderManager.new)
+        
+        # Register singletons
+        container.register_config_manager(ConfigManager.new("config/game.yml"))
+        container.register_performance_monitor(PerformanceMonitor.new)
+        
+        ErrorLogger.info("Dependencies registered")
+      end
+
       # Cleanup
       private def cleanup
+        # Cleanup new refactored managers
+        @resource_manager.cleanup_all_resources
+
         @system_manager.cleanup_systems
         RL.close_window
         puts "Engine cleanup complete"

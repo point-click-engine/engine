@@ -244,7 +244,7 @@ module PointClickEngine
           player_obj.scale = player_config.scale
 
           # Increase walking speed to compensate for larger appearance
-          player_obj.walking_speed = 200.0
+          player_obj.walking_speed = GameConstants::SCALED_WALKING_SPEED
 
           engine.player = player_obj
         end

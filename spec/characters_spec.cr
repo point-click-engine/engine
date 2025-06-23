@@ -138,8 +138,8 @@ describe PointClickEngine::Characters do
     it "has configurable mood" do
       npc = PointClickEngine::Characters::NPC.new("Guard", vec2(0, 0), vec2(32, 48))
 
-      npc.set_mood(PointClickEngine::Characters::NPCMood::Happy)
-      npc.mood.should eq(PointClickEngine::Characters::NPCMood::Happy)
+      npc.mood = PointClickEngine::Characters::CharacterMood::Happy
+      npc.mood.should eq(PointClickEngine::Characters::CharacterMood::Happy)
     end
 
     it "has configurable repeat behavior" do

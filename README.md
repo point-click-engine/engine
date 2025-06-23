@@ -121,6 +121,23 @@ game/
 └── assets/             # Images, sounds, etc.
 ```
 
+### Core Architecture
+
+The engine follows SOLID principles with a modular design:
+
+- **Dependency Injection**: Clean separation of concerns with interface-based design
+- **Manager Pattern**: Dedicated managers for scenes, resources, input, and rendering
+- **Result Monad**: Comprehensive error handling without exceptions
+- **Event System**: Decoupled communication between components
+- **Performance Monitoring**: Built-in metrics and profiling tools
+
+Key components:
+- `Core::Engine` - Main game loop and system coordination
+- `SceneManager` - Scene loading, transitions, and caching
+- `ResourceManager` - Asset loading with hot-reload support
+- `InputManager` - Priority-based input handling
+- `RenderManager` - Layer-based rendering with performance tracking
+
 ## Core Concepts
 
 ### Scenes

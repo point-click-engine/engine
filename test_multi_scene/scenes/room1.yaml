@@ -1,0 +1,16 @@
+name: room1
+background_path: "assets/room1.png"
+
+hotspots:
+  - name: door
+    type: exit
+    x: 400
+    y: 200
+    width: 80
+    height: 160
+    target_scene: room2
+    target_position:
+      x: 100
+      y: 300
+    transition_type: fade
+    description: "Door to room 2"

@@ -8,8 +8,16 @@ describe "YAML Scene Loading" do
 
     after_each do
       if Dir.exists?("test_scenes")
-        Dir.each_child("test_scenes") { |f| File.delete("test_scenes/#{f}") }
-        Dir.delete("test_scenes")
+        Dir.each_child("test_scenes") do |child|
+          path = "test_scenes/#{child}"
+          if File.directory?(path)
+            Dir.each_child(path) { |f| File.delete("#{path}/#{f}") rescue nil }
+            Dir.delete(path) rescue nil
+          else
+            File.delete(path) rescue nil
+          end
+        end
+        Dir.delete("test_scenes") rescue nil
       end
     end
 

@@ -1,98 +1,53 @@
+# Configuration management system for the Point & Click Engine
+
 require "yaml"
+require "./error_handling"
+require "./interfaces"
 
 module PointClickEngine
   module Core
     class ConfigManager
-      property settings : Hash(String, String) = {} of String => String
-      property config_file : String = "config.yaml"
+      include ErrorHelpers
+      include IConfigManager
 
-      def initialize
-        load_defaults
-      end
+      @config_file : String
+      @config_data : Hash(String, String) = {} of String => String
 
       def initialize(@config_file : String)
-        load_defaults
-        load_from_file
+        ErrorLogger.info("ConfigManager initialized")
       end
 
-      def get(key : String) : String?
-        @settings[key]?
-      end
-
-      def get(key : String, default : String) : String
-        @settings[key]? || default
+      def get(key : String, default_value : String? = nil) : String?
+        @config_data[key]? || default_value
       end
 
       def set(key : String, value : String)
-        @settings[key] = value
+        @config_data[key] = value
       end
 
-      def has?(key : String) : Bool
-        @settings.has_key?(key)
+      def has_key?(key : String) : Bool
+        @config_data.has_key?(key)
       end
 
-      def get_int(key : String, default : Int32 = 0) : Int32
-        value = get(key)
-        return default unless value
-        value.to_i? || default
-      end
-
-      def get_float(key : String, default : Float32 = 0.0f32) : Float32
-        value = get(key)
-        return default unless value
-        value.to_f32? || default
-      end
-
-      def get_bool(key : String, default : Bool = false) : Bool
-        value = get(key)
-        return default unless value
-        case value.downcase
-        when "true", "yes", "1", "on"
-          true
-        when "false", "no", "0", "off"
-          false
-        else
-          default
+      def save_config : Result(Nil, ConfigError)
+        begin
+          File.write(@config_file, @config_data.to_yaml)
+          Result.success(nil)
+        rescue ex
+          Result.failure(ConfigError.new("Failed to save config: #{ex.message}", @config_file))
         end
       end
 
-      def save_to_file
-        File.write(@config_file, @settings.to_yaml)
-      rescue ex
-        puts "Failed to save config: #{ex.message}"
-      end
-
-      def load_from_file
-        return unless File.exists?(@config_file)
-
-        yaml_content = File.read(@config_file)
-        loaded = Hash(String, String).from_yaml(yaml_content)
-        @settings.merge!(loaded)
-      rescue ex
-        puts "Failed to load config: #{ex.message}"
-      end
-
-      private def load_defaults
-        # Game defaults
-        @settings["game.version"] = "1.0.0"
-        @settings["game.debug"] = "false"
-
-        # Graphics defaults
-        @settings["graphics.fullscreen"] = "false"
-        @settings["graphics.vsync"] = "true"
-        @settings["graphics.resolution.width"] = "1024"
-        @settings["graphics.resolution.height"] = "768"
-
-        # Audio defaults
-        @settings["audio.master_volume"] = "1.0"
-        @settings["audio.music_volume"] = "0.7"
-        @settings["audio.sfx_volume"] = "0.8"
-        @settings["audio.mute"] = "false"
-
-        # Gameplay defaults
-        @settings["gameplay.text_speed"] = "normal"
-        @settings["gameplay.auto_save"] = "true"
-        @settings["gameplay.language"] = "en"
+      def load_config : Result(Nil, ConfigError)
+        begin
+          if File.exists?(@config_file)
+            yaml_content = File.read(@config_file)
+            @config_data = Hash(String, String).from_yaml(yaml_content)
+          end
+          Result.success(nil)
+        rescue ex
+          Result.failure(ConfigError.new("Failed to load config: #{ex.message}", @config_file))
+        end
       end
     end
   end

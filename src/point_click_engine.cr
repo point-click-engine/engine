@@ -43,7 +43,7 @@ require "yaml"
 require "json" # Required for luajit.cr compatibility (fixes JSON::Any issue)
 
 # Alias for convenience - shorthand for Raylib module
-alias RL = Raylib
+# Note: RL alias is defined in individual files that need Raylib types
 
 # Core modules
 require "./utils/yaml_converters"
@@ -173,7 +173,8 @@ module PointClickEngine
   alias Direction8 = Characters::Direction8
   alias AnimationState = Characters::AnimationState
   alias AnimationController = Characters::AnimationController
-  alias NPCMood = Characters::NPCMood
+  alias NPCMood = Characters::CharacterMood  # Legacy alias for backward compatibility
+alias CharacterMood = Characters::CharacterMood
   alias AnimationData = Characters::AnimationData
   alias CharacterDialogue = Characters::Dialogue::CharacterDialogue
   alias DialogTree = Characters::Dialogue::DialogTree

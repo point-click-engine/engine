@@ -1,0 +1,19 @@
+---
+name: save_test
+background_path: bg.png
+scale: 1.5
+enable_pathfinding: true
+navigation_cell_size: 16
+hotspots:
+- name: test_hotspot
+  description: Test description
+  type: rectangle
+  x: -5.0
+  y: 0.0
+  width: 30.0
+  height: 40.0
+characters:
+- name: test_char
+  position:
+    x: 50.0
+    y: 60.0

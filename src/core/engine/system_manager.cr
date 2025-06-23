@@ -53,7 +53,7 @@ module PointClickEngine
           @gui = UI::GUIManager.new
 
           # Initialize config manager
-          @config = ConfigManager.new
+          @config = ConfigManager.new("config/game.yml")
 
           # Initialize dialog manager
           @dialog_manager = UI::DialogManager.new

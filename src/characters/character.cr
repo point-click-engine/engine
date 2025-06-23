@@ -3,6 +3,9 @@
 require "yaml"
 require "../utils/yaml_converters"
 require "../core/game_object"
+require "../core/game_constants"
+require "../utils/vector_math"
+require "./movement_controller"
 
 module PointClickEngine
   module Characters
@@ -26,6 +29,22 @@ module PointClickEngine
       Right # Character is facing right
       Up    # Character is facing up/away
       Down  # Character is facing down/toward camera
+    end
+
+    # Defines the emotional state/mood of a character
+    #
+    # Used to control mood-based animations, dialogue options, and NPC reactions.
+    # Available to both Player and NPC characters for consistent emotional gameplay.
+    enum CharacterMood
+      Friendly # Character is approachable and welcoming
+      Neutral  # Character has no particular emotional state
+      Hostile  # Character is aggressive or unwelcoming
+      Sad      # Character is melancholy or depressed
+      Happy    # Character is joyful and upbeat
+      Angry    # Character is irritated or furious
+      Wise     # Character is contemplative and knowledgeable
+      Curious  # Character is inquisitive and interested
+      Confused # Character is uncertain or puzzled
     end
 
     # Marker module for objects that support dialogue interactions
@@ -113,8 +132,11 @@ module PointClickEngine
       # Current facing direction for sprite selection
       property direction : Direction = Direction::Right
 
+      # Current emotional state/mood affecting animations and interactions
+      property mood : CharacterMood = CharacterMood::Neutral
+
       # Movement speed in pixels per second
-      property walking_speed : Float32 = 100.0
+      property walking_speed : Float32 = Core::GameConstants::DEFAULT_WALKING_SPEED
 
       # Target position for movement (nil if not moving)
       @[YAML::Field(converter: PointClickEngine::Utils::YAMLConverters::Vector2Converter, nilable: true)]
@@ -144,6 +166,9 @@ module PointClickEngine
 
       # Animated sprite data for rendering
       property sprite_data : Graphics::AnimatedSprite?
+
+      # Path to the sprite/spritesheet file for this character
+      property sprite_path : String?
 
       # Gets the character's sprite
       #
@@ -175,6 +200,10 @@ module PointClickEngine
       # Manual scale override from configuration (overrides dynamic scaling)
       property manual_scale : Float32?
 
+      # Movement controller for centralized movement logic (runtime only)
+      @[YAML::Field(ignore: true)]
+      property movement_controller : MovementController?
+
       # Creates a character with empty properties
       #
       # Initializes all collections and sets up dialogue system.
@@ -185,6 +214,7 @@ module PointClickEngine
         @description = ""
         @animations = {} of String => AnimationData
         @dialogue_system_data = Dialogue::CharacterDialogue.new(self)
+        @movement_controller = MovementController.new(self)
       end
 
       # Creates a character with specified properties
@@ -197,6 +227,7 @@ module PointClickEngine
         @description = "A character named #{@name}"
         @dialogue_system_data = Dialogue::CharacterDialogue.new(self)
         @animations = {} of String => AnimationData
+        @movement_controller = MovementController.new(self)
       end
 
       # Called after YAML deserialization to restore runtime state
@@ -209,6 +240,7 @@ module PointClickEngine
         super(ctx)
         @sprite_data.try &.after_yaml_deserialize(ctx)
         @dialogue_system_data.try &.character = self
+        @movement_controller = MovementController.new(self)
         play_animation(@current_animation, force_restart: false)
       end
 
@@ -248,7 +280,7 @@ module PointClickEngine
       # character.add_animation("idle", 0, 1, 0.1, false)
       # ```
       def add_animation(name : String, start_frame : Int32, frame_count : Int32,
-                        frame_speed : Float32 = 0.1, loop : Bool = true)
+                        frame_speed : Float32 = Core::GameConstants::DEFAULT_ANIMATION_SPEED, loop : Bool = true)
         @animations[name] = AnimationData.new(start_frame, frame_count, frame_speed, loop)
       end
 
@@ -284,35 +316,24 @@ module PointClickEngine
       #
       # Sets the character to walk directly toward the target position.
       # Automatically selects appropriate walking animation based on direction.
-      # Clears any existing pathfinding data.
+      # Uses the MovementController for optimized movement calculations.
       #
       # - *target* : World position to walk to
+      # - *use_pathfinding* : Whether to use pathfinding (default: character setting)
       #
       # ```
       # character.walk_to(Vector2.new(200, 300))
+      # character.walk_to(target, use_pathfinding: true)
       # ```
-      def walk_to(target : RL::Vector2)
-        @target_position = target
-        @state = CharacterState::Walking
-
-        # Reset path when new target is set
-        @path = nil
-        @current_path_index = 0
-
-        if target.x < @position.x
-          @direction = Direction::Left
-          play_animation("walk_left") if @animations.has_key?("walk_left")
-        else
-          @direction = Direction::Right
-          play_animation("walk_right") if @animations.has_key?("walk_right")
-        end
+      def walk_to(target : RL::Vector2, use_pathfinding : Bool? = nil)
+        @movement_controller.try(&.move_to(target, use_pathfinding))
       end
 
       # Initiates movement along a predefined path
       #
       # Sets the character to follow a series of waypoints, typically
       # generated by the pathfinding system. The character will navigate
-      # through each waypoint in sequence.
+      # through each waypoint in sequence using the MovementController.
       #
       # - *path* : Array of waypoints to follow
       #
@@ -321,42 +342,36 @@ module PointClickEngine
       # character.walk_to_with_path(waypoints) if waypoints
       # ```
       def walk_to_with_path(path : Array(RL::Vector2))
-        return if path.empty?
-
-        @path = path
-        @current_path_index = 0
-        @target_position = path.last
-        @state = CharacterState::Walking
-
-        # Set initial direction based on first waypoint
-        if path[0].x < @position.x
-          @direction = Direction::Left
-          play_animation("walk_left") if @animations.has_key?("walk_left")
-        else
-          @direction = Direction::Right
-          play_animation("walk_right") if @animations.has_key?("walk_right")
-        end
+        @movement_controller.try(&.move_along_path(path))
       end
 
       # Stops the character's movement immediately
       #
       # Clears movement target and path, returns to idle state, and
-      # plays appropriate idle animation. Executes walk completion callback
-      # if one was set.
+      # plays appropriate idle animation. Uses the MovementController
+      # for consistent movement handling.
       def stop_walking
-        @target_position = nil
-        @path = nil
-        @current_path_index = 0
-        @state = CharacterState::Idle
-        base_idle_anim = @direction == Direction::Left ? "idle_left" : "idle_right"
-        play_animation(base_idle_anim) if @animations.has_key?(base_idle_anim)
-        play_animation("idle") if !@animations.has_key?(base_idle_anim) && @animations.has_key?("idle")
-
-        # Call completion callback if set
-        if callback = @on_walk_complete
-          @on_walk_complete = nil # Clear callback to prevent double calls
-          callback.call
-        end
+        @movement_controller.try(&.stop_movement)
+      end
+      
+      # Check if character is currently moving
+      def moving? : Bool
+        @movement_controller.try(&.moving?) || false
+      end
+      
+      # Check if character is following a pathfinding route
+      def following_path? : Bool
+        @movement_controller.try(&.following_path?) || false
+      end
+      
+      # Get remaining distance to movement target
+      def distance_to_target : Float32
+        @movement_controller.try(&.distance_to_target) || 0.0_f32
+      end
+      
+      # Set movement completion callback
+      def on_movement_complete(&block : -> Nil)
+        @movement_controller.try(&.on_movement_complete = block)
       end
 
       # Makes the character speak dialogue text
@@ -422,7 +437,7 @@ module PointClickEngine
       # - *dt* : Delta time in seconds since last update
       def update(dt : Float32)
         return unless @active
-        update_movement(dt)
+        @movement_controller.try(&.update(dt))
         update_animation(dt)
         @dialogue_system_data.try &.update(dt)
       end
@@ -663,6 +678,48 @@ module PointClickEngine
         end
 
         @sprite_data.try &.position = @position
+      end
+
+      # Sets the character's mood and updates mood-based animations
+      #
+      # Changes the character's emotional state and triggers appropriate
+      # mood-based animations if they exist.
+      #
+      # - *new_mood* : The mood to set for this character
+      #
+      # ```
+      # character.set_mood(CharacterMood::Happy)
+      # character.set_mood(CharacterMood::Angry)
+      # ```
+      def set_mood(new_mood : CharacterMood)
+        @mood = new_mood
+        update_mood_animation
+      end
+
+      # Updates character animation based on current mood
+      #
+      # Automatically selects appropriate animations based on the character's
+      # current mood state. Falls back to "idle" if mood-specific animations
+      # don't exist.
+      #
+      # Called automatically when mood changes via `set_mood`.
+      private def update_mood_animation
+        mood_anim = case @mood
+                    when CharacterMood::Happy    then "happy"
+                    when CharacterMood::Sad      then "sad"
+                    when CharacterMood::Angry    then "angry"
+                    when CharacterMood::Wise     then "wise"
+                    when CharacterMood::Curious  then "curious"
+                    when CharacterMood::Confused then "confused"
+                    when CharacterMood::Friendly then "friendly"
+                    when CharacterMood::Hostile  then "hostile"
+                    else                              "idle"
+                    end
+
+        # Only play mood animation if it exists and character is idle
+        if @animations.has_key?(mood_anim) && @state == CharacterState::Idle
+          play_animation(mood_anim, force_restart: false)
+        end
       end
 
       private def update_animation(dt : Float32)

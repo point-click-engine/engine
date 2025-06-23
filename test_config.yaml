@@ -1,0 +1,25 @@
+game:
+  title: "Test Game"
+  version: "1.0.0"
+  author: "Test Author"
+
+window:
+  width: 800
+  height: 600
+  fullscreen: false
+  target_fps: 60
+
+player:
+  name: "TestPlayer"
+  sprite_path: "assets/player.png"
+  sprite:
+    frame_width: 32
+    frame_height: 32
+    columns: 4
+    rows: 4
+
+features:
+  - verbs
+  - floating_dialogs
+
+start_scene: "intro"

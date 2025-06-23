@@ -1,0 +1,9 @@
+game:
+  title: "Adventure v1"
+
+window:
+  width: 800
+  height: 600
+
+settings:
+  master_volume: 0.5

@@ -1,0 +1,13 @@
+name: start
+background_path: assets/bg.png
+script_path: mini_game/scripts/start.lua
+
+hotspots:
+  - name: door
+    type: exit
+    x: 400
+    y: 200
+    width: 100
+    height: 200
+    target_scene: next_room
+    description: "A mysterious door"

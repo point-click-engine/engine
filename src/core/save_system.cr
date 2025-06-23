@@ -106,10 +106,10 @@ module PointClickEngine
 
           # Restore player position
           if player = engine.player
-            player.position = RL::Vector2.new(x: save_data.player_position_x, y: save_data.player_position_y)
+            player.position = Raylib::Vector2.new(x: save_data.player_position_x, y: save_data.player_position_y)
           elsif current_scene = engine.current_scene
             if player = current_scene.player
-              player.position = RL::Vector2.new(x: save_data.player_position_x, y: save_data.player_position_y)
+              player.position = Raylib::Vector2.new(x: save_data.player_position_x, y: save_data.player_position_y)
             end
           end
 
