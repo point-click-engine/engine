@@ -4,7 +4,7 @@ yaml = File.read("crystal_mystery/game_config.yaml")
 puts "YAML content around line 19:"
 lines = yaml.split('\n')
 (17..21).each do |i|
-  puts "#{i}: #{lines[i-1]? || "(no line)"}"
+  puts "#{i}: #{lines[i - 1]? || "(no line)"}"
 end
 
 begin

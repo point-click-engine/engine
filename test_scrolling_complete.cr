@@ -16,7 +16,7 @@ RL.begin_texture_mode(test_texture)
 (0...1536).each do |y|
   color = RL::Color.new(
     r: (50 + y * 0.1).to_u8,
-    g: (100 + y * 0.05).to_u8, 
+    g: (100 + y * 0.05).to_u8,
     b: (150 - y * 0.05).to_u8,
     a: 255
   )
@@ -38,7 +38,7 @@ markers = [
   {x: 1024, y: 768, text: "CENTER", color: RL::GREEN},
   {x: 1848, y: 768, text: "RIGHT", color: RL::BLUE},
   {x: 1024, y: 200, text: "TOP", color: RL::YELLOW},
-  {x: 1024, y: 1336, text: "BOTTOM", color: RL::PURPLE}
+  {x: 1024, y: 1336, text: "BOTTOM", color: RL::PURPLE},
 ]
 
 markers.each do |marker|
@@ -72,7 +72,7 @@ player_texture = RL.load_render_texture(48, 96)
 RL.begin_texture_mode(player_texture)
 RL.clear_background(RL::BLANK)
 # Draw a simple character shape
-RL.draw_rectangle(12, 0, 24, 48, RL::DARKBLUE)  # Body
+RL.draw_rectangle(12, 0, 24, 48, RL::DARKBLUE) # Body
 RL.draw_circle(24, 24, 12.0, RL::BEIGE)        # Head
 RL.draw_rectangle(16, 48, 8, 48, RL::DARKBLUE) # Left leg
 RL.draw_rectangle(24, 48, 8, 48, RL::DARKBLUE) # Right leg
@@ -88,11 +88,11 @@ test_scene.set_player(player)
 # Add interactive hotspots at each marker
 markers.each_with_index do |marker, i|
   hotspot = PointClickEngine::Scenes::Hotspot.new(
-    "marker_#{i}", 
-    RL::Vector2.new(x: marker[:x] - 75, y: marker[:y] - 75), 
+    "marker_#{i}",
+    RL::Vector2.new(x: marker[:x] - 75, y: marker[:y] - 75),
     RL::Vector2.new(x: 150, y: 150)
   )
-  hotspot.on_click = ->{ 
+  hotspot.on_click = -> {
     dialog = PointClickEngine::UI::Dialog.new(
       "You clicked the #{marker[:text]} marker at (#{marker[:x]}, #{marker[:y]})",
       RL::Vector2.new(x: 50, y: 600),
@@ -110,7 +110,7 @@ walkable_region.vertices = [
   RL::Vector2.new(x: 50, y: 400),
   RL::Vector2.new(x: 2000, y: 400),
   RL::Vector2.new(x: 2000, y: 1400),
-  RL::Vector2.new(x: 50, y: 1400)
+  RL::Vector2.new(x: 50, y: 1400),
 ]
 walkable_area.regions << walkable_region
 test_scene.walkable_area = walkable_area
@@ -127,12 +127,12 @@ help_visible = true
 help_text = [
   "=== CAMERA SCROLLING TEST ===",
   "Mouse to edges: Scroll camera",
-  "Click: Move player to position", 
+  "Click: Move player to position",
   "F1: Toggle debug mode",
   "F5: Toggle edge scrolling",
   "Tab: Toggle hotspot highlights",
   "H: Toggle this help",
-  "ESC: Pause menu"
+  "ESC: Pause menu",
 ]
 
 # Main update callback
@@ -141,32 +141,32 @@ engine.on_update = ->(dt : Float32) do
   if RL.key_pressed?(RL::KeyboardKey::H)
     help_visible = !help_visible
   end
-  
+
   # Draw help text (screen space, not affected by camera)
   if help_visible
     # Draw help background
     RL.draw_rectangle(10, 10, 350, help_text.size * 25 + 20, RL::Color.new(r: 0, g: 0, b: 0, a: 200))
-    
+
     # Draw help text
     help_text.each_with_index do |line, i|
       RL.draw_text(line, 20, 20 + i * 25, 20, RL::WHITE)
     end
   end
-  
+
   # Draw camera info
   if camera = engine.camera
     info_text = [
       "Camera: #{camera.position.x.to_i}, #{camera.position.y.to_i}",
       "Player: #{player.position.x.to_i}, #{player.position.y.to_i}",
       "Edge scroll: #{camera.edge_scroll_enabled ? "ON" : "OFF"}",
-      "Scene size: #{test_scene.background.try(&.width) || 0} x #{test_scene.background.try(&.height) || 0}"
+      "Scene size: #{test_scene.background.try(&.width) || 0} x #{test_scene.background.try(&.height) || 0}",
     ]
-    
+
     y_offset = help_visible ? (help_text.size * 25 + 40) : 10
-    
+
     # Draw info background
     RL.draw_rectangle(10, y_offset, 350, info_text.size * 20 + 10, RL::Color.new(r: 0, g: 0, b: 0, a: 150))
-    
+
     # Draw info text
     info_text.each_with_index do |line, i|
       RL.draw_text(line, 20, y_offset + 5 + i * 20, 16, RL::LIGHTGRAY)

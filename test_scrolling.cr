@@ -45,13 +45,13 @@ test_scene.set_player(player)
 
 # Add some hotspots
 left_hotspot = PointClickEngine::Scenes::Hotspot.new("left_area", RL::Vector2.new(x: 100, y: 600), RL::Vector2.new(x: 200, y: 300))
-left_hotspot.on_click = ->{ puts "Clicked left area!" }
+left_hotspot.on_click = -> { puts "Clicked left area!" }
 
 center_hotspot = PointClickEngine::Scenes::Hotspot.new("center_area", RL::Vector2.new(x: 900, y: 600), RL::Vector2.new(x: 200, y: 300))
-center_hotspot.on_click = ->{ puts "Clicked center area!" }
+center_hotspot.on_click = -> { puts "Clicked center area!" }
 
 right_hotspot = PointClickEngine::Scenes::Hotspot.new("right_area", RL::Vector2.new(x: 1700, y: 600), RL::Vector2.new(x: 200, y: 300))
-right_hotspot.on_click = ->{ puts "Clicked right area!" }
+right_hotspot.on_click = -> { puts "Clicked right area!" }
 
 test_scene.add_hotspot(left_hotspot)
 test_scene.add_hotspot(center_hotspot)
