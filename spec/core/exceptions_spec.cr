@@ -49,7 +49,7 @@ describe PointClickEngine::Core do
     it "creates a validation error with multiple errors" do
       errors = ["Missing field 'name'", "Invalid value for 'width'", "Asset not found"]
       error = PointClickEngine::Core::ValidationError.new(errors, "game.yaml")
-      
+
       error.errors.should eq(errors)
       error.filename.should eq("game.yaml")
       error.message.not_nil!.should contain("Validation failed with 3 error(s):")

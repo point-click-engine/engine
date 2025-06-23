@@ -1,5 +1,5 @@
 name: library
-background_path: crystal_mystery/assets/backgrounds/library.png
+background_path: assets/backgrounds/library.png
 enable_pathfinding: true
 navigation_cell_size: 16
 enable_camera_scrolling: false  # Library fits in viewport
@@ -43,39 +43,57 @@ hotspots:
     y: 200
     width: 150
     height: 300
-    description: "Ancient books line the shelves"
+    actions:
+      look: "Ancient books line the shelves"
+      use: "examine_bookshelf"
   - name: desk
     x: 400
     y: 400
     width: 200
     height: 150
-    description: "A mahogany desk with scattered papers"
+    actions:
+      look: "A mahogany desk with scattered papers"
+      use: "examine_desk"
   - name: door_to_lab
-    type: exit
     x: 850
     y: 300
     width: 100
     height: 200
-    target_scene: laboratory
-    target_position: {x: 100, y: 400}
-    transition_type: fade
-    auto_walk: true
-    description: "Door to the laboratory"
+    actions:
+      look: "Door to the laboratory"
+      use: "go_to_laboratory"
   - name: painting
     type: polygon
-    vertices:
-      - {x: 500, y: 100}
-      - {x: 620, y: 100}
-      - {x: 620, y: 250}
-      - {x: 560, y: 280}
-      - {x: 500, y: 250}
-    description: "A portrait of the mansion's founder"
+    points:
+      - x: 500
+        y: 100
+      - x: 620
+        y: 100
+      - x: 620
+        y: 250
+      - x: 560
+        y: 280
+      - x: 500
+        y: 250
+    actions:
+      look: "A portrait of the mansion's founder"
+      use: "examine_painting"
+
+exits:
+  - x: 850
+    y: 300
+    width: 100
+    height: 200
+    target_scene: laboratory
+    spawn_position:
+      x: 100
+      y: 400
 characters:
   - name: butler
     position:
       x: 300
       y: 450
-    sprite_path: crystal_mystery/assets/sprites/butler.png
+    sprite_path: assets/sprites/butler.png
     sprite_info:
       frame_width: 100
       frame_height: 100

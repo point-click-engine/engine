@@ -115,6 +115,10 @@ module PointClickEngine
       property start_music : String?
       property ui : UIConfig?
 
+      # Non-serialized property to store config directory
+      @[YAML::Field(ignore: true)]
+      property config_base_dir : String = ""
+
       # Load configuration from YAML file
       def self.from_file(path : String) : GameConfig
         unless File.exists?(path)
@@ -124,13 +128,16 @@ module PointClickEngine
         begin
           yaml_content = File.read(path)
           config = from_yaml(yaml_content)
-          
+
           # Validate configuration
           errors = Validators::ConfigValidator.validate(config, path)
           unless errors.empty?
             raise ValidationError.new(errors, path)
           end
-          
+
+          # Store base directory for asset loading
+          config.config_base_dir = File.dirname(path)
+
           config
         rescue ex : YAML::ParseException
           raise ConfigError.new("Invalid YAML syntax: #{ex.message}", path)
@@ -221,8 +228,10 @@ module PointClickEngine
             )
           )
 
+          # Resolve player sprite path relative to config directory
+          full_player_sprite_path = File.join(config_base_dir, player_config.sprite_path)
           player_obj.load_enhanced_spritesheet(
-            player_config.sprite_path,
+            full_player_sprite_path,
             player_config.sprite.frame_width,
             player_config.sprite.frame_height,
             player_config.sprite.columns,
@@ -265,7 +274,7 @@ module PointClickEngine
       private def load_assets(engine : Engine)
         # Load scenes
         assets.try(&.scenes.each do |pattern|
-          Dir.glob(pattern).each do |path|
+          Dir.glob(File.join(config_base_dir, pattern)).each do |path|
             if File.exists?(path)
               begin
                 ErrorReporter.report_progress("Loading scene '#{File.basename(path)}'")
@@ -286,7 +295,7 @@ module PointClickEngine
 
         # Load dialogs
         assets.try(&.dialogs.each do |pattern|
-          Dir.glob(pattern).each do |path|
+          Dir.glob(File.join(config_base_dir, pattern)).each do |path|
             begin
               ErrorReporter.report_progress("Loading dialog '#{File.basename(path)}'")
               dialog_tree = Characters::Dialogue::DialogTree.load_from_file(path)
@@ -305,7 +314,7 @@ module PointClickEngine
         # Load quests
         if qm = engine.quest_manager
           assets.try(&.quests.each do |pattern|
-            Dir.glob(pattern).each do |path|
+            Dir.glob(File.join(config_base_dir, pattern)).each do |path|
               if File.exists?(path)
                 ErrorReporter.report_progress("Loading quests '#{File.basename(path)}'")
                 success = qm.load_quests_from_yaml(path)

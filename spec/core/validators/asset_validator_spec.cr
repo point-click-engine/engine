@@ -20,12 +20,12 @@ describe PointClickEngine::Core::Validators::AssetValidator do
       Dir.mkdir_p("#{temp_dir}/assets/sprites")
       Dir.mkdir_p("#{temp_dir}/assets/audio")
       Dir.mkdir_p("#{temp_dir}/scenes")
-      
+
       begin
         # Create test files
         File.write("#{temp_dir}/assets/sprites/player.png", "fake png data")
         File.write("#{temp_dir}/assets/audio/theme.ogg", "fake ogg data")
-        
+
         config_yaml = <<-YAML
         game:
           title: "Test Game"
@@ -47,7 +47,7 @@ describe PointClickEngine::Core::Validators::AssetValidator do
 
         config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
         errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "#{temp_dir}/config.yaml")
-        
+
         errors.should contain("Missing sound: assets/audio/missing.wav")
         errors.size.should eq(1)
       ensure
@@ -70,19 +70,19 @@ describe PointClickEngine::Core::Validators::AssetValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "/fake/path/config.yaml")
-      
+
       errors.should contain("Missing sprite: sprites/missing_player.png")
     end
 
     it "validates asset formats" do
       temp_dir = File.tempname("asset_format_test")
       Dir.mkdir_p("#{temp_dir}/assets")
-      
+
       begin
         # Create files with wrong extensions
         File.write("#{temp_dir}/assets/background.txt", "not an image")
         File.write("#{temp_dir}/assets/music.exe", "not audio")
-        
+
         config_yaml = <<-YAML
         game:
           title: "Test Game"
@@ -104,7 +104,7 @@ describe PointClickEngine::Core::Validators::AssetValidator do
 
         config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
         errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "#{temp_dir}/config.yaml")
-        
+
         errors.any? { |e| e.includes?("Unsupported image format") && e.includes?(".txt") }.should be_true
         errors.any? { |e| e.includes?("Unsupported music format") && e.includes?(".exe") }.should be_true
       ensure
@@ -117,11 +117,11 @@ describe PointClickEngine::Core::Validators::AssetValidator do
       Dir.mkdir_p("#{temp_dir}/assets")
       Dir.mkdir_p("#{temp_dir}/data")
       Dir.mkdir_p("#{temp_dir}/resources")
-      
+
       begin
         # Place asset in data directory
         File.write("#{temp_dir}/data/sprite.png", "fake png")
-        
+
         config_yaml = <<-YAML
         game:
           title: "Test Game"
@@ -136,7 +136,7 @@ describe PointClickEngine::Core::Validators::AssetValidator do
 
         config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
         errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "#{temp_dir}/config.yaml")
-        
+
         # Should find the sprite in data directory
         errors.should be_empty
       ensure
@@ -147,11 +147,11 @@ describe PointClickEngine::Core::Validators::AssetValidator do
     it "detects empty asset files" do
       temp_dir = File.tempname("empty_asset_test")
       Dir.mkdir_p("#{temp_dir}/assets")
-      
+
       begin
         # Create empty file
         File.touch("#{temp_dir}/assets/empty.png")
-        
+
         config_yaml = <<-YAML
         game:
           title: "Test Game"
@@ -166,7 +166,7 @@ describe PointClickEngine::Core::Validators::AssetValidator do
 
         config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
         errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "#{temp_dir}/config.yaml")
-        
+
         errors.any? { |e| e.includes?("file is empty") }.should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
@@ -177,7 +177,7 @@ describe PointClickEngine::Core::Validators::AssetValidator do
       temp_dir = File.tempname("scene_asset_test")
       Dir.mkdir_p("#{temp_dir}/scenes")
       Dir.mkdir_p("#{temp_dir}/assets")
-      
+
       begin
         # Create scene with various asset references
         scene_yaml = <<-YAML
@@ -193,11 +193,11 @@ describe PointClickEngine::Core::Validators::AssetValidator do
             sound: assets/voice.wav
         YAML
         File.write("#{temp_dir}/scenes/test.yaml", scene_yaml)
-        
+
         # Only create some of the referenced assets
         File.write("#{temp_dir}/assets/bg.png", "fake bg")
         File.write("#{temp_dir}/assets/door.png", "fake door")
-        
+
         config_yaml = <<-YAML
         game:
           title: "Test Game"
@@ -208,10 +208,10 @@ describe PointClickEngine::Core::Validators::AssetValidator do
 
         config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
         errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "#{temp_dir}/config.yaml")
-        
+
         # Should report missing optional assets (cursor, portrait, sound are optional)
         # But background is required
-        errors.should be_empty  # All extracted assets except background are optional
+        errors.should be_empty # All extracted assets except background are optional
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -239,7 +239,7 @@ describe PointClickEngine::Core::Validators::AssetValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "/fake/config.yaml")
-      
+
       # All files are missing
       errors.select { |e| e.starts_with?("Missing music:") }.size.should eq(5)
       errors.select { |e| e.starts_with?("Missing sound:") }.size.should eq(5)

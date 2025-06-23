@@ -8,7 +8,7 @@ module PointClickEngine
         puts "\n#{"=" * 60}".colorize(:red)
         puts "❌ LOADING ERROR".colorize(:red).bold
         puts "=" * 60
-        
+
         unless context.empty?
           puts "Context: #{context}".colorize(:yellow)
         end
@@ -23,7 +23,6 @@ module PointClickEngine
             puts "Field: #{error.field}".colorize(:cyan)
           end
           puts "\nError: #{error.message}".colorize(:white)
-          
         when AssetError
           puts "Type: Asset Loading Error".colorize(:red)
           puts "Asset: #{error.asset_path}".colorize(:cyan)
@@ -31,7 +30,6 @@ module PointClickEngine
             puts "Referenced in: #{error.filename}".colorize(:cyan)
           end
           puts "\nError: #{error.message}".colorize(:white)
-          
         when SceneError
           puts "Type: Scene Loading Error".colorize(:red)
           puts "Scene: #{error.scene_name}".colorize(:cyan)
@@ -39,7 +37,6 @@ module PointClickEngine
             puts "Field: #{error.field}".colorize(:cyan)
           end
           puts "\nError: #{error.message}".colorize(:white)
-          
         when ValidationError
           puts "Type: Validation Error".colorize(:red)
           if error.filename
@@ -49,7 +46,6 @@ module PointClickEngine
           error.errors.each_with_index do |err, i|
             puts "  #{i + 1}. #{err}".colorize(:red)
           end
-          
         else
           puts "Type: #{error.class}".colorize(:red)
           puts "\nError: #{error.message}".colorize(:white)
@@ -113,7 +109,7 @@ module PointClickEngine
         separator
         puts "❌ #{title}".colorize(:red).bold
         separator
-        
+
         errors.each_with_index do |error, index|
           puts "\nError #{index + 1}:".colorize(:red).bold
           case error
@@ -126,7 +122,7 @@ module PointClickEngine
             puts "  #{error.message}".colorize(:white)
           end
         end
-        
+
         separator
       end
     end

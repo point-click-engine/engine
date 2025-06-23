@@ -16,10 +16,10 @@ module PointClickEngine
 
       def self.run(config_path : String) : CheckResult
         result = CheckResult.new
-        
+
         puts "Running pre-flight checks..."
         puts "=" * 50
-        
+
         # Step 1: Validate configuration file
         puts "\n1. Checking game configuration..."
         begin
@@ -28,14 +28,17 @@ module PointClickEngine
         rescue ex : ConfigError
           result.passed = false
           result.errors << "Configuration Error: #{ex.message}"
+          display_summary(result)
           return result
         rescue ex : ValidationError
           result.passed = false
           result.errors.concat(ex.errors)
+          display_summary(result)
           return result
         rescue ex
           result.passed = false
           result.errors << "Unexpected error loading config: #{ex.message}"
+          display_summary(result)
           return result
         end
 
@@ -53,7 +56,7 @@ module PointClickEngine
         puts "\n3. Checking scene files..."
         scene_count = 0
         scene_errors = [] of String
-        
+
         if assets = config.assets
           assets.scenes.each do |pattern|
             Dir.glob(File.join(File.dirname(config_path), pattern)).each do |scene_path|
@@ -66,7 +69,7 @@ module PointClickEngine
             end
           end
         end
-        
+
         if scene_errors.empty?
           result.info << "✓ #{scene_count} scene(s) validated"
         else
@@ -76,7 +79,8 @@ module PointClickEngine
 
         # Step 4: Check for common issues
         puts "\n4. Checking for common issues..."
-        check_common_issues(config, result)
+        base_dir = File.dirname(config_path)
+        check_common_issues(config, result, base_dir)
 
         # Step 5: Performance warnings
         puts "\n5. Checking performance considerations..."
@@ -84,17 +88,17 @@ module PointClickEngine
 
         # Display summary
         display_summary(result)
-        
+
         result
       end
 
-      private def self.check_common_issues(config : GameConfig, result : CheckResult)
+      private def self.check_common_issues(config : GameConfig, result : CheckResult, base_dir : String)
         # Check if start scene exists
         if start_scene = config.start_scene
           scene_found = false
           if assets = config.assets
             assets.scenes.each do |pattern|
-              Dir.glob(pattern).each do |path|
+              Dir.glob(File.join(base_dir, pattern)).each do |path|
                 if File.basename(path, ".yaml") == start_scene
                   scene_found = true
                   break
@@ -102,7 +106,7 @@ module PointClickEngine
               end
             end
           end
-          
+
           unless scene_found
             result.warnings << "Start scene '#{start_scene}' not found in scene files"
           end
@@ -121,7 +125,7 @@ module PointClickEngine
         if config.features.includes?("shaders")
           result.info << "✓ Shaders enabled - ensure graphics card supports them"
         end
-        
+
         if config.features.includes?("auto_save")
           result.info << "✓ Auto-save enabled"
         end
@@ -129,10 +133,10 @@ module PointClickEngine
 
       private def self.check_performance(config : GameConfig, config_path : String, result : CheckResult)
         base_dir = File.dirname(config_path)
-        
+
         # Check asset sizes
         large_assets = [] of String
-        
+
         if assets = config.assets
           # Check audio files
           if audio = assets.audio
@@ -147,7 +151,7 @@ module PointClickEngine
             end
           end
         end
-        
+
         unless large_assets.empty?
           result.warnings << "Large assets detected (consider compression):"
           large_assets.each { |a| result.warnings << "  - #{a}" }
@@ -160,7 +164,7 @@ module PointClickEngine
             scene_count += Dir.glob(File.join(base_dir, pattern)).size
           end
         end
-        
+
         if scene_count > 50
           result.warnings << "Large number of scenes (#{scene_count}) may increase loading time"
         end
@@ -170,22 +174,22 @@ module PointClickEngine
         puts "\n" + "=" * 50
         puts "Pre-flight Check Summary:"
         puts "=" * 50
-        
+
         if result.info.any?
           puts "\nℹ️  Information:"
           result.info.each { |msg| puts "   #{msg}" }
         end
-        
+
         if result.warnings.any?
           puts "\n⚠️  Warnings:"
           result.warnings.each { |msg| puts "   #{msg}" }
         end
-        
+
         if result.errors.any?
           puts "\n❌ Errors:"
           result.errors.each { |msg| puts "   #{msg}" }
         end
-        
+
         puts "\n" + "=" * 50
         if result.passed
           puts "✅ All checks passed! Game is ready to run."

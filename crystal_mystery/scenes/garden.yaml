@@ -1,5 +1,5 @@
 name: garden
-background_path: crystal_mystery/assets/backgrounds/garden.png
+background_path: assets/backgrounds/garden.png
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/garden.lua
@@ -12,13 +12,6 @@ walkable_areas:
         - {x: 950, y: 250}
         - {x: 950, y: 700}
         - {x: 50, y: 700}
-    - name: fountain_center
-      walkable: false
-      vertices:
-        - {x: 420, y: 340}
-        - {x: 580, y: 340}
-        - {x: 580, y: 480}
-        - {x: 420, y: 480}
   scale_zones:
     - min_y: 250
       max_y: 450
@@ -34,33 +27,54 @@ hotspots:
     y: 300
     width: 200
     height: 200
-    description: "An ornate fountain with crystal-clear water"
+    actions:
+      look: "An ornate fountain with crystal-clear water"
+      use: "examine_fountain"
   - name: statue
     type: polygon
-    vertices:
-      - {x: 740, y: 200}  # top (head)
-      - {x: 760, y: 220}  # right shoulder
-      - {x: 780, y: 260}  # right arm
-      - {x: 770, y: 400}  # right base
-      - {x: 730, y: 450}  # bottom base
-      - {x: 690, y: 400}  # left base
-      - {x: 680, y: 260}  # left arm  
-      - {x: 700, y: 220}  # left shoulder
-    description: "A weathered statue holding something..."
+    points:
+      - x: 740
+        y: 200
+      - x: 760
+        y: 220
+      - x: 780
+        y: 260
+      - x: 770
+        y: 400
+      - x: 730
+        y: 450
+      - x: 690
+        y: 400
+      - x: 680
+        y: 260
+      - x: 700
+        y: 220
+    actions:
+      look: "A weathered statue holding something..."
+      use: "examine_statue"
   - name: flowerbed
     x: 150
     y: 450
     width: 250
     height: 100
-    description: "Beautiful roses in full bloom"
+    actions:
+      look: "Beautiful roses in full bloom"
+      use: "examine_flowerbed"
   - name: door_to_lab
-    type: exit
     x: 50
     y: 300
     width: 100
     height: 200
+    actions:
+      look: "Back to the laboratory"
+      use: "go_to_laboratory"
+
+exits:
+  - x: 50
+    y: 300
+    width: 100
+    height: 200
     target_scene: laboratory
-    target_position: {x: 800, y: 400}
-    transition_type: fade
-    auto_walk: true
-    description: "Back to the laboratory"
+    spawn_position:
+      x: 800
+      y: 400

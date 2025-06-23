@@ -99,7 +99,7 @@ describe PointClickEngine::Core::ErrorReporter do
       errors = [
         PointClickEngine::Core::ConfigError.new("Invalid value", "config.yaml"),
         PointClickEngine::Core::AssetError.new("Not found", "sprite.png"),
-        Exception.new("Generic error")
+        Exception.new("Generic error"),
       ]
       # Should not raise
       PointClickEngine::Core::ErrorReporter.report_multiple_errors(errors, "Validation Failed")

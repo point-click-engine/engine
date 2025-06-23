@@ -10,11 +10,11 @@ describe "Validation System" do
     PointClickEngine::Core::SceneError.should_not be_nil
     PointClickEngine::Core::ValidationError.should_not be_nil
     PointClickEngine::Core::SaveGameError.should_not be_nil
-    
+
     PointClickEngine::Core::Validators::ConfigValidator.should_not be_nil
     PointClickEngine::Core::Validators::AssetValidator.should_not be_nil
     PointClickEngine::Core::Validators::SceneValidator.should_not be_nil
-    
+
     PointClickEngine::Core::PreflightCheck.should_not be_nil
     PointClickEngine::Core::ErrorReporter.should_not be_nil
   end
@@ -26,9 +26,9 @@ describe "Validation System" do
       PointClickEngine::Core::AssetError.new("test", "asset.png"),
       PointClickEngine::Core::SceneError.new("test", "scene"),
       PointClickEngine::Core::ValidationError.new(["error1"], "file.yaml"),
-      PointClickEngine::Core::SaveGameError.new("test")
+      PointClickEngine::Core::SaveGameError.new("test"),
     ]
-    
+
     errors.each { |e| e.should_not be_nil }
   end
 
@@ -37,10 +37,10 @@ describe "Validation System" do
     game:
       title: "Test Game"
     YAML
-    
+
     config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
     errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test.yaml")
-    
+
     # Basic config should be valid
     errors.should be_empty
   end
@@ -49,14 +49,14 @@ describe "Validation System" do
     temp_dir = File.tempname("scene_test")
     Dir.mkdir_p(temp_dir)
     temp_file = "#{temp_dir}/test_scene.yaml"
-    
+
     scene_yaml = <<-YAML
     name: test_scene
     background_path: bg.png
     YAML
-    
+
     File.write(temp_file, scene_yaml)
-    
+
     begin
       errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
       errors.should be_empty
@@ -67,7 +67,7 @@ describe "Validation System" do
 
   it "error reporter can report errors without crashing" do
     error = PointClickEngine::Core::ConfigError.new("Test error", "test.yaml")
-    
+
     # Simply test that these methods don't raise exceptions
     # We won't try to capture output in the spec
     PointClickEngine::Core::ErrorReporter.report_loading_error(error)
@@ -79,16 +79,16 @@ describe "Validation System" do
   it "pre-flight check can run" do
     temp_dir = File.tempname("preflight_test")
     Dir.mkdir_p(temp_dir)
-    
+
     begin
       config_yaml = <<-YAML
       game:
         title: "Test Game"
       YAML
-      
+
       config_path = "#{temp_dir}/config.yaml"
       File.write(config_path, config_yaml)
-      
+
       # Just run the check without capturing output
       result = PointClickEngine::Core::PreflightCheck.run(config_path)
       result.should_not be_nil

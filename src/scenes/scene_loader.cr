@@ -15,7 +15,8 @@ module PointClickEngine
     class SceneLoader
       def self.load_from_yaml(path : String) : Scene
         scene_name = File.basename(path, ".yaml")
-        
+        scene_dir = File.dirname(path)
+
         begin
           yaml_content = PointClickEngine::AssetLoader.read_yaml(path)
           scene_data = YAML.parse(yaml_content)
@@ -26,7 +27,7 @@ module PointClickEngine
         unless scene_data["name"]?
           raise Core::SceneError.new("Missing required field 'name'", scene_name)
         end
-        
+
         scene = Scene.new(scene_data["name"].as_s)
 
         if scale = scene_data["scale"]?
@@ -34,7 +35,9 @@ module PointClickEngine
         end
 
         if background_path = scene_data["background_path"]?
-          scene.load_background(background_path.as_s, scene.scale)
+          # Resolve asset path relative to scene directory
+          full_background_path = File.join(File.dirname(scene_dir), background_path.as_s)
+          scene.load_background(full_background_path, scene.scale)
         end
 
         if enable_pathfinding = scene_data["enable_pathfinding"]?
@@ -239,7 +242,9 @@ module PointClickEngine
                 frame_width = sprite_info["frame_width"].as_i
                 frame_height = sprite_info["frame_height"].as_i
               end
-              character.load_spritesheet(sprite_path.as_s, frame_width, frame_height)
+              # Resolve asset path relative to scene directory
+              full_sprite_path = File.join(File.dirname(scene_dir), sprite_path.as_s)
+              character.load_spritesheet(full_sprite_path, frame_width, frame_height)
             end
 
             scene.add_character(character)

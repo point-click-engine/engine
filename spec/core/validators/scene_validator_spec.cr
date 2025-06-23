@@ -19,9 +19,9 @@ describe PointClickEngine::Core::Validators::SceneValidator do
             look: "It's a door"
             use: "open_door"
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
         errors.should be_empty
@@ -38,7 +38,7 @@ describe PointClickEngine::Core::Validators::SceneValidator do
     it "detects invalid YAML syntax" do
       temp_file = File.tempname("invalid_yaml", ".yaml")
       File.write(temp_file, "invalid: yaml: syntax: here")
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
         errors.any? { |e| e.includes?("Invalid YAML syntax") }.should be_true
@@ -52,9 +52,9 @@ describe PointClickEngine::Core::Validators::SceneValidator do
       scene_yaml = <<-YAML
       scale: 1.0
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
         errors.should contain("Missing required field 'name'")
@@ -70,9 +70,9 @@ describe PointClickEngine::Core::Validators::SceneValidator do
       name: different_name
       background_path: bg.png
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
         errors.any? { |e| e.includes?("Scene name 'different_name' doesn't match filename") }.should be_true
@@ -88,9 +88,9 @@ describe PointClickEngine::Core::Validators::SceneValidator do
       background_path: bg.png
       scale: 15.0
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
         errors.should contain("Scale must be between 0 and 10 (got 15.0)")
@@ -107,9 +107,9 @@ describe PointClickEngine::Core::Validators::SceneValidator do
       enable_pathfinding: true
       navigation_cell_size: 150
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
         errors.should contain("Navigation cell size must be between 1 and 100 (got 150)")
@@ -140,12 +140,12 @@ describe PointClickEngine::Core::Validators::SceneValidator do
           width: 10
           height: 10
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
-        
+
         errors.should contain("Hotspot #1: Name cannot be empty")
         errors.should contain("Hotspot #1: x cannot be negative")
         errors.should contain("Hotspot #1: height cannot be negative")
@@ -180,12 +180,12 @@ describe PointClickEngine::Core::Validators::SceneValidator do
             - x: 100
               y: 100
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
-        
+
         errors.should contain("Hotspot #1: Polygon must have at least 3 points")
         errors.should contain("Hotspot #1: Point #2 missing x or y coordinate")
         errors.should contain("Hotspot #2: Point #2 has negative coordinates")
@@ -213,12 +213,12 @@ describe PointClickEngine::Core::Validators::SceneValidator do
             - x: 50
               y: -30
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
-        
+
         errors.should contain("Walkable area #1: Must have at least 3 points")
         errors.should contain("Walkable area #2: Point #2 has negative coordinates")
         errors.should contain("Walkable area #2: Point #3 has negative coordinates")
@@ -249,12 +249,12 @@ describe PointClickEngine::Core::Validators::SceneValidator do
           spawn_position:
             x: 100
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
-        
+
         errors.should contain("Exit #1: Missing required field 'height'")
         errors.should contain("Exit #1: Missing required field 'target_scene'")
         errors.should contain("Exit #1: x cannot be negative")
@@ -284,12 +284,12 @@ describe PointClickEngine::Core::Validators::SceneValidator do
           min_scale: -0.5
           max_scale: 10
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
-        
+
         errors.should contain("Scale zone #1: width cannot be negative")
         errors.should contain("Scale zone #1: min_scale cannot be greater than max_scale")
         errors.should contain("Scale zone #2: min_scale must be between 0 and 5")
@@ -314,12 +314,12 @@ describe PointClickEngine::Core::Validators::SceneValidator do
           sprite: ""
           dialog: ""
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
-        
+
         errors.should contain("Character #1: Name cannot be empty")
         errors.should contain("Character #2: x cannot be negative")
         errors.should contain("Character #2: y cannot be negative")
@@ -346,12 +346,12 @@ describe PointClickEngine::Core::Validators::SceneValidator do
             invalid_action: "something"
             use: "do_something"
       YAML
-      
+
       File.write(temp_file, scene_yaml)
-      
+
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
-        
+
         errors.should contain("Hotspot #1: Unknown action 'invalid_action'")
       ensure
         File.delete(temp_file) if File.exists?(temp_file)

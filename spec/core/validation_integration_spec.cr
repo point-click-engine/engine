@@ -9,7 +9,7 @@ describe "Validation System Integration" do
     Dir.mkdir_p("#{temp_dir}/assets/audio")
     Dir.mkdir_p("#{temp_dir}/scenes")
     Dir.mkdir_p("#{temp_dir}/dialogs")
-    
+
     begin
       # Create a complete game configuration
       config_yaml = <<-YAML
@@ -85,7 +85,7 @@ describe "Validation System Integration" do
           - text: "Press ESC for menu"
             duration: 5.0
       YAML
-      
+
       # Create all referenced files
       File.write("#{temp_dir}/config.yaml", config_yaml)
       File.write("#{temp_dir}/assets/sprites/player.png", "fake player sprite")
@@ -93,7 +93,7 @@ describe "Validation System Integration" do
       File.write("#{temp_dir}/assets/audio/battle.mp3", "fake battle music")
       File.write("#{temp_dir}/assets/audio/click.wav", "fake click sound")
       File.write("#{temp_dir}/assets/audio/door.ogg", "fake door sound")
-      
+
       # Create a complete scene
       scene_yaml = <<-YAML
       name: intro
@@ -163,11 +163,11 @@ describe "Validation System Integration" do
           sprite: assets/sprites/guard.png
           dialog: guard_dialog
       YAML
-      
+
       File.write("#{temp_dir}/scenes/intro.yaml", scene_yaml)
       File.write("#{temp_dir}/assets/intro_bg.png", "fake background")
       File.write("#{temp_dir}/assets/sprites/guard.png", "fake guard sprite")
-      
+
       # Create a dialog file
       dialog_yaml = <<-YAML
       name: guard_dialog
@@ -175,23 +175,23 @@ describe "Validation System Integration" do
         - id: start
           text: "Halt! Who goes there?"
       YAML
-      
+
       File.write("#{temp_dir}/dialogs/guard_dialog.yaml", dialog_yaml)
-      
+
       # Now run the complete validation pipeline
       config = PointClickEngine::Core::GameConfig.from_file("#{temp_dir}/config.yaml")
       config.should_not be_nil
       config.game.title.should eq("Integration Test Game")
-      
+
       # Run pre-flight check
       original_stdout = STDOUT
       captured = IO::Memory.new
-      
+
       begin
         {% if flag?(:darwin) || flag?(:linux) %}
           STDOUT.reopen(captured)
         {% end %}
-        
+
         result = PointClickEngine::Core::PreflightCheck.run("#{temp_dir}/config.yaml")
         result.passed.should be_true
         result.errors.should be_empty
@@ -201,7 +201,6 @@ describe "Validation System Integration" do
           STDOUT.reopen(original_stdout)
         {% end %}
       end
-      
     ensure
       FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
     end
@@ -210,7 +209,7 @@ describe "Validation System Integration" do
   it "catches all types of validation errors" do
     temp_dir = File.tempname("error_test")
     Dir.mkdir_p("#{temp_dir}/scenes")
-    
+
     begin
       # Create a config with multiple errors
       config_yaml = <<-YAML
@@ -254,9 +253,9 @@ describe "Validation System Integration" do
           music:
             theme: "missing_theme.ogg"
       YAML
-      
+
       File.write("#{temp_dir}/config.yaml", config_yaml)
-      
+
       # Create an invalid scene
       scene_yaml = <<-YAML
       name: wrong_name
@@ -286,26 +285,26 @@ describe "Validation System Integration" do
           x: -500
           y: -600
       YAML
-      
+
       File.write("#{temp_dir}/scenes/test_scene.yaml", scene_yaml)
-      
+
       # Attempt to load and validate
       expect_raises(PointClickEngine::Core::ValidationError) do
         PointClickEngine::Core::GameConfig.from_file("#{temp_dir}/config.yaml")
       end
-      
+
       # Run pre-flight check to see all errors
       original_stdout = STDOUT
       captured = IO::Memory.new
-      
+
       begin
         {% if flag?(:darwin) || flag?(:linux) %}
           STDOUT.reopen(captured)
         {% end %}
-        
+
         result = PointClickEngine::Core::PreflightCheck.run("#{temp_dir}/config.yaml")
         result.passed.should be_false
-        
+
         # Config validation errors
         result.errors.any? { |e| e.includes?("Game title cannot be empty") }.should be_true
         result.errors.any? { |e| e.includes?("Window width must be positive") }.should be_true
@@ -315,13 +314,11 @@ describe "Validation System Integration" do
         result.errors.any? { |e| e.includes?("master_volume must be between") }.should be_true
         result.errors.any? { |e| e.includes?("Flag names cannot be empty") }.should be_true
         result.errors.any? { |e| e.includes?("reserved and cannot be used") }.should be_true
-        
       ensure
         {% if flag?(:darwin) || flag?(:linux) %}
           STDOUT.reopen(original_stdout)
         {% end %}
       end
-      
     ensure
       FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
     end
@@ -334,28 +331,27 @@ describe "Validation System Integration" do
       PointClickEngine::Core::AssetError.new("Missing", "asset.png", "scene.yaml"),
       PointClickEngine::Core::SceneError.new("Invalid", "test_scene", "hotspot"),
       PointClickEngine::Core::ValidationError.new(["Error 1", "Error 2"], "file.yaml"),
-      PointClickEngine::Core::SaveGameError.new("Corrupted", "save.dat")
+      PointClickEngine::Core::SaveGameError.new("Corrupted", "save.dat"),
     ]
-    
+
     errors_to_test.each do |error|
       # Capture output
       original_stdout = STDOUT
       captured = IO::Memory.new
-      
+
       begin
         {% if flag?(:darwin) || flag?(:linux) %}
           STDOUT.reopen(captured)
         {% end %}
-        
+
         PointClickEngine::Core::ErrorReporter.report_loading_error(error)
-        
+
         captured.rewind
         output = captured.gets_to_end
-        
+
         # Should contain error type and message
         output.should contain("LOADING ERROR")
         output.should contain(error.class.to_s.split("::").last)
-        
       ensure
         {% if flag?(:darwin) || flag?(:linux) %}
           STDOUT.reopen(original_stdout)

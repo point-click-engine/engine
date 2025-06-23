@@ -16,7 +16,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-      
+
       errors.should be_empty
     end
 
@@ -31,9 +31,9 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       yaml_data = YAML.parse(config_yaml)
       config = PointClickEngine::Core::GameConfig.new
       config.window = PointClickEngine::Core::GameConfig::WindowConfig.from_yaml(yaml_data["window"].to_yaml)
-      
+
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-      
+
       errors.should contain("Missing required 'game' section")
     end
 
@@ -46,7 +46,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-      
+
       errors.should contain("Game title cannot be empty")
     end
 
@@ -62,7 +62,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-      
+
       errors.should contain("Window width must be positive (got -100)")
       errors.should contain("Window height must be positive (got 0)")
       errors.should contain("Target FPS must be between 1 and 300 (got 500)")
@@ -84,7 +84,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-      
+
       errors.should contain("Player sprite_path cannot be empty")
       errors.should contain("Player sprite frame_width must be positive")
       errors.should contain("Player sprite frame_height must be positive")
@@ -104,7 +104,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-      
+
       errors.should contain("Invalid scaling_mode 'InvalidMode'. Must be one of: FitWithBars, Stretch, PixelPerfect")
       errors.should contain("Display target_width must be positive")
       errors.should contain("Display target_height must be positive")
@@ -122,7 +122,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-      
+
       errors.should contain("master_volume must be between 0 and 1 (got 1.5)")
       errors.should contain("music_volume must be between 0 and 1 (got -0.1)")
       errors.should contain("sfx_volume must be between 0 and 1 (got 2.0)")
@@ -143,7 +143,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-      
+
       errors.should contain("Flag names cannot be empty")
       errors.should contain("Flag name 'true' is reserved and cannot be used")
       errors.should contain("Variable name 'null' is reserved and cannot be used")
@@ -154,7 +154,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       # Create temporary directory structure for testing
       temp_dir = File.tempname("config_test")
       Dir.mkdir(temp_dir)
-      
+
       begin
         config_yaml = <<-YAML
         game:
@@ -174,7 +174,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
 
         config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
         errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "#{temp_dir}/config.yaml")
-        
+
         errors.should contain("Scene pattern 'scenes/*.yaml' matches no files")
         errors.should contain("Scene pattern 'nonexistent/*.yaml' matches no files")
         errors.should contain("No scene files found using provided patterns")
@@ -202,7 +202,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-      
+
       errors.any? { |e| e.includes?("Start scene 'missing_scene' not found") }.should be_true
       errors.should contain("Start music 'missing_music' not defined in audio.music section")
     end
@@ -226,7 +226,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-      
+
       errors.should contain("Player start position X cannot be negative")
       errors.should contain("Player start position Y cannot be negative")
     end

@@ -1,15 +1,4 @@
 #!/bin/bash
+# Run Crystal Mystery game from the root directory
 
-echo "========================="
-echo "The Crystal Mystery Game"
-echo "========================="
-echo ""
-echo "Starting the game..."
-echo ""
-echo "Controls:"
-echo "- Click to interact with objects"
-echo "- ESC to return to menu"
-echo "- F1 for debug mode"
-echo ""
-
-./crystal_mystery_game
+crystal run crystal_mystery/main.cr "$@"

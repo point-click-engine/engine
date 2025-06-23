@@ -7,7 +7,7 @@ class CrystalMysteryGame
 
   def initialize
     config_path = "crystal_mystery/game_config.yaml"
-    
+
     # Run pre-flight checks first
     begin
       PointClickEngine::Core::PreflightCheck.run!(config_path)
