@@ -2,6 +2,7 @@
 
 require "yaml"
 require "file_utils"
+require "../inventory/inventory_item"
 
 module PointClickEngine
   module Core

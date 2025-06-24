@@ -23,16 +23,38 @@ module PointClickEngine
         # Step 1: Validate configuration file
         puts "\n1. Checking game configuration..."
         begin
-          config = GameConfig.from_file(config_path)
+          # Load config without validation first
+          unless File.exists?(config_path)
+            result.passed = false
+            result.errors << "Configuration file not found: #{config_path}"
+            display_summary(result)
+            return result
+          end
+
+          yaml_content = File.read(config_path)
+          config = GameConfig.from_yaml(yaml_content)
+          config.config_base_dir = File.dirname(config_path)
           result.info << "✓ Configuration loaded successfully"
-        rescue ex : ConfigError
+
+          # Run validation separately to get warnings/errors
+          validation_errors = Validators::ConfigValidator.validate(config, config_path)
+          unless validation_errors.empty?
+            # Check if these are critical errors or can be warnings
+            validation_errors.each do |error|
+              if error.includes?("matches no files") ||
+                 error.includes?("not found in asset patterns") ||
+                 error.includes?("No scene patterns defined")
+                # These should be warnings for preflight check
+                result.warnings << error
+              else
+                result.passed = false
+                result.errors << error
+              end
+            end
+          end
+        rescue ex : YAML::ParseException
           result.passed = false
-          result.errors << "Configuration Error: #{ex.message}"
-          display_summary(result)
-          return result
-        rescue ex : ValidationError
-          result.passed = false
-          result.errors.concat(ex.errors)
+          result.errors << "Configuration Error: Invalid YAML syntax - #{ex.message}"
           display_summary(result)
           return result
         rescue ex
@@ -141,6 +163,7 @@ module PointClickEngine
           if sprite_path = player.sprite_path
             full_sprite_path = File.expand_path(sprite_path, base_dir)
             unless File.exists?(full_sprite_path)
+              result.passed = false
               result.errors << "Player sprite not found: #{sprite_path}"
             else
               result.info << "✓ Player sprite found: #{sprite_path}"
@@ -152,13 +175,14 @@ module PointClickEngine
           # Check player sprite dimensions
           if sprite = player.sprite
             if sprite.frame_width <= 0 || sprite.frame_height <= 0
+              result.passed = false
               result.errors << "Invalid player sprite dimensions: #{sprite.frame_width}x#{sprite.frame_height}"
             end
           else
             result.warnings << "No player sprite dimensions specified - may cause rendering issues"
           end
         else
-          result.errors << "No player configuration found"
+          result.warnings << "No player configuration found - player character will not be available"
         end
 
         # Check scene background scaling issues
@@ -189,6 +213,7 @@ module PointClickEngine
                         result.warnings << "Scene '#{scene_name}' background may be too small (#{bg_path}) for window size #{window_width}x#{window_height}"
                       end
                     else
+                      result.passed = false
                       result.errors << "Background image not found for scene '#{File.basename(scene_path)}': #{bg_path}"
                     end
                   end
@@ -267,6 +292,7 @@ module PointClickEngine
         end
 
         if in_non_walkable_area
+          result.passed = false
           result.errors << "Player starting position (#{player_x}, #{player_y}) is in a non-walkable area in scene '#{scene_name}'"
         elsif !in_walkable_area && walkable_areas.any? { |a| a[:walkable] }
           result.warnings << "Player starting position (#{player_x}, #{player_y}) may not be in any walkable area in scene '#{scene_name}'"

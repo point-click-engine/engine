@@ -1,9 +1,0 @@
-game:
-  title: "State Change Test"
-
-assets:
-  quests: ["test_quests/*.yaml"]
-
-initial_state:
-  flags:
-    game_started: true

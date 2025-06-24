@@ -34,7 +34,7 @@ module PointClickEngine
     class CursorManager
       property cursors : Hash(VerbType, RL::Texture2D)
       property current_verb : VerbType = VerbType::Walk
-      property current_hotspot : Hotspot? = nil
+      property current_hotspot : Scenes::Hotspot? = nil
       property current_character : Characters::Character? = nil
       property show_tooltip : Bool = true
       property tooltip_offset : RL::Vector2 = RL::Vector2.new(x: 20, y: 20)

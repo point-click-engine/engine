@@ -1,6 +1,7 @@
 # Dialog system for character conversations
 
 require "yaml"
+require "../core/game_object"
 
 module PointClickEngine
   module UI

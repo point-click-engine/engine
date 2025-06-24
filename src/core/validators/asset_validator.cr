@@ -5,7 +5,7 @@ module PointClickEngine
   module Core
     module Validators
       class AssetValidator
-        struct AssetCheck
+        class AssetCheck
           property path : String
           property type : String
           property required : Bool
@@ -23,10 +23,12 @@ module PointClickEngine
           # Collect all assets to check
           assets_to_check = [] of AssetCheck
 
-          # Player sprite - TODO: Fix path resolution issue
-          # if player = config.player
-          #   assets_to_check << AssetCheck.new(player.sprite_path, "sprite", true)
-          # end
+          # Player sprite
+          if player = config.player
+            if sprite_path = player.sprite_path
+              assets_to_check << AssetCheck.new(sprite_path, "sprite", true)
+            end
+          end
 
           # Scene backgrounds and assets
           if assets = config.assets
@@ -37,6 +39,7 @@ module PointClickEngine
                   assets_to_check.concat(scene_assets)
                 rescue ex
                   errors << "Failed to parse scene '#{scene_path}': #{ex.message}"
+                  # puts "Scene parse error: #{ex.message}"
                 end
               end
             end
@@ -77,9 +80,9 @@ module PointClickEngine
             # Simple extraction of asset references from YAML
             # Look for common asset fields
             yaml_content.each_line do |line|
-              if match = line.match(/background:\s*["']?([^"'\s]+)["']?/)
+              if match = line.match(/background(?:_path)?:\s*["']?([^"'\s]+)["']?/)
                 assets << AssetCheck.new(match[1], "background", true)
-              elsif match = line.match(/sprite:\s*["']?([^"'\s]+)["']?/)
+              elsif match = line.match(/sprite(?:_path)?:\s*["']?([^"'\s]+)["']?/)
                 assets << AssetCheck.new(match[1], "sprite", false)
               elsif match = line.match(/portrait:\s*["']?([^"'\s]+)["']?/)
                 assets << AssetCheck.new(match[1], "portrait", false)
@@ -90,7 +93,8 @@ module PointClickEngine
               end
             end
           rescue ex
-            # Error will be reported by caller
+            # Re-raise so caller can handle
+            raise ex
           end
 
           assets
@@ -107,28 +111,39 @@ module PointClickEngine
           ]
 
           # Also check in any mounted archives
-          if PointClickEngine::AssetManager.instance.exists?(asset.path)
-            asset.exists = true
-            return
-          end
+          # Skip AssetManager check in tests or when no archives are mounted
+          # NOTE: Disabled because AssetManager.exists? also checks filesystem
+          # with wrong base path for validation context
+          # begin
+          #   if PointClickEngine::AssetManager.instance.exists?(asset.path)
+          #     asset.exists = true
+          #     puts "Found in AssetManager"
+          #     return
+          #   end
+          # rescue ex
+          #   # AssetManager not initialized, continue with filesystem check
+          #   puts "AssetManager exception: #{ex.message}"
+          # end
 
           # Check filesystem
           paths_to_try.each do |path|
+            # Debug output
             if File.exists?(path)
-              asset.exists = true
-
               # Verify file is readable and not empty
               begin
                 if File.size(path) == 0
                   asset.error = "file is empty"
                   asset.exists = false
+                  # puts "File is empty: #{path}"
+                else
+                  asset.exists = true
+                  return
                 end
               rescue ex
                 asset.error = "cannot read file: #{ex.message}"
                 asset.exists = false
+                # puts "Cannot read file: #{path} - #{ex.message}"
               end
-
-              return
             end
           end
 

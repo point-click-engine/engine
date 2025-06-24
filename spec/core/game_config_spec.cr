@@ -32,6 +32,10 @@ describe PointClickEngine::Core::GameConfig do
       start_scene: "intro"
       YAML
 
+      # Create necessary directories and files
+      Dir.mkdir_p("assets")
+      File.write("assets/player.png", "fake png data")
+
       File.write("test_config.yaml", yaml_content)
 
       config = PointClickEngine::Core::GameConfig.from_file("test_config.yaml")
@@ -69,7 +73,7 @@ describe PointClickEngine::Core::GameConfig do
     it "raises an error for invalid YAML" do
       File.write("invalid_config.yaml", "invalid: yaml: content:")
 
-      expect_raises(YAML::ParseException) do
+      expect_raises(PointClickEngine::Core::ConfigError) do
         PointClickEngine::Core::GameConfig.from_file("invalid_config.yaml")
       end
 
@@ -154,8 +158,7 @@ describe PointClickEngine::Core::GameConfig do
 
       RL.close_window
       File.delete("engine_test_config.yaml")
-      File.delete("assets/hero.png")
-      Dir.delete("assets")
+      FileUtils.rm_rf("assets")
     end
 
     it "loads assets from glob patterns" do

@@ -193,7 +193,9 @@ describe PointClickEngine::Scenes do
       scene.add_character(npc)
 
       # Should find NPC but not player (player excluded from search)
-      scene.get_character_at(vec2(110, 110)).should eq(npc)
+      # Character at (100,100) with size (32,48) has bounds:
+      # x: 84-116, y: 52-100
+      scene.get_character_at(vec2(100, 80)).should eq(npc)  # Within bounds
       scene.get_character_at(vec2(10, 10)).should be_nil   # Player excluded
       scene.get_character_at(vec2(200, 200)).should be_nil # No character there
     end

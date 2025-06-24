@@ -316,7 +316,7 @@ crystal build main.cr --debug
 
 ## Resources
 
-- Full API: `docs/GAME_FORMAT_SPECIFICATION.md`
-- Editor Guide: `docs/EDITOR_IMPLEMENTATION_GUIDE.md`
+- Full API: `GAME_FORMAT_SPECIFICATION.md` (in this directory)
+- Editor Guide: `../tools/EDITOR_DEVELOPMENT.md`
 - Examples: `crystal_mystery/` directory
 - Templates: `templates/` directory

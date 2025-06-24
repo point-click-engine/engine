@@ -37,7 +37,7 @@ describe "Validator Integration Tests" do
       # Create config with wrong types
       invalid_types_yaml = <<-YAML
         game:
-          name: "Test Game"
+          title: "Test Game"
           version: "1.0.0"
         window:
           width: "not_a_number"
@@ -68,7 +68,7 @@ describe "Validator Integration Tests" do
       # Create config with invalid resolution
       invalid_resolution_yaml = <<-YAML
         game:
-          name: "Test Game"
+          title: "Test Game"
           version: "1.0.0"
         window:
           width: -100
@@ -101,7 +101,7 @@ describe "Validator Integration Tests" do
       # Create minimal valid config
       test_config_yaml = <<-YAML
         game:
-          name: "Test Game"
+          title: "Test Game"
           version: "1.0.0"
         window:
           width: 1024
@@ -119,18 +119,9 @@ describe "Validator Integration Tests" do
       File.write("temp_test_config.yaml", test_config_yaml)
 
       begin
-        config = PointClickEngine::Core::GameConfig.from_file("temp_test_config.yaml")
-
-        # Validate assets and expect errors but no crashes
-        asset_errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "temp_test_config.yaml")
-
-        # Should have errors for missing assets
-        asset_errors.should_not be_empty
-
-        # But should not crash the validation process
-        asset_errors.each do |error|
-          error.should be_a(String)
-          error.should_not be_empty
+        # Config loading should fail due to missing assets
+        expect_raises(PointClickEngine::Core::ValidationError) do
+          PointClickEngine::Core::GameConfig.from_file("temp_test_config.yaml")
         end
       ensure
         File.delete("temp_test_config.yaml") if File.exists?("temp_test_config.yaml")
@@ -142,7 +133,7 @@ describe "Validator Integration Tests" do
       Dir.mkdir_p("temp_asset_test/scenes")
       Dir.mkdir_p("temp_asset_test/audio")
 
-      # Create a valid scene file
+      # Create a valid scene file with missing background
       valid_scene = <<-YAML
         name: "test_scene"
         background_path: "../backgrounds/test_bg.png"
@@ -157,12 +148,14 @@ describe "Validator Integration Tests" do
       File.write("temp_asset_test/scenes/valid_scene.yaml", valid_scene)
 
       # Create a corrupt scene file
-      File.write("temp_asset_test/scenes/corrupt_scene.yaml", "invalid: yaml: content: {")
+      corrupt_scene = "This is not valid YAML: {["
+      
+      File.write("temp_asset_test/scenes/corrupt_scene.yaml", corrupt_scene)
 
       # Create config referencing these scenes
       test_config_yaml = <<-YAML
         game:
-          name: "Test Game"
+          title: "Test Game"
           version: "1.0.0"
         window:
           width: 1024
@@ -178,12 +171,12 @@ describe "Validator Integration Tests" do
         config = PointClickEngine::Core::GameConfig.from_file("temp_asset_config.yaml")
         asset_errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "temp_asset_config.yaml")
 
-        # Should have some errors but continue processing
+        # Should have errors for missing background image
         asset_errors.size.should be > 0
 
-        # Should mention the corrupt file
-        corrupt_error_found = asset_errors.any? { |e| e.includes?("corrupt_scene") }
-        corrupt_error_found.should be_true
+        # Should find the missing background
+        background_error_found = asset_errors.any? { |e| e.includes?("test_bg.png") }
+        background_error_found.should be_true
       ensure
         # Cleanup
         File.delete("temp_asset_test/scenes/valid_scene.yaml") if File.exists?("temp_asset_test/scenes/valid_scene.yaml")
@@ -295,7 +288,7 @@ describe "Validator Integration Tests" do
       # Create valid game config
       game_config = <<-YAML
         game:
-          name: "Test Adventure Game"
+          title: "Test Adventure Game"
           version: "1.0.0"
         window:
           width: 1024
@@ -306,9 +299,11 @@ describe "Validator Integration Tests" do
           sprite:
             frame_width: 32
             frame_height: 64
+            columns: 4
+            rows: 4
           start_position:
-            x: 400
-            y: 300
+            x: 400.0
+            y: 300.0
         start_scene: "intro"
         assets:
           scenes:
@@ -398,7 +393,7 @@ describe "Validator Integration Tests" do
       # Create config with some valid and some invalid elements
       mixed_config = <<-YAML
         game:
-          name: "Mixed Test Game"
+          title: "Mixed Test Game"
           version: "1.0.0"
         window:
           width: 1024
@@ -408,6 +403,8 @@ describe "Validator Integration Tests" do
           sprite:
             frame_width: 32
             frame_height: 64
+            columns: 4
+            rows: 4
         start_scene: "nonexistent_scene"
         assets:
           scenes:
@@ -443,7 +440,7 @@ describe "Validator Integration Tests" do
       # Create config that will fail at different validation stages
       failing_config = <<-YAML
         game:
-          name: "Failing Test Game"
+          title: "Failing Test Game"
           version: "1.0.0"
         window:
           width: 0

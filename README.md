@@ -111,9 +111,32 @@ Or for development:
 
 That's it! You have a working adventure game.
 
-## Architecture
+## Documentation
 
-The engine uses a data-driven architecture where games are defined through YAML configuration files and Lua scripts:
+### 📚 User Guide
+- **[Getting Started](docs/user-guide/GETTING_STARTED.md)** - Installation and first game tutorial
+- **[Quick Reference](docs/user-guide/QUICK_REFERENCE.md)** - Quick lookup for common tasks
+- **[Game Formats Overview](docs/user-guide/GAME_FORMAT_SPECIFICATION.md)** - Introduction to YAML formats
+  - **[YAML Formats](docs/user-guide/YAML_FORMATS.md)** - Complete YAML specification
+  - **[Lua Scripting](docs/user-guide/LUA_SCRIPTING.md)** - Full Lua API reference
+  - **[Asset Guide](docs/user-guide/ASSET_GUIDE.md)** - Asset requirements and guidelines
+
+### 🔧 Developer Guide
+- **[Architecture](docs/developer-guide/ARCHITECTURE.md)** - Technical architecture and design
+- **[Testing Guide](docs/developer-guide/TESTING_GUIDE.md)** - Testing strategies and implementation
+- **[Validation System](docs/developer-guide/VALIDATION_SYSTEM.md)** - Error handling and validation
+- **[Debugging Guide](docs/developer-guide/DEBUGGING_GUIDE.md)** - Debugging techniques
+
+### ✨ Features
+- **[Dialog System](docs/features/dialog_system.md)** - Dialog trees and conversations
+- **[Dialog Input](docs/features/dialog_input_handling.md)** - Input handling during dialogs
+- **[Feature Specs](docs/features/specs/)** - Detailed feature specifications
+
+### 🛠️ Tools & Editor
+- **[Editor Development](docs/tools/EDITOR_DEVELOPMENT.md)** - Building a visual editor
+- **[Migration Guide](docs/tools/MIGRATION_GUIDE.md)** - Migrating existing games
+
+## Project Structure
 
 ```
 game/
@@ -127,75 +150,9 @@ game/
 └── assets/             # Images, sounds, etc.
 ```
 
-### Core Architecture
-
-The engine follows SOLID principles with a modular design:
-
-- **Dependency Injection**: Clean separation of concerns with interface-based design
-- **Manager Pattern**: Dedicated managers for scenes, resources, input, and rendering
-- **Result Monad**: Comprehensive error handling without exceptions
-- **Event System**: Decoupled communication between components
-- **Performance Monitoring**: Built-in metrics and profiling tools
-
-Key components:
-- `Core::Engine` - Main game loop and system coordination
-- `SceneManager` - Scene loading, transitions, and caching
-- `ResourceManager` - Asset loading with hot-reload support
-- `InputManager` - Priority-based input handling
-- `RenderManager` - Layer-based rendering with performance tracking
-
-## Core Concepts
-
-### Scenes
-Scenes are game locations with backgrounds, interactive hotspots, and characters. They support:
-- Rectangle and polygon hotspots
-- Exit zones with transitions
-- Walkable area definition
-- Character walk-behind regions
-- Dynamic scaling zones
-
-### Scripting
-Lua scripts handle all game logic with access to a rich API:
-- Scene management
-- Character control
-- Dialog system
-- Inventory management
-- Quest tracking
-- Audio control
-- Visual effects
-
-### Dialogs
-Dialog trees support:
-- Branching conversations
-- Conditional choices
-- Character portraits
-- Effects and state changes
-- Multiple dialog styles
-
-### Quests
-The quest system features:
-- Multi-objective quests
-- Prerequisites and dependencies
-- Conditional rewards
-- Journal entries
-- Auto-start conditions
-
 ## Examples
 
 See the `crystal_mystery` directory for a complete example game demonstrating all engine features.
-
-## Templates
-
-The `templates` directory contains:
-- `game_config_template.yaml` - Starting point for new games
-- `minimal_game.cr` - Minimal game setup
-
-## Documentation
-
-Comprehensive documentation is available in the `docs` directory:
-- `GAME_FORMAT_SPECIFICATION.md` - Complete format reference
-- `GAME_FORMAT_SCHEMA.md` - JSON schemas for validation
-- `EDITOR_IMPLEMENTATION_GUIDE.md` - Building a visual editor
 
 ## Requirements
 
@@ -236,14 +193,6 @@ For other projects using this engine, copy the `run.sh` script to your project r
 
 **Note**: Always use `./run.sh` instead of calling `crystal` directly. This ensures proper audio library linking and compatibility.
 
-## Creating Your Game
-
-1. Copy the `templates/game_config_template.yaml`
-2. Customize it for your game
-3. Create your scenes, scripts, and assets
-4. Use `templates/minimal_game.cr` as your entry point
-5. Build and distribute!
-
 ## Building Games
 
 ### Development Build
@@ -266,6 +215,12 @@ The engine supports building for:
 
 Contributions are welcome! Please read our contributing guidelines and submit pull requests to our repository.
 
+When adding new features:
+1. Update the Game Format Specification
+2. Add JSON schemas if needed
+3. Update the Quick Reference
+4. Add examples to crystal_mystery
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
@@ -287,7 +242,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Support
 
-- Documentation: See `docs/` directory
+- Documentation: See organized documentation above
+- Example Game: See `crystal_mystery/` directory
 - Issues: GitHub Issues
 - Discord: [Join our community](#)
 

@@ -1,3 +1,6 @@
+require "./src/core/game_config"
+
+yaml_content = <<-YAML
 game:
   title: "Test Game"
   version: "1.0.0"
@@ -23,3 +26,12 @@ features:
   - floating_dialogs
 
 start_scene: "intro"
+YAML
+
+begin
+  config = PointClickEngine::Core::GameConfig.from_yaml(yaml_content)
+  puts "Success! Loaded config: #{config.game.title}"
+rescue ex
+  puts "Error: #{ex.class} - #{ex.message}"
+  puts ex.backtrace.first(5).join("\n")
+end

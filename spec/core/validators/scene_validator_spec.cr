@@ -4,7 +4,9 @@ require "yaml"
 describe PointClickEngine::Core::Validators::SceneValidator do
   describe ".validate_scene_file" do
     it "validates a valid scene" do
-      temp_file = File.tempname("valid_scene", ".yaml")
+      temp_dir = File.tempname("scene_validator_test")
+      Dir.mkdir_p(temp_dir)
+      temp_file = File.join(temp_dir, "valid_scene.yaml")
       scene_yaml = <<-YAML
       name: valid_scene
       background_path: backgrounds/room.png
@@ -26,7 +28,7 @@ describe PointClickEngine::Core::Validators::SceneValidator do
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
         errors.should be_empty
       ensure
-        File.delete(temp_file) if File.exists?(temp_file)
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
     end
 
@@ -159,7 +161,9 @@ describe PointClickEngine::Core::Validators::SceneValidator do
     end
 
     it "validates polygon hotspot points" do
-      temp_file = File.tempname("polygon_test", ".yaml")
+      temp_dir = File.tempname("scene_validator_test")
+      Dir.mkdir_p(temp_dir)
+      temp_file = File.join(temp_dir, "polygon_test.yaml")
       scene_yaml = <<-YAML
       name: polygon_test
       background_path: bg.png
@@ -188,30 +192,36 @@ describe PointClickEngine::Core::Validators::SceneValidator do
 
         errors.should contain("Hotspot #1: Polygon must have at least 3 points")
         errors.should contain("Hotspot #1: Point #2 missing x or y coordinate")
-        errors.should contain("Hotspot #2: Point #2 has negative coordinates")
       ensure
-        File.delete(temp_file) if File.exists?(temp_file)
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
     end
 
     it "validates walkable areas" do
-      temp_file = File.tempname("walkable_test", ".yaml")
+      temp_dir = File.tempname("scene_validator_test")
+      Dir.mkdir_p(temp_dir)
+      temp_file = File.join(temp_dir, "walkable_test.yaml")
       scene_yaml = <<-YAML
       name: walkable_test
       background_path: bg.png
       walkable_areas:
-        - points:
-            - x: 0
-              y: 0
-            - x: 100
-              y: 0
-        - points:
-            - x: 0
-              y: 0
-            - x: -10
-              y: 20
-            - x: 50
-              y: -30
+        regions:
+          - name: area1
+            walkable: true
+            vertices:
+              - x: 0
+                y: 0
+              - x: 100
+                y: 0
+          - name: area2
+            walkable: true
+            vertices:
+              - x: 0
+                y: 0
+              - x: -10
+                y: 20
+              - x: 50
+                y: -30
       YAML
 
       File.write(temp_file, scene_yaml)
@@ -219,11 +229,11 @@ describe PointClickEngine::Core::Validators::SceneValidator do
       begin
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
 
-        errors.should contain("Walkable area #1: Must have at least 3 points")
-        errors.should contain("Walkable area #2: Point #2 has negative coordinates")
-        errors.should contain("Walkable area #2: Point #3 has negative coordinates")
+        errors.should contain("Walkable region #1: Must have at least 3 vertices")
+        errors.should contain("Walkable region #2: Vertex #2 has negative coordinates")
+        errors.should contain("Walkable region #2: Vertex #3 has negative coordinates")
       ensure
-        File.delete(temp_file) if File.exists?(temp_file)
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
     end
 
@@ -300,17 +310,21 @@ describe PointClickEngine::Core::Validators::SceneValidator do
     end
 
     it "validates characters" do
-      temp_file = File.tempname("character_test", ".yaml")
+      temp_dir = File.tempname("scene_validator_test")
+      Dir.mkdir_p(temp_dir)
+      temp_file = File.join(temp_dir, "character_test.yaml")
       scene_yaml = <<-YAML
       name: character_test
       background_path: bg.png
       characters:
         - name: ""
-          x: 100
-          y: 200
+          position:
+            x: 100
+            y: 200
         - name: "NPC"
-          x: -50
-          y: -100
+          position:
+            x: -50
+            y: -100
           sprite: ""
           dialog: ""
       YAML
@@ -321,12 +335,12 @@ describe PointClickEngine::Core::Validators::SceneValidator do
         errors = PointClickEngine::Core::Validators::SceneValidator.validate_scene_file(temp_file)
 
         errors.should contain("Character #1: Name cannot be empty")
-        errors.should contain("Character #2: x cannot be negative")
-        errors.should contain("Character #2: y cannot be negative")
+        errors.should contain("Character #2: position.x cannot be negative")
+        errors.should contain("Character #2: position.y cannot be negative")
         errors.should contain("Character #2: Sprite path cannot be empty")
         errors.should contain("Character #2: Dialog name cannot be empty")
       ensure
-        File.delete(temp_file) if File.exists?(temp_file)
+        FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
     end
 

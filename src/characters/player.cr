@@ -156,6 +156,15 @@ module PointClickEngine
 
       # Setup player-specific animations
       private def setup_player_animations
+        # Set up basic animations for compatibility
+        @animations["idle"] = AnimationData.new(0, 1, 0.1f32, true)
+        @animations["idle_right"] = AnimationData.new(0, 1, 0.1f32, true)
+        @animations["idle_left"] = AnimationData.new(0, 1, 0.1f32, true)
+        @animations["walk_right"] = AnimationData.new(4, 4, 0.1f32, true)
+        @animations["walk_left"] = AnimationData.new(8, 4, 0.1f32, true)
+        @animations["talk"] = AnimationData.new(32, 2, 0.3f32, true)
+        @current_animation = "idle_right"
+
         # Add player-specific idle variations
         @animation_controller.add_idle_variation("check_inventory", 100, 8, 0.15)
         @animation_controller.add_idle_variation("look_around", 108, 6, 0.2)

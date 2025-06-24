@@ -27,12 +27,10 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
         height: 768
       YAML
 
-      # Try to parse incomplete config - should work since fields are nilable
-      config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
-
-      errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
-
-      errors.should contain("Missing required 'game' section")
+      # Try to parse incomplete config - should raise exception
+      expect_raises(YAML::ParseException, "Missing YAML attribute: game") do
+        PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
+      end
     end
 
     it "detects empty game title" do
@@ -159,15 +157,15 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
           title: "Test Game"
         assets:
           scenes:
-            - "#{temp_dir}/scenes/*.yaml"
-            - "#{temp_dir}/nonexistent/*.yaml"
+            - "scenes/*.yaml"
+            - "nonexistent/*.yaml"
           dialogs:
-            - "#{temp_dir}/dialogs/*.yaml"
+            - "dialogs/*.yaml"
           audio:
             music:
-              theme: "#{temp_dir}/music/theme.ogg"
+              theme: "music/theme.ogg"
             sounds:
-              click: "#{temp_dir}/sounds/click.wav"
+              click: "sounds/click.wav"
         YAML
 
         config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
@@ -218,8 +216,8 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
           columns: 4
           rows: 4
         start_position:
-          x: -100
-          y: -50
+          x: -100.0
+          y: -50.0
       YAML
 
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)

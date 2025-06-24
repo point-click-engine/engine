@@ -27,16 +27,36 @@ module PointClickEngine
         # Step 1: Validate configuration file
         puts "\n1. Checking game configuration..."
         begin
-          config = GameConfig.from_file(config_path)
+          # Load config without validation first
+          unless File.exists?(config_path)
+            result.passed = false
+            result.errors << "Configuration file not found: #{config_path}"
+            display_summary(result)
+            return result
+          end
+
+          yaml_content = File.read(config_path)
+          config = GameConfig.from_yaml(yaml_content)
+          config.config_base_dir = File.dirname(config_path)
           result.info << "✓ Configuration loaded successfully"
-        rescue ex : ConfigError
+
+          # Run validation separately to get warnings/errors
+          validation_errors = Validators::ConfigValidator.validate(config, config_path)
+          unless validation_errors.empty?
+            # Check if these are critical errors or can be warnings
+            validation_errors.each do |error|
+              if error.includes?("matches no files") || error.includes?("not found in asset patterns")
+                # These should be warnings for preflight check
+                result.warnings << error
+              else
+                result.passed = false
+                result.errors << error
+              end
+            end
+          end
+        rescue ex : YAML::ParseException
           result.passed = false
-          result.errors << "Configuration Error: #{ex.message}"
-          display_summary(result)
-          return result
-        rescue ex : ValidationError
-          result.passed = false
-          result.errors.concat(ex.errors)
+          result.errors << "Invalid YAML syntax: #{ex.message}"
           display_summary(result)
           return result
         rescue ex
@@ -126,7 +146,7 @@ module PointClickEngine
 
         # Step 14: Security considerations
         puts "\n14. Scanning for security issues..."
-        check_security(config, result, base_dir)
+        check_security(config, result, base_dir, config_path)
 
         # Step 15: Animation validation
         puts "\n15. Validating animations..."
@@ -678,12 +698,12 @@ module PointClickEngine
         end
       end
 
-      private def self.check_security(config : GameConfig, result : CheckResult, base_dir : String)
+      private def self.check_security(config : GameConfig, result : CheckResult, base_dir : String, config_path : String)
         # Check for sensitive data in config
-        config_file = Dir.glob(File.join(base_dir, "*.yaml")).find { |f| f.includes?("game") || f.includes?("config") }
-        return unless config_file
+        # Just use the config file that was passed in
+        return unless File.exists?(config_path)
 
-        config_content = File.read(config_file)
+        config_content = File.read(config_path)
 
         # Look for potential secrets
         sensitive_patterns = [

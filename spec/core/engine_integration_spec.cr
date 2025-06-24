@@ -7,6 +7,9 @@ describe "Engine Integration with YAML Configuration" do
   end
 
   it "creates a minimal game from YAML configuration" do
+    # Clean up any existing test directories
+    FileUtils.rm_rf("test_minimal_game") if Dir.exists?("test_minimal_game")
+    
     # Create minimal game structure
     Dir.mkdir_p("test_minimal_game/scenes")
     Dir.mkdir_p("test_minimal_game/scripts")
@@ -23,7 +26,7 @@ describe "Engine Integration with YAML Configuration" do
     
     player:
       name: "TestHero"
-      sprite_path: "test_minimal_game/assets/sprites/hero.png"
+      sprite_path: "assets/sprites/hero.png"
       sprite:
         frame_width: 32
         frame_height: 32
@@ -31,18 +34,16 @@ describe "Engine Integration with YAML Configuration" do
         rows: 1
     
     assets:
-      scenes: ["test_minimal_game/scenes/*.yaml"]
+      scenes: ["scenes/*.yaml"]
     
     start_scene: "test_room"
     YAML
 
-    File.write("test_minimal_game/game_config.yaml", config_yaml)
-
     # Create a test scene
     scene_yaml = <<-YAML
     name: test_room
-    background_path: "test_minimal_game/assets/bg.png"
-    script_path: "test_minimal_game/scripts/test_room.lua"
+    background_path: "assets/bg.png"
+    script_path: "scripts/test_room.lua"
     
     hotspots:
       - name: test_object
@@ -71,6 +72,9 @@ describe "Engine Integration with YAML Configuration" do
     LUA
 
     File.write("test_minimal_game/scripts/test_room.lua", lua_script)
+
+    # Write config after creating all required files
+    File.write("test_minimal_game/game_config.yaml", config_yaml)
 
     # Load and create engine
     config = PointClickEngine::Core::GameConfig.from_file("test_minimal_game/game_config.yaml")
@@ -104,29 +108,22 @@ describe "Engine Integration with YAML Configuration" do
 
     # Cleanup
     RL.close_window
-
-    # Remove test files
-    File.delete("test_minimal_game/game_config.yaml")
-    File.delete("test_minimal_game/scenes/test_room.yaml")
-    File.delete("test_minimal_game/scripts/test_room.lua")
-    File.delete("test_minimal_game/assets/bg.png")
-    File.delete("test_minimal_game/assets/sprites/hero.png")
-    Dir.delete("test_minimal_game/scenes")
-    Dir.delete("test_minimal_game/scripts")
-    Dir.delete("test_minimal_game/assets/sprites")
-    Dir.delete("test_minimal_game/assets")
-    Dir.delete("test_minimal_game")
+    FileUtils.rm_rf("test_minimal_game")
   end
 
   it "handles multiple scenes with transitions" do
+    # Clean up any existing test directories
+    FileUtils.rm_rf("test_multi_scene") if Dir.exists?("test_multi_scene")
+    
     Dir.mkdir_p("test_multi_scene/scenes")
+    Dir.mkdir_p("test_multi_scene/assets")
 
     config_yaml = <<-YAML
     game:
       title: "Multi-Scene Test"
     
     assets:
-      scenes: ["test_multi_scene/scenes/*.yaml"]
+      scenes: ["scenes/*.yaml"]
     
     start_scene: "room1"
     YAML
@@ -176,6 +173,10 @@ describe "Engine Integration with YAML Configuration" do
     YAML
 
     File.write("test_multi_scene/scenes/room2.yaml", room2_yaml)
+    
+    # Create dummy assets
+    File.write("test_multi_scene/assets/room1.png", "dummy")
+    File.write("test_multi_scene/assets/room2.png", "dummy")
 
     # Load config and create engine
     config = PointClickEngine::Core::GameConfig.from_file("test_multi_scene/game_config.yaml")
@@ -205,27 +206,29 @@ describe "Engine Integration with YAML Configuration" do
 
     # Cleanup
     RL.close_window
-
-    File.delete("test_multi_scene/game_config.yaml")
-    File.delete("test_multi_scene/scenes/room1.yaml")
-    File.delete("test_multi_scene/scenes/room2.yaml")
-    Dir.delete("test_multi_scene/scenes")
-    Dir.delete("test_multi_scene")
+    FileUtils.rm_rf("test_multi_scene")
   end
 
   it "integrates quest system from YAML" do
+    # Clean up any existing test directories
+    FileUtils.rm_rf("test_quest_game") if Dir.exists?("test_quest_game")
+    
     Dir.mkdir_p("test_quest_game/quests")
+    Dir.mkdir_p("test_quest_game/scenes")
 
     config_yaml = <<-YAML
     game:
       title: "Quest Test"
     
     assets:
-      quests: ["test_quest_game/quests/*.yaml"]
+      scenes: ["scenes/*.yaml"]
+      quests: ["quests/*.yaml"]
     
     initial_state:
       flags:
         game_started: true
+    
+    start_scene: "test_scene"
     YAML
 
     File.write("test_quest_game/game_config.yaml", config_yaml)
@@ -255,6 +258,12 @@ describe "Engine Integration with YAML Configuration" do
     YAML
 
     File.write("test_quest_game/quests/main_quests.yaml", quest_yaml)
+    
+    # Create a minimal scene
+    scene_yaml = <<-YAML
+    name: test_scene
+    YAML
+    File.write("test_quest_game/scenes/test_scene.yaml", scene_yaml)
 
     # Load config and create engine
     config = PointClickEngine::Core::GameConfig.from_file("test_quest_game/game_config.yaml")
@@ -280,11 +289,7 @@ describe "Engine Integration with YAML Configuration" do
 
     # Cleanup
     RL.close_window
-
-    File.delete("test_quest_game/game_config.yaml")
-    File.delete("test_quest_game/quests/main_quests.yaml")
-    Dir.delete("test_quest_game/quests")
-    Dir.delete("test_quest_game")
+    FileUtils.rm_rf("test_quest_game")
   end
 
   it "handles complex initial state setup" do

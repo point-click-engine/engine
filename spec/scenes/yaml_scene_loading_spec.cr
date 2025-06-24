@@ -140,16 +140,13 @@ describe "YAML Scene Loading" do
       YAML
 
       File.write("missing_scene_config.yaml", config_yaml)
-      config = PointClickEngine::Core::GameConfig.from_file("missing_scene_config.yaml")
-
-      RL.init_window(800, 600, "Missing Scene Test")
-
-      # Should not crash
-      engine = config.create_engine
-      engine.scenes.size.should eq(0)
+      
+      # Should raise validation error for missing scenes
+      expect_raises(PointClickEngine::Core::ValidationError) do
+        PointClickEngine::Core::GameConfig.from_file("missing_scene_config.yaml")
+      end
 
       # Cleanup
-      RL.close_window
       File.delete("missing_scene_config.yaml")
     end
 
@@ -230,9 +227,10 @@ describe "YAML Scene Loading" do
 
       RL.init_window(800, 600, "Invalid Scene Test")
 
-      # Should handle error gracefully
-      engine = config.create_engine
-      engine.scenes.size.should eq(0) # Failed to load
+      # Should raise error when trying to create engine with invalid scene
+      expect_raises(PointClickEngine::Core::SceneError) do
+        config.create_engine
+      end
 
       # Cleanup
       RL.close_window

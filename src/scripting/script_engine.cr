@@ -368,6 +368,15 @@ module PointClickEngine
           function game.get_time()
             return _engine_get_time()
           end
+          
+          -- Game state management
+          function set_game_state(key, value)
+            _engine_set_game_state(key, value)
+          end
+          
+          function get_game_state(key)
+            return _engine_get_game_state(key)
+          end
         LUA
 
         @lua.register_fn_global("_engine_save_game") do |state|
@@ -399,6 +408,46 @@ module PointClickEngine
           current_time = Time.utc.to_unix_f
           state.push(current_time)
           1
+        end
+
+        @lua.register_fn_global("_engine_set_game_state") do |state|
+          if state.size >= 2
+            key = state.to_string(1)
+            value = state.to_any?(2)
+            @game_state[key] = value if value
+          end
+          0
+        end
+
+        @lua.register_fn_global("_engine_get_game_state") do |state|
+          if state.size >= 1
+            key = state.to_string(1)
+            if value = @game_state[key]?
+              # Convert LuaAny back to appropriate type for pushing
+              case value
+              when String
+                state.push(value.as(String))
+              when Float64
+                state.push(value.as(Float64))
+              when Bool
+                state.push(value.as(Bool))
+              when Int32
+                state.push(value.as(Int32))
+              when Int64
+                state.push(value.as(Int64))
+              when Nil
+                state.push(nil)
+              else
+                state.push(nil)
+              end
+              1
+            else
+              state.push(nil)
+              1
+            end
+          else
+            0
+          end
         end
       end
     end

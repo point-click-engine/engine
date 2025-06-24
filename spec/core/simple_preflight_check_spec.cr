@@ -168,6 +168,8 @@ describe "Simple Preflight Validation Tests" do
         sprite:
           frame_width: 32
           frame_height: 64
+          columns: 8
+          rows: 4
       YAML
 
       File.write("test_game.yaml", config_yaml)
@@ -336,8 +338,17 @@ describe "Simple Preflight Validation Tests" do
         File.delete("test_game.yaml") if File.exists?("test_game.yaml")
         3.times { |i| File.delete("sprites/sprite_#{i}.png") if File.exists?("sprites/sprite_#{i}.png") }
         2.times { |i| File.delete("backgrounds/bg_#{i}.jpg") if File.exists?("backgrounds/bg_#{i}.jpg") }
-        Dir.delete("sprites") if Dir.exists?("sprites")
-        Dir.delete("backgrounds") if Dir.exists?("backgrounds")
+
+        # Clean up any remaining files in directories before deleting them
+        if Dir.exists?("sprites")
+          Dir.glob("sprites/*").each { |f| File.delete(f) if File.exists?(f) }
+          Dir.delete("sprites")
+        end
+
+        if Dir.exists?("backgrounds")
+          Dir.glob("backgrounds/*").each { |f| File.delete(f) if File.exists?(f) }
+          Dir.delete("backgrounds")
+        end
       end
     end
   end

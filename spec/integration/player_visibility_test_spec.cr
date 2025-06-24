@@ -79,30 +79,22 @@ describe "Player Visibility in Scene Transitions" do
     # Simulate scene transition
     engine.change_scene("laboratory")
 
-    # The fix ensures player is added to new scene
-    if new_scene = engine.current_scene
-      if p = engine.player
-        new_scene.set_player(p)
-      end
-    end
+    # Get the actual current scene from the engine
+    current_scene = engine.current_scene.not_nil!
 
-    # Verify player is now in laboratory
-    laboratory.player.should eq(player)
-    laboratory.characters.should contain(player)
+    # Verify player is now in the current scene (laboratory)
+    current_scene.player.should eq(player)
+    current_scene.characters.should contain(player)
 
     # Transition to garden
     engine.change_scene("garden")
 
-    # Add player to garden
-    if new_scene = engine.current_scene
-      if p = engine.player
-        new_scene.set_player(p)
-      end
-    end
+    # Get the actual current scene from the engine
+    garden_scene = engine.current_scene.not_nil!
 
-    # Verify player is in garden
-    garden.player.should eq(player)
-    garden.characters.should contain(player)
+    # Verify player is in the current scene (garden)
+    garden_scene.player.should eq(player)
+    garden_scene.characters.should contain(player)
 
     # Note: The player may still be in previous scenes' character lists
     # because the engine doesn't automatically remove characters when changing scenes.

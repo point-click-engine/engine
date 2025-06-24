@@ -36,6 +36,13 @@ module PointClickEngine
       # Texture management
 
       def load_texture(path : String) : Result(Raylib::Texture2D, AssetError)
+        # Validate path
+        if path.strip.empty?
+          return Result(Raylib::Texture2D, AssetError).failure(
+            AssetError.new("Invalid path: empty or whitespace-only path", path)
+          )
+        end
+
         # Return cached texture if it exists
         if @textures.has_key?(path)
           return Result(Raylib::Texture2D, AssetError).success(@textures[path])
@@ -82,6 +89,13 @@ module PointClickEngine
       # Sound management
 
       def load_sound(path : String) : Result(RAudio::Sound, AssetError)
+        # Validate path
+        if path.strip.empty?
+          return Result(RAudio::Sound, AssetError).failure(
+            AssetError.new("Invalid path: empty or whitespace-only path", path)
+          )
+        end
+
         if @sounds.has_key?(path)
           return Result(RAudio::Sound, AssetError).success(@sounds[path])
         end
@@ -126,6 +140,13 @@ module PointClickEngine
       # Music management
 
       def load_music(path : String) : Result(RAudio::Music, AssetError)
+        # Validate path
+        if path.strip.empty?
+          return Result(RAudio::Music, AssetError).failure(
+            AssetError.new("Invalid path: empty or whitespace-only path", path)
+          )
+        end
+
         if @music.has_key?(path)
           return Result(RAudio::Music, AssetError).success(@music[path])
         end

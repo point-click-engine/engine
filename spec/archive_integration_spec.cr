@@ -68,11 +68,11 @@ describe "Archive Loading Integration" do
       PointClickEngine::AssetManager.mount_archive(temp_archive)
 
       # Test that we can read the script
-      script_content = PointClickEngine::AssetLoader.read_script("scripts/npc.lua")
+      script_content = PointClickEngine::AssetManager.read_file("scripts/npc.lua")
       script_content.should contain("Character initialized from archive")
 
       # Test that we can read the dialog
-      dialog_content = PointClickEngine::AssetLoader.read_yaml("dialogs/test_dialog.yml")
+      dialog_content = PointClickEngine::AssetManager.read_file("dialogs/test_dialog.yml")
       dialog_content.should contain("Archive Dialog")
       dialog_content.should contain("Hello! I'm loaded from an archive.")
 
@@ -93,7 +93,7 @@ describe "Archive Loading Integration" do
 
       # Unmount and verify files are no longer accessible
       PointClickEngine::AssetManager.unmount_archive
-      PointClickEngine::AssetLoader.exists?("scripts/npc.lua").should be_false
+      PointClickEngine::AssetManager.exists?("scripts/npc.lua").should be_false
     ensure
       File.delete(temp_archive) if File.exists?(temp_archive)
       # Clean up in case of failure

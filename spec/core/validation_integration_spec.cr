@@ -38,8 +38,8 @@ describe "Validation System Integration" do
           columns: 8
           rows: 4
         start_position:
-          x: 640
-          y: 600
+          x: 640.0
+          y: 600.0
       
       features:
         - verbs
@@ -158,8 +158,9 @@ describe "Validation System Integration" do
       
       characters:
         - name: Guard
-          x: 800
-          y: 550
+          position:
+            x: 800.0
+            y: 550.0
           sprite: assets/sprites/guard.png
           dialog: guard_dialog
       YAML
@@ -198,7 +199,7 @@ describe "Validation System Integration" do
     Dir.mkdir_p("#{temp_dir}/scenes")
 
     begin
-      # Create a config with multiple errors
+      # Create a config with validation errors (but valid YAML syntax)
       config_yaml = <<-YAML
       game:
         title: ""
@@ -207,15 +208,16 @@ describe "Validation System Integration" do
         height: 0
         target_fps: 1000
       player:
+        name: "TestPlayer"
         sprite_path: "missing.png"
         sprite:
           frame_width: -32
           frame_height: 0
           columns: 0
-          rows: -1
+          rows: 1
         start_position:
-          x: -100
-          y: -200
+          x: -100.0
+          y: -200.0
       display:
         scaling_mode: "InvalidMode"
         target_width: 0

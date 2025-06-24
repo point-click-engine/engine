@@ -1,3 +1,5 @@
+require "./cutscene"
+
 module PointClickEngine
   module Cutscenes
     # Manages cutscenes in the game

@@ -23,7 +23,7 @@ describe "Resource Management Comprehensive Tests" do
 
       # Test texture loading (will return nil for non-existent file)
       result = resource_manager.load_texture(test_texture_path)
-      result.should be_nil # Non-existent file
+      result.failure?.should be_true # Non-existent file
     end
 
     it "handles basic sound loading" do
@@ -33,7 +33,7 @@ describe "Resource Management Comprehensive Tests" do
 
       # Test sound loading
       result = resource_manager.load_sound(test_sound_path)
-      result.should be_nil # Non-existent file
+      result.failure?.should be_true # Non-existent file
     end
 
     it "handles basic music loading" do
@@ -43,7 +43,7 @@ describe "Resource Management Comprehensive Tests" do
 
       # Test music loading
       result = resource_manager.load_music(test_music_path)
-      result.should be_nil # Non-existent file
+      result.failure?.should be_true # Non-existent file
     end
   end
 
@@ -119,23 +119,23 @@ describe "Resource Management Comprehensive Tests" do
       # Second load attempt (should be same result)
       result2 = resource_manager.load_texture(test_path)
 
-      # Both should be nil for non-existent file
-      result1.should be_nil
-      result2.should be_nil
+      # Both should fail for non-existent file
+      result1.failure?.should be_true
+      result2.failure?.should be_true
     end
 
     it "handles multiple resource types" do
       resource_manager = PointClickEngine::Core::ResourceManager.new
 
       # Load different types of resources
-      texture = resource_manager.load_texture("test.png")
-      sound = resource_manager.load_sound("test.wav")
-      music = resource_manager.load_music("test.ogg")
+      texture_result = resource_manager.load_texture("test.png")
+      sound_result = resource_manager.load_sound("test.wav")
+      music_result = resource_manager.load_music("test.ogg")
 
-      # All should be nil for non-existent files
-      texture.should be_nil
-      sound.should be_nil
-      music.should be_nil
+      # All should fail for non-existent files
+      texture_result.failure?.should be_true
+      sound_result.failure?.should be_true
+      music_result.failure?.should be_true
     end
   end
 
@@ -150,7 +150,7 @@ describe "Resource Management Comprehensive Tests" do
 
         # Try loading after adding paths
         result = resource_manager.load_texture("test_in_custom_path.png")
-        result.should be_nil # Still non-existent
+        result.failure?.should be_true # Still non-existent
       rescue
         # Methods may not exist, that's ok
       end
@@ -169,7 +169,7 @@ describe "Resource Management Comprehensive Tests" do
 
       test_paths.each do |path|
         result = resource_manager.load_texture(path)
-        result.should be_nil # All non-existent
+        result.failure?.should be_true # All non-existent
       end
     end
   end
@@ -188,13 +188,13 @@ describe "Resource Management Comprehensive Tests" do
         case File.extname(file)
         when ".png"
           result = resource_manager.load_texture(file)
-          result.should be_nil
+          result.failure?.should be_true
         when ".wav"
           result = resource_manager.load_sound(file)
-          result.should be_nil
+          result.failure?.should be_true
         when ".ogg"
           result = resource_manager.load_music(file)
-          result.should be_nil
+          result.failure?.should be_true
         end
       end
     end
@@ -212,7 +212,7 @@ describe "Resource Management Comprehensive Tests" do
 
       invalid_paths.each do |path|
         result = resource_manager.load_texture(path)
-        result.should be_nil
+        result.failure?.should be_true
       end
     end
 
@@ -230,7 +230,7 @@ describe "Resource Management Comprehensive Tests" do
 
       unsupported_files.each do |file|
         result = resource_manager.load_texture(file)
-        result.should be_nil
+        result.failure?.should be_true
       end
     end
   end
@@ -347,7 +347,7 @@ describe "Resource Management Comprehensive Tests" do
       # Load same resource multiple times
       10.times do
         result = resource_manager.load_texture(test_path)
-        result.should be_nil # Non-existent file
+        result.failure?.should be_true # Non-existent file
       end
 
       # Should handle repeated calls gracefully
@@ -406,13 +406,18 @@ describe "Resource Management Comprehensive Tests" do
       empty_names = ["", " ", "\t", "\n", "  \t\n  "]
 
       empty_names.each do |name|
-        texture = resource_manager.load_texture(name)
-        sound = resource_manager.load_sound(name)
-        music = resource_manager.load_music(name)
+        texture_result = resource_manager.load_texture(name)
+        sound_result = resource_manager.load_sound(name)
+        music_result = resource_manager.load_music(name)
 
-        texture.should be_nil
-        sound.should be_nil
-        music.should be_nil
+        texture_result.failure?.should be_true
+        sound_result.failure?.should be_true
+        music_result.failure?.should be_true
+
+        # Check error messages
+        (texture_result.error.message || "").should contain("Invalid path")
+        (sound_result.error.message || "").should contain("Invalid path")
+        (music_result.error.message || "").should contain("Invalid path")
       end
     end
 
@@ -432,13 +437,13 @@ describe "Resource Management Comprehensive Tests" do
         case File.extname(path)
         when ".png"
           result = resource_manager.load_texture(path)
-          result.should be_nil
+          result.failure?.should be_true
         when ".wav"
           result = resource_manager.load_sound(path)
-          result.should be_nil
+          result.failure?.should be_true
         when ".ogg"
           result = resource_manager.load_music(path)
-          result.should be_nil
+          result.failure?.should be_true
         end
       end
     end

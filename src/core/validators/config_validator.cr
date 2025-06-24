@@ -80,28 +80,31 @@ module PointClickEngine
         end
 
         private def self.validate_player_config(player : GameConfig::PlayerConfig, config_path : String, errors : Array(String))
-          if player.sprite_path.empty?
-            errors << "Player sprite_path cannot be empty"
-          else
-            base_dir = File.dirname(config_path)
-            full_path = File.join(base_dir, player.sprite_path)
-            unless File.exists?(full_path) || file_exists_in_patterns?(player.sprite_path)
-              errors << "Player sprite file '#{player.sprite_path}' not found"
+          if sprite_path = player.sprite_path
+            if sprite_path.empty?
+              errors << "Player sprite_path cannot be empty"
+            else
+              base_dir = File.dirname(config_path)
+              full_path = File.join(base_dir, sprite_path)
+              unless File.exists?(full_path) || file_exists_in_patterns?(sprite_path)
+                errors << "Player sprite file '#{sprite_path}' not found"
+              end
             end
           end
 
-          sprite = player.sprite
-          if sprite.frame_width <= 0
-            errors << "Player sprite frame_width must be positive"
-          end
-          if sprite.frame_height <= 0
-            errors << "Player sprite frame_height must be positive"
-          end
-          if sprite.columns <= 0
-            errors << "Player sprite columns must be positive"
-          end
-          if sprite.rows <= 0
-            errors << "Player sprite rows must be positive"
+          if sprite = player.sprite
+            if sprite.frame_width <= 0
+              errors << "Player sprite frame_width must be positive"
+            end
+            if sprite.frame_height <= 0
+              errors << "Player sprite frame_height must be positive"
+            end
+            if sprite.columns <= 0
+              errors << "Player sprite columns must be positive"
+            end
+            if sprite.rows <= 0
+              errors << "Player sprite rows must be positive"
+            end
           end
 
           if pos = player.start_position

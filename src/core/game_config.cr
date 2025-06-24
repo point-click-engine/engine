@@ -57,8 +57,8 @@ module PointClickEngine
       class PlayerConfig
         include YAML::Serializable
         property name : String = "Player"
-        property sprite_path : String
-        property sprite : SpriteInfo
+        property sprite_path : String?
+        property sprite : SpriteInfo?
         property scale : Float32 = 1.0f32
         property start_position : Position?
       end
@@ -224,20 +224,24 @@ module PointClickEngine
               y: player_config.start_position.try(&.y) || (window.try(&.height) || 768) - 150
             ),
             Raylib::Vector2.new(
-              x: player_config.sprite.frame_width.to_f32,
-              y: player_config.sprite.frame_height.to_f32
+              x: player_config.sprite.try(&.frame_width).try(&.to_f32) || 64.0f32,
+              y: player_config.sprite.try(&.frame_height).try(&.to_f32) || 64.0f32
             )
           )
 
           # Resolve player sprite path relative to config directory
-          full_player_sprite_path = File.join(config_base_dir, player_config.sprite_path)
-          player_obj.load_enhanced_spritesheet(
-            full_player_sprite_path,
-            player_config.sprite.frame_width,
-            player_config.sprite.frame_height,
-            player_config.sprite.columns,
-            player_config.sprite.rows
-          )
+          if sprite_path = player_config.sprite_path
+            full_player_sprite_path = File.join(config_base_dir, sprite_path)
+            if sprite_info = player_config.sprite
+              player_obj.load_enhanced_spritesheet(
+                full_player_sprite_path,
+                sprite_info.frame_width,
+                sprite_info.frame_height,
+                sprite_info.columns,
+                sprite_info.rows
+              )
+            end
+          end
 
           # Apply scale from config
           player_obj.manual_scale = player_config.scale

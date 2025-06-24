@@ -118,15 +118,19 @@ describe "Engine GameStateManager Integration" do
         title: "State Change Test"
       
       assets:
+        scenes: ["test_scenes/*.yaml"]
         quests: ["test_quests/*.yaml"]
+      
+      start_scene: "test_scene"
       
       initial_state:
         flags:
           game_started: true
       YAML
 
-      # Create quest file
+      # Create directories and files
       Dir.mkdir_p("test_quests")
+      Dir.mkdir_p("test_scenes")
       quest_yaml = <<-YAML
       - id: test_quest
         name: "Test Quest"
@@ -141,6 +145,13 @@ describe "Engine GameStateManager Integration" do
       YAML
 
       File.write("test_quests/quest.yaml", quest_yaml)
+      
+      # Create minimal scene
+      scene_yaml = <<-YAML
+      name: test_scene
+      YAML
+      File.write("test_scenes/test_scene.yaml", scene_yaml)
+      
       File.write("state_change_config.yaml", config_yaml)
 
       config = PointClickEngine::Core::GameConfig.from_file("state_change_config.yaml")
@@ -172,7 +183,9 @@ describe "Engine GameStateManager Integration" do
       RL.close_window
       File.delete("state_change_config.yaml")
       File.delete("test_quests/quest.yaml")
+      File.delete("test_scenes/test_scene.yaml")
       Dir.delete("test_quests")
+      Dir.delete("test_scenes")
     end
   end
 

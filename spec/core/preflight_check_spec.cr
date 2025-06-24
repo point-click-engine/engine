@@ -250,7 +250,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         # Create background files
         File.write("#{temp_dir}/assets/backgrounds/scene1.png", "fake bg")
-        File.write("#{temp_dir}/assets/backgrounds/small_bg.png", "small bg")
+        File.write("#{temp_dir}/assets/backgrounds/small_320x180_bg.png", "small bg")
 
         config_yaml = <<-YAML
         game:
@@ -459,8 +459,8 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        result.passed.should be_false
-        result.errors.should contain("No player configuration found")
+        result.passed.should be_true
+        result.warnings.should contain("No player configuration found - player character will not be available")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end

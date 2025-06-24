@@ -179,7 +179,7 @@ module PointClickEngine
         direction, distance = get_direction_and_distance(target)
 
         # Check if we've arrived
-        if distance < MOVEMENT_ARRIVAL_THRESHOLD
+        if distance <= MOVEMENT_ARRIVAL_THRESHOLD
           @character.position = target
           stop_movement
           return
@@ -204,7 +204,7 @@ module PointClickEngine
         direction, distance = get_direction_and_distance(current_waypoint)
 
         # Check if we reached the current waypoint
-        if distance < PATHFINDING_WAYPOINT_THRESHOLD
+        if distance <= PATHFINDING_WAYPOINT_THRESHOLD
           advance_to_next_waypoint
           return
         end
@@ -304,8 +304,8 @@ module PointClickEngine
         # Determine new direction
         new_direction = target.x < @character.position.x ? Direction::Left : Direction::Right
 
-        # Update character direction and animation if changed
-        if new_direction != @character.direction
+        # Update character direction and animation if changed or not walking
+        if new_direction != @character.direction || !@character.current_animation.starts_with?("walk")
           @character.direction = new_direction
           play_walking_animation(new_direction)
         end

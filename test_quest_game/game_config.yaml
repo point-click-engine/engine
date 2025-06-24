@@ -1,9 +1,0 @@
-game:
-  title: "Quest Test"
-
-assets:
-  quests: ["test_quest_game/quests/*.yaml"]
-
-initial_state:
-  flags:
-    game_started: true

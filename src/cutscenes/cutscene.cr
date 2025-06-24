@@ -1,3 +1,5 @@
+require "./cutscene_action"
+
 module PointClickEngine
   module Cutscenes
     # A cutscene is a sequence of actions

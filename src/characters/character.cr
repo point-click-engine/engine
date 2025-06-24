@@ -6,6 +6,7 @@ require "../core/game_object"
 require "../core/game_constants"
 require "../utils/vector_math"
 require "./movement_controller"
+require "./dialogue/character_dialogue"
 
 module PointClickEngine
   module Characters
@@ -326,6 +327,8 @@ module PointClickEngine
       # character.walk_to(target, use_pathfinding: true)
       # ```
       def walk_to(target : RL::Vector2, use_pathfinding : Bool? = nil)
+        @target_position = target
+        @state = CharacterState::Walking
         @movement_controller.try(&.move_to(target, use_pathfinding))
       end
 
@@ -351,6 +354,8 @@ module PointClickEngine
       # plays appropriate idle animation. Uses the MovementController
       # for consistent movement handling.
       def stop_walking
+        @target_position = nil
+        @state = CharacterState::Idle
         @movement_controller.try(&.stop_movement)
       end
 
