@@ -131,9 +131,14 @@ module PointClickEngine
         x = @character_position.x - (wrapped.total_width / 2)
         y = @character_position.y - 80 - wrapped.total_height + @float_offset
 
-        # Keep on screen
-        margin = 10
-        x = Math.max(margin, Math.min(x, RL.get_screen_width - wrapped.total_width - margin))
+        # Use game dimensions instead of screen dimensions
+        # Floating dialogs render in game coordinate space
+        game_width = 1024f32 # Game reference width
+        game_height = 768f32 # Game reference height
+
+        # Keep within game bounds
+        margin = 10f32
+        x = Math.max(margin, Math.min(x, game_width - wrapped.total_width - margin))
         y = Math.max(margin, y)
 
         @position_cache = RL::Vector2.new(x: x, y: y)
@@ -300,8 +305,10 @@ module PointClickEngine
 
       # Draw narrator text (centered)
       private def draw_narrator_text(pos : RL::Vector2, wrapped : WrappedText, text_color : RL::Color, bg_color : RL::Color)
-        # Center on screen
-        screen_center = RL::Vector2.new(x: RL.get_screen_width / 2, y: RL.get_screen_height / 4)
+        # Center in game space
+        game_width = 1024f32
+        game_height = 768f32
+        screen_center = RL::Vector2.new(x: game_width / 2, y: game_height / 4)
         centered_pos = RL::Vector2.new(x: screen_center.x - wrapped.total_width / 2, y: screen_center.y)
 
         draw_rectangle_background(centered_pos, wrapped, text_color, bg_color)

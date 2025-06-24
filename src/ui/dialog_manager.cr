@@ -176,7 +176,6 @@ module PointClickEngine
         if dialog = @current_dialog
           if dialog.visible && dialog.ready_to_process_input && RL.mouse_button_pressed?(RL::MouseButton::Left)
             @consumed_input_this_frame = true
-            puts "DialogManager: Will consume input this frame"
           end
         end
 
@@ -241,7 +240,15 @@ module PointClickEngine
       end
 
       def dialog_consumed_input? : Bool
-        @consumed_input_this_frame || @current_dialog.try(&.consumed_input) || false
+        # Only consider input consumed if we have an actual interactive dialog
+        # Floating dialogs should not block input since they're just visual
+        if current_dialog = @current_dialog
+          # This is an interactive dialog that should consume input
+          current_dialog.consumed_input
+        else
+          # No interactive dialog active, don't consume input
+          false
+        end
       end
 
       # Add a dialog tree

@@ -1311,11 +1311,13 @@ module PointClickEngine
         }
         @render_manager.add_renderer("scene_objects", scene_renderer)
 
-        # Dialogs layer
+        # Dialogs layer - add to UI layer since there's no separate dialogs layer
         dialogs_renderer = ->(dt : Float32) {
           @dialogs.each(&.draw)
+          # Also render floating dialogs from dialog manager
+          @system_manager.dialog_manager.try(&.draw)
         }
-        @render_manager.add_renderer("dialogs", dialogs_renderer)
+        @render_manager.add_renderer("ui", dialogs_renderer)
 
         # Cutscene layer
         cutscene_renderer = ->(dt : Float32) {
