@@ -149,7 +149,7 @@ describe "Validator Integration Tests" do
 
       # Create a corrupt scene file
       corrupt_scene = "This is not valid YAML: {["
-      
+
       File.write("temp_asset_test/scenes/corrupt_scene.yaml", corrupt_scene)
 
       # Create config referencing these scenes

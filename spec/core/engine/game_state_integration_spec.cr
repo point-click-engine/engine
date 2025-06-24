@@ -145,13 +145,13 @@ describe "Engine GameStateManager Integration" do
       YAML
 
       File.write("test_quests/quest.yaml", quest_yaml)
-      
+
       # Create minimal scene
       scene_yaml = <<-YAML
       name: test_scene
       YAML
       File.write("test_scenes/test_scene.yaml", scene_yaml)
-      
+
       File.write("state_change_config.yaml", config_yaml)
 
       config = PointClickEngine::Core::GameConfig.from_file("state_change_config.yaml")

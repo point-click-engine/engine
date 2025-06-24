@@ -140,7 +140,7 @@ describe "YAML Scene Loading" do
       YAML
 
       File.write("missing_scene_config.yaml", config_yaml)
-      
+
       # Should raise validation error for missing scenes
       expect_raises(PointClickEngine::Core::ValidationError) do
         PointClickEngine::Core::GameConfig.from_file("missing_scene_config.yaml")

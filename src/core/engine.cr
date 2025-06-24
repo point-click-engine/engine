@@ -31,24 +31,129 @@ require "./performance_monitor"
 module PointClickEngine
   # Core engine functionality, game loop, and state management
   module Core
-    # Main game engine class using singleton pattern for global access
+    # Main game engine class that coordinates all game systems.
     #
-    # The Engine coordinates all game systems and provides the main game loop.
-    # It manages scenes, handles input, coordinates rendering, and maintains
-    # game state. Most game functionality is accessed through this class.
+    # The `Engine` class is the central hub of the Point & Click Engine framework.
+    # It manages the game window, coordinates all subsystems (graphics, audio, input),
+    # runs the main game loop, and provides the primary API for game development.
     #
-    # ## Example
+    # ## Architecture
+    #
+    # The engine uses a singleton pattern for global access and coordinates:
+    # - Window creation and management via Raylib
+    # - Scene management with transitions
+    # - Input handling (mouse, keyboard, gamepad)
+    # - Audio system (music, sound effects, ambient sounds)
+    # - Save/load system
+    # - Debug tools and visualization
+    #
+    # ## Basic Usage
     #
     # ```
-    # # Create and initialize the engine
-    # engine = PointClickEngine::Core::Engine.new(800, 600, "My Game")
+    # # Create engine (automatically becomes singleton)
+    # engine = PointClickEngine::Core::Engine.new(1024, 768, "My Adventure")
     # engine.init
     #
-    # # Add scenes and start the game
-    # engine.add_scene(my_scene)
-    # engine.change_scene("main_room")
+    # # Create and add a scene
+    # scene = PointClickEngine::Scenes::Scene.new("intro")
+    # scene.load_background("assets/intro.png")
+    # engine.add_scene(scene)
+    #
+    # # Start the game
+    # engine.change_scene("intro")
     # engine.run
     # ```
+    #
+    # ## Advanced Usage with Systems
+    #
+    # ```
+    # # Enable debug mode for development
+    # PointClickEngine::Core::Engine.debug_mode = true
+    #
+    # # Configure systems before init
+    # engine = Engine.new(1920, 1080, "HD Adventure")
+    # engine.target_fps = 144 # For high refresh monitors
+    # engine.handle_clicks = true
+    # engine.edge_scroll_enabled = true
+    #
+    # # Initialize with custom configuration
+    # config = GameConfig.from_file("game_config.yaml")
+    # engine.configure_from(config)
+    # engine.init
+    #
+    # # Access singleton from anywhere
+    # Engine.instance.change_scene("menu")
+    # ```
+    #
+    # ## Input Handling
+    #
+    # ```
+    # # Enable/disable input systems
+    # engine.handle_clicks = true       # Mouse clicks for movement
+    # engine.enable_verb_coin = true    # Right-click verb interface
+    # engine.edge_scroll_enabled = true # Camera scrolling at edges
+    #
+    # # Block input temporarily (e.g., during cutscenes)
+    # engine.block_input_frames = 60 # Block for 1 second at 60 FPS
+    # ```
+    #
+    # ## Save/Load System
+    #
+    # ```
+    # # Quick save/load
+    # engine.save_game("slot1")
+    # engine.load_game("slot1")
+    #
+    # # Autosave on scene changes
+    # engine.autosave = true
+    # engine.autosave_slot = "autosave"
+    # ```
+    #
+    # ## Common Gotchas
+    #
+    # 1. **Singleton Pattern**: Only one Engine instance can exist at a time.
+    #    ```
+    # engine1 = Engine.new(800, 600, "Game 1")
+    # engine2 = Engine.new(800, 600, "Game 2") # Overwrites engine1 as singleton!
+    # Engine.instance == engine2               # true
+    #    ```
+    #
+    # 2. **Initialization Order**: Always call `init` before using engine features.
+    #    ```
+    # engine = Engine.new(800, 600, "Game")
+    # # engine.run  # ERROR: Window not created!
+    # engine.init # Must init first
+    # engine.run  # Now it works
+    #    ```
+    #
+    # 3. **Scene Management**: Add scenes before changing to them.
+    #    ```
+    # engine.change_scene("intro") # ERROR: Scene not found!
+    # engine.add_scene(intro_scene)
+    # engine.change_scene("intro") # Works now
+    #    ```
+    #
+    # 4. **Input Blocking**: Remember to unblock input after cutscenes.
+    #    ```
+    # engine.block_input_frames = 300 # 5 seconds
+    # # Input automatically unblocks after 300 frames
+    # # But you can manually unblock early:
+    # engine.block_input_frames = 0
+    #    ```
+    #
+    # ## Performance Tips
+    #
+    # - Use `target_fps` to limit frame rate and save CPU/battery
+    # - Enable `edge_scroll_enabled` only for scenes larger than viewport
+    # - Call `unload_scene` on scenes no longer needed to free memory
+    # - Use `debug_mode = false` in production for better performance
+    #
+    # ## See Also
+    #
+    # - `Scene` - For scene management
+    # - `InputHandler` - For custom input handling
+    # - `SaveSystem` - For save/load functionality
+    # - `GameConfig` - For configuration-based initialization
     class Engine
       include YAML::Serializable
 

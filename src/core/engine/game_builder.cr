@@ -1,7 +1,7 @@
 # Game builder for simplified engine initialization
 require "../engine"
-require "../../game_state_manager"
-require "../../quest_manager"
+require "../game_state_manager"
+require "../quest_system"
 require "../../characters/player"
 require "../../scenes/scene_loader"
 

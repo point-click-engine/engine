@@ -6,29 +6,134 @@ require "../ui/cursor_manager"
 
 module PointClickEngine
   module Scenes
-    # Represents an interactive area or object within a scene
-    #
-    # Hotspots define clickable regions that players can interact with using
-    # different verbs (look, use, talk, etc.). They can represent doors, items,
-    # furniture, or any other interactive element in the game world.
-    #
-    # ## Key Features
-    # - Rectangular or custom-shaped interaction areas
-    # - Cursor type changes on hover
-    # - Verb-based interaction system
-    # - Movement blocking for obstacles
-    # - Debug visualization support
-    #
-    # ## Usage Example
-    # ```
-    # door = Hotspot.new("door", Vector2.new(100, 50), Vector2.new(80, 120))
-    # door.description = "A wooden door"
-    # door.cursor_type = CursorType::Use
-    # door.on_click = -> { open_door }
-    # scene.add_hotspot(door)
-    # ```
-    #
-    # NOTE: Hotspots support both rectangular and polygon-based collision areas
+    # # Represents an interactive area or object within a scene.
+    ##
+    # # Hotspots are the primary way players interact with the game world. They define
+    # # clickable regions that respond to different verbs (look, use, talk, etc.) and
+    # # can represent doors, items, furniture, characters, or any interactive element.
+    ##
+    # # ## Architecture
+    ##
+    # # Hotspots inherit from `GameObject` and add:
+    # # - Cursor feedback system for hover states
+    # # - Verb-based interaction routing
+    # # - Optional movement blocking for obstacles
+    # # - Script integration for complex behaviors
+    # # - Debug visualization in development mode
+    ##
+    # # ## Basic Usage
+    ##
+    # # ```crystal
+    # # # Create a simple door hotspot
+    # # door = Hotspot.new("door", Vector2.new(400, 200), Vector2.new(80, 150))
+    # # door.description = "A sturdy wooden door"
+    # # door.cursor_type = Hotspot::CursorType::Use
+    ##
+    # # # Add click handler
+    # # door.on_click = -> do
+    # #   if player.has_item?("key")
+    # #     engine.change_scene("hallway")
+    # #   else
+    # #     player.say("It's locked. I need a key.")
+    # #   end
+    # # end
+    ##
+    # # scene.add_hotspot(door)
+    # # ```
+    ##
+    # # ## Advanced Usage with Verbs
+    ##
+    # # ```crystal
+    # # # Create a multi-verb NPC hotspot
+    # # guard = Hotspot.new("guard", Vector2.new(600, 300), Vector2.new(64, 96))
+    # # guard.object_type = UI::ObjectType::Character
+    # # guard.default_verb = UI::VerbType::Talk
+    ##
+    # # # Different responses for different verbs
+    # # scene.on_hotspot_interact("guard") do |verb, player|
+    # #   case verb
+    # #   when .look?
+    # #     player.say("A tired-looking guard.")
+    # #   when .talk?
+    # #     start_dialog("guard_conversation")
+    # #   when .use?
+    # #     player.say("I'd rather not touch him.")
+    # #   end
+    # # end
+    # # ```
+    ##
+    # # ## Movement Blocking
+    ##
+    # # ```crystal
+    # # # Create an obstacle that blocks pathfinding
+    # # table = Hotspot.new("table", Vector2.new(300, 400), Vector2.new(120, 80))
+    # # table.blocks_movement = true
+    # # table.description = "A heavy oak table"
+    ##
+    # # # Characters will path around this hotspot
+    # # ```
+    ##
+    # # ## Script Integration
+    ##
+    # # ```crystal
+    # # # Use Lua scripts for complex interactions
+    # # terminal = Hotspot.new("terminal", Vector2.new(200, 300), Vector2.new(100, 100))
+    # # terminal.script_path = "scripts/terminal.lua"
+    ##
+    # # # In terminal.lua:
+    # # # hotspot.on_interact("terminal", function(player)
+    # # #   if game.get_var("power_on") then
+    # # #     show_terminal_interface()
+    # # #   else
+    # # #     player.say("The terminal is powered off")
+    # # #   end
+    # # # end)
+    # # ```
+    ##
+    # # ## Common Gotchas
+    ##
+    # # 1. **Z-order matters**: Hotspots are checked front-to-back
+    # #    ```crystal
+    # #    # If hotspots overlap, only the front one receives clicks
+    # #    scene.add_hotspot(background_hotspot)  # Added first = behind
+    # #    scene.add_hotspot(foreground_hotspot)  # Added last = in front
+    # #    ```
+    ##
+    # # 2. **Callbacks aren't serialized**: Re-register after loading
+    # #    ```crystal
+    # #    # ❌ This won't survive save/load:
+    # #    door.on_click = -> { do_something }
+    ##
+    # #    # ✅ Use scripts or scene event handlers instead:
+    # #    scene.on_hotspot_interact("door") { do_something }
+    # #    ```
+    ##
+    # # 3. **Debug visualization performance**: Many hotspots can slow down debug mode
+    # #    ```crystal
+    # #    # Consider disabling debug for background hotspots
+    # #    decorative_hotspot.visible = false  # Hides debug overlay
+    # #    ```
+    ##
+    # # 4. **Cursor changes require mouse movement**: Static cursor won't update
+    # #    ```crystal
+    # #    # After changing cursor_type dynamically:
+    # #    hotspot.cursor_type = CursorType::Talk
+    # #    # User must move mouse to see new cursor
+    # #    ```
+    ##
+    # # ## Performance Tips
+    ##
+    # # - Use `blocks_movement` sparingly - each blocking hotspot adds to pathfinding cost
+    # # - Consider combining multiple decorative hotspots into one larger area
+    # # - Disable `visible` for purely functional hotspots to skip debug rendering
+    # # - Use polygon hotspots only when rectangles won't suffice
+    ##
+    # # ## See Also
+    ##
+    # # - `PolygonHotspot` - For non-rectangular interaction areas
+    # # - `Scene#add_hotspot` - Adding hotspots to scenes
+    # # - `UI::VerbCoin` - Verb selection interface
+    # # - `CursorManager` - Cursor appearance system
     class Hotspot < Core::GameObject
       # Unique identifier for this hotspot
       property name : String
@@ -64,16 +169,57 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property debug_color : RL::Color = RL::Color.new(r: 255, g: 0, b: 0, a: 100)
 
-      # Defines the visual cursor types for different interaction modes
-      #
-      # Used to provide visual feedback about available actions when
-      # hovering over hotspots.
+      # # Defines cursor appearances for different interaction modes.
+      ##
+      # # The cursor automatically changes when hovering over hotspots to indicate
+      # # the primary action available. This provides immediate visual feedback
+      # # about what clicking will do.
+      ##
+      # # ## Usage
+      ##
+      # # ```crystal
+      # # # Set cursor for different hotspot types
+      # # door.cursor_type = CursorType::Use      # Shows tool/hand cursor
+      # # npc.cursor_type = CursorType::Talk      # Shows speech bubble
+      # # painting.cursor_type = CursorType::Look  # Shows magnifying glass
+      # # ```
+      ##
+      # # ## Custom Cursor Mapping
+      ##
+      # # ```crystal
+      # # # Map cursors to verb actions
+      # # case hotspot.cursor_type
+      # # when .talk?
+      # #   default_verb = VerbType::Talk
+      # # when .use?
+      # #   default_verb = VerbType::Use
+      # # when .look?
+      # #   default_verb = VerbType::Look
+      # # end
+      # # ```
       enum CursorType
-        Default # Standard arrow cursor
-        Hand    # Pointing hand for general interaction
-        Look    # Magnifying glass for examination
-        Talk    # Speech bubble for conversation
-        Use     # Tool cursor for item usage
+        # # Standard arrow cursor - no special interaction indicated
+        Default
+
+        # # Pointing hand cursor - general interaction available
+        ##
+        # # Used for clickable objects without specific verb association
+        Hand
+
+        # # Magnifying glass cursor - examination available
+        ##
+        # # Indicates the object has detailed description or close-up view
+        Look
+
+        # # Speech bubble cursor - conversation available
+        ##
+        # # Used for NPCs and talkable objects
+        Talk
+
+        # # Tool/gear cursor - item can be used or operated
+        ##
+        # # Indicates mechanical interaction or item usage
+        Use
       end
 
       # Creates a hotspot with empty properties
@@ -95,12 +241,39 @@ module PointClickEngine
         @description = ""
       end
 
-      # Updates the hotspot's interaction state
-      #
-      # Checks for mouse hover and click events, executing appropriate
-      # callbacks when the mouse interacts with the hotspot area.
-      #
-      # - *dt* : Delta time in seconds since last update
+      # # Updates the hotspot's interaction state.
+      ##
+      # # Called every frame to check for mouse interactions. Handles hover
+      # # detection and click events, triggering registered callbacks when
+      # # the mouse interacts with the hotspot area.
+      ##
+      # # - *dt* : Delta time in seconds since last update
+      ##
+      # # ## Callback Execution
+      ##
+      # # - `on_hover` - Called every frame while mouse is over hotspot
+      # # - `on_click` - Called once when mouse button is pressed
+      ##
+      # # ## Example Override
+      ##
+      # # ```crystal
+      # # class AnimatedHotspot < Hotspot
+      # #   def update(dt)
+      # #     super  # Handle interaction
+      ##
+      # #     # Add custom animation
+      # #     if @hovered
+      # #       @glow_intensity = Math.min(1.0, @glow_intensity + dt * 2)
+      # #     else
+      # #       @glow_intensity = Math.max(0.0, @glow_intensity - dt * 2)
+      # #     end
+      # #   end
+      # # end
+      # # ```
+      ##
+      # # NOTE: Inactive hotspots (`active = false`) skip all interaction checks
+      ##
+      # # WARNING: Avoid heavy computation in hover callbacks as they run every frame
       def update(dt : Float32)
         return unless @active
 

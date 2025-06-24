@@ -9,7 +9,7 @@ describe "Engine Integration with YAML Configuration" do
   it "creates a minimal game from YAML configuration" do
     # Clean up any existing test directories
     FileUtils.rm_rf("test_minimal_game") if Dir.exists?("test_minimal_game")
-    
+
     # Create minimal game structure
     Dir.mkdir_p("test_minimal_game/scenes")
     Dir.mkdir_p("test_minimal_game/scripts")
@@ -114,7 +114,7 @@ describe "Engine Integration with YAML Configuration" do
   it "handles multiple scenes with transitions" do
     # Clean up any existing test directories
     FileUtils.rm_rf("test_multi_scene") if Dir.exists?("test_multi_scene")
-    
+
     Dir.mkdir_p("test_multi_scene/scenes")
     Dir.mkdir_p("test_multi_scene/assets")
 
@@ -173,7 +173,7 @@ describe "Engine Integration with YAML Configuration" do
     YAML
 
     File.write("test_multi_scene/scenes/room2.yaml", room2_yaml)
-    
+
     # Create dummy assets
     File.write("test_multi_scene/assets/room1.png", "dummy")
     File.write("test_multi_scene/assets/room2.png", "dummy")
@@ -212,7 +212,7 @@ describe "Engine Integration with YAML Configuration" do
   it "integrates quest system from YAML" do
     # Clean up any existing test directories
     FileUtils.rm_rf("test_quest_game") if Dir.exists?("test_quest_game")
-    
+
     Dir.mkdir_p("test_quest_game/quests")
     Dir.mkdir_p("test_quest_game/scenes")
 
@@ -258,7 +258,7 @@ describe "Engine Integration with YAML Configuration" do
     YAML
 
     File.write("test_quest_game/quests/main_quests.yaml", quest_yaml)
-    
+
     # Create a minimal scene
     scene_yaml = <<-YAML
     name: test_scene

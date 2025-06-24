@@ -1,6 +1,216 @@
 module PointClickEngine
+  # # Navigation and pathfinding systems for character movement.
+  ##
+  # # The `Navigation` module provides intelligent pathfinding for characters
+  # # to navigate around obstacles. It implements the A* algorithm with
+  # # grid-based navigation meshes for efficient path calculation.
+  ##
+  # # ## Core Components
+  ##
+  # # - `Pathfinding` - A* pathfinding algorithm implementation
+  # # - `NavigationGrid` - Grid-based walkable area representation
+  # # - `Node` - Pathfinding graph nodes
+  ##
+  # # ## Basic Usage
+  ##
+  # # ```crystal
+  # # # Create navigation grid from scene
+  # # nav_grid = NavigationGrid.from_scene(scene, 800, 600, cell_size: 16)
+  ##
+  # # # Create pathfinder
+  # # pathfinder = Pathfinding.new(nav_grid)
+  ##
+  # # # Find path
+  # # path = pathfinder.find_path(
+  # #   start_pos: Vector2.new(100, 100),
+  # #   end_pos: Vector2.new(700, 500)
+  # # )
+  ##
+  # # # Follow path
+  # # if path
+  # #   character.follow_path(path)
+  # # end
+  # # ```
+  ##
+  # # ## Navigation Grid Setup
+  ##
+  # # ```crystal
+  # # # Manual grid creation
+  # # grid = NavigationGrid.new(50, 40, cell_size: 16)
+  ##
+  # # # Mark obstacles
+  # # grid.set_rect_walkable(200, 150, 100, 80, walkable: false)
+  ##
+  # # # Set individual cells
+  # # grid.set_walkable(10, 15, false)
+  # # ```
+  ##
+  # # ## Path Smoothing
+  ##
+  # # ```crystal
+  # # # Get smoothed path for natural movement
+  # # raw_path = pathfinder.find_path(start, goal)
+  # # smooth_path = pathfinder.smooth_path(raw_path)
+  # # ```
+  ##
+  # # ## Performance Optimization
+  ##
+  # # ```crystal
+  # # # Larger cell sizes = faster but less precise
+  # # nav_grid = NavigationGrid.new(width, height, cell_size: 32)
+  ##
+  # # # Cache paths for common routes
+  # # @path_cache = {} of {Vector2, Vector2} => Array(Vector2)?
+  # # ```
+  ##
+  # # ## Common Patterns
+  ##
+  # # ### Dynamic Obstacles
+  # # ```crystal
+  # # # Update grid when objects move
+  # # grid.set_rect_walkable(old_pos.x, old_pos.y, size.x, size.y, true)
+  # # grid.set_rect_walkable(new_pos.x, new_pos.y, size.x, size.y, false)
+  # # ```
+  ##
+  # # ### Path Validation
+  # # ```crystal
+  # # # Check if path still valid after scene change
+  # # if path && !pathfinder.is_path_valid?(path)
+  # #   # Recalculate path
+  # #   path = pathfinder.find_path(current_pos, target_pos)
+  # # end
+  # # ```
+  ##
+  # # ## See Also
+  ##
+  # # - `Character#walk_to` - High-level movement API
+  # # - `Scene#setup_navigation` - Automatic grid generation
+  # # - `WalkableArea` - Polygon-based navigation
   module Navigation
-    # A* pathfinding implementation for point & click navigation
+    # # A* pathfinding implementation for point & click navigation.
+    ##
+    # # The `Pathfinding` class implements the A* algorithm to find optimal
+    # # paths through a grid-based navigation mesh. It supports diagonal
+    # # movement and path smoothing for natural character movement.
+    ##
+    # # ## Algorithm Details
+    ##
+    # # A* combines:
+    # # - **G cost**: Distance from start node
+    # # - **H cost**: Heuristic distance to goal (Manhattan or Euclidean)
+    # # - **F cost**: G + H (total estimated cost)
+    ##
+    # # ## Basic Usage
+    ##
+    # # ```crystal
+    # # # Create pathfinder with navigation grid
+    # # grid = NavigationGrid.new(50, 40, cell_size: 16)
+    # # pathfinder = Pathfinding.new(grid)
+    ##
+    # # # Find path between two points
+    # # start = Vector2.new(100, 100)
+    # # goal = Vector2.new(600, 400)
+    # # path = pathfinder.find_path(start, goal)
+    ##
+    # # if path
+    # #   puts "Path found with #{path.size} waypoints"
+    # #   character.follow_path(path)
+    # # else
+    # #   puts "No path available"
+    # # end
+    # # ```
+    ##
+    # # ## Diagonal Movement
+    ##
+    # # ```crystal
+    # # # Enable/disable diagonal movement
+    # # pathfinder.allow_diagonal = true  # 8-directional
+    # # pathfinder.allow_diagonal = false # 4-directional
+    ##
+    # # # Diagonal movement cost
+    # # pathfinder.diagonal_cost = 1.414  # sqrt(2)
+    # # ```
+    ##
+    # # ## Path Smoothing
+    ##
+    # # ```crystal
+    # # # Smooth path for more natural movement
+    # # raw_path = pathfinder.find_path(start, goal)
+    # # smooth_path = pathfinder.smooth_path(raw_path)
+    ##
+    # # # Reduces unnecessary waypoints
+    # # # [A->B->C->D] might become [A->D] if no obstacles
+    # # ```
+    ##
+    # # ## Heuristics
+    ##
+    # # ```crystal
+    # # # Manhattan distance (grid-based movement)
+    # # pathfinder.heuristic = :manhattan
+    ##
+    # # # Euclidean distance (more accurate)
+    # # pathfinder.heuristic = :euclidean
+    ##
+    # # # Custom heuristic
+    # # pathfinder.heuristic_func = ->(a : Node, b : Node) {
+    # #   # Your custom distance calculation
+    # #   (a.x - b.x).abs + (a.y - b.y).abs
+    # # }
+    # # ```
+    ##
+    # # ## Performance Considerations
+    ##
+    # # - **Grid size**: Smaller cells = more precise but slower
+    # # - **Search limit**: Set max nodes to prevent hanging
+    # # - **Path caching**: Cache frequently used paths
+    # # - **Hierarchical**: Use multiple grid resolutions
+    ##
+    # # ```crystal
+    # # # Limit search space
+    # # pathfinder.max_search_nodes = 1000
+    ##
+    # # # Early exit for long paths
+    # # path = pathfinder.find_path(start, goal, max_distance: 500)
+    # # ```
+    ##
+    # # ## Common Gotchas
+    ##
+    # # 1. **Grid alignment**: Ensure positions align with grid
+    # #    ```crystal
+    # #    # Snap to grid center
+    # #    grid_x, grid_y = grid.world_to_grid(pos.x, pos.y)
+    # #    snapped_x, snapped_y = grid.grid_to_world(grid_x, grid_y)
+    # #    ```
+    ##
+    # # 2. **Dynamic obstacles**: Update grid when scene changes
+    # #    ```crystal
+    # #    # Moving obstacle
+    # #    update_grid_for_object(old_pos, new_pos)
+    # #    ```
+    ##
+    # # 3. **Path invalidation**: Stored paths can become invalid
+    # #    ```crystal
+    # #    # Validate before use
+    # #    if !pathfinder.is_path_valid?(stored_path)
+    # #      stored_path = pathfinder.find_path(start, goal)
+    # #    end
+    # #    ```
+    ##
+    # # ## Debugging
+    ##
+    # # ```crystal
+    # # # Visualize pathfinding
+    # # if Engine.debug_mode
+    # #   pathfinder.draw_grid
+    # #   pathfinder.draw_path(current_path)
+    # # end
+    # # ```
+    ##
+    # # ## See Also
+    ##
+    # # - `NavigationGrid` - Grid-based navigation mesh
+    # # - `Node` - Pathfinding graph nodes
+    # # - `Character#path` - Character path following
     class Pathfinding
       # Node used in pathfinding
       class Node

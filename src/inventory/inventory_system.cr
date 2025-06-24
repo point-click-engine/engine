@@ -3,6 +3,118 @@
 require "yaml"
 
 module PointClickEngine
+  # # Provides inventory management functionality for adventure games.
+  ##
+  # # The `Inventory` module contains all classes and utilities for managing
+  # # player items, including storage, display, combination, and usage mechanics.
+  # # It integrates with the scene system for item-based puzzle solving.
+  ##
+  # # ## Architecture
+  ##
+  # # The inventory system consists of:
+  # # - `InventoryItem` - Individual item representation
+  # # - `InventorySystem` - Main inventory UI and management
+  # # - `ItemCombination` - Rules for combining items
+  # # - `ItemUsage` - Item interaction with the game world
+  ##
+  # # ## Basic Example
+  ##
+  # # ```crystal
+  # # # Create inventory UI
+  # # inventory = Inventory::InventorySystem.new(Vector2.new(10, 400))
+  ##
+  # # # Add items
+  # # key = Inventory::InventoryItem.new("key", "assets/items/key.png")
+  # # key.description = "A rusty old key"
+  # # inventory.add_item(key)
+  ##
+  # # # Handle item usage
+  # # inventory.on_item_used = ->(item, target) do
+  # #   if item.name == "key" && target == "door"
+  # #     open_door()
+  # #     inventory.remove_item(item)
+  # #   end
+  # # end
+  # # ```
+  ##
+  # # ## Item Combination System
+  ##
+  # # ```crystal
+  # # # Define combination rules
+  # # inventory.on_items_combined = ->(item1, item2, action) do
+  # #   case {item1.name, item2.name}
+  # #   when {"stick", "rope"}
+  # #     inventory.remove_item(item1)
+  # #     inventory.remove_item(item2)
+  # #     inventory.add_item(create_item("fishing_rod"))
+  # #   when {"berries", "water"}
+  # #     create_potion(item1, item2)
+  # #   else
+  # #     player.say("I can't combine these items")
+  # #   end
+  # # end
+  # # ```
+  ##
+  # # ## Integration with Scenes
+  ##
+  # # ```crystal
+  # # # In scene setup
+  # # scene.on_hotspot_interact("chest") do |verb, player|
+  # #   if verb.use? && player.selected_item?.try(&.name) == "key"
+  # #     open_chest()
+  # #     inventory.remove_item(player.selected_item.not_nil!)
+  # #   end
+  # # end
+  # # ```
+  ##
+  # # ## Save/Load Support
+  ##
+  # # The inventory system automatically serializes with game saves:
+  ##
+  # # ```crystal
+  # # # Items are preserved across save/load cycles
+  # # save_data = engine.create_save_data
+  # # # save_data includes inventory.items automatically
+  # # ```
+  ##
+  # # ## Common Patterns
+  ##
+  # # ### Quest Items
+  # # ```crystal
+  # # class QuestItem < InventoryItem
+  # #   property quest_id : String
+  # #   property cannot_drop : Bool = true
+  ##
+  # #   def on_examine(player)
+  # #     player.say(@description)
+  # #     QuestManager.advance(@quest_id)
+  # #   end
+  # # end
+  # # ```
+  ##
+  # # ### Consumable Items
+  # # ```crystal
+  # # potion = InventoryItem.new("health_potion", "potion.png")
+  # # potion.on_use = -> do
+  # #   player.heal(50)
+  # #   inventory.remove_item(potion)
+  # #   true  # Consumed successfully
+  # # end
+  # # ```
+  ##
+  # # ## Best Practices
+  ##
+  # # 1. Keep item names unique for save/load reliability
+  # # 2. Use descriptive names for debugging: "golden_key" not "key1"
+  # # 3. Preload item icons at scene start for performance
+  # # 4. Limit inventory size for gameplay balance (typically 8-12 items)
+  # # 5. Provide visual feedback for invalid combinations
+  ##
+  # # ## See Also
+  ##
+  # # - `UI::UIManager` - For inventory display toggling
+  # # - `Scene#on_hotspot_interact` - For item usage on hotspots
+  # # - `SaveSystem` - For inventory persistence
   module Inventory
     # Manages the player's inventory of items and item interactions
     #

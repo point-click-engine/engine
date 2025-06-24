@@ -66,7 +66,7 @@ describe "Minimal Game Example" do
     background_path: ../assets/intro_bg.png
     YAML
     File.write("scenes/intro.yaml", scene_yaml)
-    
+
     File.write("template_game.yaml", template_config)
     config = PointClickEngine::Core::GameConfig.from_file("template_game.yaml")
 
@@ -94,7 +94,7 @@ describe "Minimal Game Example" do
     # Cleanup any existing directories first
     FileUtils.rm_rf("mini_game") if Dir.exists?("mini_game")
     FileUtils.rm_rf("assets") if Dir.exists?("assets")
-    
+
     # Complete game directory structure
     Dir.mkdir_p("mini_game/scenes")
     Dir.mkdir_p("mini_game/scripts")
@@ -149,13 +149,13 @@ describe "Minimal Game Example" do
     File.write("mini_game/scenes/start.yaml", scene_yaml)
     File.write("mini_game/scripts/start.lua", lua_script)
     File.write("mini_game_main.cr", main_cr)
-    
+
     # Create next_room scene to avoid validation errors
     next_room_yaml = <<-YAML
     name: next_room
     YAML
     File.write("mini_game/scenes/next_room.yaml", next_room_yaml)
-    
+
     # Create asset files
     File.write("assets/hero.png", "fake png")
     File.write("assets/bg.png", "fake png")

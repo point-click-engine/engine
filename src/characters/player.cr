@@ -4,29 +4,256 @@ require "yaml"
 require "./animation"
 
 module PointClickEngine
+  # # Character system for adventure game protagonists and NPCs.
+  ##
+  # # The `Characters` module provides a complete character system with:
+  # # - Base character functionality for all game entities
+  # # - Specialized player character with inventory integration
+  # # - NPC system with AI behaviors and scheduling
+  # # - Advanced animation with 8-directional movement
+  # # - Dialog and interaction systems
+  # # - Mood and personality traits
+  ##
+  # # ## Character Hierarchy
+  ##
+  # # ```
+  # # Character (abstract base)
+  # # ├── Player (protagonist)
+  # # ├── NPC (non-player characters)
+  # # │   ├── SimpleNPC (basic NPCs)
+  # # │   └── ScriptableCharacter (Lua-driven)
+  # # └── EnhancedCharacter (8-dir animations)
+  # # ```
+  ##
+  # # ## Animation System
+  ##
+  # # ```crystal
+  # # # Characters support multiple animation states
+  # # character.play_animation("walk_left")
+  # # character.set_animation_state(AnimationState::Talking)
+  ##
+  # # # 8-directional movement for modern games
+  # # direction = Direction8.from_velocity(velocity)
+  # # character.play_enhanced_animation(state, direction)
+  # # ```
+  ##
+  # # ## AI Behaviors
+  ##
+  # # ```crystal
+  # # # NPCs can have complex behaviors
+  # # guard = NPC.new("Guard", pos, size)
+  # # guard.behavior = PatrolBehavior.new([point1, point2, point3])
+  # # guard.mood = CharacterMood::Suspicious
+  # # ```
+  ##
+  # # ## Dialog Integration
+  ##
+  # # ```crystal
+  # # # Characters can engage in conversations
+  # # npc.on_talk do |player|
+  # #   dialog_tree = load_dialog("guard_conversation")
+  # #   dialog_tree.start(player, npc)
+  # # end
+  # # ```
+  ##
+  # # ## Common Patterns
+  ##
+  # # ### Creating Interactive NPCs
+  # # ```crystal
+  # # shopkeeper = NPC.new("Shopkeeper", Vector2.new(400, 300), Vector2.new(64, 96))
+  # # shopkeeper.load_spritesheet("shopkeeper.png", 64, 96)
+  # # shopkeeper.add_idle_animation
+  # # shopkeeper.mood = CharacterMood::Friendly
+  ##
+  # # shopkeeper.on_interact = ->(player : Character) {
+  # #   if player.has_item?("money")
+  # #     open_shop_interface
+  # #   else
+  # #     shopkeeper.say("Come back when you have money!")
+  # #   end
+  # # }
+  # # ```
+  ##
+  # # ### Player Character Setup
+  # # ```crystal
+  # # player = Player.new("Hero", start_position, Vector2.new(32, 48))
+  # # player.load_enhanced_spritesheet("hero_8dir.png", 32, 48, 8, 4)
+  # # player.movement_enabled = true
+  # # player.inventory_access = true
+  # # ```
+  ##
+  # # ## See Also
+  ##
+  # # - `AI::NPCBehavior` - NPC behavior patterns
+  # # - `Dialogue::DialogTree` - Conversation system
+  # # - `AnimationController` - Animation management
+  # # - `Inventory::InventorySystem` - Player inventory
   module Characters
-    # Enhanced player character with advanced animation system
-    # for Simon the Sorcerer style adventure games.
-    #
-    # ## Features
-    # - 8-directional walking animations
-    # - Context-specific action animations
-    # - Idle variations and personality animations
-    # - Smooth direction transitions
-    #
-    # ## Usage
-    # ```
-    # player = Player.new("Simon", position, size)
-    # player.load_enhanced_spritesheet("simon_8dir.png", 32, 64, 8, 4)
-    # player.walk_to(target) # Automatically selects appropriate direction
-    # player.perform_action(AnimationState::PickingUp, item_position)
-    # ```
+    # # The main player character with inventory and interaction capabilities.
+    ##
+    # # `Player` represents the protagonist that the user controls. It extends
+    # # `EnhancedCharacter` with player-specific features like inventory access,
+    # # item usage, and special interaction callbacks. The player character
+    # # serves as the primary interface between the user and the game world.
+    ##
+    # # ## Features
+    ##
+    # # - 8-directional walking animations
+    # # - Context-specific action animations (pick up, use, examine)
+    # # - Inventory system integration
+    # # - Movement enable/disable for cutscenes
+    # # - Special idle and personality animations
+    # # - Interaction callbacks for game logic
+    ##
+    # # ## Basic Setup
+    ##
+    # # ```crystal
+    # # # Create player character
+    # # player = Player.new("Alex", Vector2.new(400, 300), Vector2.new(32, 48))
+    ##
+    # # # Load animated sprite sheet
+    # # player.load_enhanced_spritesheet("alex_sprites.png", 32, 48, 8, 4)
+    # # # 8 columns for directions, 4 rows for animation states
+    ##
+    # # # Add to scene
+    # # scene.player = player
+    # # ```
+    ##
+    # # ## Movement Control
+    ##
+    # # ```crystal
+    # # # Player automatically handles click-to-walk
+    # # player.handle_click(mouse_pos, scene)
+    ##
+    # # # Disable during cutscenes
+    # # player.movement_enabled = false
+    # # cutscene.play
+    # # cutscene.on_complete = -> { player.movement_enabled = true }
+    # # ```
+    ##
+    # # ## Item Interactions
+    ##
+    # # ```crystal
+    # # # Using items on objects
+    # # player.use_item_on_target(door_position)
+    # # # Plays "using" animation facing the door
+    ##
+    # # # Picking up items
+    # # player.pick_up_item(key_position)
+    # # # Plays "picking up" animation and faces item
+    ##
+    # # # Examining objects
+    # # player.examine_object(painting_position)
+    # # # Turns to face object without moving
+    # # ```
+    ##
+    # # ## Inventory Integration
+    ##
+    # # ```crystal
+    # # # Control inventory access
+    # # player.inventory_access = false  # Disable during conversations
+    ##
+    # # # Check for items
+    # # if player.inventory.has_item?("key")
+    # #   player.use_item_on_target(door_position)
+    # # end
+    # # ```
+    ##
+    # # ## Interaction Callbacks
+    ##
+    # # ```crystal
+    # # # Track what the player is interacting with
+    # # player.on_interact_with = ->(target : Hotspot | Character, verb : Symbol) {
+    # #   case verb
+    # #   when :use
+    # #     handle_use_interaction(target)
+    # #   when :look
+    # #     handle_examine(target)
+    # #   when :talk
+    # #     start_conversation(target) if target.is_a?(Character)
+    # #   end
+    # # }
+    # # ```
+    ##
+    # # ## Common Gotchas
+    ##
+    # # 1. **Movement during dialogs**: Always disable movement during conversations
+    # #    ```crystal
+    # #    dialog.on_show = -> { player.movement_enabled = false }
+    # #    dialog.on_hide = -> { player.movement_enabled = true }
+    # #    ```
+    ##
+    # # 2. **Player is not automatically added to scene**: Must assign explicitly
+    # #    ```crystal
+    # #    scene.player = player  # Don't forget this!
+    # #    ```
+    ##
+    # # 3. **Animation setup timing**: Load spritesheet after window init
+    # #    ```crystal
+    # #    engine.init
+    # #    player.load_enhanced_spritesheet(...)  # After init
+    # #    ```
+    ##
+    # # 4. **Interaction callbacks not serialized**: Re-register after loading
+    # #    ```crystal
+    # #    # After loading a save:
+    # #    player.interaction_callback = original_callback
+    # #    ```
+    ##
+    # # ## Customization
+    ##
+    # # ```crystal
+    # # class CustomPlayer < Player
+    # #   property stamina : Float32 = 100.0
+    ##
+    # #   def walk_to(target : Vector2)
+    # #     if @stamina > 0
+    # #       super
+    # #       @stamina -= 1.0
+    # #     else
+    # #       say("I'm too tired to walk!")
+    # #     end
+    # #   end
+    ##
+    # #   def rest
+    # #     perform_action(AnimationState::Sitting)
+    # #     @stamina = Math.min(100.0, @stamina + 50.0)
+    # #   end
+    # # end
+    # # ```
+    ##
+    # # ## Performance Notes
+    ##
+    # # - Player updates every frame when visible
+    # # - Pathfinding calculations occur on click (can be expensive)
+    # # - Animation frames cached for performance
+    # # - Consider disabling when off-screen
+    ##
+    # # ## See Also
+    ##
+    # # - `EnhancedCharacter` - Base class with 8-dir animations
+    # # - `Inventory::InventorySystem` - Player inventory
+    # # - `Scene#player` - Scene player management
+    # # - `Engine#player` - Global player access
     class Player < EnhancedCharacter
       include Talkable
 
+      # # Whether the player can open their inventory.
+      ##
+      # # Disable during conversations, cutscenes, or puzzles to prevent
+      # # players from accessing items at inappropriate times.
       property inventory_access : Bool = true
+
+      # # Whether the player can move via mouse clicks.
+      ##
+      # # Disable during dialogs, cutscenes, or scripted sequences to
+      # # prevent unwanted movement.
       property movement_enabled : Bool = true
 
+      # # Callback tracking current interaction target and verb (runtime only).
+      ##
+      # # Used by the game logic to handle complex multi-step interactions.
+      # # Format: {target_object, verb_symbol}
       @[YAML::Field(ignore: true)]
       property interaction_callback : Tuple(Scenes::Hotspot | Character, Symbol)?
 
@@ -68,7 +295,22 @@ module PointClickEngine
         say("I can't talk to myself!") { }
       end
 
-      # Enhanced click handling with proper animations
+      # # Handles mouse click for player movement.
+      ##
+      # # Validates the target position is walkable before initiating movement.
+      # # Automatically selects appropriate walking animation based on direction.
+      ##
+      # # - *mouse_pos* : Click position in world coordinates
+      # # - *scene* : Current scene for walkability checks
+      ##
+      # # ```crystal
+      # # # In input handler
+      # # if mouse_clicked
+      # #   player.handle_click(mouse_world_pos, current_scene)
+      # # end
+      # # ```
+      ##
+      # # NOTE: Respects `movement_enabled` flag
       def handle_click(mouse_pos : RL::Vector2, scene : Scenes::Scene)
         return unless @movement_enabled
 
@@ -79,15 +321,50 @@ module PointClickEngine
         walk_to(mouse_pos)
       end
 
-      # Perform specific action with appropriate animation
+      # # Plays item usage animation facing the target.
+      ##
+      # # Character turns to face the target and plays the "using" animation.
+      # # Useful for key-in-lock, lever pulling, button pressing animations.
+      ##
+      # # - *target_position* : Position of the object being used
+      ##
+      # # ```crystal
+      # # if player.selected_item == "key"
+      # #   player.use_item_on_target(door.position)
+      # #   # Then handle the actual interaction
+      # # end
+      # # ```
       def use_item_on_target(target_position : RL::Vector2)
         perform_action(AnimationState::Using, target_position)
       end
 
+      # # Plays item pickup animation facing the item.
+      ##
+      # # Character bends down or reaches out to pick up an item.
+      # # The animation varies based on item height relative to character.
+      ##
+      # # - *item_position* : Position of the item being picked up
+      ##
+      # # ```crystal
+      # # player.pick_up_item(coin.position)
+      # # inventory.add_item(coin)
+      # # scene.remove_object(coin)
+      # # ```
       def pick_up_item(item_position : RL::Vector2)
         perform_action(AnimationState::PickingUp, item_position)
       end
 
+      # # Turns character to look at an object without moving.
+      ##
+      # # Useful for examine actions where the player comments on something
+      # # without walking to it. Uses idle animation in the appropriate direction.
+      ##
+      # # - *object_position* : Position to look towards
+      ##
+      # # ```crystal
+      # # player.examine_object(painting.position)
+      # # player.say("A beautiful landscape painting.")
+      # # ```
       def examine_object(object_position : RL::Vector2)
         # Look in direction of object
         direction_vec = RL::Vector2.new(

@@ -3,8 +3,220 @@
 require "yaml"
 
 module PointClickEngine
+  # # Scene management and interactive environments.
+  ##
+  # # The `Scenes` module provides all components for creating game locations,
+  # # including backgrounds, interactive hotspots, navigation meshes, and
+  # # scene transitions. Scenes are the primary containers for gameplay.
+  ##
+  # # ## Core Components
+  ##
+  # # - `Scene` - Main scene container and manager
+  # # - `Hotspot` - Interactive clickable areas
+  # # - `PolygonHotspot` - Non-rectangular hotspots
+  # # - `WalkableArea` - Navigation and movement constraints
+  # # - `ExitZone` - Scene transition triggers
+  # # - `SceneLoader` - YAML-based scene loading
+  ##
+  # # ## Scene Structure
+  ##
+  # # ```
+  # # Scene
+  # # ├── Background (image)
+  # # ├── Walkable Areas (navigation mesh)
+  # # ├── Hotspots (interactive objects)
+  # # ├── Characters (NPCs)
+  # # ├── Objects (props)
+  # # └── Exits (to other scenes)
+  # # ```
+  ##
+  # # ## Creating Scenes
+  ##
+  # # ```crystal
+  # # # Programmatically
+  # # scene = Scene.new("kitchen")
+  # # scene.load_background("assets/kitchen.png")
+  # # scene.add_hotspot(stove_hotspot)
+  # # scene.add_character(chef_npc)
+  ##
+  # # # From YAML
+  # # scene = SceneLoader.load("scenes/kitchen.yaml")
+  # # ```
+  ##
+  # # ## Navigation System
+  ##
+  # # ```crystal
+  # # # Define walkable areas
+  # # walkable = WalkableArea.new
+  # # walkable.add_region(floor_polygon, walkable: true)
+  # # walkable.add_region(table_polygon, walkable: false)
+  # # scene.walkable_area = walkable
+  ##
+  # # # Characters automatically path around obstacles
+  # # ```
+  ##
+  # # ## Scene Transitions
+  ##
+  # # ```crystal
+  # # # Define exit zones
+  # # door = ExitZone.new("door", rect, "hallway")
+  # # door.transition_type = TransitionType::FadeBlack
+  # # scene.add_exit(door)
+  # # ```
+  ##
+  # # ## Common Patterns
+  ##
+  # # ### Dynamic Scene Changes
+  # # ```crystal
+  # # scene.on_enter = -> {
+  # #   if game.has_flag?("lights_off")
+  # #     scene.load_background("assets/kitchen_dark.png")
+  # #   end
+  # # }
+  # # ```
+  ##
+  # # ### Conditional Exits
+  # # ```crystal
+  # # exit.on_use = -> {
+  # #   if player.has_item?("key")
+  # #     engine.change_scene(exit.target_scene)
+  # #   else
+  # #     player.say("The door is locked")
+  # #   end
+  # # }
+  # # ```
+  ##
+  # # ## See Also
+  ##
+  # # - `Engine#change_scene` - Scene switching
+  # # - `Character#walk_to` - Character navigation
+  # # - `Hotspot` - Interactive elements
   module Scenes
-    # Defines walkable and non-walkable regions in a scene
+    # # Manages walkable and non-walkable regions in a scene.
+    ##
+    # # The `WalkableArea` class defines where characters can move using polygon regions.
+    # # It supports obstacles, walk-behind areas for depth sorting, and scale zones
+    # # for perspective effects. Multiple regions can overlap with non-walkable areas
+    # # taking precedence.
+    ##
+    # # ## Features
+    ##
+    # # - Polygon-based walkable/non-walkable regions
+    # # - Walk-behind areas for objects in front of characters
+    # # - Scale zones for character size based on Y position
+    # # - Path constraint to keep movement within bounds
+    # # - Efficient point-in-polygon collision detection
+    ##
+    # # ## Basic Usage
+    ##
+    # # ```crystal
+    # # walkable = WalkableArea.new
+    ##
+    # # # Define the main walkable floor
+    # # floor = PolygonRegion.new("floor", walkable: true)
+    # # floor.vertices = [
+    # #   Vector2.new(100, 400),
+    # #   Vector2.new(700, 400),
+    # #   Vector2.new(700, 550),
+    # #   Vector2.new(100, 550)
+    # # ]
+    # # walkable.regions << floor
+    ##
+    # # # Add an obstacle (table)
+    # # table = PolygonRegion.new("table", walkable: false)
+    # # table.vertices = [
+    # #   Vector2.new(300, 450),
+    # #   Vector2.new(400, 450),
+    # #   Vector2.new(400, 500),
+    # #   Vector2.new(300, 500)
+    # # ]
+    # # walkable.regions << table
+    # # ```
+    ##
+    # # ## Walk-Behind Regions
+    ##
+    # # ```crystal
+    # # # Create a column that characters can walk behind
+    # # column = WalkBehindRegion.new("column")
+    # # column.y_threshold = 400  # Characters below Y=400 appear behind
+    # # column.texture = load_texture("column.png")
+    # # column.position = Vector2.new(350, 300)
+    # # walkable.walk_behind_regions << column
+    # # ```
+    ##
+    # # ## Scale Zones (Perspective)
+    ##
+    # # ```crystal
+    # # # Characters appear smaller in the background
+    # # perspective = ScaleZone.new
+    # # perspective.min_y = 200    # Far background
+    # # perspective.max_y = 550    # Foreground
+    # # perspective.min_scale = 0.5  # 50% size at back
+    # # perspective.max_scale = 1.0  # 100% size at front
+    # # walkable.scale_zones << perspective
+    ##
+    # # # Character scale interpolates smoothly between zones
+    # # ```
+    ##
+    # # ## Path Constraints
+    ##
+    # # ```crystal
+    # # # Constrain movement to walkable area
+    # # start_pos = Vector2.new(100, 400)
+    # # click_pos = Vector2.new(500, 300)  # In non-walkable area
+    ##
+    # # # Returns closest walkable point along the path
+    # # actual_target = walkable.constrain_to_walkable(start_pos, click_pos)
+    # # character.walk_to(actual_target)
+    # # ```
+    ##
+    # # ## Common Gotchas
+    ##
+    # # 1. **Empty regions = everything walkable**: No regions means no restrictions
+    # #    ```crystal
+    # #    walkable.regions.empty?  # true = entire scene is walkable
+    # #    ```
+    ##
+    # # 2. **Non-walkable takes precedence**: Overlapping regions favor blocking
+    # #    ```crystal
+    # #    # If point is in both walkable and non-walkable regions,
+    # #    # it's considered non-walkable
+    # #    ```
+    ##
+    # # 3. **Polygon winding matters**: Use consistent clockwise/counter-clockwise
+    # #    ```crystal
+    # #    # Clockwise winding
+    # #    vertices = [top_left, top_right, bottom_right, bottom_left]
+    # #    ```
+    ##
+    # # 4. **Scale zones are Y-based only**: X position doesn't affect scale
+    # #    ```crystal
+    # #    scale = walkable.get_scale_at_y(character.position.y)
+    # #    # X coordinate is ignored for scaling
+    # #    ```
+    ##
+    # # ## Performance Tips
+    ##
+    # # - Keep polygon vertex counts reasonable (4-8 vertices typical)
+    # # - Use bounding box pre-check for complex areas
+    # # - Combine adjacent walkable regions when possible
+    # # - Limit scale zones to 2-3 for smooth interpolation
+    ##
+    # # ## Debugging
+    ##
+    # # ```crystal
+    # # # Visualize walkable areas in debug mode
+    # # if Engine.debug_mode
+    # #   walkable.draw_debug  # Green = walkable, Red = blocked
+    # # end
+    # # ```
+    ##
+    # # ## See Also
+    ##
+    # # - `PolygonRegion` - Individual walkable/non-walkable areas
+    # # - `Scene#walkable_area` - Assigning to scenes
+    # # - `Character#walk_to` - Character pathfinding
+    # # - `Navigation::Pathfinding` - A* pathfinding system
     class WalkableArea
       include YAML::Serializable
 
@@ -21,7 +233,30 @@ module PointClickEngine
         @scale_zones = [] of ScaleZone
       end
 
-      # Check if a point is in a walkable area
+      # # Checks if a point is within a walkable area.
+      ##
+      # # Tests the point against all defined regions. Non-walkable regions
+      # # take precedence over walkable ones when regions overlap.
+      ##
+      # # - *point* : The position to test
+      # # - Returns true if the point is walkable, false otherwise
+      ##
+      # # ## Algorithm
+      ##
+      # # 1. If no regions defined, returns true (everything walkable)
+      # # 2. Quick bounding box check for early rejection
+      # # 3. Test point against each polygon region
+      # # 4. Non-walkable regions override walkable ones
+      ##
+      # # ```crystal
+      # # if walkable_area.is_point_walkable?(mouse_pos)
+      # #   character.walk_to(mouse_pos)
+      # # else
+      # #   character.say("I can't walk there")
+      # # end
+      # # ```
+      ##
+      # # NOTE: Uses point-in-polygon algorithm internally
       def is_point_walkable?(point : RL::Vector2) : Bool
         # If no regions defined, assume walkable
         return true if @regions.empty?
