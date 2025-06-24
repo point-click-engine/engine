@@ -252,7 +252,9 @@ module PointClickEngine
           if @input_block_frames <= 0
             unblock_input
           end
-          return # Skip input processing while blocked
+          # Still allow keyboard shortcuts even when input is blocked
+          process_keyboard_shortcuts_only
+          return # Skip normal input processing while blocked
         end
 
         # Process handlers in priority order
@@ -455,6 +457,17 @@ module PointClickEngine
         elsif !currently_pressed && was_held
           @released_keys.add(key)
           @held_keys.delete(key)
+        end
+      end
+
+      # Process only keyboard shortcuts when input is blocked
+      private def process_keyboard_shortcuts_only
+        # Only process keyboard shortcut handlers when input is blocked
+        @named_handlers.each do |name, handler|
+          if name == "keyboard_shortcuts" && handler.enabled
+            # Call the keyboard shortcut handler
+            handler.handler.call(0.0_f32)
+          end
         end
       end
     end

@@ -249,7 +249,17 @@ module PointClickEngine
         end
 
         private def handle_open_verb(hotspot : Scenes::Hotspot, player : Characters::Character?)
-          show_message("I can't open that.")
+          # Check if it's an exit zone (like a door)
+          if hotspot.is_a?(Scenes::ExitZone)
+            handle_walk_verb(hotspot, hotspot.position, player)
+          else
+            # Call hotspot's on_click handler if available
+            if hotspot.on_click
+              hotspot.on_click.try &.call
+            else
+              show_message("I can't open that.")
+            end
+          end
         end
 
         private def handle_inventory_verb(verb : UI::VerbType, item : Inventory::InventoryItem)
@@ -366,12 +376,12 @@ module PointClickEngine
           if RL.key_pressed?(RL::KeyboardKey::F1)
             # Toggle debug mode
             PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
-            puts "Debug mode: #{PointClickEngine::Core::Engine.debug_mode}"
+            puts "VERB SYSTEM F1 - Debug mode: #{PointClickEngine::Core::Engine.debug_mode}"
           end
 
           if RL.key_pressed?(RL::KeyboardKey::Tab)
             @engine.toggle_hotspot_highlight
-            puts "Hotspot highlight: #{@engine.render_coordinator.hotspot_highlight_enabled}"
+            puts "VERB SYSTEM TAB - Hotspot highlight toggled"
           end
 
           if RL.key_pressed?(RL::KeyboardKey::I)
@@ -396,8 +406,10 @@ module PointClickEngine
           # Mouse wheel to cycle through verbs
           if RL.get_mouse_wheel_move > 0
             @cursor_manager.cycle_verb_forward
+            puts "MOUSE WHEEL UP - Verb: #{@cursor_manager.current_verb}"
           elsif RL.get_mouse_wheel_move < 0
             @cursor_manager.cycle_verb_backward
+            puts "MOUSE WHEEL DOWN - Verb: #{@cursor_manager.current_verb}"
           end
         end
 

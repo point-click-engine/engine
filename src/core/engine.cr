@@ -482,12 +482,14 @@ module PointClickEngine
             toggle_fullscreen
           end
 
-          if @input_manager.key_pressed?(Raylib::KeyboardKey::F1)
+          # Check direct Raylib input as fallback
+          if RL.key_pressed?(Raylib::KeyboardKey::F1)
             Core::Engine.debug_mode = !Core::Engine.debug_mode
-            puts "Debug mode: #{Core::Engine.debug_mode}"
+            puts "ENGINE F1: Debug mode: #{Core::Engine.debug_mode}"
           end
 
-          if @input_manager.key_pressed?(Raylib::KeyboardKey::Tab)
+          if RL.key_pressed?(Raylib::KeyboardKey::Tab)
+            puts "ENGINE TAB: Toggling hotspot highlight"
             toggle_hotspot_highlight
           end
 
@@ -804,9 +806,11 @@ module PointClickEngine
           dialog_active ||= dm.is_dialog_active?
         end
 
-        # Block input if dialog is active
+        # Block mouse input if dialog is active, but allow keyboard shortcuts
         if dialog_active
           @input_manager.block_input(1, "dialog_active")
+          # Note: Keyboard shortcuts are handled by individual input handlers
+          # with higher priority than dialog blocking
         else
           @input_manager.unblock_input
         end
@@ -1332,6 +1336,15 @@ module PointClickEngine
 
           # Render menu system
           @system_manager.menu_system.try(&.draw)
+
+          # Render achievement notifications
+          @system_manager.achievement_manager.try(&.draw)
+
+          # Render verb input system cursor
+          if verb_system = @verb_input_system
+            display_manager = @system_manager.display_manager
+            verb_system.draw(display_manager)
+          end
         }
         @render_manager.add_renderer("ui", ui_renderer)
 

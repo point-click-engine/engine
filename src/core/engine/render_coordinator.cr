@@ -77,7 +77,7 @@ module PointClickEngine
 
           # Render floating dialogs from dialog manager
           if engine = Core::Engine.instance
-            engine.dialog_manager.try(&.draw)
+            engine.system_manager.dialog_manager.try(&.draw)
           end
 
           # Render debug information if enabled
