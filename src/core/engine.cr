@@ -404,6 +404,15 @@ module PointClickEngine
         # Initialize camera for scene scrolling
         @camera = Graphics::Camera.new(@window_width, @window_height)
 
+        # Set up input handlers for the new InputManager
+        setup_input_handlers
+
+        # Set up input handlers
+        setup_input_handlers
+
+        # Set up render layers
+        setup_render_layers
+
         @initialized = true
         puts "Engine initialized with #{@system_manager.initialized_systems_count} systems"
       end
@@ -431,6 +440,105 @@ module PointClickEngine
         @window_height = height
         @title = title
         init
+      end
+
+      # Set up input handlers for the InputManager
+      private def setup_input_handlers
+        # Register menu input handler with highest priority
+        @input_manager.register_handler("menu_input", 100) do |dt|
+          if menu = @system_manager.menu_system
+            if menu.current_menu && menu.current_menu.not_nil!.visible
+              menu.update(dt)
+              true # Consume input when menu is active
+            else
+              false
+            end
+          else
+            false
+          end
+        end
+
+        # Register dialog input handler with high priority
+        @input_manager.register_handler("dialog_input", 90) do |dt|
+          if @dialogs.any?(&.visible)
+            true # Consume input when dialog is visible
+          elsif dm = @system_manager.dialog_manager
+            dm.is_dialog_active?
+          else
+            false
+          end
+        end
+
+        # Register keyboard shortcut handler
+        @input_manager.register_handler("keyboard_shortcuts", 80) do |dt|
+          # Handle common keyboard shortcuts
+          if @input_manager.key_pressed?(Raylib::KeyboardKey::Escape)
+            if menu = @system_manager.menu_system
+              menu.toggle_pause_menu
+            end
+          end
+
+          if @input_manager.key_pressed?(Raylib::KeyboardKey::F11)
+            toggle_fullscreen
+          end
+
+          if @input_manager.key_pressed?(Raylib::KeyboardKey::F1)
+            Core::Engine.debug_mode = !Core::Engine.debug_mode
+            puts "Debug mode: #{Core::Engine.debug_mode}"
+          end
+
+          if @input_manager.key_pressed?(Raylib::KeyboardKey::Tab)
+            toggle_hotspot_highlight
+          end
+
+          if @input_manager.key_pressed?(Raylib::KeyboardKey::F5)
+            if cam = @camera
+              cam.edge_scroll_enabled = !cam.edge_scroll_enabled
+              puts "Camera edge scrolling: #{cam.edge_scroll_enabled ? "enabled" : "disabled"}"
+            end
+          end
+
+          false # Don't consume input for keyboard shortcuts
+        end
+
+        # Register verb input handler if enabled
+        @input_manager.register_handler("verb_input", 50) do |dt|
+          if verb_system = @verb_input_system
+            camera_for_input = if scene = @current_scene
+                                 scene.enable_camera_scrolling ? @camera : nil
+                               else
+                                 nil
+                               end
+            display_manager = @system_manager.display_manager
+            verb_system.process_input(@current_scene, @player, display_manager, camera_for_input)
+            # Return true if verb system consumed input
+            @input_manager.mouse_consumed?
+          else
+            false
+          end
+        end
+
+        # Register default game input handler with lowest priority
+        @input_manager.register_handler("game_input", 10) do |dt|
+          camera_for_input = if scene = @current_scene
+                               scene.enable_camera_scrolling ? @camera : nil
+                             else
+                               nil
+                             end
+
+          # Handle mouse clicks
+          if @input_manager.mouse_button_pressed?(Raylib::MouseButton::Left)
+            @input_handler.handle_click(@current_scene, @player, camera_for_input)
+            @input_manager.consume_mouse_input
+            true
+          elsif @input_manager.mouse_button_pressed?(Raylib::MouseButton::Right)
+            @input_handler.handle_right_click(@current_scene, camera_for_input)
+            @input_manager.consume_mouse_input
+            true
+          else
+            false
+          end
+        end
       end
 
       # Scene management
@@ -696,22 +804,16 @@ module PointClickEngine
           dialog_active ||= dm.is_dialog_active?
         end
 
-        # Process input only if no dialog is active
-        if !dialog_active
-          camera_for_input = if scene = @current_scene
-                               scene.enable_camera_scrolling ? @camera : nil
-                             else
-                               nil
-                             end
-
-          # Delegate input processing to InputManager
-          # TODO: Update this to use new InputManager API
-          # @input_manager.process_input(@current_scene, @player, camera_for_input, @verb_input_system, @input_handler, @system_manager.display_manager)
+        # Block input if dialog is active
+        if dialog_active
+          @input_manager.block_input(1, "dialog_active")
+        else
+          @input_manager.unblock_input
         end
 
-        # Update cursor via RenderManager
-        # TODO: Update this to use new RenderManager API
-        # @render_manager.update_cursor(@current_scene)
+        # Update cursor
+        # Note: GUI system doesn't have cursor manager built-in
+        # We'll need to create a separate cursor system or use UIManager
 
         # Call game-specific update if provided
         @on_update.try &.call(dt)
@@ -795,9 +897,7 @@ module PointClickEngine
                                nil
                              end
 
-          # Delegate input processing to InputManager
-          # TODO: Update this to use new InputManager API
-          # @input_manager.process_input(@current_scene, @player, camera_for_input, @verb_input_system, @input_handler, @system_manager.display_manager)
+          # Input processing is now handled by InputManager in the update method
         end
 
         # Update cursor via RenderManager
@@ -809,28 +909,8 @@ module PointClickEngine
       private def render
         dt = RL.get_frame_time
 
-        # The new RenderManager uses a layer-based system
-        # For now, use the old rendering approach directly
-        RL.begin_drawing
-        RL.clear_background(RL::BLACK)
-
-        # Only pass camera if current scene has scrolling enabled
-        camera_to_use = if scene = @current_scene
-                          scene.enable_camera_scrolling ? @camera : nil
-                        else
-                          nil
-                        end
-
-        # Use the RenderCoordinator for actual rendering
-        @render_coordinator.render(
-          @current_scene,
-          @dialogs,
-          @cutscene_manager,
-          @system_manager.transition_manager,
-          camera_to_use
-        )
-
-        RL.end_drawing
+        # Use the new RenderManager for rendering
+        @render_manager.render(dt)
       end
 
       # Display settings
@@ -918,7 +998,11 @@ module PointClickEngine
       # end
       # ```
       def toggle_hotspot_highlight
-        @render_coordinator.hotspot_highlight_enabled = !@render_coordinator.hotspot_highlight_enabled
+        if @render_manager.hotspot_highlighting_enabled?
+          @render_manager.disable_hotspot_highlighting
+        else
+          @render_manager.enable_hotspot_highlighting
+        end
       end
 
       # Set hotspot highlight settings
@@ -933,9 +1017,11 @@ module PointClickEngine
       # engine.set_hotspot_highlight(true, RL::BLUE, false)
       # ```
       def set_hotspot_highlight(enabled : Bool, color : RL::Color? = nil, pulse : Bool? = nil)
-        @render_coordinator.hotspot_highlight_enabled = enabled
-        @render_coordinator.hotspot_highlight_color = color if color
-        @render_coordinator.hotspot_highlight_pulse = pulse unless pulse.nil?
+        if enabled
+          @render_manager.enable_hotspot_highlighting(color, pulse || true)
+        else
+          @render_manager.disable_hotspot_highlighting
+        end
       end
 
       # Archive support
@@ -1145,6 +1231,9 @@ module PointClickEngine
         @resource_manager = ResourceManager.new
         @camera = Graphics::Camera.new(@window_width, @window_height)
 
+        # Set up input handlers for the new InputManager
+        setup_input_handlers
+
         # Restore singleton reference
         @@instance = self
       end
@@ -1185,6 +1274,141 @@ module PointClickEngine
         container.register_performance_monitor(PerformanceMonitor.new)
 
         ErrorLogger.info("Dependencies registered")
+      end
+
+      # Set up render layers for the RenderManager
+      private def setup_render_layers
+        # Background layer for scene backgrounds
+        background_renderer = ->(dt : Float32) {
+          if scene = @current_scene
+            if bg = scene.background
+              RL.draw_texture_ex(
+                bg,
+                RL::Vector2.new(x: 0, y: 0),
+                0.0f32,
+                scene.scale,
+                RL::WHITE
+              )
+            end
+          end
+        }
+        @render_manager.add_renderer("background", background_renderer)
+
+        # Scene objects layer (with camera support)
+        scene_renderer = ->(dt : Float32) {
+          camera_to_use = if scene = @current_scene
+                            scene.enable_camera_scrolling ? @camera : nil
+                          else
+                            nil
+                          end
+
+          # Render scene objects with camera
+          @current_scene.try(&.draw(camera_to_use))
+        }
+        @render_manager.add_renderer("scene_objects", scene_renderer)
+
+        # Dialogs layer
+        dialogs_renderer = ->(dt : Float32) {
+          @dialogs.each(&.draw)
+        }
+        @render_manager.add_renderer("dialogs", dialogs_renderer)
+
+        # Cutscene layer
+        cutscene_renderer = ->(dt : Float32) {
+          @cutscene_manager.draw
+        }
+        @render_manager.add_renderer("cutscenes", cutscene_renderer)
+
+        # Transition effects layer
+        transitions_renderer = ->(dt : Float32) {
+          @system_manager.transition_manager.try(&.draw)
+        }
+        @render_manager.add_renderer("transitions", transitions_renderer)
+
+        # UI layer (menus, inventory, etc.)
+        ui_renderer = ->(dt : Float32) {
+          # Render inventory
+          @inventory.draw
+
+          # Render menu system
+          @system_manager.menu_system.try(&.draw)
+        }
+        @render_manager.add_renderer("ui", ui_renderer)
+
+        # Debug overlay layer
+        debug_renderer = ->(dt : Float32) {
+          if Engine.debug_mode
+            # Debug rendering handled by RenderManager internally
+          end
+        }
+        @render_manager.add_renderer("debug", debug_renderer)
+      end
+
+      # Set up input handlers for the InputManager
+      private def setup_input_handlers
+        # Menu system has highest priority (100)
+        @input_manager.register_handler("menu_system", 100) do |dt|
+          if menu = @system_manager.menu_system
+            if menu.current_menu
+              menu.update(dt)
+              true # Consume input when menu is active
+            else
+              false
+            end
+          else
+            false
+          end
+        end
+
+        # Dialog system has high priority (90)
+        @input_manager.register_handler("dialog_system", 90) do |dt|
+          if dm = @system_manager.dialog_manager
+            if dm.is_dialog_active?
+              dm.update(dt)
+              true # Consume input when dialog is active
+            else
+              false
+            end
+          else
+            false
+          end
+        end
+
+        # Verb input system has medium-high priority (70)
+        @input_manager.register_handler("verb_input", 70) do |dt|
+          if verb_system = @verb_input_system
+            camera_for_input = if scene = @current_scene
+                                 scene.enable_camera_scrolling ? @camera : nil
+                               else
+                                 nil
+                               end
+            display_manager = @system_manager.display_manager
+            verb_system.process_input(@current_scene, @player, display_manager, camera_for_input)
+            # Verb system decides whether to consume input
+            false
+          else
+            false
+          end
+        end
+
+        # Default game input has medium priority (50)
+        @input_manager.register_handler("game_input", 50) do |dt|
+          camera_for_input = if scene = @current_scene
+                               scene.enable_camera_scrolling ? @camera : nil
+                             else
+                               nil
+                             end
+
+          # Process game input (clicks, movement, etc.)
+          @input_handler.process_input(@current_scene, @player, camera_for_input)
+          false # Don't consume by default, let other handlers also process
+        end
+
+        # Global keyboard shortcuts have low priority (10)
+        @input_manager.register_handler("global_keys", 10) do |dt|
+          @input_handler.handle_keyboard_input
+          false # Don't consume, these are global shortcuts
+        end
       end
 
       # Cleanup

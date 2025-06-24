@@ -167,8 +167,41 @@ module PointClickEngine
       #
       # - *hotspot* : The hotspot to add
       def add_hotspot(hotspot : Hotspot)
-        @hotspots << hotspot
+        @hotspots << hotspot unless @hotspots.includes?(hotspot)
         @objects << hotspot unless @objects.includes?(hotspot)
+      end
+
+      # Removes a hotspot from the scene by name
+      #
+      # Removes the hotspot from both the hotspots collection and the
+      # general objects collection. Returns true if the hotspot was found
+      # and removed, false otherwise.
+      #
+      # - *name* : The name of the hotspot to remove
+      #
+      # Returns: true if hotspot was removed, false if not found
+      def remove_hotspot(name : String) : Bool
+        hotspot = @hotspots.find { |h| h.name == name }
+        return false unless hotspot
+
+        @hotspots.delete(hotspot)
+        @objects.delete(hotspot)
+        true
+      end
+
+      # Removes a hotspot from the scene
+      #
+      # Removes the hotspot from both the hotspots collection and the
+      # general objects collection. Returns true if the hotspot was found
+      # and removed, false otherwise.
+      #
+      # - *hotspot* : The hotspot object to remove
+      #
+      # Returns: true if hotspot was removed, false if not found
+      def remove_hotspot(hotspot : Hotspot) : Bool
+        found = @hotspots.delete(hotspot)
+        @objects.delete(hotspot) if found
+        found != nil
       end
 
       # Adds a game object to the scene
@@ -409,7 +442,7 @@ module PointClickEngine
       #
       # Returns: The hotspot at that position, or `nil`
       def get_hotspot_at(point : RL::Vector2) : Hotspot?
-        @hotspots.find { |h| h.active && h.contains_point?(point) }
+        @hotspots.reverse.find { |h| h.active && h.visible && h.contains_point?(point) }
       end
 
       # Finds an active character (excluding player) at the specified position
@@ -421,7 +454,7 @@ module PointClickEngine
       #
       # Returns: The character at that position, or `nil`
       def get_character_at(point : RL::Vector2) : Characters::Character?
-        @characters.find { |c| c.active && c.contains_point?(point) && c != @player }
+        @characters.find { |c| c.active && c.visible && c.contains_point?(point) && c != @player }
       end
 
       # Finds a character by name

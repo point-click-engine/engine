@@ -27,6 +27,19 @@ class CrystalMysteryGame
 
     # Show main menu
     @engine.show_main_menu
+
+    # Debug: Check if menu is visible
+    if menu = @engine.system_manager.menu_system
+      puts "Menu system exists"
+      if menu.current_menu
+        puts "Current menu: #{menu.current_menu.class}"
+        puts "Menu visible: #{menu.current_menu.try(&.visible)}"
+      else
+        puts "No current menu set!"
+      end
+    else
+      puts "No menu system!"
+    end
   end
 
   def run

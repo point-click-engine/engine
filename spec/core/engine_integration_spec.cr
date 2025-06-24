@@ -1,5 +1,21 @@
 require "../spec_helper"
 
+module PointClickEngine
+  class TestCharacter < Characters::Character
+    def on_interact(interactor : Character)
+      # Test implementation
+    end
+
+    def on_look
+      # Test implementation
+    end
+
+    def on_talk
+      # Test implementation
+    end
+  end
+end
+
 describe "Engine Integration with YAML Configuration" do
   before_each do
     # Ensure clean state

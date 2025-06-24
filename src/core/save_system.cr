@@ -19,6 +19,7 @@ module PointClickEngine
       property game_variables : Hash(String, String)
       property completed_dialogs : Array(String)
       property scene_states : Hash(String, Hash(String, String))
+      property play_time : Float32? = nil
 
       def initialize
         @timestamp = Time.utc
@@ -66,7 +67,19 @@ module PointClickEngine
           save_data.inventory_items = engine.inventory.items.dup
 
           # Save game variables (from script engine or dialog trees)
-          # save_data.game_variables = engine.game_variables.dup
+          if script_engine = engine.script_engine
+            # Get game time from script engine if available
+            if game_time = script_engine.get_global("game_time")
+              save_data.game_variables["game_time"] = game_time.to_s
+            elsif engine.responds_to?(:game_time)
+              save_data.game_variables["game_time"] = engine.game_time.to_s
+            end
+
+            # Copy other game state variables from script engine
+            script_engine.game_state.each do |key, value|
+              save_data.game_variables[key] = value.to_s
+            end
+          end
 
           # Save completed dialogs
           # save_data.completed_dialogs = engine.completed_dialogs.dup
@@ -178,6 +191,31 @@ module PointClickEngine
       def self.save_exists?(slot_name : String) : Bool
         save_path = File.join(SAVE_DIRECTORY, "#{slot_name}#{SAVE_EXTENSION}")
         File.exists?(save_path)
+      end
+
+      # Get save information without loading the full save
+      def self.get_save_info(slot_name : String) : NamedTuple(timestamp: Time, scene_name: String, play_time: Float32?)?
+        save_path = File.join(SAVE_DIRECTORY, "#{slot_name}#{SAVE_EXTENSION}")
+        return nil unless File.exists?(save_path)
+
+        begin
+          yaml_content = File.read(save_path)
+          save_data = SaveData.from_yaml(yaml_content)
+
+          # Calculate play time if game time is tracked
+          play_time = save_data.play_time
+          if play_time.nil? && (game_time = save_data.game_variables["game_time"]?)
+            play_time = game_time.to_f32
+          end
+
+          {
+            timestamp:  save_data.timestamp,
+            scene_name: save_data.current_scene_name,
+            play_time:  play_time,
+          }
+        rescue ex
+          nil
+        end
       end
     end
   end

@@ -207,10 +207,8 @@ module PointClickEngine
         return unless scene
 
         if camera
-          # Render with camera transformations
-          RL.begin_mode_2d(camera.get_camera2d)
+          # Render with camera transformations by passing camera to draw methods
           render_scene_content(scene, camera, dt)
-          RL.end_mode_2d
         else
           # Render without camera transformations
           render_scene_content(scene, nil, dt)

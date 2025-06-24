@@ -338,11 +338,69 @@ module PointClickEngine
         @lua.register_fn_global("_engine_dialog_show_choices") do |state|
           if state.size >= 2
             question = state.to_string(1)
-            # choices_table = state.to_table(2) # TODO: Implement table parsing
             char_name = state.size >= 3 ? state.to_string(3) : ""
 
-            # TODO: Parse choices table and create dialog with choices
-            # This would require more complex Lua table parsing
+            # Parse choices table
+            choices = [] of {text: String, action: String?}
+
+            if state.is_table?(2)
+              # Push the table onto the stack
+              state.push_value(2)
+
+              # Iterate through table entries
+              state.push(nil)
+              while state.next(-2)
+                # Stack: ... table key value
+                if state.is_table?(-1)
+                  # Each choice is a table with text and optional action
+                  choice_text = ""
+                  choice_action = nil
+
+                  # Get "text" field
+                  state.get_field(-1, "text")
+                  if state.is_string?(-1)
+                    choice_text = state.to_string(-1)
+                  end
+                  state.pop(1)
+
+                  # Get optional "action" field
+                  state.get_field(-1, "action")
+                  if state.is_string?(-1)
+                    choice_action = state.to_string(-1)
+                  end
+                  state.pop(1)
+
+                  choices << {text: choice_text, action: choice_action}
+                elsif state.is_string?(-1)
+                  # Simple string choice
+                  choices << {text: state.to_string(-1), action: nil}
+                end
+
+                state.pop(1) # Remove value, keep key for next iteration
+              end
+              state.pop(1) # Remove table
+            end
+
+            # Create dialog with choices
+            if engine = Core::Engine.instance
+              if dialog_manager = engine.dialog_manager
+                # Convert choices to the format expected by dialog manager
+                choice_texts = choices.map { |c| c[:text] }
+
+                # Create callback to handle choice selection
+                callback = ->(choice_index : Int32) {
+                  # Dialog manager uses 1-based indexing
+                  actual_index = choice_index - 1
+                  if actual_index >= 0 && actual_index < choices.size
+                    if action = choices[actual_index][:action]
+                      engine.script_engine.try(&.execute_script(action))
+                    end
+                  end
+                }
+
+                dialog_manager.show_choice(question, choice_texts, callback)
+              end
+            end
           end
           0
         end

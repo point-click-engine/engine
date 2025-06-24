@@ -70,6 +70,19 @@ module PointClickEngine
           end
         end
 
+        # Draw method for compatibility with render layer system
+        def draw
+          return unless @active
+          return unless texture = @render_texture
+          return unless effect = @current_effect
+
+          # For fade effect, draw overlay
+          if effect.is_a?(FadeEffect)
+            alpha = (255 * @progress).to_u8
+            RL.draw_rectangle(0, 0, @width, @height, RL::Color.new(r: 0, g: 0, b: 0, a: alpha))
+          end
+        end
+
         # Render with transition effect
         def render_with_transition(&block : -> Nil)
           unless @active

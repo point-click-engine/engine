@@ -51,7 +51,26 @@ module PointClickEngine
 
         def available? : Bool
           return false if @once_only && @used
-          # TODO: Check conditions with script engine
+
+          # Check conditions with script engine if available
+          if !@conditions.empty?
+            if engine = Core::Engine.instance
+              if script = engine.script_engine
+                # Check all conditions (AND logic)
+                @conditions.each do |condition|
+                  begin
+                    # Evaluate condition as a Lua expression that returns boolean
+                    result = script.execute_script("return #{condition}")
+                    return false unless result == true
+                  rescue ex
+                    Core::ErrorLogger.error("Failed to evaluate dialog choice condition '#{condition}': #{ex.message}")
+                    # Default to available if script fails
+                  end
+                end
+              end
+            end
+          end
+
           true
         end
       end
@@ -196,12 +215,28 @@ module PointClickEngine
 
         private def execute_actions(actions : Array(String))
           actions.each do |action|
-            # TODO: Integrate with script engine to execute actions
-            # For now, basic variable setting
-            if action.starts_with?("set ")
-              parts = action.split(" ", 3)
-              if parts.size == 3
-                set_variable(parts[1], parts[2])
+            # Integrate with script engine to execute actions
+            if engine = Core::Engine.instance
+              if script = engine.script_engine
+                begin
+                  script.execute_script(action)
+                rescue ex
+                  Core::ErrorLogger.error("Failed to execute dialog action '#{action}': #{ex.message}")
+                end
+              else
+                # Fallback: try to parse simple variable assignments
+                if match = action.match(/^set\s+(\w+)\s*=\s*(.+)$/)
+                  var_name = match[1]
+                  var_value = match[2].strip.strip('"').strip('\'')
+                  @variables[var_name] = var_value
+                elsif match = action.match(/^add_item\s+(.+)$/)
+                  item_name = match[1].strip.strip('"').strip('\'')
+                  # Try to add to inventory if available
+                  if inventory = engine.inventory
+                    # This would need an item creation method
+                    Core::ErrorLogger.info("Would add item: #{item_name}")
+                  end
+                end
               end
             end
           end

@@ -260,7 +260,12 @@ module PointClickEngine
 
         # Play sound effect if specified
         if sound = anim_data.sound_effect
-          # TODO: Play sound through audio manager
+          # Play sound through audio manager if available
+          if engine = Core::Engine.instance
+            if audio = engine.audio_manager
+              audio.play_sound_effect(sound)
+            end
+          end
         end
       end
 
@@ -278,10 +283,39 @@ module PointClickEngine
 
       # Play turn animation between directions
       private def play_turn_animation(from : Direction8, to : Direction8)
-        # For now, just switch directly
-        # TODO: Implement smooth turn animations
+        # Calculate the turn direction (clockwise or counter-clockwise)
+        from_angle = direction_to_angle(from)
+        to_angle = direction_to_angle(to)
+
+        # Calculate shortest angular distance
+        angle_diff = (to_angle - from_angle + 360) % 360
+
+        # Determine turn direction
+        if angle_diff > 180
+          # Counter-clockwise is shorter
+          play_animation("turn_ccw")
+        elsif angle_diff > 0
+          # Clockwise is shorter
+          play_animation("turn_cw")
+        end
+
         @current_direction = to
         @last_direction = to
+      end
+
+      # Convert direction to angle in degrees
+      private def direction_to_angle(dir : Direction8) : Int32
+        case dir
+        when .north?      then 0
+        when .north_east? then 45
+        when .east?       then 90
+        when .south_east? then 135
+        when .south?      then 180
+        when .south_west? then 225
+        when .west?       then 270
+        when .north_west? then 315
+        else                   0
+        end
       end
     end
 

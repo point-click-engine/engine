@@ -466,9 +466,18 @@ module PointClickEngine
           # For saving, always show slots
           (1..5).each do |i|
             slot_name = "save_slot_#{i}"
-            if Core::SaveSystem.save_exists?(slot_name)
-              # TODO: Get save info (date, scene, etc.)
-              add_item("Slot #{i} - [Used]") { @on_save_slot.try &.call(slot_name) }
+            if save_info = Core::SaveSystem.get_save_info(slot_name)
+              # Format save info
+              time_str = save_info[:timestamp].to_s("%Y-%m-%d %H:%M")
+              scene_str = save_info[:scene_name].empty? ? "Unknown" : save_info[:scene_name]
+              play_time_str = if play_time = save_info[:play_time]
+                                hours = (play_time / 3600).to_i
+                                minutes = ((play_time % 3600) / 60).to_i
+                                "#{hours}h#{minutes}m"
+                              else
+                                "--"
+                              end
+              add_item("Slot #{i} - #{time_str} - #{scene_str} (#{play_time_str})") { @on_save_slot.try &.call(slot_name) }
             else
               add_item("Slot #{i} - [Empty]") { @on_save_slot.try &.call(slot_name) }
             end
@@ -478,9 +487,19 @@ module PointClickEngine
           saves_found = false
           (1..5).each do |i|
             slot_name = "save_slot_#{i}"
-            if Core::SaveSystem.save_exists?(slot_name)
+            if save_info = Core::SaveSystem.get_save_info(slot_name)
               saves_found = true
-              add_item("Slot #{i}") { @on_load_slot.try &.call(slot_name) }
+              # Format save info
+              time_str = save_info[:timestamp].to_s("%Y-%m-%d %H:%M")
+              scene_str = save_info[:scene_name].empty? ? "Unknown" : save_info[:scene_name]
+              play_time_str = if play_time = save_info[:play_time]
+                                hours = (play_time / 3600).to_i
+                                minutes = ((play_time % 3600) / 60).to_i
+                                "#{hours}h#{minutes}m"
+                              else
+                                "--"
+                              end
+              add_item("Slot #{i} - #{time_str} - #{scene_str} (#{play_time_str})") { @on_load_slot.try &.call(slot_name) }
             end
           end
 
@@ -492,9 +511,15 @@ module PointClickEngine
 
         # Add quick save/load slot
         if @is_save_mode
-          add_item("Quick Save") { @on_save_slot.try &.call("quicksave") }
-        elsif Core::SaveSystem.save_exists?("quicksave")
-          add_item("Quick Load") { @on_load_slot.try &.call("quicksave") }
+          if save_info = Core::SaveSystem.get_save_info("quicksave")
+            time_str = save_info[:timestamp].to_s("%H:%M")
+            add_item("Quick Save (#{time_str})") { @on_save_slot.try &.call("quicksave") }
+          else
+            add_item("Quick Save") { @on_save_slot.try &.call("quicksave") }
+          end
+        elsif save_info = Core::SaveSystem.get_save_info("quicksave")
+          time_str = save_info[:timestamp].to_s("%H:%M")
+          add_item("Quick Load (#{time_str})") { @on_load_slot.try &.call("quicksave") }
         end
 
         # Back button

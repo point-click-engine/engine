@@ -529,17 +529,8 @@ module PointClickEngine
           )
           RL.check_collision_point_rec?(point, bounds)
         else
-          # Fallback to original calculation if no sprite data
-          scaled_width = @size.x * @scale
-          scaled_height = @size.y * @scale
-
-          bounds = RL::Rectangle.new(
-            x: @position.x - scaled_width / 2,
-            y: @position.y - scaled_height,
-            width: scaled_width,
-            height: scaled_height
-          )
-          RL.check_collision_point_rec?(point, bounds)
+          # Fallback to GameObject calculation if no sprite data
+          super
         end
       end
 

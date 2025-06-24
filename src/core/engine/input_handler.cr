@@ -47,9 +47,24 @@ module PointClickEngine
                 # Fallback to talk interaction
                 clicked_character.on_talk
               else
-                # Default character interaction - could show dialog or description
-                puts "Clicked on character: #{clicked_character.name}"
-                # TODO: Implement character dialog system integration
+                # Default character interaction - show dialog or description
+                if engine = Engine.instance
+                  # Check if character has a dialog tree
+                  if dialog_manager = engine.dialog_manager
+                    if dialog_manager.has_dialog?(clicked_character.name)
+                      # Start character's dialog tree
+                      dialog_manager.start_dialog(clicked_character.name)
+                    else
+                      # Show default interaction message
+                      dialog_manager.show_message(
+                        "#{player.try(&.name) || "You"}: I should talk to #{clicked_character.name}."
+                      )
+                    end
+                  else
+                    # Fallback: just log the interaction
+                    puts "Clicked on character: #{clicked_character.name}"
+                  end
+                end
               end
             else
               # Move player to clicked position if no hotspot or character (using world coordinates)
@@ -131,7 +146,7 @@ module PointClickEngine
         private def handle_debug_toggle
           # Toggle debug mode
           PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
-          puts "Debug mode: #{PointClickEngine::Core::Engine.debug_mode}"
+          puts "F1 pressed - Debug mode: #{PointClickEngine::Core::Engine.debug_mode}"
         end
 
         private def handle_hotspot_context_menu(hotspot, position : RL::Vector2)
@@ -141,6 +156,7 @@ module PointClickEngine
 
         private def handle_hotspot_highlight_toggle
           # Toggle hotspot highlighting
+          puts "Tab pressed - Toggling hotspot highlighting"
           Engine.instance.toggle_hotspot_highlight
         end
 
