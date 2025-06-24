@@ -63,7 +63,7 @@ hotspots:
     description: "Door to the laboratory"
     target_scene: laboratory
     target_position: {x: 100, y: 400}
-    transition_type: slide
+    transition_type: swirl
     default_verb: open
     object_type: door
     actions:

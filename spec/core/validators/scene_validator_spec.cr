@@ -151,7 +151,7 @@ describe PointClickEngine::Core::Validators::SceneValidator do
         errors.should contain("Hotspot #1: Name cannot be empty")
         errors.should contain("Hotspot #1: x cannot be negative")
         errors.should contain("Hotspot #1: height cannot be negative")
-        errors.should contain("Hotspot #2: Invalid type 'invalid_type'. Must be one of: rectangle, polygon, dynamic")
+        errors.should contain("Hotspot #2: Invalid type 'invalid_type'. Must be one of: rectangle, polygon, dynamic, exit")
         errors.should contain("Hotspot #2: Missing required field 'x'")
         errors.should contain("Hotspot #3: Polygon type requires 'points' array")
         errors.should contain("Hotspot #4: Dynamic hotspot requires 'conditions'")

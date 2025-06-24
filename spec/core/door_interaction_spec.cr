@@ -10,6 +10,7 @@ describe "Door Interaction System" do
         window_height: 600
       )
       engine.init
+      engine.enable_verb_input
 
       # Create a scene with overlapping hotspot and exit zone (like library door)
       scene = PointClickEngine::Scenes::Scene.new("test_scene")
@@ -34,27 +35,23 @@ describe "Door Interaction System" do
       )
       scene.add_hotspot(exit_zone)
 
-      # Get the verb input system (may be nil if not initialized)
+      # Get the verb input system
       verb_system = engine.verb_input_system
-      if verb_system.nil?
-        # Initialize verb system if not already done
-        engine.enable_verb_coin = true
-        engine.update(0.016f32) # trigger initialization
-        verb_system = engine.verb_input_system.not_nil!
-      end
+      verb_system.should_not be_nil
+      verb_system = verb_system.not_nil!
 
       # Set up the "open" verb
       verb_system.cursor_manager.set_verb(PointClickEngine::UI::VerbType::Open)
 
       # Click at the door position (850, 300 is center of the door)
-      door_position = RL::Vector2.new(x: 875f32, y: 400f32)
+      door_position = RL::Vector2.new(x: 850f32, y: 300f32)
 
       # Test that both hotspots are found at this position
       found_hotspot = scene.get_hotspot_at(door_position)
       found_hotspot.should_not be_nil
 
-      # The regular hotspot should be found by default (it was added last)
-      found_hotspot.should be(door_hotspot)
+      # The exit zone should be found by default (it was added last)
+      found_hotspot.should be(exit_zone)
 
       # But ExitZones should be findable too
       found_exit = scene.hotspots.find { |h| h.is_a?(PointClickEngine::Scenes::ExitZone) && h.contains_point?(door_position) }
@@ -72,6 +69,7 @@ describe "Door Interaction System" do
         window_height: 600
       )
       engine.init
+      engine.enable_verb_input
 
       # Create source scene
       library_scene = PointClickEngine::Scenes::Scene.new("library")
@@ -94,7 +92,8 @@ describe "Door Interaction System" do
       library_scene.add_hotspot(exit_zone)
 
       # Verify we start in library
-      engine.current_scene.should be(library_scene)
+      engine.current_scene.should_not be_nil
+      engine.current_scene.not_nil!.name.should eq("library")
 
       # The exit zone should be accessible (no item requirements)
       exit_zone.is_accessible?(engine.inventory).should be_true

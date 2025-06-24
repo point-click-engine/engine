@@ -11,6 +11,19 @@ module PointClickEngine
       Fade
       Slide
       Iris
+      # Cheesy/retro transitions
+      Swirl
+      StarWipe
+      HeartWipe
+      Curtain
+      Ripple
+      Checkerboard
+      # Movie-like transitions
+      Warp
+      MatrixRain
+      Vortex
+      PageTurn
+      Fire
     end
 
     # Edge exit directions

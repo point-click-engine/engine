@@ -69,7 +69,7 @@ hotspots:
     description: "Back to the laboratory"
     target_scene: laboratory
     target_position: {x: 800, y: 400}
-    transition_type: slide
+    transition_type: star_wipe
     default_verb: open
     object_type: door
     actions:

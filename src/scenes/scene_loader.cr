@@ -153,10 +153,21 @@ module PointClickEngine
                         # Set transition effect
                         if transition = hotspot_data["transition_type"]?
                           case transition.as_s.downcase
-                          when "instant" then exit_zone.transition_type = TransitionType::Instant
-                          when "fade"    then exit_zone.transition_type = TransitionType::Fade
-                          when "slide"   then exit_zone.transition_type = TransitionType::Slide
-                          when "iris"    then exit_zone.transition_type = TransitionType::Iris
+                          when "instant"      then exit_zone.transition_type = TransitionType::Instant
+                          when "fade"         then exit_zone.transition_type = TransitionType::Fade
+                          when "slide"        then exit_zone.transition_type = TransitionType::Slide
+                          when "iris"         then exit_zone.transition_type = TransitionType::Iris
+                          when "swirl"        then exit_zone.transition_type = TransitionType::Swirl
+                          when "star_wipe"    then exit_zone.transition_type = TransitionType::StarWipe
+                          when "heart_wipe"   then exit_zone.transition_type = TransitionType::HeartWipe
+                          when "curtain"      then exit_zone.transition_type = TransitionType::Curtain
+                          when "ripple"       then exit_zone.transition_type = TransitionType::Ripple
+                          when "checkerboard" then exit_zone.transition_type = TransitionType::Checkerboard
+                          when "warp"         then exit_zone.transition_type = TransitionType::Warp
+                          when "matrix_rain"  then exit_zone.transition_type = TransitionType::MatrixRain
+                          when "vortex"       then exit_zone.transition_type = TransitionType::Vortex
+                          when "page_turn"    then exit_zone.transition_type = TransitionType::PageTurn
+                          when "fire"         then exit_zone.transition_type = TransitionType::Fire
                           end
                         end
 
@@ -289,10 +300,21 @@ module PointClickEngine
             # Set transition type
             if transition = exit_data["transition_type"]?
               case transition.as_s.downcase
-              when "instant" then exit_zone.transition_type = TransitionType::Instant
-              when "fade"    then exit_zone.transition_type = TransitionType::Fade
-              when "slide"   then exit_zone.transition_type = TransitionType::Slide
-              when "iris"    then exit_zone.transition_type = TransitionType::Iris
+              when "instant"      then exit_zone.transition_type = TransitionType::Instant
+              when "fade"         then exit_zone.transition_type = TransitionType::Fade
+              when "slide"        then exit_zone.transition_type = TransitionType::Slide
+              when "iris"         then exit_zone.transition_type = TransitionType::Iris
+              when "swirl"        then exit_zone.transition_type = TransitionType::Swirl
+              when "star_wipe"    then exit_zone.transition_type = TransitionType::StarWipe
+              when "heart_wipe"   then exit_zone.transition_type = TransitionType::HeartWipe
+              when "curtain"      then exit_zone.transition_type = TransitionType::Curtain
+              when "ripple"       then exit_zone.transition_type = TransitionType::Ripple
+              when "checkerboard" then exit_zone.transition_type = TransitionType::Checkerboard
+              when "warp"         then exit_zone.transition_type = TransitionType::Warp
+              when "matrix_rain"  then exit_zone.transition_type = TransitionType::MatrixRain
+              when "vortex"       then exit_zone.transition_type = TransitionType::Vortex
+              when "page_turn"    then exit_zone.transition_type = TransitionType::PageTurn
+              when "fire"         then exit_zone.transition_type = TransitionType::Fire
               end
             end
 

@@ -302,11 +302,11 @@ module PointClickEngine
 
         private def perform_exit_transition(exit_zone : Scenes::ExitZone)
           # Use the integrated transition system with enhanced scene change handling
-          @engine.transition_manager.try do |tm|
+          if tm = @engine.transition_manager
             effect = map_transition_type(exit_zone.transition_type, exit_zone.position)
 
-            # Use longer transition duration for dramatic effect
-            transition_duration = 2.5f32
+            # Use VERY long transition duration for super cheesy dramatic effect!
+            transition_duration = 4.5f32
 
             # Start the transition
             tm.start_transition(effect, transition_duration) do
@@ -337,6 +337,12 @@ module PointClickEngine
               # Play transition sound if available
               @engine.audio_manager.try &.play_sound_effect("transition")
             end
+          else
+            # Fallback to immediate scene change
+            @engine.change_scene(exit_zone.target_scene)
+            if (pos = exit_zone.target_position) && (player = @engine.player)
+              player.position = pos
+            end
           end
         end
 
@@ -357,6 +363,28 @@ module PointClickEngine
             end
           when .iris?
             Graphics::TransitionEffect::Iris
+          when .swirl?
+            Graphics::TransitionEffect::Swirl
+          when .star_wipe?
+            Graphics::TransitionEffect::StarWipe
+          when .heart_wipe?
+            Graphics::TransitionEffect::HeartWipe
+          when .curtain?
+            Graphics::TransitionEffect::Curtain
+          when .ripple?
+            Graphics::TransitionEffect::Ripple
+          when .checkerboard?
+            Graphics::TransitionEffect::Checkerboard
+          when .warp?
+            Graphics::TransitionEffect::Warp
+          when .matrix_rain?
+            Graphics::TransitionEffect::MatrixRain
+          when .vortex?
+            Graphics::TransitionEffect::Vortex
+          when .page_turn?
+            Graphics::TransitionEffect::PageTurn
+          when .fire?
+            Graphics::TransitionEffect::Fire
           else
             Graphics::TransitionEffect::Fade
           end

@@ -939,7 +939,24 @@ module PointClickEngine
       private def render
         dt = RL.get_frame_time
 
-        # Use the new RenderManager for rendering
+        # Check if we should use transition wrapping
+        if tm = @system_manager.transition_manager
+          if tm.transitioning?
+            # Wrap entire render process with transition
+            RL.begin_drawing
+            RL.clear_background(RL::BLACK)
+
+            tm.render_with_transition do
+              # Render all layers except the transition layer itself
+              @render_manager.render_internal(dt)
+            end
+
+            RL.end_drawing
+            return
+          end
+        end
+
+        # Normal rendering without transition
         @render_manager.render(dt)
       end
 

@@ -174,9 +174,25 @@ module PointClickEngine
         RL.begin_drawing
         RL.clear_background(Raylib::BLACK)
 
+        render_internal(dt)
+
+        RL.end_drawing
+
+        # Update performance statistics
+        end_time = Time.monotonic
+        @render_time = (end_time - start_time).total_milliseconds.to_f32
+        update_fps_counter(dt)
+        @frame_count += 1
+      end
+
+      # Internal rendering method (without begin/end drawing)
+      # Used by transition system to wrap rendering
+      def render_internal(dt : Float32)
         # Render all layers in priority order
         @render_layers.each do |layer|
           next unless layer.enabled
+          # Skip transition layer when rendering inside a transition
+          next if layer.name == "transitions"
 
           layer.renderers.each do |renderer|
             renderer.call(dt)
@@ -189,14 +205,6 @@ module PointClickEngine
 
         # Render FPS counter if enabled
         render_fps_counter if @show_fps
-
-        RL.end_drawing
-
-        # Update performance statistics
-        end_time = Time.monotonic
-        @render_time = (end_time - start_time).total_milliseconds.to_f32
-        update_fps_counter(dt)
-        @frame_count += 1
       end
 
       # Render a scene with camera support
