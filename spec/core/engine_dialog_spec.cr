@@ -114,8 +114,10 @@ describe "Engine Dialog System Integration" do
     scene = PointClickEngine::Scenes::Scene.new("multi_char_scene")
     characters.each { |char| scene.add_character(char) }
 
+    # Add scene to engine and set it as current directly
     engine.scenes["multi_char_scene"] = scene
-    engine.change_scene("multi_char_scene")
+    engine.current_scene = scene
+    engine.current_scene_name = "multi_char_scene"
 
     # Verify all characters are present
     current_scene = engine.current_scene.not_nil!
@@ -143,7 +145,7 @@ describe "Engine Dialog System Integration" do
     available_options << "Complete quest" if !completed_quest
     available_options << "Goodbye"
 
-    available_options.size.should eq(2)
+    available_options.size.should eq(3)
     available_options.should contain("Buy item")
     available_options.should contain("Complete quest")
 

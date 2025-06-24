@@ -4,6 +4,9 @@ require "./transition_effect"
 require "./shader_loader"
 require "./effects/basic_effects"
 require "./effects/geometric_effects"
+require "./effects/artistic_effects"
+require "./effects/cinematic_effects"
+require "./effects/advanced_effects"
 
 module PointClickEngine
   module Graphics
@@ -164,6 +167,7 @@ module PointClickEngine
 
         private def create_effect_instance(effect : TransitionEffect, duration : Float32) : BaseTransitionEffect?
           case effect
+          # Basic effects
           when .fade?
             FadeEffect.new(duration)
           when .dissolve?
@@ -178,6 +182,7 @@ module PointClickEngine
             SlideEffect.new(duration, SlideDirection::Up)
           when .slide_down?
             SlideEffect.new(duration, SlideDirection::Down)
+            # Geometric effects
           when .iris?
             IrisEffect.new(duration)
           when .star_wipe?
@@ -188,8 +193,43 @@ module PointClickEngine
             CheckerboardEffect.new(duration)
           when .pixelate?
             PixelateEffect.new(duration)
+            # Artistic effects
+          when .swirl?
+            SwirlEffect.new(duration)
+          when .curtain?
+            CurtainEffect.new(duration)
+          when .ripple?
+            RippleEffect.new(duration)
+          when .glitch?
+            GlitchEffect.new(duration)
+            # Cinematic effects
+          when .warp?
+            WarpEffect.new(duration)
+          when .wave?
+            WaveEffect.new(duration)
+          when .film_burn?
+            FilmBurnEffect.new(duration)
+          when .static?
+            StaticEffect.new(duration)
+          when .matrix_rain?
+            MatrixRainEffect.new(duration)
+            # Advanced effects
+          when .zoom_blur?
+            ZoomBlurEffect.new(duration)
+          when .clock_wipe?
+            ClockWipeEffect.new(duration)
+          when .barn_door?
+            BarnDoorEffect.new(duration)
+          when .page_turn?
+            PageTurnEffect.new(duration)
+          when .shatter?
+            ShatterEffect.new(duration)
+          when .vortex?
+            VortexEffect.new(duration)
+          when .fire?
+            FireEffect.new(duration)
           else
-            # Default to fade for unimplemented effects
+            # Default to fade for any remaining unimplemented effects
             FadeEffect.new(duration)
           end
         end
