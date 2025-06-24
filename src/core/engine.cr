@@ -27,6 +27,7 @@ require "./resource_manager"
 require "./dependency_container_simple"
 require "./config_manager"
 require "./performance_monitor"
+require "./render_validation"
 
 module PointClickEngine
   # Core engine functionality, game loop, and state management
@@ -415,6 +416,11 @@ module PointClickEngine
 
         @initialized = true
         puts "Engine initialized with #{@system_manager.initialized_systems_count} systems"
+
+        # Run architectural validation in debug mode
+        if Engine.debug_mode
+          RenderValidation.quick_validate(self)
+        end
       end
 
       # Initialize the engine with specific window dimensions and title
@@ -471,26 +477,32 @@ module PointClickEngine
 
         # Register keyboard shortcut handler
         @input_manager.register_handler("keyboard_shortcuts", 80) do |dt|
+          consumed = false
+
           # Handle common keyboard shortcuts
           if @input_manager.key_pressed?(Raylib::KeyboardKey::Escape)
             if menu = @system_manager.menu_system
               menu.toggle_pause_menu
             end
+            consumed = true
           end
 
           if @input_manager.key_pressed?(Raylib::KeyboardKey::F11)
             toggle_fullscreen
+            consumed = true
           end
 
-          # Check direct Raylib input as fallback
-          if RL.key_pressed?(Raylib::KeyboardKey::F1)
+          # Use input manager instead of direct Raylib for consistency
+          if @input_manager.key_pressed?(Raylib::KeyboardKey::F1)
             Core::Engine.debug_mode = !Core::Engine.debug_mode
-            puts "ENGINE F1: Debug mode: #{Core::Engine.debug_mode}"
+            # Debug mode toggled
+            consumed = true
           end
 
-          if RL.key_pressed?(Raylib::KeyboardKey::Tab)
-            puts "ENGINE TAB: Toggling hotspot highlight"
+          if @input_manager.key_pressed?(Raylib::KeyboardKey::Tab)
+            # Hotspot highlight toggled
             toggle_hotspot_highlight
+            consumed = true
           end
 
           if @input_manager.key_pressed?(Raylib::KeyboardKey::F5)
@@ -498,14 +510,24 @@ module PointClickEngine
               cam.edge_scroll_enabled = !cam.edge_scroll_enabled
               puts "Camera edge scrolling: #{cam.edge_scroll_enabled ? "enabled" : "disabled"}"
             end
+            consumed = true
           end
 
-          false # Don't consume input for keyboard shortcuts
+          # Consume keyboard input if we handled any shortcuts
+          if consumed
+            @input_manager.consume_keyboard_input
+          end
+
+          consumed # Return true if we consumed input to stop other handlers
         end
 
         # Register verb input handler if enabled
         @input_manager.register_handler("verb_input", 50) do |dt|
           if verb_system = @verb_input_system
+            # Check if input was already consumed by higher priority handlers
+            mouse_was_consumed = @input_manager.mouse_consumed?
+            keyboard_was_consumed = @input_manager.keyboard_consumed?
+
             camera_for_input = if scene = @current_scene
                                  scene.enable_camera_scrolling ? @camera : nil
                                else
@@ -513,8 +535,12 @@ module PointClickEngine
                                end
             display_manager = @system_manager.display_manager
             verb_system.process_input(@current_scene, @player, display_manager, camera_for_input)
-            # Return true if verb system consumed input
-            @input_manager.mouse_consumed?
+
+            # Return true if verb system consumed any input that wasn't already consumed
+            new_mouse_consumed = @input_manager.mouse_consumed?
+            new_keyboard_consumed = @input_manager.keyboard_consumed?
+
+            (new_mouse_consumed && !mouse_was_consumed) || (new_keyboard_consumed && !keyboard_was_consumed)
           else
             false
           end

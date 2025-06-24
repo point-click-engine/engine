@@ -46,39 +46,35 @@ hotspots:
       look: "A locked cabinet with glass doors"
       use: "try_cabinet"
   - name: door_to_library
+    type: exit
     x: 50
     y: 300
     width: 100
     height: 200
+    description: "Back to the library"
+    target_scene: library
+    target_position: {x: 800, y: 400}
+    transition_type: slide
+    default_verb: open
+    object_type: door
     actions:
-      look: "Back to the library"
-      use: "go_to_library"
+      look: "The door leading back to the library"
+      use: "Return to the library"
   - name: door_to_garden
+    type: exit
     x: 850
     y: 300
     width: 100
     height: 200
-    actions:
-      look: "Door to the garden"
-      use: "go_to_garden"
-
-exits:
-  - x: 50
-    y: 300
-    width: 100
-    height: 200
-    target_scene: library
-    spawn_position:
-      x: 800
-      y: 400
-  - x: 850
-    y: 300
-    width: 100
-    height: 200
+    description: "Door to the garden"
     target_scene: garden
-    spawn_position:
-      x: 100
-      y: 400
+    target_position: {x: 100, y: 400}
+    transition_type: slide
+    default_verb: open
+    object_type: door
+    actions:
+      look: "A glass door leading to the garden"
+      use: "The garden looks peaceful"
 characters:
   - name: scientist
     position:

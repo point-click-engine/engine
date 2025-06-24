@@ -56,7 +56,7 @@ module PointClickEngine
       def initialize(@text : String, @character_name : String, @character_position : RL::Vector2, @duration : Float32, color : RL::Color? = nil)
         @color = color || determine_character_color(@character_name)
         @background_color = RL::Color.new(r: 0, g: 0, b: 0, a: 180)
-        puts "FloatingDialog initialized: color=#{@color}, bg=#{@background_color}"
+        # Debug: FloatingDialog initialized
 
         # Enable typewriter for longer text
         @typewriter_enabled = @text.size > 20
@@ -365,7 +365,10 @@ module PointClickEngine
       # Show floating dialog for character
       def show_dialog(character_name : String, text : String, character_pos : RL::Vector2,
                       duration : Float32? = nil, style : DialogStyle = DialogStyle::Bubble, color : RL::Color? = nil)
-        puts "FloatingDialogManager.show_dialog called: #{character_name}, #{text}"
+        # Debug output only for non-empty text
+        if !text.empty?
+          puts "FloatingDialogManager.show_dialog called: #{character_name}, #{text}"
+        end
         return unless @enable_floating
 
         # Remove oldest dialog if at max capacity
@@ -378,7 +381,7 @@ module PointClickEngine
         dialog.style = style
 
         @active_dialogs << dialog
-        puts "Added floating dialog, active count: #{@active_dialogs.size}"
+        # Debug: Added floating dialog
       end
 
       # Update all active dialogs
@@ -387,7 +390,7 @@ module PointClickEngine
         @active_dialogs.reject! do |dialog|
           should_remove = dialog.update(dt)
           if should_remove
-            puts "Removing expired dialog after #{dialog.elapsed}s (duration: #{dialog.duration}s)"
+            # Debug: Removing expired dialog
           end
           should_remove
         end

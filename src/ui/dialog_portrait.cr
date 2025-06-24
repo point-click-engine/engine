@@ -406,7 +406,10 @@ module PointClickEngine
         return unless current_name = @active_portrait
         return unless portrait = @portraits[current_name]?
 
-        screen_pos = portrait.get_screen_position(RL.get_screen_width, RL.get_screen_height)
+        # Use game dimensions for portrait positioning
+        game_width = 1024
+        game_height = 768
+        screen_pos = portrait.get_screen_position(game_width, game_height)
         portrait.draw(screen_pos)
       end
 

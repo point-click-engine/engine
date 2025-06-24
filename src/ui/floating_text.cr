@@ -218,13 +218,14 @@ module PointClickEngine
         x = @target_position.x - (bounds.width / 2)
         y = @target_position.y - 80 - bounds.height + float_offset
 
-        # Keep on screen
+        # Keep within game bounds (not screen bounds)
+        # FloatingText renders in game coordinate space
         margin = 10
-        screen_width = RL.get_screen_width
-        screen_height = RL.get_screen_height
+        game_width = 1024f32 # Game reference width
+        game_height = 768f32 # Game reference height
 
-        x = Math.max(margin, Math.min(x, screen_width - bounds.width - margin))
-        y = Math.max(margin, Math.min(y, screen_height - bounds.height - margin))
+        x = Math.max(margin, Math.min(x, game_width - bounds.width - margin))
+        y = Math.max(margin, Math.min(y, game_height - bounds.height - margin))
 
         RL::Vector2.new(x: x, y: y)
       end

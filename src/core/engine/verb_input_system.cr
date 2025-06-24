@@ -59,15 +59,20 @@ module PointClickEngine
           # Update cursor manager (use screen coordinates for UI)
           @cursor_manager.update(game_mouse, scene, @engine.inventory)
 
+          # Get engine's input manager for consistent consumption checking
+          input_manager = @engine.input_manager
+
           # Handle left click - execute current verb
-          if !Core::InputState.mouse_consumed? && RL.mouse_button_pressed?(RL::MouseButton::Left)
+          if !input_manager.mouse_consumed? && input_manager.mouse_button_pressed?(Raylib::MouseButton::Left)
             handle_verb_click(scene, player, world_mouse)
+            input_manager.consume_mouse_input
           end
 
           # Handle right click - always look (this works even if dialogs are up)
-          if RL.mouse_button_pressed?(RL::MouseButton::Right)
+          if input_manager.mouse_button_pressed?(Raylib::MouseButton::Right)
             # Right-click should work even during dialogs for examining things
             handle_look_click(scene, world_mouse)
+            input_manager.consume_mouse_input
           end
         end
 
@@ -99,6 +104,16 @@ module PointClickEngine
           if @engine.inventory.visible
             if item = @engine.inventory.get_item_at_position(pos)
               handle_inventory_verb(verb, item)
+              return
+            end
+          end
+
+          # For open verb, prioritize ExitZones (doors should open/transition)
+          if verb.open?
+            # Look for ExitZones at the clicked position
+            exit_zone = scene.hotspots.find { |h| h.is_a?(Scenes::ExitZone) && h.active && h.visible && h.contains_point?(pos) }
+            if exit_zone
+              execute_verb_on_hotspot(verb, exit_zone, pos, player)
               return
             end
           end
@@ -361,55 +376,36 @@ module PointClickEngine
 
         # Handle keyboard input for debug and UI toggles
         private def handle_keyboard_input
-          # Handle common keyboard shortcuts
-          if RL.key_pressed?(RL::KeyboardKey::Escape)
-            # Toggle pause menu instead of exiting game
-            if menu_system = @engine.system_manager.menu_system
-              menu_system.toggle_pause_menu
-            end
-          end
+          # Get the engine's input manager for consistent consumption checking
+          input_manager = @engine.input_manager
 
-          if RL.key_pressed?(RL::KeyboardKey::F11)
-            @engine.toggle_fullscreen
-          end
+          # Skip keyboard shortcuts that are handled by higher priority handlers
+          # Only handle verb-specific keys and inventory toggle
 
-          if RL.key_pressed?(RL::KeyboardKey::F1)
-            # Toggle debug mode
-            PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
-            puts "VERB SYSTEM F1 - Debug mode: #{PointClickEngine::Core::Engine.debug_mode}"
-          end
-
-          if RL.key_pressed?(RL::KeyboardKey::Tab)
-            @engine.toggle_hotspot_highlight
-            puts "VERB SYSTEM TAB - Hotspot highlight toggled"
-          end
-
-          if RL.key_pressed?(RL::KeyboardKey::I)
+          if input_manager.key_pressed?(Raylib::KeyboardKey::I)
             @engine.inventory.toggle_visibility
           end
 
-          # Verb selection with number keys
-          if RL.key_pressed?(RL::KeyboardKey::One)
+          # Verb selection with number keys (these are verb-specific, not global shortcuts)
+          if input_manager.key_pressed?(Raylib::KeyboardKey::One)
             @cursor_manager.set_verb(UI::VerbType::Walk)
-          elsif RL.key_pressed?(RL::KeyboardKey::Two)
+          elsif input_manager.key_pressed?(Raylib::KeyboardKey::Two)
             @cursor_manager.set_verb(UI::VerbType::Look)
-          elsif RL.key_pressed?(RL::KeyboardKey::Three)
+          elsif input_manager.key_pressed?(Raylib::KeyboardKey::Three)
             @cursor_manager.set_verb(UI::VerbType::Talk)
-          elsif RL.key_pressed?(RL::KeyboardKey::Four)
+          elsif input_manager.key_pressed?(Raylib::KeyboardKey::Four)
             @cursor_manager.set_verb(UI::VerbType::Use)
-          elsif RL.key_pressed?(RL::KeyboardKey::Five)
+          elsif input_manager.key_pressed?(Raylib::KeyboardKey::Five)
             @cursor_manager.set_verb(UI::VerbType::Take)
-          elsif RL.key_pressed?(RL::KeyboardKey::Six)
+          elsif input_manager.key_pressed?(Raylib::KeyboardKey::Six)
             @cursor_manager.set_verb(UI::VerbType::Open)
           end
 
-          # Mouse wheel to cycle through verbs
+          # Mouse wheel to cycle through verbs (this is verb-specific)
           if RL.get_mouse_wheel_move > 0
             @cursor_manager.cycle_verb_forward
-            puts "MOUSE WHEEL UP - Verb: #{@cursor_manager.current_verb}"
           elsif RL.get_mouse_wheel_move < 0
             @cursor_manager.cycle_verb_backward
-            puts "MOUSE WHEEL DOWN - Verb: #{@cursor_manager.current_verb}"
           end
         end
 

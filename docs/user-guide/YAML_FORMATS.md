@@ -154,24 +154,37 @@ hotspots: Array(Hotspot)
     
   # Exit hotspot (scene transition)
   - name: String
-    type: "exit"
+    type: "exit"           # REQUIRED: Marks this hotspot as an exit/door
     x: Float32
     y: Float32
     width: Float32
     height: Float32
+    description: String     # Shown on hover/examine
+    
+    # Exit-specific properties
     target_scene: String    # Scene to transition to
     target_position:        # Player position in target scene
       x: Float32
       y: Float32
     transition_type: String? # "fade" | "iris" | "slide_left" | etc.
     auto_walk: Bool?        # Auto-walk to exit before transition
-    description: String
+    
+    # Optional exit properties
+    default_verb: String?   # Default verb (e.g., "open" for doors)
+    object_type: String?    # Visual hint (e.g., "door", "stairs")
+    locked_message: String? # Message when requirements not met
     
     # Edge exit (transition at screen edge)
     edge: String?           # "left" | "right" | "top" | "bottom"
     
     # Exit requirements
     requirements: Condition? # Conditions to allow exit
+    
+    # Action-specific messages
+    actions:               # Custom messages for verb actions
+      look: String?        # Custom look description
+      use: String?         # Custom use message
+      open: String?        # Custom open message
 
 # Characters in the scene
 characters: Array(Character)

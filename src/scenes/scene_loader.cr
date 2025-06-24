@@ -113,7 +113,8 @@ module PointClickEngine
 
                         dynamic_hotspot
                       when "exit"
-                        # Load exit zone
+                        # Load exit zone - a special hotspot that triggers scene transitions
+                        # This is the recommended way to define doors and exits
                         x = hotspot_data["x"]?.try(&.as_f.to_f32) || 0f32
                         y = hotspot_data["y"]?.try(&.as_f.to_f32) || 0f32
                         width = hotspot_data["width"]?.try(&.as_f.to_f32) || 100f32
@@ -136,13 +137,20 @@ module PointClickEngine
                           hotspot_data["target_scene"]?.try(&.as_s) || ""
                         )
 
-                        if target_pos = hotspot_data["target_position"]?
+                        # Set spawn position in the target scene
+                        if target_pos = hotspot_data["spawn_position"]?
+                          exit_zone.target_position = Raylib::Vector2.new(
+                            x: target_pos["x"].as_f.to_f32,
+                            y: target_pos["y"].as_f.to_f32
+                          )
+                        elsif target_pos = hotspot_data["target_position"]? # Support both names
                           exit_zone.target_position = Raylib::Vector2.new(
                             x: target_pos["x"].as_f.to_f32,
                             y: target_pos["y"].as_f.to_f32
                           )
                         end
 
+                        # Set transition effect
                         if transition = hotspot_data["transition_type"]?
                           case transition.as_s.downcase
                           when "instant" then exit_zone.transition_type = TransitionType::Instant
@@ -152,10 +160,12 @@ module PointClickEngine
                           end
                         end
 
+                        # Set behavior properties
                         exit_zone.auto_walk = hotspot_data["auto_walk"]?.try(&.as_bool) != false
                         exit_zone.requires_item = hotspot_data["requires_item"]?.try(&.as_s)
                         exit_zone.locked_message = hotspot_data["locked_message"]?.try(&.as_s)
 
+                        # Set edge exit direction (for exits at screen edges)
                         if edge = hotspot_data["edge_exit"]?
                           case edge.as_s.downcase
                           when "north" then exit_zone.edge_exit = EdgeExit::North
@@ -234,6 +244,73 @@ module PointClickEngine
             end
 
             scene.add_hotspot(hotspot)
+          end
+        end
+
+        # DEPRECATED: Support for legacy exits section (will be removed in future versions)
+        # New scenes should use type: exit in hotspots instead
+        if exits = scene_data["exits"]?
+          puts "WARNING: Scene '#{scene.name}' uses deprecated 'exits:' section. Please migrate to 'type: exit' hotspots."
+          exits.as_a.each do |exit_data|
+            x = exit_data["x"]?.try(&.as_f.to_f32) || 0f32
+            y = exit_data["y"]?.try(&.as_f.to_f32) || 0f32
+            width = exit_data["width"]?.try(&.as_f.to_f32) || 100f32
+            height = exit_data["height"]?.try(&.as_f.to_f32) || 100f32
+
+            # Convert top-left to center position
+            pos = Raylib::Vector2.new(
+              x: x + width / 2,
+              y: y + height / 2
+            )
+            size = Raylib::Vector2.new(
+              x: width,
+              y: height
+            )
+
+            # Generate a name if not provided
+            exit_name = exit_data["name"]?.try(&.as_s) || "exit_#{exits.as_a.index(exit_data)}"
+            target_scene = exit_data["target_scene"]?.try(&.as_s) || ""
+
+            exit_zone = ExitZone.new(exit_name, pos, size, target_scene)
+
+            # Set target position if provided
+            if target_pos = exit_data["spawn_position"]?
+              exit_zone.target_position = Raylib::Vector2.new(
+                x: target_pos["x"].as_f.to_f32,
+                y: target_pos["y"].as_f.to_f32
+              )
+            elsif target_pos = exit_data["target_position"]?
+              exit_zone.target_position = Raylib::Vector2.new(
+                x: target_pos["x"].as_f.to_f32,
+                y: target_pos["y"].as_f.to_f32
+              )
+            end
+
+            # Set transition type
+            if transition = exit_data["transition_type"]?
+              case transition.as_s.downcase
+              when "instant" then exit_zone.transition_type = TransitionType::Instant
+              when "fade"    then exit_zone.transition_type = TransitionType::Fade
+              when "slide"   then exit_zone.transition_type = TransitionType::Slide
+              when "iris"    then exit_zone.transition_type = TransitionType::Iris
+              end
+            end
+
+            # Set other properties
+            exit_zone.auto_walk = exit_data["auto_walk"]?.try(&.as_bool) != false
+            exit_zone.requires_item = exit_data["requires_item"]?.try(&.as_s)
+            exit_zone.locked_message = exit_data["locked_message"]?.try(&.as_s)
+
+            if edge = exit_data["edge_exit"]?
+              case edge.as_s.downcase
+              when "north" then exit_zone.edge_exit = EdgeExit::North
+              when "south" then exit_zone.edge_exit = EdgeExit::South
+              when "east"  then exit_zone.edge_exit = EdgeExit::East
+              when "west"  then exit_zone.edge_exit = EdgeExit::West
+              end
+            end
+
+            scene.add_hotspot(exit_zone)
           end
         end
 
