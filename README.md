@@ -16,6 +16,9 @@ A modern, data-driven adventure game engine written in Crystal, designed for cre
 - **Audio System** - Music and sound effects with 3D positioning
 - **Pathfinding** - A* pathfinding for character movement
 - **Localization Ready** - Built-in support for multiple languages
+- **Modular Architecture** - Component-based design with focused, reusable modules
+- **Enhanced Validation** - Comprehensive preflight checks and asset validation
+- **Optimized Movement System** - Smooth character movement with configurable controllers
 
 ## Quick Start
 
@@ -126,9 +129,11 @@ That's it! You have a working adventure game.
 
 ### 🔧 Developer Guide
 - **[Architecture](docs/developer-guide/ARCHITECTURE.md)** - Technical architecture and design
+- **[Component Architecture](docs/developer-guide/COMPONENT_ARCHITECTURE.md)** - Modular component system overview
 - **[Testing Guide](docs/developer-guide/TESTING_GUIDE.md)** - Testing strategies and implementation
 - **[Validation System](docs/developer-guide/VALIDATION_SYSTEM.md)** - Error handling and validation
 - **[Debugging Guide](docs/developer-guide/DEBUGGING_GUIDE.md)** - Debugging techniques
+- **[Refactoring Summary](docs/developer-guide/REFACTORING_SUMMARY.md)** - Recent refactoring and improvements
 
 ### ✨ Features
 - **[Dialog System](docs/features/dialog_system.md)** - Dialog trees and conversations

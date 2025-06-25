@@ -15,10 +15,59 @@ The Point & Click Engine follows a modular architecture with clear separation of
 
 ### Design Patterns
 - **Manager Pattern**: Dedicated managers for each subsystem
+- **Component Pattern**: Modular components for complex entities (Characters, Scenes)
 - **Dependency Injection**: Interface-based dependencies resolved at runtime
 - **Result Monad**: Error handling without exceptions
 - **Observer Pattern**: Event system for decoupled communication
 - **Strategy Pattern**: Pluggable implementations for rendering, input, etc.
+
+## Component-Based Architecture
+
+The engine has been comprehensively refactored to use a modern component-based architecture. All major systems have been broken down into focused, reusable components following SOLID principles.
+
+### Key Architectural Improvements
+- **Modular Components**: 26+ focused components extracted from monolithic classes
+- **Dependency Injection**: Components accept dependencies rather than creating them
+- **Composition Pattern**: Systems use composition for maximum flexibility
+- **Coordinator Classes**: Main classes orchestrate component interactions
+- **Comprehensive Testing**: All components have isolated unit tests
+
+### Major Component Systems
+
+#### Character System
+- **AnimationController**: Animation state management and timing
+- **SpriteController**: Sprite rendering and transformations
+- **CharacterStateManager**: State machine and transitions
+- **MovementController**: Smooth movement with pathfinding integration
+
+#### Scene System
+- **NavigationManager**: Pathfinding and walkable area management
+- **BackgroundRenderer**: Background rendering with effects
+- **HotspotManager**: Interactive hotspot detection and handling
+
+#### Menu System
+- **MenuInputHandler**: Centralized input processing
+- **MenuRenderer**: Visual rendering and theming
+- **MenuNavigator**: Navigation logic and item selection
+- **ConfigurationManager**: Game settings management
+
+#### Navigation System
+- **AStarAlgorithm**: Core pathfinding implementation
+- **NavigationGrid**: Grid-based navigation mesh
+- **PathOptimizer**: Path smoothing and optimization
+- **HeuristicCalculator**: Distance calculation strategies
+- **MovementValidator**: Movement rule validation
+
+#### Validation System
+- **ValidationResult**: Standardized validation results
+- **AssetValidationChecker**: Asset validation logic
+- **RenderingValidationChecker**: Rendering configuration validation
+- **PerformanceValidationChecker**: Performance analysis
+- **PreflightOrchestrator**: Validation coordination
+
+For detailed component documentation, see:
+- **[Component Architecture Guide](COMPONENT_ARCHITECTURE.md)** - Complete component system documentation
+- **[Refactoring Summary](REFACTORING_SUMMARY.md)** - Overview of refactoring achievements
 
 ## Core Components
 

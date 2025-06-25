@@ -22,9 +22,22 @@
 - Create documentation about coordinate systems and texture independence
 - Add more validation for logical dimensions vs actual coordinates
 - Test the game with the new navigation grid using logical dimensions
+- **MAJOR REFACTORING COMPLETED**: Extracted components from all large monolithic files:
+  - Engine.cr (1,559 lines) → 3 modular spec extractions
+  - Character.cr (757 lines) → AnimationController, SpriteController, CharacterStateManager + specs
+  - Scene.cr (722 lines) → NavigationManager, BackgroundRenderer, HotspotManager + specs
+  - Menu System (718 lines) → MenuInputHandler, MenuRenderer, MenuNavigator, ConfigurationManager + specs
+  - Pathfinding (701 lines) → 8 components including AStarAlgorithm, PathOptimizer, NavigationGrid + specs
+  - Enhanced Preflight Check (678 lines) → ValidationResult, AssetValidationChecker, RenderingValidationChecker, PerformanceValidationChecker + orchestrator
 
 ## In Progress
-- Debug character stuck after first movement
+- Debug character stuck after first movement (may be resolved by movement controller refactoring)
 
-## Pending
-- None
+## Pending - Future Enhancements
+See [REFACTORING_TODO.md](REFACTORING_TODO.md) for additional improvement opportunities.
+
+### Documentation Updates Needed
+- Update ARCHITECTURE.md to reflect new component structure
+- Create COMPONENT_ARCHITECTURE.md for developer guide
+- Update existing feature documentation to reference new components
+- Archive outdated documentation
