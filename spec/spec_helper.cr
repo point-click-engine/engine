@@ -8,6 +8,7 @@ require "file_utils"
 {% end %}
 
 require "../src/point_click_engine"
+require "./support/resource_cleanup"
 
 # RL alias is defined in individual source files that need Raylib types
 require "../src/core/game_config"

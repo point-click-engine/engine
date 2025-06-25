@@ -68,7 +68,7 @@ describe "Door Interaction System" do
       if result2
         result2[:scene].should eq("garden")
         result2[:effect].should eq(PointClickEngine::Graphics::TransitionEffect::Fade)
-        result2[:duration].should eq(1.0f32)
+        result2[:duration].should eq(-1.0f32) # -1.0 signals to use scene's default duration
         result2[:position].should be_nil
       end
 

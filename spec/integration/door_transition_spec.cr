@@ -78,7 +78,8 @@ describe "Door transition effects" do
           content.includes?(":#{transition}:").should be_true
         end
         # Check for either explicit duration or default duration property
-        (content.includes?(":4.5:").should be_true || content.includes?("default_transition_duration:").should be_true)
+        has_duration = content.includes?(":4.5:") || content.includes?("default_transition_duration:")
+        has_duration.should be_true
       end
     end
   end

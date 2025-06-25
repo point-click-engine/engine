@@ -196,6 +196,24 @@ For other projects using this engine, copy the `run.sh` script to your project r
 
 **Note**: Always use `./run.sh` instead of calling `crystal` directly. This ensures proper audio library linking and compatibility.
 
+## Testing
+
+### Running Tests
+```bash
+crystal spec              # Run all tests
+crystal spec spec/core    # Run specific test directory
+```
+
+### Test Organization
+- `spec/core/` - Core engine tests
+- `spec/scenes/` - Scene system tests
+- `spec/ui/` - UI component tests
+- `spec/navigation/` - Pathfinding tests
+- `spec/integration/` - Integration tests
+
+### Note on Test Suite
+The test suite is comprehensive with 700+ specs. A backup script `run_specs_safely.sh` is available for running tests in groups if needed.
+
 ## Building Games
 
 ### Development Build

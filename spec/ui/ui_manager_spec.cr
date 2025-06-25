@@ -107,7 +107,7 @@ end
 # Test helper for creating mock scenes and hotspots
 class MockScene < PointClickEngine::Scenes::Scene
   def initialize
-    super("test_scene", "Test Scene")
+    super("test_scene")
   end
 
   def get_hotspot_at(pos : RL::Vector2) : PointClickEngine::Scenes::Hotspot?

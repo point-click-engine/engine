@@ -5,7 +5,7 @@ All notable changes to the Point & Click Engine will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- Comprehensive test suite with 157 specs covering all major components
+- Comprehensive test suite with 700+ specs covering all major components
 - New modular architecture with dedicated managers:
   - `SceneManager` for scene loading, transitions, and caching
   - `ResourceManager` for asset loading with hot-reload support
@@ -20,6 +20,10 @@ All notable changes to the Point & Click Engine will be documented in this file.
 - Scene-level default transition durations
 - Support for "default" keyword in transition commands
 - Visual transition effects now properly render with shaders
+- Comprehensive pathfinding improvements with diagonal movement and corner-cutting prevention
+- FloatingText and FloatingTextManager for character dialogue
+- Enhanced walkable area system with polygon regions and scale zones
+- Test suite safety script (`run_specs_safely.sh`) for running large test suites
 
 ### Changed
 - Refactored core engine to use manager pattern instead of monolithic design
@@ -38,6 +42,12 @@ All notable changes to the Point & Click Engine will be documented in this file.
 - Various spec failures related to UI components
 - Transition shaders not loading properly
 - Transition visual effects not rendering
+- Pathfinding issues including path simplification bugs and missing diagonal corner checks
+- Crystal spec contain matcher compatibility
+- Malloc double-free error in test suite by improving resource cleanup in finalizers
+- Resource manager safety issues preventing double-free errors
+- Audio system finalizer error handling
+- DialogManager handling of uninitialized Engine.instance
 
 ### Removed
 - Complex dependency container implementation

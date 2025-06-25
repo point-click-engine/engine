@@ -75,7 +75,15 @@ module PointClickEngine
 
       def unload_texture(path : String) : Result(Nil, AssetError)
         if texture = @textures[path]?
-          RL.unload_texture(texture)
+          # Only unload if texture is valid
+          begin
+            if texture.id > 0
+              RL.unload_texture(texture)
+            end
+          rescue ex
+            # Ignore unload errors during cleanup
+            puts "Warning: Failed to unload texture #{path}: #{ex.message}"
+          end
           @textures.delete(path)
           puts "Texture unloaded: #{path}"
           Result(Nil, AssetError).success(nil)
@@ -126,7 +134,15 @@ module PointClickEngine
 
       def unload_sound(path : String) : Result(Nil, AssetError)
         if sound = @sounds[path]?
-          RAudio.unload_sound(sound)
+          # Only unload if sound is valid
+          begin
+            if sound.frame_count > 0
+              RAudio.unload_sound(sound)
+            end
+          rescue ex
+            # Ignore unload errors during cleanup
+            puts "Warning: Failed to unload sound #{path}: #{ex.message}"
+          end
           @sounds.delete(path)
           puts "Sound unloaded: #{path}"
           Result(Nil, AssetError).success(nil)
@@ -177,7 +193,15 @@ module PointClickEngine
 
       def unload_music(path : String) : Result(Nil, AssetError)
         if music = @music[path]?
-          RAudio.unload_music_stream(music)
+          # Only unload if music is valid
+          begin
+            if music.frame_count > 0
+              RAudio.unload_music_stream(music)
+            end
+          rescue ex
+            # Ignore unload errors during cleanup
+            puts "Warning: Failed to unload music #{path}: #{ex.message}"
+          end
           @music.delete(path)
           puts "Music unloaded: #{path}"
           Result(Nil, AssetError).success(nil)
@@ -203,13 +227,43 @@ module PointClickEngine
       # Cleanup
 
       def cleanup_all_resources
-        @textures.each_value { |texture| RL.unload_texture(texture) }
+        # Safely unload textures
+        @textures.each do |path, texture|
+          begin
+            # Check if texture is valid before unloading
+            if texture.id > 0
+              RL.unload_texture(texture)
+            end
+          rescue ex
+            puts "Warning: Failed to unload texture #{path}: #{ex.message}"
+          end
+        end
         @textures.clear
 
-        @sounds.each_value { |sound| RAudio.unload_sound(sound) }
+        # Safely unload sounds
+        @sounds.each do |path, sound|
+          begin
+            # Check if sound has valid data before unloading
+            if sound.frame_count > 0
+              RAudio.unload_sound(sound)
+            end
+          rescue ex
+            puts "Warning: Failed to unload sound #{path}: #{ex.message}"
+          end
+        end
         @sounds.clear
 
-        @music.each_value { |music| RAudio.unload_music_stream(music) }
+        # Safely unload music
+        @music.each do |path, music|
+          begin
+            # Check if music has valid data before unloading
+            if music.frame_count > 0
+              RAudio.unload_music_stream(music)
+            end
+          rescue ex
+            puts "Warning: Failed to unload music #{path}: #{ex.message}"
+          end
+        end
         @music.clear
 
         puts "All resources cleaned up"

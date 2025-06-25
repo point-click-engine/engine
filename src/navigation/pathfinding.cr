@@ -331,6 +331,7 @@ module PointClickEngine
 
       property grid : NavigationGrid
       property allow_diagonal : Bool
+      property max_search_nodes : Int32 = 5000
 
       def initialize(@grid : NavigationGrid, @allow_diagonal : Bool = true)
       end
@@ -344,25 +345,42 @@ module PointClickEngine
         return nil unless @grid.is_walkable?(start_grid[0], start_grid[1])
         return nil unless @grid.is_walkable?(end_grid[0], end_grid[1])
 
-        # A* algorithm
-        open_set = Set(Node).new
-        closed_set = Set(Node).new
+        # Special case: already at destination
+        if start_grid[0] == end_grid[0] && start_grid[1] == end_grid[1]
+          return [Raylib::Vector2.new(x: end_x, y: end_y)]
+        end
+
+        # A* algorithm with priority queue
+        open_list = [] of Node
+        closed_set = Set({Int32, Int32}).new
 
         start_node = Node.new(start_grid[0], start_grid[1])
         end_node = Node.new(end_grid[0], end_grid[1])
 
         start_node.h_cost = heuristic(start_node, end_node)
-        open_set.add(start_node)
+        open_list << start_node
 
-        # Track nodes by position for quick lookup
-        node_map = {} of {Int32, Int32} => Node
-        node_map[{start_node.x, start_node.y}] = start_node
+        # Track best node for each position
+        best_g_cost = {} of {Int32, Int32} => Float32
+        best_g_cost[{start_node.x, start_node.y}] = 0.0f32
 
-        while !open_set.empty?
-          # Get node with lowest f_cost
-          current = open_set.min_by(&.f_cost)
-          open_set.delete(current)
-          closed_set.add(current)
+        nodes_searched = 0
+
+        while !open_list.empty? && nodes_searched < @max_search_nodes
+          nodes_searched += 1
+
+          # Get node with lowest f_cost (using heap would be more efficient)
+          current_index = 0
+          current = open_list[0]
+          open_list.each_with_index do |node, index|
+            if node.f_cost < current.f_cost || (node.f_cost == current.f_cost && node.h_cost < current.h_cost)
+              current = node
+              current_index = index
+            end
+          end
+
+          open_list.delete_at(current_index)
+          closed_set.add({current.x, current.y})
 
           # Found the goal
           if current.x == end_node.x && current.y == end_node.y
@@ -372,24 +390,38 @@ module PointClickEngine
           # Check neighbors
           neighbors = get_neighbors(current)
           neighbors.each do |neighbor_pos|
+            next if closed_set.includes?(neighbor_pos)
             next unless @grid.is_walkable?(neighbor_pos[0], neighbor_pos[1])
 
-            neighbor = node_map[neighbor_pos]? || Node.new(neighbor_pos[0], neighbor_pos[1])
-            node_map[neighbor_pos] = neighbor
-
-            next if closed_set.includes?(neighbor)
+            # For diagonal movement, check if we can actually move diagonally
+            if @allow_diagonal && is_diagonal_move(current, neighbor_pos)
+              next unless can_move_diagonally(current.x, current.y, neighbor_pos[0], neighbor_pos[1])
+            end
 
             # Calculate tentative g_cost
-            tentative_g = current.g_cost + distance(current, neighbor)
+            move_cost = calculate_move_cost(current, neighbor_pos)
+            tentative_g = current.g_cost + move_cost
 
-            if !open_set.includes?(neighbor) || tentative_g < neighbor.g_cost
-              neighbor.parent = current
+            # Skip if we've already found a better path to this node
+            if best_g_cost.has_key?(neighbor_pos) && tentative_g >= best_g_cost[neighbor_pos]
+              next
+            end
+
+            # This path is better
+            best_g_cost[neighbor_pos] = tentative_g
+
+            # Find or create neighbor node
+            neighbor = open_list.find { |n| n.x == neighbor_pos[0] && n.y == neighbor_pos[1] }
+
+            if neighbor.nil?
+              neighbor = Node.new(neighbor_pos[0], neighbor_pos[1])
               neighbor.g_cost = tentative_g
               neighbor.h_cost = heuristic(neighbor, end_node)
-
-              if !open_set.includes?(neighbor)
-                open_set.add(neighbor)
-              end
+              neighbor.parent = current
+              open_list << neighbor
+            elsif tentative_g < neighbor.g_cost
+              neighbor.g_cost = tentative_g
+              neighbor.parent = current
             end
           end
         end
@@ -397,11 +429,36 @@ module PointClickEngine
         nil # No path found
       end
 
+      # Check if movement is diagonal
+      private def is_diagonal_move(from : Node, to : {Int32, Int32}) : Bool
+        dx = (from.x - to[0]).abs
+        dy = (from.y - to[1]).abs
+        dx == 1 && dy == 1
+      end
+
+      # Check if diagonal movement is valid (not cutting corners)
+      private def can_move_diagonally(from_x : Int32, from_y : Int32, to_x : Int32, to_y : Int32) : Bool
+        # Check both adjacent cells to prevent corner cutting
+        @grid.is_walkable?(from_x, to_y) && @grid.is_walkable?(to_x, from_y)
+      end
+
+      # Calculate movement cost
+      private def calculate_move_cost(from : Node, to : {Int32, Int32}) : Float32
+        dx = (from.x - to[0]).abs
+        dy = (from.y - to[1]).abs
+
+        if dx == 1 && dy == 1
+          1.414f32 # Diagonal cost (sqrt(2))
+        else
+          1.0f32 # Cardinal cost
+        end
+      end
+
       # Get walkable neighbors
       private def get_neighbors(node : Node) : Array({Int32, Int32})
         neighbors = [] of {Int32, Int32}
 
-        # Cardinal directions
+        # Cardinal directions - always check these
         neighbors << {node.x - 1, node.y} # Left
         neighbors << {node.x + 1, node.y} # Right
         neighbors << {node.x, node.y - 1} # Up
@@ -418,29 +475,19 @@ module PointClickEngine
         neighbors
       end
 
-      # Heuristic function (Euclidean distance)
+      # Heuristic function
       private def heuristic(a : Node, b : Node) : Float32
-        dx = (a.x - b.x).abs
-        dy = (a.y - b.y).abs
+        dx = (a.x - b.x).abs.to_f32
+        dy = (a.y - b.y).abs.to_f32
 
         if @allow_diagonal
-          # Euclidean distance
-          Math.sqrt(dx * dx + dy * dy).to_f32
+          # Octile distance (better for diagonal movement)
+          d_min = Math.min(dx, dy)
+          d_max = Math.max(dx, dy)
+          1.414f32 * d_min + (d_max - d_min)
         else
           # Manhattan distance
-          (dx + dy).to_f32
-        end
-      end
-
-      # Distance between adjacent nodes
-      private def distance(a : Node, b : Node) : Float32
-        dx = (a.x - b.x).abs
-        dy = (a.y - b.y).abs
-
-        if dx == 1 && dy == 1
-          Math.sqrt(2.0).to_f32 # Diagonal movement
-        else
-          1.0f32 # Cardinal movement
+          dx + dy
         end
       end
 
@@ -456,62 +503,105 @@ module PointClickEngine
         end
 
         path.reverse!
-        smooth_path(path)
+        # Don't over-smooth the path - just remove redundant points
+        optimize_path(path)
       end
 
-      # Simple path smoothing
-      private def smooth_path(path : Array(Raylib::Vector2)) : Array(Raylib::Vector2)
+      # Optimize path by removing redundant waypoints
+      private def optimize_path(path : Array(Raylib::Vector2)) : Array(Raylib::Vector2)
         return path if path.size < 3
 
-        smoothed = [path[0]]
+        # For very short paths, keep at least one intermediate point
+        if path.size <= 3
+          return path
+        end
+
+        optimized = [path[0]]
         i = 0
 
         while i < path.size - 1
-          j = i + 2
+          # Look ahead to find furthest reachable point
+          j = i + 1
+          furthest = i + 1
 
-          # Try to skip nodes if there's a direct line of sight
-          while j < path.size
-            if has_line_of_sight(path[i], path[j])
-              j += 1
+          # Don't optimize away all intermediate points
+          max_lookahead = Math.min(i + 5, path.size - 1)
+
+          while j < path.size && j <= max_lookahead
+            if has_clear_path(path[i], path[j])
+              furthest = j
             else
-              break
+              break # Stop at first obstacle
             end
+            j += 1
           end
 
-          smoothed << path[j - 1]
-          i = j - 1
+          # Always include at least some intermediate points for long paths
+          if furthest == path.size - 1 && path.size > 5 && optimized.size == 1
+            # Keep a midpoint for long direct paths
+            mid = (path.size / 2).to_i
+            optimized << path[mid]
+          end
+
+          optimized << path[furthest]
+          i = furthest
         end
 
-        smoothed
+        # Ensure we always include the final destination
+        if optimized.last != path.last
+          optimized << path.last
+        end
+
+        optimized
       end
 
-      # Check if there's a clear line of sight between two points
-      private def has_line_of_sight(start : Raylib::Vector2, target : Raylib::Vector2) : Bool
-        x0 = (start.x / @grid.cell_size).to_i
-        y0 = (start.y / @grid.cell_size).to_i
-        x1 = (target.x / @grid.cell_size).to_i
-        y1 = (target.y / @grid.cell_size).to_i
+      # Check if there's a clear path between two points using Bresenham's line algorithm
+      private def has_clear_path(start : Raylib::Vector2, target : Raylib::Vector2) : Bool
+        # Convert to grid coordinates for precise checking
+        start_grid = @grid.world_to_grid(start.x, start.y)
+        end_grid = @grid.world_to_grid(target.x, target.y)
 
+        x0, y0 = start_grid
+        x1, y1 = end_grid
+
+        # Bresenham's line algorithm to check all cells along the path
         dx = (x1 - x0).abs
         dy = (y1 - y0).abs
         sx = x0 < x1 ? 1 : -1
         sy = y0 < y1 ? 1 : -1
         err = dx - dy
 
+        x, y = x0, y0
+
         while true
-          return false unless @grid.is_walkable?(x0, y0)
+          # Check if current cell is walkable
+          return false unless @grid.is_walkable?(x, y)
 
-          break if x0 == x1 && y0 == y1
+          # Reached the end
+          break if x == x1 && y == y1
 
+          # Calculate next position
           e2 = 2 * err
           if e2 > -dy
             err -= dy
-            x0 += sx
+            x += sx
           end
           if e2 < dx
             err += dx
-            y0 += sy
+            y += sy
           end
+        end
+
+        true
+      end
+
+      # Check if a path is still valid
+      def is_path_valid?(path : Array(Raylib::Vector2)) : Bool
+        return false if path.empty?
+
+        path.each do |point|
+          grid_pos = @grid.world_to_grid(point.x, point.y)
+          return false unless @grid.is_walkable?(grid_pos[0], grid_pos[1])
         end
 
         true

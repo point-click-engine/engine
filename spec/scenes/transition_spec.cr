@@ -56,7 +56,7 @@ describe PointClickEngine::Scenes::TransitionHelper do
       if result
         result[:scene].should eq("lobby")
         result[:effect].should eq(PointClickEngine::Graphics::TransitionEffect::Fade)
-        result[:duration].should eq(1.0f32)
+        result[:duration].should eq(-1.0f32) # -1.0 signals to use scene's default duration
         result[:position].should be_nil
       end
     end

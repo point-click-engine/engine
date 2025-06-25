@@ -272,7 +272,7 @@ module PointClickEngine
         total_width = max_width + (@padding * 2)
         total_height = text_height + choice_height + (@padding * 2)
 
-        @total_height = total_height
+        @total_height = total_height.to_f32
         @text_bounds = RL::Rectangle.new(x: 0, y: 0, width: total_width, height: total_height)
         @text_bounds.not_nil!
       end

@@ -6,8 +6,8 @@ describe "Memory Leak Detection" do
   describe "scene lifecycle memory leaks" do
     it "does not leak memory during scene creation/destruction cycles" do
       # Baseline memory measurement
-      GC.collect  # Force initial cleanup
-      sleep(0.01) # Allow GC to complete
+      GC.collect             # Force initial cleanup
+      sleep(10.milliseconds) # Allow GC to complete
       initial_memory = GC.stats.heap_size
       baseline_bytes = GC.stats.total_bytes
 
@@ -43,7 +43,7 @@ describe "Memory Leak Detection" do
         # Force garbage collection every few cycles
         if cycle % 10 == 9
           GC.collect
-          sleep(0.01)
+          sleep(10.milliseconds)
 
           current_memory = GC.stats.heap_size
           memory_growth = current_memory.to_i64 - initial_memory.to_i64
@@ -62,7 +62,7 @@ describe "Memory Leak Detection" do
 
       # Final memory check
       GC.collect
-      sleep(0.01)
+      sleep(10.milliseconds)
       final_memory = GC.stats.heap_size
       final_bytes = GC.stats.total_bytes
 

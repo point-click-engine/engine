@@ -285,7 +285,14 @@ module PointClickEngine
         # # called manually for immediate cleanup.
         def finalize
           if sound = @sound
-            RAudio.unload_sound(sound)
+            begin
+              # Only unload if the sound is valid
+              if sound.frame_count > 0
+                RAudio.unload_sound(sound)
+              end
+            rescue ex
+              # Ignore errors during finalization
+            end
           end
         end
       end
@@ -361,7 +368,14 @@ module PointClickEngine
 
         def finalize
           if music = @music
-            RAudio.unload_music_stream(music)
+            begin
+              # Only unload if the music is valid
+              if music.frame_count > 0
+                RAudio.unload_music_stream(music)
+              end
+            rescue ex
+              # Ignore errors during finalization
+            end
           end
         end
       end
@@ -500,11 +514,17 @@ module PointClickEngine
       end
 
       def finalize
-        @sound_effects.each_value(&.finalize)
-        @music_tracks.each_value(&.finalize)
-        {% if flag?(:with_audio) %}
-          RAudio.close_audio_device
-        {% end %}
+        begin
+          @sound_effects.each_value(&.finalize)
+          @music_tracks.each_value(&.finalize)
+          {% if flag?(:with_audio) %}
+            if RAudio.is_audio_device_ready?
+              RAudio.close_audio_device
+            end
+          {% end %}
+        rescue ex
+          # Ignore errors during finalization
+        end
       end
     end
   end
