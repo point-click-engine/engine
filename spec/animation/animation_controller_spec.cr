@@ -71,8 +71,8 @@ describe "Animation Controller Comprehensive Tests" do
       # Check variations were added
       animation_controller.animations.has_key?("idle_yawn").should be_true
       animation_controller.animations.has_key?("idle_stretch").should be_true
-      animation_controller.idle_variations.should contain("idle_yawn")
-      animation_controller.idle_variations.should contain("idle_stretch")
+      animation_controller.idle_variations.includes?("idle_yawn").should be_true
+      animation_controller.idle_variations.includes?("idle_stretch").should be_true
 
       # Check variation properties
       yawn_anim = animation_controller.animations["idle_yawn"]
@@ -261,7 +261,7 @@ describe "Animation Controller Comprehensive Tests" do
         (timer_accumulated || variation_played).should be_true
 
         if variation_played
-          animation_controller.idle_variations.should contain(animation_controller.current_animation)
+          animation_controller.idle_variations.includes?(animation_controller.current_animation).should be_true
           # Timer should be reset when variation plays
           animation_controller.idle_timer.should eq(0.0_f32)
         end

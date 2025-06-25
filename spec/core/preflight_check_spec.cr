@@ -49,9 +49,9 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result.passed.should be_true
         result.errors.should be_empty
-        result.info.should contain("✓ Configuration loaded successfully")
-        result.info.should contain("✓ All assets validated")
-        result.info.should contain("✓ 1 scene(s) validated")
+        result.info.includes?("✓ Configuration loaded successfully").should be_true
+        result.info.includes?("✓ All assets validated").should be_true
+        result.info.includes?("✓ 1 scene(s).should be_true validated")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -66,7 +66,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result.passed.should be_false
         result.errors.should_not be_empty
-        result.errors.first.should contain("Configuration Error")
+        result.errors.first.includes?("Configuration Error").should be_true
       ensure
         File.delete(temp_file) if File.exists?(temp_file)
       end
@@ -92,8 +92,8 @@ describe PointClickEngine::Core::PreflightCheck do
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
         result.passed.should be_false
-        result.errors.should contain("Game title cannot be empty")
-        result.errors.should contain("Window width must be positive (got -100)")
+        result.errors.includes?("Game title cannot be empty").should be_true
+        result.errors.includes?("Window width must be positive (got -100).should be_true")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -189,8 +189,8 @@ describe PointClickEngine::Core::PreflightCheck do
 
         # Should pass but with warnings
         result.passed.should be_true
-        result.warnings.should contain("Window size (4096x2160) is larger than 1920x1080 - may cause performance issues")
-        result.warnings.should contain("Start scene 'missing_scene' not found in scene files")
+        result.warnings.includes?("Window size (4096x2160).should be_true is larger than 1920x1080 - may cause performance issues")
+        result.warnings.includes?("Start scene 'missing_scene' not found in scene files").should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -232,7 +232,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result.warnings.any? { |w| w.includes?("Large assets detected") }.should be_true
         result.warnings.any? { |w| w.includes?("Music 'theme': 15.0 MB") }.should be_true
-        result.warnings.should contain("Large number of scenes (60) may increase loading time")
+        result.warnings.includes?("Large number of scenes (60).should be_true may increase loading time")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -311,13 +311,13 @@ describe PointClickEngine::Core::PreflightCheck do
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
         # Should detect player sprite correctly
-        result.info.should contain("✓ Player sprite found: assets/sprites/player.png")
+        result.info.includes?("✓ Player sprite found: assets/sprites/player.png").should be_true
 
         # Should detect valid backgrounds
-        result.info.should contain("✓ Background found for scene 'scene1': assets/backgrounds/scene1.png")
+        result.info.includes?("✓ Background found for scene 'scene1': assets/backgrounds/scene1.png").should be_true
 
         # Should detect missing background
-        result.errors.should contain("Background image not found for scene 'scene2.yaml': assets/backgrounds/missing.png")
+        result.errors.includes?("Background image not found for scene 'scene2.yaml': assets/backgrounds/missing.png").should be_true
 
         # Should warn about potentially small backgrounds
         result.warnings.any? { |w| w.includes?("background may be too small") && w.includes?("320x180") }.should be_true
@@ -350,7 +350,7 @@ describe PointClickEngine::Core::PreflightCheck do
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
         result.passed.should be_false
-        result.errors.should contain("Player sprite not found: assets/sprites/missing_player.png")
+        result.errors.includes?("Player sprite not found: assets/sprites/missing_player.png").should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -378,7 +378,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        result.warnings.should contain("No player sprite path specified - player will be invisible")
+        result.warnings.includes?("No player sprite path specified - player will be invisible").should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -411,7 +411,7 @@ describe PointClickEngine::Core::PreflightCheck do
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
         result.passed.should be_false
-        result.errors.should contain("Invalid player sprite dimensions: 0x-10")
+        result.errors.includes?("Invalid player sprite dimensions: 0x-10").should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -438,7 +438,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        result.warnings.should contain("No player sprite dimensions specified - may cause rendering issues")
+        result.warnings.includes?("No player sprite dimensions specified - may cause rendering issues").should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -460,7 +460,7 @@ describe PointClickEngine::Core::PreflightCheck do
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
         result.passed.should be_true
-        result.warnings.should contain("No player configuration found - player character will not be available")
+        result.warnings.includes?("No player configuration found - player character will not be available").should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -492,7 +492,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        result.warnings.should contain("Start scene 'main' may not have proper player spawn position defined")
+        result.warnings.includes?("Start scene 'main' may not have proper player spawn position defined").should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -552,7 +552,7 @@ describe PointClickEngine::Core::PreflightCheck do
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
         result.passed.should be_false
-        result.errors.should contain("Player starting position (500.0, 400.0) is in a non-walkable area in scene 'library'")
+        result.errors.includes?("Player starting position (500.0, 400.0).should be_true is in a non-walkable area in scene 'library'")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -611,7 +611,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        result.info.should contain("✓ Player starting position is in walkable area in scene 'library'")
+        result.info.includes?("✓ Player starting position is in walkable area in scene 'library'").should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -663,7 +663,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        result.warnings.should contain("Player starting position (50.0, 200.0) may not be in any walkable area in scene 'test_scene'")
+        result.warnings.includes?("Player starting position (50.0, 200.0).should be_true may not be in any walkable area in scene 'test_scene'")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -768,7 +768,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        result.info.should contain("✓ Player starting position is in walkable area in scene 'complex_scene'")
+        result.info.includes?("✓ Player starting position is in walkable area in scene 'complex_scene'").should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -814,7 +814,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        result.warnings.should contain("Scene 'test_scene': Hotspots 'hotspot1' and 'hotspot2' overlap - may cause interaction issues")
+        result.warnings.includes?("Scene 'test_scene': Hotspots 'hotspot1' and 'hotspot2' overlap - may cause interaction issues").should be_true
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -859,7 +859,7 @@ describe PointClickEngine::Core::PreflightCheck do
 
         result = PointClickEngine::Core::PreflightCheck.run(config_path)
 
-        result.warnings.should contain("Scene 'test_scene': Character 'butler' at (400.0, 450.0) may be blocked by hotspot 'desk'")
+        result.warnings.includes?("Scene 'test_scene': Character 'butler' at (400.0, 450.0).should be_true may be blocked by hotspot 'desk'")
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
       end

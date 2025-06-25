@@ -225,8 +225,8 @@ describe PointClickEngine::Core::GameStateManager do
       manager.set_flag("test_flag", true)
       manager.set_variable("test_var", 42)
 
-      events_received.should contain("test_flag:true")
-      events_received.should contain("test_var:42")
+      events_received.includes?("test_flag:true").should be_true
+      events_received.includes?("test_var:42").should be_true
     end
   end
 
@@ -242,8 +242,8 @@ describe PointClickEngine::Core::GameStateManager do
 
       # Save to JSON
       json_str = manager.to_json
-      json_str.should contain("test_flag")
-      json_str.should contain("test_var")
+      json_str.includes?("test_flag").should be_true
+      json_str.includes?("test_var").should be_true
 
       # Load from JSON
       loaded = PointClickEngine::Core::GameStateManager.from_json(json_str)
@@ -262,9 +262,9 @@ describe PointClickEngine::Core::GameStateManager do
       manager.set_variable("test_var", 42)
 
       dump = manager.debug_dump
-      dump.should contain("test_flag")
-      dump.should contain("test_var")
-      dump.should contain("GAME STATE DEBUG")
+      dump.includes?("test_flag").should be_true
+      dump.includes?("test_var").should be_true
+      dump.includes?("GAME STATE DEBUG").should be_true
     end
   end
 end

@@ -3,6 +3,7 @@ background_path: assets/backgrounds/garden.png
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/garden.lua
+default_transition_duration: 3.0  # Medium duration for outdoor transitions
 walkable_areas:
   regions:
     - name: main_garden

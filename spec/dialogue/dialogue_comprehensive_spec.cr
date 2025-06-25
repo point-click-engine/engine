@@ -298,9 +298,9 @@ describe "Dialogue System Comprehensive Tests" do
       choice3.conditions = ["gold_coins >= 3"]
 
       # Test that choices exist (availability logic would be implemented in the condition checker)
-      choice1.conditions.should contain("has_key == true")
-      choice2.conditions.should contain("met_guard == false")
-      choice3.conditions.should contain("gold_coins >= 3")
+      choice1.conditions.includes?("has_key == true").should be_true
+      choice2.conditions.includes?("met_guard == false").should be_true
+      choice3.conditions.includes?("gold_coins >= 3").should be_true
     end
 
     it "handles action execution" do
@@ -315,9 +315,9 @@ describe "Dialogue System Comprehensive Tests" do
       choice.actions = ["set reward_accepted true", "set met_merchant true"]
 
       # Test action format
-      node.actions.should contain("set quest_complete true")
-      node.actions.should contain("set gold_coins 10")
-      choice.actions.should contain("set reward_accepted true")
+      node.actions.includes?("set quest_complete true").should be_true
+      node.actions.includes?("set gold_coins 10").should be_true
+      choice.actions.includes?("set reward_accepted true").should be_true
     end
   end
 
@@ -510,9 +510,9 @@ describe "Dialogue System Comprehensive Tests" do
       # Test YAML serialization
       yaml_string = tree.to_yaml
       yaml_string.should_not be_empty
-      yaml_string.should contain("Serialization Test")
-      yaml_string.should contain("Hello!")
-      yaml_string.should contain("Butler")
+      yaml_string.includes?("Serialization Test").should be_true
+      yaml_string.includes?("Hello!").should be_true
+      yaml_string.includes?("Butler").should be_true
 
       # Test deserialization
       loaded_tree = PointClickEngine::Characters::Dialogue::DialogTree.from_yaml(yaml_string)

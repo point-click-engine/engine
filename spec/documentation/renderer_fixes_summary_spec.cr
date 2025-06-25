@@ -84,10 +84,10 @@ describe "Renderer Registration Fixes Documentation" do
 
     # Verify UI layer has all expected components
     ui_components = render_layer_structure["ui"]
-    ui_components.should contain("inventory")
-    ui_components.should contain("menu_system")
-    ui_components.should contain("achievement_manager")
-    ui_components.should contain("verb_input_cursor")
+    ui_components.includes?("inventory").should be_true
+    ui_components.includes?("menu_system").should be_true
+    ui_components.includes?("achievement_manager").should be_true
+    ui_components.includes?("verb_input_cursor").should be_true
     ui_components.size.should eq(4)
   end
 
@@ -111,9 +111,9 @@ describe "Renderer Registration Fixes Documentation" do
     audit_findings["audit_status"].should eq("complete")
 
     fixed_components = audit_findings["components_fixed"].as(Array)
-    fixed_components.should contain("DialogManager")
-    fixed_components.should contain("VerbInputSystem")
-    fixed_components.should contain("AchievementManager")
+    fixed_components.includes?("DialogManager").should be_true
+    fixed_components.includes?("VerbInputSystem").should be_true
+    fixed_components.includes?("AchievementManager").should be_true
   end
 
   it "documents the importance of proper renderer registration" do
@@ -131,8 +131,8 @@ describe "Renderer Registration Fixes Documentation" do
       "rule_5" => "Test rendering as part of component development",
     }
 
-    registration_principles["rule_1"].should contain("must be registered")
-    registration_principles["rule_3"].should contain("ui' layer")
+    registration_principles["rule_1"].to_s.should contain("must be registered")
+    registration_principles["rule_3"].to_s.should contain("ui' layer")
     registration_principles.size.should eq(5)
   end
 
@@ -171,11 +171,11 @@ describe "Renderer Registration Fixes Documentation" do
     end
 
     # All components should now be properly registered and accessible
-    registered_components.should contain("inventory")
-    registered_components.should contain("menu_system")
-    registered_components.should contain("achievement_manager")
-    registered_components.should contain("verb_input_system")
-    registered_components.should contain("dialog_manager")
+    registered_components.includes?("inventory").should be_true
+    registered_components.includes?("menu_system").should be_true
+    registered_components.includes?("achievement_manager").should be_true
+    registered_components.includes?("verb_input_system").should be_true
+    registered_components.includes?("dialog_manager").should be_true
 
     # Should have all 5 critical UI components
     registered_components.size.should be >= 5

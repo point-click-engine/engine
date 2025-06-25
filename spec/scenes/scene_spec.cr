@@ -10,6 +10,29 @@ module PointClickEngine
         scene.hotspots.should be_empty
         scene.characters.should be_empty
       end
+
+      it "initializes with default transition duration of 1.0" do
+        scene = Scenes::Scene.new("test_scene")
+        scene.default_transition_duration.should eq(1.0f32)
+      end
+    end
+
+    describe "#default_transition_duration" do
+      it "can be set to a custom value" do
+        scene = Scenes::Scene.new("test_scene")
+        scene.default_transition_duration = 4.5f32
+        scene.default_transition_duration.should eq(4.5f32)
+      end
+
+      it "is preserved through YAML serialization" do
+        scene = Scenes::Scene.new("test_scene")
+        scene.default_transition_duration = 3.0f32
+
+        yaml = scene.to_yaml
+        loaded_scene = Scenes::Scene.from_yaml(yaml)
+
+        loaded_scene.default_transition_duration.should eq(3.0f32)
+      end
     end
 
     describe "#add_hotspot" do
@@ -35,8 +58,8 @@ module PointClickEngine
         )
 
         scene.add_hotspot(hotspot)
-        scene.hotspots.should contain(hotspot)
-        scene.objects.should contain(hotspot)
+        scene.hotspots.includes?(hotspot).should be_true
+        scene.objects.includes?(hotspot).should be_true
       end
 
       it "prevents duplicate hotspots" do
@@ -76,9 +99,9 @@ module PointClickEngine
         result.should be_true
 
         scene.hotspots.size.should eq(1)
-        scene.hotspots.should_not contain(hotspot1)
-        scene.hotspots.should contain(hotspot2)
-        scene.objects.should_not contain(hotspot1)
+        scene.hotspots.includes?(hotspot1).should be_false
+        scene.hotspots.includes?(hotspot2).should be_true
+        scene.objects.includes?(hotspot1).should be_false
       end
 
       it "returns false when hotspot name not found" do
@@ -107,9 +130,9 @@ module PointClickEngine
         result.should be_true
 
         scene.hotspots.size.should eq(1)
-        scene.hotspots.should_not contain(hotspot1)
-        scene.hotspots.should contain(hotspot2)
-        scene.objects.should_not contain(hotspot1)
+        scene.hotspots.includes?(hotspot1).should be_false
+        scene.hotspots.includes?(hotspot2).should be_true
+        scene.objects.includes?(hotspot1).should be_false
       end
 
       it "returns false when hotspot object not found" do
@@ -229,8 +252,8 @@ module PointClickEngine
         )
 
         scene.add_character(character)
-        scene.characters.should contain(character)
-        scene.objects.should contain(character)
+        scene.characters.includes?(character).should be_true
+        scene.objects.includes?(character).should be_true
       end
 
       it "prevents duplicate characters" do
@@ -260,7 +283,7 @@ module PointClickEngine
 
         scene.set_player(player)
         scene.player.should eq(player)
-        scene.characters.should contain(player)
+        scene.characters.includes?(player).should be_true
       end
     end
 

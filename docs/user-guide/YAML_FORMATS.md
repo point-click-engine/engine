@@ -99,6 +99,9 @@ navigation_cell_size: Int32 # Grid cell size for pathfinding
 # Camera scrolling configuration
 enable_camera_scrolling: Bool # Enable camera scrolling for larger scenes (default: true)
 
+# Default transition duration for this scene
+default_transition_duration: Float32? # Duration in seconds (default: 1.0)
+
 # Walkable area definition
 walkable_areas:
   regions: Array(Region)  # Walkable polygons
@@ -152,9 +155,10 @@ hotspots: Array(Hotspot)
     # Any action can trigger a transition using this format:
     # "transition:scene_name:effect:duration:x,y"
     # Examples:
-    #   open: "transition:garden:swirl:4.5:300,400"
-    #   use: "transition:dungeon:fade:2.0:100,200"
-    #   talk: "transition:wizard_tower:star_wipe:3.0:500,300"
+    #   open: "transition:garden:swirl:4.5:300,400"      # Explicit duration
+    #   use: "transition:dungeon:fade::100,200"          # Use scene's default_transition_duration
+    #   talk: "transition:wizard_tower:star_wipe:default" # Explicitly use default duration
+    #   close: "transition:library:curtain"              # Minimal format (uses all defaults)
     #
     # Parameters:
     # - scene_name: Required. Target scene to transition to
@@ -163,7 +167,11 @@ hotspots: Array(Hotspot)
     #   iris, swirl, star_wipe, heart_wipe, curtain, ripple, checkerboard, pixelate,
     #   warp, wave, glitch, film_burn, static, matrix_rain, zoom_blur, clock_wipe,
     #   barn_door, page_turn, shatter, vortex, fire
-    # - duration: Optional. Transition duration in seconds (default: 1.0)
+    # - duration: Optional. Transition duration in seconds
+    #   - Explicit number: Use that duration (e.g., "2.5")
+    #   - Empty or "default": Use the current scene's default_transition_duration
+    #   - If omitted entirely: Use the current scene's default_transition_duration
+    #   - Fallback: 1.0 seconds if no default is specified
     # - x,y: Optional. Target position for player in new scene
     
     # For dynamic hotspots

@@ -171,11 +171,11 @@ describe "Renderer Registration System" do
     end
 
     # Verify that all critical UI components are accounted for
-    components_with_draw.should contain("inventory")
-    components_with_draw.should contain("menu_system")
-    components_with_draw.should contain("achievement_manager")
-    components_with_draw.should contain("verb_input_system")
-    components_with_draw.should contain("dialog_manager")
+    components_with_draw.includes?("inventory").should be_true
+    components_with_draw.includes?("menu_system").should be_true
+    components_with_draw.includes?("achievement_manager").should be_true
+    components_with_draw.includes?("verb_input_system").should be_true
+    components_with_draw.includes?("dialog_manager").should be_true
 
     # Should have at least 5 UI components with draw methods
     components_with_draw.size.should be >= 5
@@ -343,14 +343,14 @@ describe "Renderer Registration System" do
     end
 
     # Should have all major rendering components
-    render_systems.should contain("render_manager")
-    render_systems.should contain("scene_rendering")
-    render_systems.should contain("inventory")
-    render_systems.should contain("menu_system")
-    render_systems.should contain("achievement_manager")
-    render_systems.should contain("verb_input_cursor")
-    render_systems.should contain("dialog_manager")
-    render_systems.should contain("transition_manager")
+    render_systems.includes?("render_manager").should be_true
+    render_systems.includes?("scene_rendering").should be_true
+    render_systems.includes?("inventory").should be_true
+    render_systems.includes?("menu_system").should be_true
+    render_systems.includes?("achievement_manager").should be_true
+    render_systems.includes?("verb_input_cursor").should be_true
+    render_systems.includes?("dialog_manager").should be_true
+    render_systems.includes?("transition_manager").should be_true
 
     # Should have at least 8 rendering systems
     render_systems.size.should be >= 8

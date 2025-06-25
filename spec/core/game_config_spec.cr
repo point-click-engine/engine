@@ -45,8 +45,8 @@ describe PointClickEngine::Core::GameConfig do
       config.game.author.should eq("Test Author")
       config.window.try(&.width).should eq(800)
       config.window.try(&.height).should eq(600)
-      config.features.should contain("verbs")
-      config.features.should contain("floating_dialogs")
+      config.features.includes?("verbs").should be_true
+      config.features.includes?("floating_dialogs").should be_true
       config.start_scene.should eq("intro")
 
       File.delete("test_config.yaml")

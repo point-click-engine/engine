@@ -3,6 +3,7 @@ background_path: assets/backgrounds/laboratory.png
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/laboratory.lua
+default_transition_duration: 2.0  # Shorter transitions for this busy scene
 walkable_areas:
   regions:
     - name: main_floor
@@ -67,8 +68,8 @@ hotspots:
     object_type: door
     actions:
       look: "A glass door leading to the garden"
-      open: "transition:garden:curtain:4.5:100,400"
-      use: "transition:garden:curtain:4.5:100,400"
+      open: "transition:garden:curtain::100,400"  # Uses scene's default (2.0s)
+      use: "transition:garden:curtain"  # Position is also optional
 characters:
   - name: scientist
     position:

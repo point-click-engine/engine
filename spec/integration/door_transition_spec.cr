@@ -32,7 +32,7 @@ describe "Door transition effects" do
     door_hotspot.default_verb = PointClickEngine::UI::VerbType::Open
     door_hotspot.object_type = PointClickEngine::UI::ObjectType::Door
     door_hotspot.action_commands["open"] = "transition:next_room:heart_wipe:4.5:300,400"
-    door_hotspot.action_commands["use"] = "transition:next_room:heart_wipe:4.5:300,400"
+    door_hotspot.action_commands["use"] = "transition:next_room:heart_wipe::300,400" # Uses scene default
     scene.add_hotspot(door_hotspot)
 
     # Create target scene
@@ -73,11 +73,12 @@ describe "Door transition effects" do
         content = File.read(path)
 
         # Check for the new action-based transition format
-        content.should contain("transition:")
+        content.includes?("transition:").should be_true
         transitions.each do |transition|
-          content.should contain(":#{transition}:")
+          content.includes?(":#{transition}:").should be_true
         end
-        content.should contain(":4.5:")
+        # Check for either explicit duration or default duration property
+        (content.includes?(":4.5:").should be_true || content.includes?("default_transition_duration:").should be_true)
       end
     end
   end
@@ -109,6 +110,29 @@ describe "Door transition effects" do
     result.should_not be_nil
     if result
       result[:duration].should eq(4.5f32)
+    end
+  end
+
+  it "uses scene's default transition duration when not specified" do
+    # Test parsing with empty duration
+    result = PointClickEngine::Scenes::TransitionHelper.parse_transition_command("transition:room:swirl::100,200")
+    result.should_not be_nil
+    if result
+      result[:duration].should eq(-1.0f32) # Signal to use scene default
+    end
+
+    # Test parsing with "default" keyword
+    result = PointClickEngine::Scenes::TransitionHelper.parse_transition_command("transition:room:swirl:default")
+    result.should_not be_nil
+    if result
+      result[:duration].should eq(-1.0f32) # Signal to use scene default
+    end
+
+    # Test minimal format
+    result = PointClickEngine::Scenes::TransitionHelper.parse_transition_command("transition:room")
+    result.should_not be_nil
+    if result
+      result[:duration].should eq(-1.0f32) # Signal to use scene default
     end
   end
 end

@@ -17,6 +17,9 @@ All notable changes to the Point & Click Engine will be documented in this file.
 - Movement controller for smooth character movement
 - Vector math utilities using Raylib's optimized functions
 - Configurable game constants module
+- Scene-level default transition durations
+- Support for "default" keyword in transition commands
+- Visual transition effects now properly render with shaders
 
 ### Changed
 - Refactored core engine to use manager pattern instead of monolithic design
@@ -33,6 +36,8 @@ All notable changes to the Point & Click Engine will be documented in this file.
 - Verb detection for various hotspot types
 - Scene validation error handling
 - Various spec failures related to UI components
+- Transition shaders not loading properly
+- Transition visual effects not rendering
 
 ### Removed
 - Complex dependency container implementation

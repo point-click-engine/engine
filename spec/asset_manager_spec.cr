@@ -144,15 +144,15 @@ describe PointClickEngine::AssetManager do
         manager.mount_archive(temp_zip)
 
         files = manager.list_files
-        files.should contain("file1.txt")
-        files.should contain("dir/file2.txt")
-        files.should contain("dir/subdir/file3.txt")
+        files.includes?("file1.txt").should be_true
+        files.includes?("dir/file2.txt").should be_true
+        files.includes?("dir/subdir/file3.txt").should be_true
 
         # List files in specific directory
         dir_files = manager.list_files("dir")
-        dir_files.should contain("dir/file2.txt")
-        dir_files.should contain("dir/subdir/file3.txt")
-        dir_files.should_not contain("file1.txt")
+        dir_files.includes?("dir/file2.txt").should be_true
+        dir_files.includes?("dir/subdir/file3.txt").should be_true
+        dir_files.includes?("file1.txt").should be_false
       ensure
         File.delete(temp_zip) if File.exists?(temp_zip)
       end

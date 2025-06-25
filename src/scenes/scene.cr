@@ -99,6 +99,10 @@ module PointClickEngine
       # Whether camera scrolling is enabled for this scene
       property enable_camera_scrolling : Bool = true
 
+      # Default transition duration for this scene (in seconds)
+      # This is used when no duration is specified in transition commands
+      property default_transition_duration : Float32 = 1.0f32
+
       # Creates a new scene with empty name and collections
       def initialize
         @name = ""

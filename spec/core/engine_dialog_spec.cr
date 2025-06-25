@@ -146,8 +146,8 @@ describe "Engine Dialog System Integration" do
     available_options << "Goodbye"
 
     available_options.size.should eq(3)
-    available_options.should contain("Buy item")
-    available_options.should contain("Complete quest")
+    available_options.includes?("Buy item").should be_true
+    available_options.includes?("Complete quest").should be_true
 
     RL.close_window
   end

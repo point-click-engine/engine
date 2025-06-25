@@ -49,7 +49,7 @@ describe "Engine-Manager Integration" do
 
       # Get scene names
       names = engine.get_scene_names
-      names.should contain("test_scene")
+      names.includes?("test_scene").should be_true
 
       # Change scene
       engine.change_scene("test_scene")

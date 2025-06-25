@@ -43,7 +43,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
 
-      errors.should contain("Game title cannot be empty")
+      errors.includes?("Game title cannot be empty").should be_true
     end
 
     it "validates window configuration" do
@@ -59,9 +59,9 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
 
-      errors.should contain("Window width must be positive (got -100)")
-      errors.should contain("Window height must be positive (got 0)")
-      errors.should contain("Target FPS must be between 1 and 300 (got 500)")
+      errors.includes?("Window width must be positive (got -100).should be_true")
+      errors.includes?("Window height must be positive (got 0).should be_true")
+      errors.includes?("Target FPS must be between 1 and 300 (got 500).should be_true")
     end
 
     it "validates player configuration" do
@@ -81,11 +81,11 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
 
-      errors.should contain("Player sprite_path cannot be empty")
-      errors.should contain("Player sprite frame_width must be positive")
-      errors.should contain("Player sprite frame_height must be positive")
-      errors.should contain("Player sprite columns must be positive")
-      errors.should contain("Player sprite rows must be positive")
+      errors.includes?("Player sprite_path cannot be empty").should be_true
+      errors.includes?("Player sprite frame_width must be positive").should be_true
+      errors.includes?("Player sprite frame_height must be positive").should be_true
+      errors.includes?("Player sprite columns must be positive").should be_true
+      errors.includes?("Player sprite rows must be positive").should be_true
     end
 
     it "validates display configuration" do
@@ -101,9 +101,9 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
 
-      errors.should contain("Invalid scaling_mode 'InvalidMode'. Must be one of: FitWithBars, Stretch, PixelPerfect")
-      errors.should contain("Display target_width must be positive")
-      errors.should contain("Display target_height must be positive")
+      errors.includes?("Invalid scaling_mode 'InvalidMode'. Must be one of: FitWithBars, Stretch, PixelPerfect").should be_true
+      errors.includes?("Display target_width must be positive").should be_true
+      errors.includes?("Display target_height must be positive").should be_true
     end
 
     it "validates audio volume settings" do
@@ -119,9 +119,9 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
 
-      errors.should contain("master_volume must be between 0 and 1 (got 1.5)")
-      errors.should contain("music_volume must be between 0 and 1 (got -0.1)")
-      errors.should contain("sfx_volume must be between 0 and 1 (got 2.0)")
+      errors.includes?("master_volume must be between 0 and 1 (got 1.5).should be_true")
+      errors.includes?("music_volume must be between 0 and 1 (got -0.1).should be_true")
+      errors.includes?("sfx_volume must be between 0 and 1 (got 2.0).should be_true")
     end
 
     it "validates initial state variable names" do
@@ -140,10 +140,10 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
 
-      errors.should contain("Flag names cannot be empty")
-      errors.should contain("Flag name 'true' is reserved and cannot be used")
-      errors.should contain("Variable name 'null' is reserved and cannot be used")
-      errors.should contain("Variable names cannot be empty")
+      errors.includes?("Flag names cannot be empty").should be_true
+      errors.includes?("Flag name 'true' is reserved and cannot be used").should be_true
+      errors.includes?("Variable name 'null' is reserved and cannot be used").should be_true
+      errors.includes?("Variable names cannot be empty").should be_true
     end
 
     it "validates asset patterns" do
@@ -171,12 +171,12 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
         config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
         errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "#{temp_dir}/config.yaml")
 
-        errors.should contain("Scene pattern 'scenes/*.yaml' matches no files")
-        errors.should contain("Scene pattern 'nonexistent/*.yaml' matches no files")
-        errors.should contain("No scene files found using provided patterns")
-        errors.should contain("Dialog pattern 'dialogs/*.yaml' matches no files")
-        errors.should contain("Music file 'theme' not found at: music/theme.ogg")
-        errors.should contain("Sound file 'click' not found at: sounds/click.wav")
+        errors.includes?("Scene pattern 'scenes/*.yaml' matches no files").should be_true
+        errors.includes?("Scene pattern 'nonexistent/*.yaml' matches no files").should be_true
+        errors.includes?("No scene files found using provided patterns").should be_true
+        errors.includes?("Dialog pattern 'dialogs/*.yaml' matches no files").should be_true
+        errors.includes?("Music file 'theme' not found at: music/theme.ogg").should be_true
+        errors.includes?("Sound file 'click' not found at: sounds/click.wav").should be_true
       ensure
         Dir.delete(temp_dir) if Dir.exists?(temp_dir)
       end
@@ -200,7 +200,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
 
       errors.any? { |e| e.includes?("Start scene 'missing_scene' not found") }.should be_true
-      errors.should contain("Start music 'missing_music' not defined in audio.music section")
+      errors.includes?("Start music 'missing_music' not defined in audio.music section").should be_true
     end
 
     it "validates player start position" do
@@ -223,8 +223,8 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, "test_config.yaml")
 
-      errors.should contain("Player start position X cannot be negative")
-      errors.should contain("Player start position Y cannot be negative")
+      errors.includes?("Player start position X cannot be negative").should be_true
+      errors.includes?("Player start position Y cannot be negative").should be_true
     end
   end
 end

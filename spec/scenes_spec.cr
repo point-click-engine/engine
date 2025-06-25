@@ -141,7 +141,7 @@ describe PointClickEngine::Scenes do
 
       scene.player.should eq(player)
       scene.player_name_for_serialization.should eq("Hero")
-      scene.characters.should contain(player)
+      scene.characters.includes?(player).should be_true
     end
 
     it "can find hotspot at point" do

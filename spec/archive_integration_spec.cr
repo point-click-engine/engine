@@ -69,12 +69,12 @@ describe "Archive Loading Integration" do
 
       # Test that we can read the script
       script_content = PointClickEngine::AssetManager.read_file("scripts/npc.lua")
-      script_content.should contain("Character initialized from archive")
+      script_content.includes?("Character initialized from archive").should be_true
 
       # Test that we can read the dialog
       dialog_content = PointClickEngine::AssetManager.read_file("dialogs/test_dialog.yml")
-      dialog_content.should contain("Archive Dialog")
-      dialog_content.should contain("Hello! I'm loaded from an archive.")
+      dialog_content.includes?("Archive Dialog").should be_true
+      dialog_content.includes?("Hello! I'm loaded from an archive.").should be_true
 
       # Test that we can load and parse the dialog tree
       dialog_yaml_parsed = YAML.parse(dialog_content)
@@ -82,13 +82,13 @@ describe "Archive Loading Integration" do
 
       # Test listing files
       files = PointClickEngine::AssetManager.list_files
-      files.should contain("scripts/npc.lua")
-      files.should contain("dialogs/test_dialog.yml")
-      files.should contain("saves/test_save.yml")
+      files.includes?("scripts/npc.lua").should be_true
+      files.includes?("dialogs/test_dialog.yml").should be_true
+      files.includes?("saves/test_save.yml").should be_true
 
       # Test listing files in a directory
       script_files = PointClickEngine::AssetManager.list_files("scripts")
-      script_files.should contain("scripts/npc.lua")
+      script_files.includes?("scripts/npc.lua").should be_true
       script_files.size.should eq(1)
 
       # Unmount and verify files are no longer accessible

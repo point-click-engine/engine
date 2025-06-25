@@ -268,8 +268,8 @@ describe "Quest System Edge Case Testing" do
       # Test JSON serialization
       json_string = objective.to_json
       json_string.should_not be_empty
-      json_string.should contain("serialize_test")
-      json_string.should contain("Test serialization")
+      json_string.includes?("serialize_test").should be_true
+      json_string.includes?("Test serialization").should be_true
 
       loaded_from_json = PointClickEngine::Core::QuestObjective.from_json(json_string)
       loaded_from_json.id.should eq(objective.id)

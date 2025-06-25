@@ -7,6 +7,7 @@ module PointClickEngine
       # Parse transition command from action string
       # Format: "transition:scene_name:effect:duration:x,y"
       # Example: "transition:garden:swirl:4.5:300,400"
+      # If duration is omitted or "default", it will return -1.0 to signal use of scene's default
       def self.parse_transition_command(command : String) : NamedTuple(scene: String, effect: Graphics::TransitionEffect?, duration: Float32, position: RL::Vector2?)?
         return nil unless command.starts_with?("transition:")
 
@@ -22,11 +23,16 @@ module PointClickEngine
                    Graphics::TransitionEffect::Fade
                  end
 
-        # Parse optional duration (default to 1.0)
+        # Parse optional duration
+        # If omitted, empty, or "default", return -1.0 to signal scene default should be used
         duration = if parts.size > 3 && !parts[3].empty?
-                     parts[3].to_f32? || 1.0f32
+                     if parts[3] == "default"
+                       -1.0f32
+                     else
+                       parts[3].to_f32? || -1.0f32
+                     end
                    else
-                     1.0f32
+                     -1.0f32
                    end
 
         # Parse optional position
@@ -48,7 +54,16 @@ module PointClickEngine
       # Execute a transition command
       def self.execute_transition(command : String, engine : Core::Engine) : Bool
         if data = parse_transition_command(command)
-          engine.change_scene_with_transition(data[:scene], data[:effect], data[:duration], data[:position])
+          duration = data[:duration]
+
+          # If duration is -1.0, use the current scene's default duration
+          if duration < 0 && (scene = engine.current_scene)
+            duration = scene.default_transition_duration
+          elsif duration < 0
+            duration = 1.0f32 # Fallback if no scene
+          end
+
+          engine.change_scene_with_transition(data[:scene], data[:effect], duration, data[:position])
           true
         else
           false

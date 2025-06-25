@@ -48,8 +48,8 @@ describe PointClickEngine::AssetLoader do
         PointClickEngine::AssetManager.mount_archive(temp_zip)
 
         yaml = PointClickEngine::AssetLoader.read_yaml("dialogs/test.yml")
-        yaml.should contain("name: Test Dialog")
-        yaml.should contain("text: Hello!")
+        yaml.includes?("name: Test Dialog").should be_true
+        yaml.includes?("text: Hello!").should be_true
       ensure
         File.delete(temp_zip) if File.exists?(temp_zip)
       end

@@ -7,6 +7,7 @@ A modern, data-driven adventure game engine written in Crystal, designed for cre
 - **YAML-Based Configuration** - Define your entire game through configuration files
 - **Visual Scene System** - Hotspots, walkable areas, character scaling
 - **Camera Scrolling** - Support for scenes larger than the viewport with smooth scrolling
+- **Scene Transitions** - 25+ cheesy transition effects with configurable durations
 - **Lua Scripting** - Powerful scripting for game logic
 - **Dialog Trees** - Branching conversations with conditions
 - **Quest System** - Complex multi-objective quests
@@ -70,16 +71,18 @@ Create `scenes/intro.yaml`:
 name: intro
 background_path: assets/backgrounds/intro.png
 script_path: scripts/intro.lua
+default_transition_duration: 2.0  # Default transition time for this scene
 
 hotspots:
   - name: door
-    type: exit
     x: 400
     y: 300
     width: 100
     height: 200
-    target_scene: hallway
     description: "A wooden door"
+    actions:
+      open: "transition:hallway:swirl::100,200"  # Uses scene's default duration
+      use: "transition:hallway:fade:1.5"         # Override with specific duration
 ```
 
 ### 4. Add Scene Logic

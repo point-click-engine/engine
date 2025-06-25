@@ -38,9 +38,9 @@ describe PointClickEngine::Localization::LocalizationManager do
     manager.add_translation("test2", PointClickEngine::Localization::Locale::Es_ES, "Prueba")
 
     locales = manager.available_locales
-    locales.should contain(PointClickEngine::Localization::Locale::En_US)
-    locales.should contain(PointClickEngine::Localization::Locale::Fr_FR)
-    locales.should contain(PointClickEngine::Localization::Locale::Es_ES)
+    locales.includes?(PointClickEngine::Localization::Locale::En_US).should be_true
+    locales.includes?(PointClickEngine::Localization::Locale::Fr_FR).should be_true
+    locales.includes?(PointClickEngine::Localization::Locale::Es_ES).should be_true
   end
 
   it "changes current locale" do

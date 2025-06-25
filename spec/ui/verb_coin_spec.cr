@@ -33,8 +33,8 @@ describe PointClickEngine::UI::VerbCoin do
 
     verb_coin.active.should be_true
     verb_coin.verbs.size.should be > 0
-    verb_coin.verbs.should contain(PointClickEngine::UI::VerbType::Walk)
-    verb_coin.verbs.should contain(PointClickEngine::UI::VerbType::Look)
+    verb_coin.verbs.includes?(PointClickEngine::UI::VerbType::Walk).should be_true
+    verb_coin.verbs.includes?(PointClickEngine::UI::VerbType::Look).should be_true
   end
 
   it "hides when hide is called" do
@@ -83,7 +83,7 @@ describe PointClickEngine::UI::VerbCoin do
 
     selected = verb_coin.get_selected_verb
     selected.should_not be_nil
-    verbs.should contain(selected.not_nil!)
+    verbs.includes?(selected.not_nil!).should be_true
   end
 
   it "applies alpha to colors correctly" do

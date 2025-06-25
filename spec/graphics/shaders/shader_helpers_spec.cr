@@ -15,14 +15,14 @@ describe PointClickEngine::Graphics::Shaders::ShaderHelpers do
   end
 
   it "shader code contains proper GLSL version" do
-    PointClickEngine::Graphics::Shaders::ShaderHelpers::PIXELATE_FRAGMENT.should contain("#version 330")
-    PointClickEngine::Graphics::Shaders::ShaderHelpers::DEFAULT_VERTEX.should contain("#version 330")
+    PointClickEngine::Graphics::Shaders::ShaderHelpers::PIXELATE_FRAGMENT.includes?("#version 330").should be_true
+    PointClickEngine::Graphics::Shaders::ShaderHelpers::DEFAULT_VERTEX.includes?("#version 330").should be_true
   end
 
   it "shader code contains required uniforms" do
-    PointClickEngine::Graphics::Shaders::ShaderHelpers::PIXELATE_FRAGMENT.should contain("uniform float pixelSize")
-    PointClickEngine::Graphics::Shaders::ShaderHelpers::GRAYSCALE_FRAGMENT.should contain("uniform float intensity")
-    PointClickEngine::Graphics::Shaders::ShaderHelpers::VIGNETTE_FRAGMENT.should contain("uniform float radius")
-    PointClickEngine::Graphics::Shaders::ShaderHelpers::WAVE_FRAGMENT.should contain("uniform float time")
+    PointClickEngine::Graphics::Shaders::ShaderHelpers::PIXELATE_FRAGMENT.includes?("uniform float pixelSize").should be_true
+    PointClickEngine::Graphics::Shaders::ShaderHelpers::GRAYSCALE_FRAGMENT.includes?("uniform float intensity").should be_true
+    PointClickEngine::Graphics::Shaders::ShaderHelpers::VIGNETTE_FRAGMENT.includes?("uniform float radius").should be_true
+    PointClickEngine::Graphics::Shaders::ShaderHelpers::WAVE_FRAGMENT.includes?("uniform float time").should be_true
   end
 end

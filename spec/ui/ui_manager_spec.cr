@@ -93,7 +93,7 @@ describe PointClickEngine::UI::UIManager do
 
     # Should return a valid action description
     action_text.should_not be_empty
-    action_text.should contain("Look")
+    action_text.includes?("Look").should be_true
   end
 
   it "handles cleanup correctly" do

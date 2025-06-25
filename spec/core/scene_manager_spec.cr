@@ -33,7 +33,7 @@ describe PointClickEngine::Core::SceneManager do
       scene = MockScene.new("test_scene")
 
       manager.add_scene(scene)
-      manager.scene_names.should contain("test_scene")
+      manager.scene_names.includes?("test_scene").should be_true
     end
 
     it "replaces existing scene with same name" do
@@ -113,7 +113,7 @@ describe PointClickEngine::Core::SceneManager do
       result = manager.remove_scene("test_scene")
 
       result.success?.should be_true
-      manager.scene_names.should_not contain("test_scene")
+      manager.scene_names.includes?("test_scene").should be_false
     end
 
     it "fails to unload non-existing scene" do
@@ -141,8 +141,8 @@ describe PointClickEngine::Core::SceneManager do
       manager.add_scene(scene2)
 
       names = manager.scene_names
-      names.should contain("scene1")
-      names.should contain("scene2")
+      names.includes?("scene1").should be_true
+      names.includes?("scene2").should be_true
       names.size.should eq(2)
     end
   end

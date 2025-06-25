@@ -118,7 +118,7 @@ describe PointClickEngine::UI::OptionsMenu do
     )
 
     # Should have volume controls
-    menu.items[0].text.should contain("Master Volume:")
+    menu.items[0].text.includes?("Master Volume:").should be_true
     menu.items[1].text.should eq("Volume -")
     menu.items[2].text.should eq("Volume +")
   end
@@ -156,7 +156,7 @@ describe PointClickEngine::UI::SaveLoadMenu do
 
       # Should have 5 slots + quick save + back
       menu.items.size.should eq(7)
-      menu.items[0].text.should contain("Slot 1")
+      menu.items[0].text.includes?("Slot 1").should be_true
       menu.items[5].text.should eq("Quick Save")
       menu.items[6].text.should eq("Back")
     end

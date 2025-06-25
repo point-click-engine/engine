@@ -32,9 +32,9 @@ describe "Save/Load System Reliability Tests" do
       # Serialize to YAML
       yaml_content = save_data.to_yaml
       yaml_content.should_not be_empty
-      yaml_content.should contain("test_scene")
-      yaml_content.should contain("100.5")
-      yaml_content.should contain("test_value")
+      yaml_content.includes?("test_scene").should be_true
+      yaml_content.includes?("100.5").should be_true
+      yaml_content.includes?("test_value").should be_true
 
       # Deserialize back
       loaded_data = PointClickEngine::Core::SaveData.from_yaml(yaml_content)
@@ -42,7 +42,7 @@ describe "Save/Load System Reliability Tests" do
       loaded_data.player_position_x.should eq(100.5_f32)
       loaded_data.player_position_y.should eq(200.3_f32)
       loaded_data.game_variables["test_var"].should eq("test_value")
-      loaded_data.completed_dialogs.should contain("intro_dialog")
+      loaded_data.completed_dialogs.includes?("intro_dialog").should be_true
       loaded_data.scene_states["room1"]["door_open"].should eq("true")
     end
   end
@@ -92,7 +92,7 @@ describe "Save/Load System Reliability Tests" do
         # Verify file exists and is readable
         File.exists?(test_save_path).should be_true
         content = File.read(test_save_path)
-        content.should contain("test_room")
+        content.includes?("test_room").should be_true
 
         # Parse as SaveData
         save_data = PointClickEngine::Core::SaveData.from_yaml(content)

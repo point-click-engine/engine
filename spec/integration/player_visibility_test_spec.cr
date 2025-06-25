@@ -65,7 +65,7 @@ describe "Player Visibility in Scene Transitions" do
 
     # Verify player is in library
     library.player.should eq(player)
-    library.characters.should contain(player)
+    library.characters.includes?(player).should be_true
 
     # Create door hotspot to laboratory
     door_to_lab = PointClickEngine::Scenes::Hotspot.new(
@@ -86,7 +86,7 @@ describe "Player Visibility in Scene Transitions" do
 
     # Verify player is now in the current scene (laboratory)
     current_scene.player.should eq(player)
-    current_scene.characters.should contain(player)
+    current_scene.characters.includes?(player).should be_true
 
     # Transition to garden
     engine.change_scene("garden")
@@ -96,7 +96,7 @@ describe "Player Visibility in Scene Transitions" do
 
     # Verify player is in the current scene (garden)
     garden_scene.player.should eq(player)
-    garden_scene.characters.should contain(player)
+    garden_scene.characters.includes?(player).should be_true
 
     # Note: The player may still be in previous scenes' character lists
     # because the engine doesn't automatically remove characters when changing scenes.
@@ -120,7 +120,7 @@ describe "Player Visibility in Scene Transitions" do
 
     # Verify player is in scene's character list
     scene.player.should eq(player)
-    scene.characters.should contain(player)
+    scene.characters.includes?(player).should be_true
 
     # The fixed draw method should handle this case properly
     scene.walkable_area.should be_nil
@@ -129,6 +129,6 @@ describe "Player Visibility in Scene Transitions" do
     all_chars = scene.characters.dup
     all_chars << player if scene.player && !all_chars.includes?(player)
     all_chars.size.should eq(1)
-    all_chars.should contain(player)
+    all_chars.includes?(player).should be_true
   end
 end

@@ -48,7 +48,7 @@ describe PointClickEngine::Core::Validators::AssetValidator do
         config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
         errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "#{temp_dir}/config.yaml")
 
-        errors.should contain("Missing sound: assets/audio/missing.wav")
+        errors.includes?("Missing sound: assets/audio/missing.wav").should be_true
         errors.size.should eq(1)
       ensure
         FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
@@ -71,7 +71,7 @@ describe PointClickEngine::Core::Validators::AssetValidator do
       config = PointClickEngine::Core::GameConfig.from_yaml(config_yaml)
       errors = PointClickEngine::Core::Validators::AssetValidator.validate_all_assets(config, "/fake/path/config.yaml")
 
-      errors.should contain("Missing sprite: sprites/missing_player.png")
+      errors.includes?("Missing sprite: sprites/missing_player.png").should be_true
     end
 
     it "validates asset formats" do

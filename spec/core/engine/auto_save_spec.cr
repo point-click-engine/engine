@@ -44,7 +44,7 @@ describe "Engine Auto-Save Functionality" do
 
       # Check save content
       saved_content = File.read("saves/autosave.yml")
-      saved_content.should contain("title: Auto-Save Test")
+      saved_content.includes?("title: Auto-Save Test").should be_true
 
       # Cleanup
       RL.close_window

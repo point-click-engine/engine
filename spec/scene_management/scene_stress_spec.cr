@@ -122,10 +122,10 @@ describe "Scene Management Stress Tests" do
       scene_manager.change_scene("scene_2")
 
       # Check callback execution
-      callback_order.should contain("transition_to_scene_1")
-      callback_order.should contain("enter_scene_1")
-      callback_order.should contain("exit_scene_1")
-      callback_order.should contain("transition_to_scene_2")
+      callback_order.includes?("transition_to_scene_1").should be_true
+      callback_order.includes?("enter_scene_1").should be_true
+      callback_order.includes?("exit_scene_1").should be_true
+      callback_order.includes?("transition_to_scene_2").should be_true
     end
 
     it "handles multiple callbacks for the same scene" do

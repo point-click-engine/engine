@@ -268,7 +268,7 @@ describe "Engine Save/Load System" do
       kitchen_state = scene_states["kitchen"]
 
       bedroom_state["visited"].should be_true
-      bedroom_state["objects_taken"].as(Array).should contain("diary")
+      bedroom_state["objects_taken"].as(Array).includes?("diary").should be_true
       kitchen_state["visited"].should be_false
 
       RL.close_window
