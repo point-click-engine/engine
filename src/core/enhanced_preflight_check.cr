@@ -116,8 +116,8 @@ module PointClickEngine
           result.warnings.concat(coord_result.warnings)
         end
 
-        unless coord_result.info.empty?
-          result.info.concat(coord_result.info)
+        unless coord_result.infos.empty?
+          result.info.concat(coord_result.infos)
         end
 
         # Enhanced validation steps

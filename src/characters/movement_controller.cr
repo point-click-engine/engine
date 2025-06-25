@@ -77,7 +77,18 @@ module PointClickEngine
       # controller.move_to(target, use_pathfinding: true)
       # ```
       def move_to(target : RL::Vector2, use_pathfinding : Bool? = nil)
-        puts "[MOVEMENT] Starting movement from #{@character.position} to #{target}"
+        # Input validation
+        unless validate_target_position(target)
+          if Core::DebugConfig.should_log?(:movement)
+            puts "[MOVEMENT] Invalid target position #{target}, movement cancelled"
+          end
+          return
+        end
+
+        if Core::DebugConfig.should_log?(:movement)
+          puts "[MOVEMENT] Starting movement from #{@character.position} to #{target}"
+        end
+
         @target_position = target
         @character.state = CharacterState::Walking
 
@@ -87,26 +98,40 @@ module PointClickEngine
 
         # Store pathfinding preference
         @use_pathfinding_preference = use_pathfinding.nil? ? @character.use_pathfinding : use_pathfinding
-        puts "[MOVEMENT] Using pathfinding: #{@use_pathfinding_preference}"
+
+        if Core::DebugConfig.should_log?(:movement)
+          puts "[MOVEMENT] Using pathfinding: #{@use_pathfinding_preference}"
+        end
 
         # If pathfinding is enabled, calculate path immediately
         if @use_pathfinding_preference
           if scene = get_current_scene
-            puts "[MOVEMENT] Calculating pathfinding route..."
+            if Core::DebugConfig.should_log?(:pathfinding)
+              puts "[MOVEMENT] Calculating pathfinding route..."
+            end
+
             if calculated_path = scene.find_path(@character.position.x, @character.position.y, target.x, target.y)
-              puts "[MOVEMENT] Pathfinding found route with #{calculated_path.size} waypoints"
+              if Core::DebugConfig.should_log?(:pathfinding)
+                puts "[MOVEMENT] Pathfinding found route with #{calculated_path.size} waypoints"
+              end
               setup_pathfinding(calculated_path)
               return
             else
-              puts "[MOVEMENT] Pathfinding failed, falling back to direct movement"
+              if Core::DebugConfig.should_log?(:pathfinding)
+                puts "[MOVEMENT] Pathfinding failed, falling back to direct movement"
+              end
             end
           else
-            puts "[MOVEMENT] No scene available for pathfinding"
+            if Core::DebugConfig.should_log?(:pathfinding)
+              puts "[MOVEMENT] No scene available for pathfinding"
+            end
           end
         end
 
         # Setup direct movement if pathfinding is disabled or failed
-        puts "[MOVEMENT] Using direct movement to #{target}"
+        if Core::DebugConfig.should_log?(:movement)
+          puts "[MOVEMENT] Using direct movement to #{target}"
+        end
         update_direction_and_animation(target)
       end
 
@@ -122,7 +147,20 @@ module PointClickEngine
       # controller.move_along_path(path) if path
       # ```
       def move_along_path(waypoints : Array(RL::Vector2))
-        return if waypoints.empty?
+        # Input validation
+        if waypoints.empty?
+          if Core::DebugConfig.should_log?(:movement)
+            puts "[MOVEMENT] Empty waypoint array provided, movement cancelled"
+          end
+          return
+        end
+
+        unless validate_waypoints(waypoints)
+          if Core::DebugConfig.should_log?(:movement)
+            puts "[MOVEMENT] Invalid waypoints in path, movement cancelled"
+          end
+          return
+        end
 
         @path = waypoints
         @current_path_index = 0
@@ -138,7 +176,10 @@ module PointClickEngine
       # Clears movement target, pathfinding data, and returns character
       # to idle state. Executes completion callback if one was set.
       def stop_movement
-        puts "[MOVEMENT] STOPPING movement at position #{@character.position} (target was #{@target_position})"
+        if Core::DebugConfig.should_log?(:movement)
+          puts "[MOVEMENT] STOPPING movement at position #{@character.position} (target was #{@target_position})"
+        end
+
         @target_position = nil
         clear_pathfinding_data
         invalidate_direction_cache
@@ -159,17 +200,34 @@ module PointClickEngine
       #
       # - *dt* : Delta time in seconds since last update
       def update(dt : Float32)
+        # Input validation
+        return unless dt >= 0.0_f32 && dt <= MAX_DELTA_TIME # Reasonable delta time bounds
         return unless @character.state == CharacterState::Walking
 
+        # Validate movement state
+        unless validate_movement_state
+          if Core::DebugConfig.should_log?(:movement)
+            puts "[MOVEMENT] Invalid movement state detected, stopping movement"
+          end
+          stop_movement
+          return
+        end
+
         if path = @path
-          puts "[MOVEMENT] Update: using pathfinding (#{path.size} waypoints, current index: #{@current_path_index})"
+          if Core::DebugConfig.should_log?(:movement)
+            puts "[MOVEMENT] Update: using pathfinding (#{path.size} waypoints, current index: #{@current_path_index})"
+          end
           update_pathfinding_movement(dt)
         elsif target = @target_position
-          distance = Utils::VectorMath.distance(@character.position, target)
-          puts "[MOVEMENT] Update: direct movement to #{target}, distance: #{distance}"
+          if Core::DebugConfig.should_log?(:movement)
+            distance = Utils::VectorMath.distance(@character.position, target)
+            puts "[MOVEMENT] Update: direct movement to #{target}, distance: #{distance}"
+          end
           update_direct_movement(target, dt)
         else
-          puts "[MOVEMENT] Update: no target or path, stopping"
+          if Core::DebugConfig.should_log?(:movement)
+            puts "[MOVEMENT] Update: no target or path, stopping"
+          end
           stop_movement
         end
       end
@@ -239,11 +297,15 @@ module PointClickEngine
         # Don't use cached values as they may be stale after movement
         fresh_direction, fresh_distance = Utils::VectorMath.direction_and_distance(@character.position, current_waypoint)
 
-        puts "[PATHFINDING] At #{@character.position}, moving to waypoint #{@current_path_index}: #{current_waypoint}, distance: #{fresh_distance}, threshold: #{PATHFINDING_WAYPOINT_THRESHOLD}"
+        if Core::DebugConfig.should_log?(:pathfinding)
+          puts "[PATHFINDING] At #{@character.position}, moving to waypoint #{@current_path_index}: #{current_waypoint}, distance: #{fresh_distance}, threshold: #{PATHFINDING_WAYPOINT_THRESHOLD}"
+        end
 
         # Check if we reached the current waypoint using fresh distance
         if fresh_distance <= PATHFINDING_WAYPOINT_THRESHOLD
-          puts "[PATHFINDING] Reached waypoint #{@current_path_index}, advancing..."
+          if Core::DebugConfig.should_log?(:pathfinding)
+            puts "[PATHFINDING] Reached waypoint #{@current_path_index}, advancing..."
+          end
           advance_to_next_waypoint
           return
         end
@@ -255,7 +317,10 @@ module PointClickEngine
         actual_step = movement_step
 
         new_position = Utils::VectorMath.move_towards(@character.position, current_waypoint, actual_step)
-        puts "[PATHFINDING] Moving from #{@character.position} to #{new_position} (step: #{actual_step})"
+
+        if Core::DebugConfig.should_log?(:pathfinding)
+          puts "[PATHFINDING] Moving from #{@character.position} to #{new_position} (step: #{actual_step})"
+        end
 
         # Apply movement
         apply_movement(new_position, current_waypoint)
@@ -333,7 +398,7 @@ module PointClickEngine
       private def update_direction_and_animation(target : RL::Vector2)
         # Only update if we're moving a significant distance horizontally
         horizontal_distance = (target.x - @character.position.x).abs
-        return if horizontal_distance < 5.0
+        return if horizontal_distance < DIRECTION_UPDATE_THRESHOLD
 
         # Determine new direction
         new_direction = target.x < @character.position.x ? Direction::Left : Direction::Right
@@ -393,6 +458,62 @@ module PointClickEngine
         Core::Engine.instance.current_scene
       rescue
         nil
+      end
+
+      # Input validation methods
+
+      private def validate_target_position(target : RL::Vector2) : Bool
+        # Check for NaN or infinite values
+        return false if target.x.nan? || target.y.nan?
+        return false if target.x.infinite? || target.y.infinite?
+
+        # Check for reasonable bounds
+        return false if target.x < MIN_SCENE_COORDINATE || target.x > MAX_SCENE_COORDINATE
+        return false if target.y < MIN_SCENE_COORDINATE || target.y > MAX_SCENE_COORDINATE
+
+        true
+      end
+
+      private def validate_waypoints(waypoints : Array(RL::Vector2)) : Bool
+        # Check maximum path length to prevent performance issues
+        return false if waypoints.size > MAX_PATHFINDING_WAYPOINTS
+
+        # Validate each waypoint
+        waypoints.each do |waypoint|
+          return false unless validate_target_position(waypoint)
+        end
+
+        # Check for duplicate consecutive waypoints (performance optimization)
+        (1...waypoints.size).each do |i|
+          prev = waypoints[i - 1]
+          curr = waypoints[i]
+          distance = Math.sqrt((curr.x - prev.x)**2 + (curr.y - prev.y)**2)
+
+          # Warn about very close waypoints but don't fail validation
+          if distance < MIN_PATHFINDING_DISTANCE && Core::DebugConfig.should_log?(:movement)
+            puts "[MOVEMENT] Warning: Very close waypoints detected at #{prev} -> #{curr}"
+          end
+        end
+
+        true
+      end
+
+      private def validate_movement_state : Bool
+        # Ensure character object is valid
+        return false if @character.nil?
+
+        # Check for reasonable character size
+        return false if @character.size.x < MIN_CHARACTER_SIZE || @character.size.y < MIN_CHARACTER_SIZE
+        return false if @character.size.x > MAX_CHARACTER_SIZE || @character.size.y > MAX_CHARACTER_SIZE
+
+        # Check for reasonable walking speed
+        return false if @character.walking_speed < 0.0_f32
+        return false if @character.walking_speed > MAX_WALKING_SPEED
+
+        # Validate character position
+        return false unless validate_target_position(@character.position)
+
+        true
       end
     end
   end

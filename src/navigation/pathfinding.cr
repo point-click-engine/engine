@@ -243,7 +243,7 @@ module PointClickEngine
         property cell_size : Int32
         property walkable : Array(Array(Bool))
 
-        def initialize(@width : Int32, @height : Int32, @cell_size : Int32 = 32)
+        def initialize(@width : Int32, @height : Int32, @cell_size : Int32 = PointClickEngine::Core::GameConstants::DEFAULT_NAVIGATION_CELL_SIZE)
           @walkable = Array.new(@height) { Array.new(@width, true) }
         end
 
@@ -282,7 +282,7 @@ module PointClickEngine
         end
 
         # Create from scene hotspots and objects
-        def self.from_scene(scene : Scenes::Scene, width : Int32, height : Int32, cell_size : Int32 = 32, character_radius : Float32 = 32.0_f32) : NavigationGrid
+        def self.from_scene(scene : Scenes::Scene, width : Int32, height : Int32, cell_size : Int32 = PointClickEngine::Core::GameConstants::DEFAULT_NAVIGATION_CELL_SIZE, character_radius : Float32 = PointClickEngine::Core::GameConstants::DEFAULT_CHARACTER_RADIUS) : NavigationGrid
           grid_width = (width / cell_size).to_i + 1
           grid_height = (height / cell_size).to_i + 1
           grid = new(grid_width, grid_height, cell_size)
@@ -300,7 +300,7 @@ module PointClickEngine
                 # Check if a character-sized area can fit here
                 # We use a more lenient approach: check center and a smaller radius
                 # This prevents overly restrictive navigation grids
-                reduced_radius = character_radius * 0.7_f32 # Use 70% of actual radius for more flexibility
+                reduced_radius = character_radius * PointClickEngine::Core::GameConstants::NAVIGATION_RADIUS_REDUCTION # Use reduced radius for more flexibility
 
                 check_points = [
                   world_pos, # Center must always be walkable
@@ -353,13 +353,16 @@ module PointClickEngine
 
       property grid : NavigationGrid
       property allow_diagonal : Bool
-      property max_search_nodes : Int32 = 5000
+      property max_search_nodes : Int32 = PointClickEngine::Core::GameConstants::MAX_PATHFINDING_SEARCH_NODES
 
       def initialize(@grid : NavigationGrid, @allow_diagonal : Bool = true)
       end
 
       # Find path using A* algorithm
       def find_path(start_x : Float32, start_y : Float32, end_x : Float32, end_y : Float32) : Array(Raylib::Vector2)?
+        # Input validation
+        return nil unless validate_pathfinding_input(start_x, start_y, end_x, end_y)
+
         start_grid = @grid.world_to_grid(start_x, start_y)
         end_grid = @grid.world_to_grid(end_x, end_y)
 
@@ -375,7 +378,7 @@ module PointClickEngine
           distance = Math.sqrt((end_x - start_x)**2 + (end_y - start_y)**2)
 
           # Only return direct path if there's meaningful distance
-          if distance > 1.0
+          if distance > PointClickEngine::Core::GameConstants::SAME_CELL_DISTANCE_THRESHOLD
             return [start_pos, end_pos]
           else
             return [end_pos]
@@ -480,9 +483,9 @@ module PointClickEngine
         dy = (from.y - to[1]).abs
 
         if dx == 1 && dy == 1
-          1.414f32 # Diagonal cost (sqrt(2))
+          PointClickEngine::Core::GameConstants::DIAGONAL_MOVEMENT_COST # Diagonal cost (sqrt(2))
         else
-          1.0f32 # Cardinal cost
+          PointClickEngine::Core::GameConstants::CARDINAL_MOVEMENT_COST # Cardinal cost
         end
       end
 
@@ -516,7 +519,7 @@ module PointClickEngine
           # Octile distance (better for diagonal movement)
           d_min = Math.min(dx, dy)
           d_max = Math.max(dx, dy)
-          1.414f32 * d_min + (d_max - d_min)
+          PointClickEngine::Core::GameConstants::HEURISTIC_DIAGONAL_MULTIPLIER * d_min + (d_max - d_min)
         else
           # Manhattan distance
           dx + dy
@@ -557,7 +560,7 @@ module PointClickEngine
           furthest = i + 1
 
           # Don't optimize away all intermediate points
-          max_lookahead = Math.min(i + 5, path.size - 1)
+          max_lookahead = Math.min(i + PointClickEngine::Core::GameConstants::PATH_OPTIMIZATION_MAX_LOOKAHEAD, path.size - 1)
 
           while j < path.size && j <= max_lookahead
             if has_clear_path(path[i], path[j])
@@ -569,7 +572,7 @@ module PointClickEngine
           end
 
           # Always include at least some intermediate points for long paths
-          if furthest == path.size - 1 && path.size > 5 && optimized.size == 1
+          if furthest == path.size - 1 && path.size > PointClickEngine::Core::GameConstants::PATH_MIDPOINT_INSERTION_THRESHOLD && optimized.size == 1
             # Keep a midpoint for long direct paths
             mid = (path.size / 2).to_i
             optimized << path[mid]
@@ -661,7 +664,7 @@ module PointClickEngine
       end
 
       # Draw a path
-      def draw_path(path : Array(Raylib::Vector2), color : Raylib::Color = Raylib::YELLOW, thickness : Float32 = 3.0f32)
+      def draw_path(path : Array(Raylib::Vector2), color : Raylib::Color = Raylib::YELLOW, thickness : Float32 = PointClickEngine::Core::GameConstants::DEBUG_PATH_LINE_THICKNESS)
         return if path.size < 2
 
         (0...path.size - 1).each do |i|
@@ -670,8 +673,28 @@ module PointClickEngine
 
         # Draw waypoints
         path.each do |point|
-          Raylib.draw_circle_v(point, 5.0f32, color)
+          Raylib.draw_circle_v(point, PointClickEngine::Core::GameConstants::DEBUG_WAYPOINT_CIRCLE_RADIUS, color)
         end
+      end
+
+      # Input validation for pathfinding
+      private def validate_pathfinding_input(start_x : Float32, start_y : Float32, end_x : Float32, end_y : Float32) : Bool
+        # Check for NaN or infinite values
+        return false if start_x.nan? || start_y.nan? || end_x.nan? || end_y.nan?
+        return false if start_x.infinite? || start_y.infinite? || end_x.infinite? || end_y.infinite?
+
+        # Check for reasonable coordinate bounds
+        max_coord = (@grid.width * @grid.cell_size + @grid.cell_size).to_f32
+        return false if start_x < -@grid.cell_size || start_x > max_coord
+        return false if start_y < -@grid.cell_size || start_y > max_coord
+        return false if end_x < -@grid.cell_size || end_x > max_coord
+        return false if end_y < -@grid.cell_size || end_y > max_coord
+
+        # Check for extremely small distances (potential precision issues)
+        distance = Math.sqrt((end_x - start_x)**2 + (end_y - start_y)**2)
+        return false if distance < PointClickEngine::Core::GameConstants::MIN_PATHFINDING_DISTANCE
+
+        true
       end
     end
   end

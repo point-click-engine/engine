@@ -72,14 +72,22 @@ describe "Texture Independence" do
 
   describe "Configuration validation" do
     it "validates coordinates against logical bounds not texture bounds" do
+      # Create a simple YAML string and parse it to create GameConfig
+      yaml_content = <<-YAML
+        game:
+          title: "Test Game"
+        window:
+          width: 1024
+          height: 768
+        YAML
+
+      config = PointClickEngine::Core::GameConfig.from_yaml(yaml_content)
       validator = PointClickEngine::Core::Validators::SceneCoordinateValidator.new
-      config = PointClickEngine::Core::GameConfig.new
-      config.window = PointClickEngine::Core::GameConfig::WindowConfig.new
-      config.window.not_nil!.width = 1024
-      config.window.not_nil!.height = 768
 
       # Validator should check against logical dimensions (1024x768 by default)
       # not against any texture dimensions
+      config.window.not_nil!.width.should eq(1024)
+      config.window.not_nil!.height.should eq(768)
     end
   end
 
