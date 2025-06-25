@@ -157,6 +157,10 @@ module PointClickEngine
       # If nil, the hotspot will use the scene's default script
       property script_path : String?
 
+      # Action commands mapped by verb type
+      # e.g. {"use" => "transition:garden:swirl:4.5:300,400"}
+      property action_commands : Hash(String, String) = {} of String => String
+
       # Callback executed when the hotspot is clicked (runtime only)
       @[YAML::Field(ignore: true)]
       property on_click : Proc(Nil)?

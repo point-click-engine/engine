@@ -1,8 +1,8 @@
 require "../spec_helper"
 
 describe "Door Interaction System" do
-  describe "ExitZone Priority for Open Verb" do
-    it "prioritizes ExitZones over regular hotspots when using open verb" do
+  describe "Action-based transitions for doors" do
+    it "triggers scene transitions through hotspot actions" do
       RL.init_window(800, 600, "Door Interaction Test")
       engine = PointClickEngine::Core::Engine.new(
         title: "Door Test",
@@ -12,99 +12,75 @@ describe "Door Interaction System" do
       engine.init
       engine.enable_verb_input
 
-      # Create a scene with overlapping hotspot and exit zone (like library door)
+      # Create a scene with a door hotspot
       scene = PointClickEngine::Scenes::Scene.new("test_scene")
       engine.add_scene(scene)
       engine.change_scene("test_scene")
 
-      # Create a regular hotspot at door location
+      # Create a door hotspot with transition action
       door_hotspot = PointClickEngine::Scenes::Hotspot.new(
         "door_hotspot",
         RL::Vector2.new(x: 850f32, y: 300f32),
         RL::Vector2.new(x: 100f32, y: 200f32)
       )
       door_hotspot.description = "A wooden door"
+      door_hotspot.default_verb = PointClickEngine::UI::VerbType::Open
+      door_hotspot.object_type = PointClickEngine::UI::ObjectType::Door
+      door_hotspot.action_commands["open"] = "transition:next_scene:swirl:2.0:100,400"
+      door_hotspot.action_commands["use"] = "transition:next_scene:swirl:2.0:100,400"
       scene.add_hotspot(door_hotspot)
-
-      # Create an exit zone at the same location
-      exit_zone = PointClickEngine::Scenes::ExitZone.new(
-        "door_exit",
-        RL::Vector2.new(x: 850f32, y: 300f32),
-        RL::Vector2.new(x: 100f32, y: 200f32),
-        "next_scene"
-      )
-      scene.add_hotspot(exit_zone)
 
       # Get the verb input system
       verb_system = engine.verb_input_system
       verb_system.should_not be_nil
       verb_system = verb_system.not_nil!
 
-      # Set up the "open" verb
-      verb_system.cursor_manager.set_verb(PointClickEngine::UI::VerbType::Open)
-
-      # Click at the door position (850, 300 is center of the door)
+      # Verify door is configured correctly
       door_position = RL::Vector2.new(x: 850f32, y: 300f32)
-
-      # Test that both hotspots are found at this position
       found_hotspot = scene.get_hotspot_at(door_position)
       found_hotspot.should_not be_nil
+      found_hotspot.should be(door_hotspot)
 
-      # The exit zone should be found by default (it was added last)
-      found_hotspot.should be(exit_zone)
-
-      # But ExitZones should be findable too
-      found_exit = scene.hotspots.find { |h| h.is_a?(PointClickEngine::Scenes::ExitZone) && h.contains_point?(door_position) }
-      found_exit.should_not be_nil
-      found_exit.should be(exit_zone)
+      # Check action commands
+      door_hotspot.action_commands["open"].should eq("transition:next_scene:swirl:2.0:100,400")
 
       RL.close_window
     end
 
-    it "handles scene transitions when opening doors" do
-      RL.init_window(800, 600, "Scene Transition Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Transition Test",
-        window_width: 800,
-        window_height: 600
-      )
-      engine.init
-      engine.enable_verb_input
+    it "parses transition commands correctly" do
+      # Test full transition command
+      result = PointClickEngine::Scenes::TransitionHelper.parse_transition_command("transition:laboratory:star_wipe:4.5:200,300")
+      result.should_not be_nil
+      if result
+        result[:scene].should eq("laboratory")
+        result[:effect].should eq(PointClickEngine::Graphics::TransitionEffect::StarWipe)
+        result[:duration].should eq(4.5f32)
+        result[:position].should_not be_nil
+        if pos = result[:position]
+          pos.x.should eq(200f32)
+          pos.y.should eq(300f32)
+        end
+      end
 
-      # Create source scene
-      library_scene = PointClickEngine::Scenes::Scene.new("library")
-      engine.add_scene(library_scene)
+      # Test minimal transition command
+      result2 = PointClickEngine::Scenes::TransitionHelper.parse_transition_command("transition:garden")
+      result2.should_not be_nil
+      if result2
+        result2[:scene].should eq("garden")
+        result2[:effect].should eq(PointClickEngine::Graphics::TransitionEffect::Fade)
+        result2[:duration].should eq(1.0f32)
+        result2[:position].should be_nil
+      end
 
-      # Create target scene
-      lab_scene = PointClickEngine::Scenes::Scene.new("laboratory")
-      engine.add_scene(lab_scene)
-
-      engine.change_scene("library")
-
-      # Create exit zone that leads to laboratory
-      exit_zone = PointClickEngine::Scenes::ExitZone.new(
-        "door_to_lab",
-        RL::Vector2.new(x: 850f32, y: 300f32),
-        RL::Vector2.new(x: 100f32, y: 200f32),
-        "laboratory"
-      )
-      exit_zone.target_position = RL::Vector2.new(x: 100f32, y: 400f32)
-      library_scene.add_hotspot(exit_zone)
-
-      # Verify we start in library
-      engine.current_scene.should_not be_nil
-      engine.current_scene.not_nil!.name.should eq("library")
-
-      # The exit zone should be accessible (no item requirements)
-      exit_zone.is_accessible?(engine.inventory).should be_true
-
-      RL.close_window
+      # Test non-transition command
+      result3 = PointClickEngine::Scenes::TransitionHelper.parse_transition_command("look_at_painting")
+      result3.should be_nil
     end
 
-    it "shows appropriate message when door cannot be opened" do
-      RL.init_window(800, 600, "Locked Door Test")
+    it "supports different verbs triggering transitions" do
+      RL.init_window(800, 600, "Multi-verb Transition Test")
       engine = PointClickEngine::Core::Engine.new(
-        title: "Locked Door Test",
+        title: "Multi-verb Test",
         window_width: 800,
         window_height: 600
       )
@@ -114,26 +90,42 @@ describe "Door Interaction System" do
       engine.add_scene(scene)
       engine.change_scene("test_scene")
 
-      # Create a locked exit zone
-      locked_exit = PointClickEngine::Scenes::ExitZone.new(
-        "locked_door",
+      # Create an NPC that can teleport you when talked to
+      npc_hotspot = PointClickEngine::Scenes::Hotspot.new(
+        "wizard",
         RL::Vector2.new(x: 400f32, y: 300f32),
-        RL::Vector2.new(x: 100f32, y: 200f32),
-        "secret_room"
+        RL::Vector2.new(x: 64f32, y: 96f32)
       )
-      locked_exit.requires_item = "key"
-      locked_exit.locked_message = "The door is locked. You need a key."
-      scene.add_hotspot(locked_exit)
+      npc_hotspot.description = "A mysterious wizard"
+      npc_hotspot.default_verb = PointClickEngine::UI::VerbType::Talk
+      npc_hotspot.object_type = PointClickEngine::UI::ObjectType::Character
+      npc_hotspot.action_commands["talk"] = "transition:wizard_tower:vortex:3.0:500,300"
+      scene.add_hotspot(npc_hotspot)
 
-      # The exit should not be accessible without the required item
-      locked_exit.is_accessible?(engine.inventory).should be_false
+      # Create a button that triggers scene change
+      button_hotspot = PointClickEngine::Scenes::Hotspot.new(
+        "magic_button",
+        RL::Vector2.new(x: 200f32, y: 200f32),
+        RL::Vector2.new(x: 50f32, y: 50f32)
+      )
+      button_hotspot.description = "A glowing button"
+      button_hotspot.default_verb = PointClickEngine::UI::VerbType::Use
+      button_hotspot.object_type = PointClickEngine::UI::ObjectType::Device
+      button_hotspot.action_commands["use"] = "transition:control_room:matrix_rain:2.5"
+      button_hotspot.action_commands["push"] = "transition:control_room:matrix_rain:2.5"
+      scene.add_hotspot(button_hotspot)
+
+      # Verify hotspots are configured correctly
+      npc_hotspot.action_commands["talk"].should eq("transition:wizard_tower:vortex:3.0:500,300")
+      button_hotspot.action_commands["use"].should eq("transition:control_room:matrix_rain:2.5")
+      button_hotspot.action_commands["push"].should eq("transition:control_room:matrix_rain:2.5")
 
       RL.close_window
     end
   end
 
   describe "Verb System Integration" do
-    it "correctly identifies ExitZones when processing open verb" do
+    it "correctly handles door hotspots with open verb" do
       RL.init_window(800, 600, "Verb Integration Test")
       engine = PointClickEngine::Core::Engine.new(
         title: "Verb Test",
@@ -146,32 +138,42 @@ describe "Door Interaction System" do
       engine.add_scene(scene)
       engine.change_scene("test_scene")
 
-      # Create multiple hotspots including an ExitZone
+      # Create multiple hotspots including doors
       regular_hotspot = PointClickEngine::Scenes::Hotspot.new(
         "bookshelf",
         RL::Vector2.new(x: 100f32, y: 200f32),
         RL::Vector2.new(x: 150f32, y: 300f32)
       )
+      regular_hotspot.default_verb = PointClickEngine::UI::VerbType::Look
       scene.add_hotspot(regular_hotspot)
 
-      exit_zone = PointClickEngine::Scenes::ExitZone.new(
+      door_hotspot = PointClickEngine::Scenes::Hotspot.new(
         "exit_door",
         RL::Vector2.new(x: 800f32, y: 300f32),
-        RL::Vector2.new(x: 100f32, y: 200f32),
-        "next_room"
+        RL::Vector2.new(x: 100f32, y: 200f32)
       )
-      scene.add_hotspot(exit_zone)
+      door_hotspot.default_verb = PointClickEngine::UI::VerbType::Open
+      door_hotspot.object_type = PointClickEngine::UI::ObjectType::Door
+      door_hotspot.action_commands["open"] = "transition:next_room:fade:1.0"
+      scene.add_hotspot(door_hotspot)
 
-      # Test ExitZone identification
-      exit_position = RL::Vector2.new(x: 850f32, y: 400f32)
-      found_exits = scene.hotspots.select { |h| h.is_a?(PointClickEngine::Scenes::ExitZone) && h.contains_point?(exit_position) }
-      found_exits.size.should eq(1)
-      found_exits[0].should be(exit_zone)
+      # Test door identification
+      door_position = RL::Vector2.new(x: 850f32, y: 400f32)
+      found_door = scene.get_hotspot_at(door_position)
+      found_door.should_not be_nil
+      found_door.should be(door_hotspot)
+      if door = found_door
+        door.default_verb.should eq(PointClickEngine::UI::VerbType::Open)
+        door.object_type.should eq(PointClickEngine::UI::ObjectType::Door)
+      end
 
-      # Test that regular hotspots are not identified as ExitZones
+      # Test that regular hotspots have different properties
       bookshelf_position = RL::Vector2.new(x: 175f32, y: 350f32)
-      found_regular_exits = scene.hotspots.select { |h| h.is_a?(PointClickEngine::Scenes::ExitZone) && h.contains_point?(bookshelf_position) }
-      found_regular_exits.size.should eq(0)
+      found_bookshelf = scene.get_hotspot_at(bookshelf_position)
+      found_bookshelf.should be(regular_hotspot)
+      if bookshelf = found_bookshelf
+        bookshelf.default_verb.should eq(PointClickEngine::UI::VerbType::Look)
+      end
 
       RL.close_window
     end
@@ -196,6 +198,8 @@ describe "Door Interaction System" do
         RL::Vector2.new(x: 80f32, y: 60f32)
       )
       chest_hotspot.description = "A mysterious chest"
+      chest_hotspot.default_verb = PointClickEngine::UI::VerbType::Open
+      chest_hotspot.object_type = PointClickEngine::UI::ObjectType::Container
       scene.add_hotspot(chest_hotspot)
 
       # Regular hotspots should still be found normally
@@ -203,10 +207,29 @@ describe "Door Interaction System" do
       found_hotspot = scene.get_hotspot_at(chest_position)
       found_hotspot.should be(chest_hotspot)
 
-      # Should not be identified as ExitZone
-      found_hotspot.is_a?(PointClickEngine::Scenes::ExitZone).should be_false
+      # Should not have transition actions by default
+      if hotspot = found_hotspot
+        hotspot.action_commands.empty?.should be_true
+      end
 
       RL.close_window
+    end
+
+    it "handles action commands without transitions" do
+      scene = PointClickEngine::Scenes::Scene.new("test")
+
+      hotspot = PointClickEngine::Scenes::Hotspot.new(
+        "painting",
+        RL::Vector2.new(x: 300f32, y: 200f32),
+        RL::Vector2.new(x: 100f32, y: 150f32)
+      )
+      hotspot.action_commands["look"] = "It's a beautiful landscape painting"
+      hotspot.action_commands["use"] = "I can't interact with the painting"
+      scene.add_hotspot(hotspot)
+
+      # Non-transition commands should remain as-is
+      hotspot.action_commands["look"].should eq("It's a beautiful landscape painting")
+      hotspot.action_commands["use"].should eq("I can't interact with the painting")
     end
   end
 end

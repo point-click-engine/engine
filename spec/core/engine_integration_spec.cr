@@ -153,17 +153,16 @@ describe "Engine Integration with YAML Configuration" do
     
     hotspots:
       - name: door
-        type: exit
         x: 400
         y: 200
         width: 80
         height: 160
-        target_scene: room2
-        target_position:
-          x: 100
-          y: 300
-        transition_type: fade
         description: "Door to room 2"
+        default_verb: open
+        object_type: door
+        actions:
+          open: "transition:room2:fade:1.0:100,300"
+          use: "transition:room2:fade:1.0:100,300"
     YAML
 
     File.write("test_multi_scene/scenes/room1.yaml", room1_yaml)
@@ -175,17 +174,16 @@ describe "Engine Integration with YAML Configuration" do
     
     hotspots:
       - name: door_back
-        type: exit
         x: 50
         y: 200
         width: 80
         height: 160
-        target_scene: room1
-        target_position:
-          x: 350
-          y: 300
-        transition_type: fade
         description: "Back to room 1"
+        default_verb: open
+        object_type: door
+        actions:
+          open: "transition:room1:fade:1.0:350,300"
+          use: "transition:room1:fade:1.0:350,300"
     YAML
 
     File.write("test_multi_scene/scenes/room2.yaml", room2_yaml)
@@ -205,19 +203,28 @@ describe "Engine Integration with YAML Configuration" do
     engine.scenes.has_key?("room1").should be_true
     engine.scenes.has_key?("room2").should be_true
 
-    # Verify exit hotspots
+    # Verify door hotspots
     room1 = engine.scenes["room1"]
-    exit_hotspot = room1.hotspots.find { |h| h.name == "door" }
-    exit_hotspot.should_not be_nil
+    door_hotspot = room1.hotspots.find { |h| h.name == "door" }
+    door_hotspot.should_not be_nil
 
-    if exit_hs = exit_hotspot.as?(PointClickEngine::Scenes::ExitZone)
-      exit_hs.target_scene.should eq("room2")
-      exit_hs.target_position.should_not be_nil
-      if pos = exit_hs.target_position
-        pos.x.should eq(100)
-        pos.y.should eq(300)
+    if door = door_hotspot
+      door.default_verb.should eq(PointClickEngine::UI::VerbType::Open)
+      door.object_type.should eq(PointClickEngine::UI::ObjectType::Door)
+      door.action_commands["open"].should eq("transition:room2:fade:1.0:100,300")
+
+      # Test transition parsing
+      result = PointClickEngine::Scenes::TransitionHelper.parse_transition_command(door.action_commands["open"])
+      result.should_not be_nil
+      if result
+        result[:scene].should eq("room2")
+        result[:effect].should eq(PointClickEngine::Graphics::TransitionEffect::Fade)
+        result[:duration].should eq(1.0f32)
+        if pos = result[:position]
+          pos.x.should eq(100f32)
+          pos.y.should eq(300f32)
+        end
       end
-      exit_hs.transition_type.should eq(PointClickEngine::Scenes::TransitionType::Fade)
     end
 
     # Cleanup

@@ -122,7 +122,7 @@ walkable_areas:
 hotspots: Array(Hotspot)
   # Rectangle hotspot
   - name: String            # Unique identifier
-    type: String?           # "rectangle" (default) | "polygon" | "exit"
+    type: String?           # "rectangle" (default) | "polygon" | "dynamic"
     x: Float32              # X position
     y: Float32              # Y position
     width: Float32          # Width
@@ -132,7 +132,39 @@ hotspots: Array(Hotspot)
     # Optional properties
     active: Bool?           # Is hotspot active (default: true)
     visible: Bool?          # Is hotspot visible (default: true)
-    cursor: String?         # Custom cursor on hover
+    default_verb: String?   # Default verb when hovering (e.g., "open", "look", "use")
+    object_type: String?    # Object classification ("door", "item", "character", etc.)
+    
+    # Action handlers - can be simple text responses or special commands
+    actions:                # Actions for different verbs
+      look: String?         # Text shown when looking at the hotspot
+      use: String?          # Response or command when using
+      talk: String?         # Response when talking to
+      take: String?         # Response when trying to take
+      open: String?         # Can trigger scene transitions (see below)
+      close: String?        # Response when closing
+      push: String?         # Response when pushing
+      pull: String?         # Response when pulling
+      give: String?         # Response when giving items
+      walk: String?         # Response or command when walking to
+    
+    # Scene Transitions via Actions
+    # Any action can trigger a transition using this format:
+    # "transition:scene_name:effect:duration:x,y"
+    # Examples:
+    #   open: "transition:garden:swirl:4.5:300,400"
+    #   use: "transition:dungeon:fade:2.0:100,200"
+    #   talk: "transition:wizard_tower:star_wipe:3.0:500,300"
+    #
+    # Parameters:
+    # - scene_name: Required. Target scene to transition to
+    # - effect: Optional. Transition effect (default: fade)
+    #   Available effects: fade, dissolve, slide_left, slide_right, slide_up, slide_down,
+    #   iris, swirl, star_wipe, heart_wipe, curtain, ripple, checkerboard, pixelate,
+    #   warp, wave, glitch, film_burn, static, matrix_rain, zoom_blur, clock_wipe,
+    #   barn_door, page_turn, shatter, vortex, fire
+    # - duration: Optional. Transition duration in seconds (default: 1.0)
+    # - x,y: Optional. Target position for player in new scene
     
     # For dynamic hotspots
     states: Array(HotspotState)?
@@ -152,39 +184,19 @@ hotspots: Array(Hotspot)
     description: String
     # ... other properties same as rectangle
     
-  # Exit hotspot (scene transition)
+  # Dynamic hotspot (changes based on game state)
   - name: String
-    type: "exit"           # REQUIRED: Marks this hotspot as an exit/door
+    type: "dynamic"
     x: Float32
     y: Float32
     width: Float32
     height: Float32
-    description: String     # Shown on hover/examine
+    description: String
     
-    # Exit-specific properties
-    target_scene: String    # Scene to transition to
-    target_position:        # Player position in target scene
-      x: Float32
-      y: Float32
-    transition_type: String? # "fade" | "iris" | "slide_left" | etc.
-    auto_walk: Bool?        # Auto-walk to exit before transition
-    
-    # Optional exit properties
-    default_verb: String?   # Default verb (e.g., "open" for doors)
-    object_type: String?    # Visual hint (e.g., "door", "stairs")
-    locked_message: String? # Message when requirements not met
-    
-    # Edge exit (transition at screen edge)
-    edge: String?           # "left" | "right" | "top" | "bottom"
-    
-    # Exit requirements
-    requirements: Condition? # Conditions to allow exit
-    
-    # Action-specific messages
-    actions:               # Custom messages for verb actions
-      look: String?        # Custom look description
-      use: String?         # Custom use message
-      open: String?        # Custom open message
+    # Dynamic-specific properties
+    states: Hash(String, HotspotState)  # Named states
+    visibility_conditions: Array(Condition)?  # When to show
+    state_conditions: Hash(String, Array(Condition))?  # State triggers
 
 # Characters in the scene
 characters: Array(Character)

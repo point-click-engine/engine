@@ -94,10 +94,10 @@ require "./inventory/inventory_system"
 # Scene modules
 require "./scenes/hotspot"
 require "./scenes/polygon_hotspot"
-require "./scenes/exit_zone"
 require "./scenes/walkable_area"
 require "./scenes/scene"
 require "./scenes/scene_loader"
+require "./scenes/transition_helper"
 
 # Scripting modules
 require "./scripting/event_system"
@@ -142,9 +142,6 @@ module PointClickEngine
   alias Scene = Scenes::Scene
   alias Hotspot = Scenes::Hotspot
   alias PolygonHotspot = Scenes::PolygonHotspot
-  alias ExitZone = Scenes::ExitZone
-  alias TransitionType = Scenes::TransitionType
-  alias EdgeExit = Scenes::EdgeExit
   alias WalkableArea = Scenes::WalkableArea
   alias PolygonRegion = Scenes::PolygonRegion
   alias WalkBehindRegion = Scenes::WalkBehindRegion

@@ -120,13 +120,13 @@ module PointClickEngine
 
       # Smart detection based on hotspot properties
       private def detect_verb_from_properties(hotspot : Hotspot) : VerbType
+        # First check if hotspot has a default verb set
+        if verb = hotspot.default_verb
+          return verb
+        end
+
         name = hotspot.name.downcase
         desc = hotspot.description.downcase
-
-        # Exit zones
-        if hotspot.is_a?(Scenes::ExitZone)
-          return VerbType::Walk
-        end
 
         # Character detection
         if name.includes?("butler") || name.includes?("guard") ||

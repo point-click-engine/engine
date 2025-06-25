@@ -11,8 +11,11 @@ module PointClickEngine
         def self.load_shader_from_code(vertex_source : String, fragment_source : String) : RL::Shader?
           begin
             shader = RL.load_shader_from_memory(vertex_source, fragment_source)
-            puts "TRANSITION: Shader loaded successfully, ID: #{shader.id}"
-            return shader
+            if shader.id > 0
+              return shader
+            else
+              return nil
+            end
           rescue ex
             puts "TRANSITION ERROR: Failed to load shader - #{ex.message}"
             return nil
@@ -23,10 +26,9 @@ module PointClickEngine
         def self.create_basic_shader(fragment_source : String) : RL::Shader?
           vertex_source = <<-SHADER
           #version 330 core
-          layout (location = 0) in vec3 aPos;
-          layout (location = 1) in vec2 aTexCoord;
-          layout (location = 2) in vec3 aNormal;
-          layout (location = 3) in vec4 aColor;
+          in vec3 vertexPosition;
+          in vec2 vertexTexCoord;
+          in vec4 vertexColor;
 
           out vec2 fragTexCoord;
           out vec4 fragColor;
@@ -35,9 +37,9 @@ module PointClickEngine
 
           void main()
           {
-              fragTexCoord = aTexCoord;
-              fragColor = aColor;
-              gl_Position = mvp * vec4(aPos, 1.0);
+              fragTexCoord = vertexTexCoord;
+              fragColor = vertexColor;
+              gl_Position = mvp * vec4(vertexPosition, 1.0);
           }
           SHADER
 

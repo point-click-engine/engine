@@ -28,6 +28,7 @@ require "./dependency_container_simple"
 require "./config_manager"
 require "./performance_monitor"
 require "./render_validation"
+require "../graphics/transitions/transition_effect"
 
 module PointClickEngine
   # Core engine functionality, game loop, and state management
@@ -615,6 +616,37 @@ module PointClickEngine
       # NOTE: If the specified scene doesn't exist, a warning is printed
       # and the current scene remains unchanged.
       def change_scene(name : String)
+        change_scene_with_transition(name, nil, 0.0f32)
+      end
+
+      # Change scene with a specific transition effect
+      def change_scene_with_transition(name : String, transition_effect : Graphics::TransitionEffect?, duration : Float32 = 1.0f32, target_position : RL::Vector2? = nil)
+        # If we have a transition manager and effect, start the transition
+        if tm = @system_manager.transition_manager
+          if effect = transition_effect
+            tm.start_transition(effect, duration) do
+              # This callback runs at the halfway point of the transition
+              perform_scene_change(name)
+
+              # Set player position if provided
+              if pos = target_position
+                if p = @player
+                  p.position = pos
+                  if p.responds_to?(:stop_walking)
+                    p.stop_walking
+                  end
+                end
+              end
+            end
+            return
+          end
+        end
+
+        # No transition, just change scene immediately
+        perform_scene_change(name)
+      end
+
+      private def perform_scene_change(name : String)
         # Try to change scene via SceneManager first
         result = @scene_manager.change_scene(name)
         case result

@@ -3,6 +3,7 @@
 require "../../ui/cursor_manager"
 require "../../scenes/scene"
 require "../../scenes/hotspot"
+require "../../scenes/transition_helper"
 require "../../characters/character"
 require "../../inventory/inventory_system"
 require "../../ui/dialog_manager"
@@ -108,16 +109,6 @@ module PointClickEngine
             end
           end
 
-          # For open verb, prioritize ExitZones (doors should open/transition)
-          if verb.open?
-            # Look for ExitZones at the clicked position
-            exit_zone = scene.hotspots.find { |h| h.is_a?(Scenes::ExitZone) && h.active && h.visible && h.contains_point?(pos) }
-            if exit_zone
-              execute_verb_on_hotspot(verb, exit_zone, pos, player)
-              return
-            end
-          end
-
           # Check for hotspot
           if hotspot = scene.get_hotspot_at(pos)
             execute_verb_on_hotspot(verb, hotspot, pos, player)
@@ -142,7 +133,15 @@ module PointClickEngine
         end
 
         private def execute_verb_on_hotspot(verb : UI::VerbType, hotspot : Scenes::Hotspot, pos : RL::Vector2, player : Characters::Character?)
-          # Check for custom handler first
+          # Check for action commands first (like scene transitions)
+          verb_name = verb.to_s.downcase
+          if command = hotspot.action_commands[verb_name]?
+            if Scenes::TransitionHelper.execute_transition(command, @engine)
+              return
+            end
+          end
+
+          # Check for custom handler
           if handler = @verb_handlers[verb]?
             handler.call(hotspot, pos)
             return
@@ -200,31 +199,7 @@ module PointClickEngine
         end
 
         private def handle_walk_verb(hotspot : Scenes::Hotspot, pos : RL::Vector2, player : Characters::Character?)
-          if hotspot.is_a?(Scenes::ExitZone)
-            exit_zone = hotspot.as(Scenes::ExitZone)
-
-            # Check if exit is accessible
-            if !exit_zone.is_accessible?(@engine.inventory)
-              msg = exit_zone.locked_message || "You can't go there yet."
-              show_message(msg)
-              return
-            end
-
-            # Perform the transition
-            if exit_zone.auto_walk && player
-              # Walk to exit position first
-              walk_target = exit_zone.get_walk_target
-              player.walk_to(walk_target)
-
-              # Set up callback for when walking is complete
-              player.on_walk_complete = -> {
-                perform_exit_transition(exit_zone)
-              }
-            else
-              # Immediate transition
-              perform_exit_transition(exit_zone)
-            end
-          elsif player
+          if player
             handle_walk_to(player, @engine.current_scene.not_nil!, pos)
           end
         end
@@ -244,13 +219,8 @@ module PointClickEngine
             player.use_item_on_target(hotspot.position)
           end
 
-          # Check if it's an exit zone (treat use as walk)
-          if hotspot.is_a?(Scenes::ExitZone)
-            handle_walk_verb(hotspot, hotspot.position, player)
-          else
-            # Call hotspot's on_click handler
-            hotspot.on_click.try &.call
-          end
+          # Call hotspot's on_click handler
+          hotspot.on_click.try &.call
         end
 
         private def handle_take_verb(hotspot : Scenes::Hotspot, player : Characters::Character?)
@@ -264,16 +234,11 @@ module PointClickEngine
         end
 
         private def handle_open_verb(hotspot : Scenes::Hotspot, player : Characters::Character?)
-          # Check if it's an exit zone (like a door)
-          if hotspot.is_a?(Scenes::ExitZone)
-            handle_walk_verb(hotspot, hotspot.position, player)
+          # Call hotspot's on_click handler if available
+          if hotspot.on_click
+            hotspot.on_click.try &.call
           else
-            # Call hotspot's on_click handler if available
-            if hotspot.on_click
-              hotspot.on_click.try &.call
-            else
-              show_message("I can't open that.")
-            end
+            show_message("I can't open that.")
           end
         end
 
@@ -297,96 +262,6 @@ module PointClickEngine
             player.handle_click(target, scene)
           else
             player.walk_to(target)
-          end
-        end
-
-        private def perform_exit_transition(exit_zone : Scenes::ExitZone)
-          # Use the integrated transition system with enhanced scene change handling
-          if tm = @engine.transition_manager
-            effect = map_transition_type(exit_zone.transition_type, exit_zone.position)
-
-            # Use VERY long transition duration for super cheesy dramatic effect!
-            transition_duration = 4.5f32
-
-            # Start the transition
-            tm.start_transition(effect, transition_duration) do
-              # This callback runs at the halfway point of the transition
-              # Perfect time to change scenes while screen is obscured
-
-              # Change to the target scene
-              @engine.change_scene(exit_zone.target_scene)
-
-              # Set player position in new scene
-              if (pos = exit_zone.target_position) && (player = @engine.player)
-                player.position = pos
-                if player.responds_to?(:stop_walking)
-                  player.stop_walking
-                end
-              end
-
-              # Add player to the new scene
-              if new_scene = @engine.current_scene
-                if player = @engine.player
-                  new_scene.set_player(player)
-                end
-              end
-
-              # Trigger scene enter callbacks
-              @engine.current_scene.try(&.on_enter.try(&.call))
-
-              # Play transition sound if available
-              @engine.audio_manager.try &.play_sound_effect("transition")
-            end
-          else
-            # Fallback to immediate scene change
-            @engine.change_scene(exit_zone.target_scene)
-            if (pos = exit_zone.target_position) && (player = @engine.player)
-              player.position = pos
-            end
-          end
-        end
-
-        private def map_transition_type(transition_type : Scenes::TransitionType, position : RL::Vector2) : Graphics::TransitionEffect
-          case transition_type
-          when .fade?
-            Graphics::TransitionEffect::Fade
-          when .slide?
-            # Choose slide direction based on exit position
-            if position.x < 100
-              Graphics::TransitionEffect::SlideLeft
-            elsif position.x > 900
-              Graphics::TransitionEffect::SlideRight
-            elsif position.y < 100
-              Graphics::TransitionEffect::SlideUp
-            else
-              Graphics::TransitionEffect::SlideDown
-            end
-          when .iris?
-            Graphics::TransitionEffect::Iris
-          when .swirl?
-            Graphics::TransitionEffect::Swirl
-          when .star_wipe?
-            Graphics::TransitionEffect::StarWipe
-          when .heart_wipe?
-            Graphics::TransitionEffect::HeartWipe
-          when .curtain?
-            Graphics::TransitionEffect::Curtain
-          when .ripple?
-            Graphics::TransitionEffect::Ripple
-          when .checkerboard?
-            Graphics::TransitionEffect::Checkerboard
-          when .warp?
-            Graphics::TransitionEffect::Warp
-          when .matrix_rain?
-            Graphics::TransitionEffect::MatrixRain
-          when .vortex?
-            Graphics::TransitionEffect::Vortex
-          when .page_turn?
-            Graphics::TransitionEffect::PageTurn
-          when .fire?
-            Graphics::TransitionEffect::Fire
-          else
-            Graphics::TransitionEffect::Fade
           end
         end
 

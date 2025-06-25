@@ -143,18 +143,20 @@ describe "UI Fixes Integration Tests" do
     # Create a scene with a door hotspot
     scene = PointClickEngine::Scenes::Scene.new("door_test_scene")
 
-    # Create a door-like exit zone
+    # Create a door hotspot with transition action
     door_position = RL::Vector2.new(x: 500, y: 300)
     door_size = RL::Vector2.new(x: 60, y: 100)
 
-    door = PointClickEngine::Scenes::ExitZone.new(
+    door = PointClickEngine::Scenes::Hotspot.new(
       "door",
       door_position,
-      door_size,
-      "next_room"
+      door_size
     )
     door.description = "A wooden door"
-    door.auto_walk = true
+    door.default_verb = PointClickEngine::UI::VerbType::Open
+    door.object_type = PointClickEngine::UI::ObjectType::Door
+    door.action_commands["open"] = "transition:next_room:fade:1.0"
+    door.action_commands["use"] = "transition:next_room:fade:1.0"
 
     scene.add_hotspot(door)
     engine.add_scene(scene)

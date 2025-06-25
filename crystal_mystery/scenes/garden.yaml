@@ -61,17 +61,14 @@ hotspots:
       look: "Beautiful roses in full bloom"
       use: "examine_flowerbed"
   - name: door_to_lab
-    type: exit
     x: 50
     y: 300
     width: 100
     height: 200
     description: "Back to the laboratory"
-    target_scene: laboratory
-    target_position: {x: 800, y: 400}
-    transition_type: star_wipe
     default_verb: open
     object_type: door
     actions:
       look: "Back to the laboratory"
-      use: "Return to the laboratory"
+      open: "transition:laboratory:star_wipe:4.5:800,400"
+      use: "transition:laboratory:star_wipe:4.5:800,400"

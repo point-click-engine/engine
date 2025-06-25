@@ -99,23 +99,30 @@ describe PointClickEngine::Core::EngineComponents::VerbInputSystem do
     end
   end
 
-  describe "exit zone transitions" do
-    it "performs transitions with proper timing" do
+  describe "action-based transitions" do
+    it "triggers transitions through hotspot actions" do
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
       verb_system = PointClickEngine::Core::EngineComponents::VerbInputSystem.new(engine)
 
-      # Create exit zone
-      exit_zone = PointClickEngine::Scenes::ExitZone.new(
-        "exit",
+      # Create door hotspot with transition action
+      door = PointClickEngine::Scenes::Hotspot.new(
+        "door",
         RL::Vector2.new(x: 900, y: 300),
-        RL::Vector2.new(x: 100, y: 200),
-        "next_scene"
+        RL::Vector2.new(x: 100, y: 200)
       )
-      exit_zone.transition_type = PointClickEngine::Scenes::TransitionType::Fade
+      door.default_verb = PointClickEngine::UI::VerbType::Open
+      door.object_type = PointClickEngine::UI::ObjectType::Door
+      door.action_commands["open"] = "transition:next_scene:fade:1.0:500,300"
 
-      # Test transition type exists
-      exit_zone.transition_type.should eq(PointClickEngine::Scenes::TransitionType::Fade)
+      # Test transition command parsing
+      result = PointClickEngine::Scenes::TransitionHelper.parse_transition_command(door.action_commands["open"])
+      result.should_not be_nil
+      if result
+        result[:scene].should eq("next_scene")
+        result[:effect].should eq(PointClickEngine::Graphics::TransitionEffect::Fade)
+        result[:duration].should eq(1.0f32)
+      end
     end
   end
 end

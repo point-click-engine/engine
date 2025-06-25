@@ -55,20 +55,17 @@ hotspots:
       look: "A mahogany desk with scattered papers"
       use: "examine_desk"
   - name: door_to_lab
-    type: exit
     x: 850
     y: 300
     width: 100
     height: 200
     description: "Door to the laboratory"
-    target_scene: laboratory
-    target_position: {x: 100, y: 400}
-    transition_type: swirl
     default_verb: open
     object_type: door
     actions:
       look: "A heavy wooden door leading to the laboratory"
-      use: "The door is already open"
+      open: "transition:laboratory:swirl:4.5:100,400"
+      use: "transition:laboratory:swirl:4.5:100,400"
   - name: painting
     type: polygon
     points:

@@ -21,6 +21,7 @@ module PointClickEngine
 
         @render_texture : RL::RenderTexture2D?
         @current_effect : BaseTransitionEffect?
+        @callback_called : Bool = false
         @width : Int32
         @height : Int32
 
@@ -30,27 +31,23 @@ module PointClickEngine
 
         # Start a transition effect
         def start_transition(effect : TransitionEffect, duration : Float32 = 1.0f32, &on_complete : -> Nil)
-          puts "TRANSITION: Starting transition #{effect} for #{duration}s"
           @active = true
           @progress = 0.0f32
           @duration = duration
           @current_effect_type = effect
           @on_complete = on_complete
+          @callback_called = false
 
           # Cleanup previous effect
           @current_effect.try(&.cleanup)
 
           # Create new effect instance
           @current_effect = create_effect_instance(effect, duration)
+
+          # Load the shader for the effect
           if effect_instance = @current_effect
-            puts "TRANSITION: Created effect instance: #{effect_instance.class}"
-            if shader = effect_instance.load_shader
-              puts "TRANSITION: Shader loaded successfully"
-            else
-              puts "TRANSITION: Failed to load shader!"
-            end
-          else
-            puts "TRANSITION: Failed to create effect instance!"
+            effect_instance.shader = effect_instance.load_shader
+            # Shader loaded successfully
           end
         end
 
@@ -60,10 +57,15 @@ module PointClickEngine
 
           @progress += dt / @duration
 
+          # Call the scene change callback at halfway point
+          if @progress >= 0.5f32 && !@callback_called
+            @on_complete.try(&.call)
+            @callback_called = true
+          end
+
           if @progress >= 1.0f32
             @progress = 1.0f32
             @active = false
-            @on_complete.try(&.call)
           end
 
           # Update current effect
@@ -96,27 +98,26 @@ module PointClickEngine
           return yield unless texture = @render_texture
           return yield unless effect = @current_effect
 
-          # For fade effect, we don't need shaders
-          if effect.is_a?(FadeEffect)
-            puts "TRANSITION: Rendering fade effect, progress: #{@progress}"
-
-            # Render scene normally
+          # If no shader, just render with basic fade
+          unless shader = effect.shader
+            # No shader available, fallback to fade
             yield
 
-            # Draw a black overlay with varying alpha
+            # Simple fade overlay
             alpha = (255 * @progress).to_u8
             RL.draw_rectangle(0, 0, @width, @height, RL::Color.new(r: 0, g: 0, b: 0, a: alpha))
+
+            # Fallback fade effect applied
             return
           end
-
-          return yield unless shader = effect.shader
-
-          puts "TRANSITION: Rendering with shader effect, progress: #{@progress}"
 
           # Render scene to texture
           RL.begin_texture_mode(texture)
           yield
           RL.end_texture_mode
+
+          # Update shader parameters before rendering
+          effect.update_shader_params(@progress)
 
           # Render texture with shader effect
           RL.begin_shader_mode(shader)
@@ -127,6 +128,8 @@ module PointClickEngine
             RL::WHITE
           )
           RL.end_shader_mode
+
+          # Transition effect applied
         end
 
         # Stop current transition

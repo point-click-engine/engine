@@ -67,14 +67,16 @@ describe "Player Visibility in Scene Transitions" do
     library.player.should eq(player)
     library.characters.should contain(player)
 
-    # Create exit zone to laboratory
-    exit_to_lab = PointClickEngine::Scenes::ExitZone.new(
+    # Create door hotspot to laboratory
+    door_to_lab = PointClickEngine::Scenes::Hotspot.new(
       "door_to_lab",
       RL::Vector2.new(x: 850f32, y: 300f32),
-      RL::Vector2.new(x: 100f32, y: 200f32),
-      "laboratory"
+      RL::Vector2.new(x: 100f32, y: 200f32)
     )
-    exit_to_lab.target_position = RL::Vector2.new(x: 100f32, y: 400f32)
+    door_to_lab.default_verb = PointClickEngine::UI::VerbType::Open
+    door_to_lab.object_type = PointClickEngine::UI::ObjectType::Door
+    door_to_lab.action_commands["open"] = "transition:laboratory:fade:1.0:100,400"
+    library.add_hotspot(door_to_lab)
 
     # Simulate scene transition
     engine.change_scene("laboratory")

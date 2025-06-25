@@ -107,7 +107,7 @@ module PointClickEngine
 
             # Validate type
             if type = hotspot["type"]?
-              valid_types = ["rectangle", "polygon", "dynamic", "exit"]
+              valid_types = ["rectangle", "polygon", "dynamic"]
               unless valid_types.includes?(type.as_s)
                 errors << "#{prefix}: Invalid type '#{type}'. Must be one of: #{valid_types.join(", ")}"
               end
@@ -146,7 +146,7 @@ module PointClickEngine
 
             # Validate actions
             if actions = hotspot["actions"]?
-              valid_actions = ["look", "use", "talk", "take"]
+              valid_actions = ["look", "use", "talk", "take", "open", "close", "push", "pull", "give", "walk"]
               actions.as_h.each do |action, data|
                 unless valid_actions.includes?(action.as_s)
                   errors << "#{prefix}: Unknown action '#{action}'"
@@ -158,24 +158,6 @@ module PointClickEngine
             if hotspot["type"]?.try(&.as_s) == "dynamic"
               unless hotspot["conditions"]?
                 errors << "#{prefix}: Dynamic hotspot requires 'conditions'"
-              end
-            end
-
-            # Validate exit hotspot fields
-            if hotspot["type"]?.try(&.as_s) == "exit"
-              # Required fields for exits
-              unless hotspot["target_scene"]?
-                errors << "#{prefix}: Exit hotspot requires 'target_scene'"
-              end
-
-              # Optional but recommended fields
-              unless hotspot["target_position"]?
-                errors << "#{prefix}: Exit hotspot should have 'target_position' to specify spawn point"
-              else
-                target_pos = hotspot["target_position"]
-                unless target_pos["x"]? && target_pos["y"]?
-                  errors << "#{prefix}: target_position requires both x and y coordinates"
-                end
               end
             end
           end
