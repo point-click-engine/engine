@@ -417,8 +417,19 @@ module PointClickEngine
           item_rect = get_item_rect(index)
           RL.draw_rectangle_rec(item_rect, RL::Color.new(r: 50, g: 50, b: 50, a: 255))
           if icon = item.icon
-            RL.draw_texture_ex(icon, RL::Vector2.new(x: item_rect.x, y: item_rect.y), 0.0,
-              @slot_size / icon.width.to_f, RL::WHITE)
+            # Scale icon to fit within slot, maintaining aspect ratio
+            scale_x = @slot_size / icon.width.to_f
+            scale_y = @slot_size / icon.height.to_f
+            scale = [scale_x, scale_y].min # Use smaller scale to fit both dimensions
+
+            # Center the icon in the slot
+            icon_width = icon.width * scale
+            icon_height = icon.height * scale
+            icon_x = item_rect.x + (@slot_size - icon_width) / 2
+            icon_y = item_rect.y + (@slot_size - icon_height) / 2
+
+            RL.draw_texture_ex(icon, RL::Vector2.new(x: icon_x, y: icon_y), 0.0,
+              scale, RL::WHITE)
           else
             # Draw item name if no icon
             name_text = item.name.size > 8 ? item.name[0..7] : item.name

@@ -660,22 +660,66 @@ module PointClickEngine
             scene.set_player(player)
           end
 
+          # Setup navigation with correct character size
+          if scene.enable_pathfinding && scene.background
+            # Debug: Check if walkable area exists BEFORE setup_navigation
+            if walkable = scene.walkable_area
+              puts "[NAVIGATION] Scene has walkable area with #{walkable.regions.size} regions"
+            else
+              puts "[NAVIGATION] WARNING: Scene has no walkable area defined!"
+            end
+
+            if p = @player
+              # Use the larger dimension to ensure character fits in all orientations
+              char_width = p.size.x * p.scale
+              char_height = p.size.y * p.scale
+              # Use half the smaller dimension as radius for better navigation
+              navigation_radius = Math.min(char_width, char_height) / 2.0_f32
+              puts "[NAVIGATION] Setting up navigation for scene '#{name}' with navigation radius: #{navigation_radius} (actual size: #{char_width}x#{char_height})"
+
+              # Debug: Check if player spawn position is walkable
+              if walkable = scene.walkable_area
+                spawn_walkable = walkable.is_point_walkable?(p.position)
+                puts "[NAVIGATION] Player spawn position #{p.position} is #{spawn_walkable ? "WALKABLE" : "NOT WALKABLE"}"
+
+                # List all walkable regions
+                puts "[NAVIGATION] Scene has #{walkable.regions.size} regions:"
+                walkable.regions.each do |region|
+                  puts "[NAVIGATION]   - '#{region.name}' (walkable: #{region.walkable}) vertices: #{region.vertices.size}"
+                  if region.vertices.size >= 4
+                    min_y = region.vertices.min_by(&.y).y
+                    max_y = region.vertices.max_by(&.y).y
+                    min_x = region.vertices.min_by(&.x).x
+                    max_x = region.vertices.max_by(&.x).x
+                    puts "[NAVIGATION]     Bounds: X(#{min_x}-#{max_x}) Y(#{min_y}-#{max_y})"
+                  end
+                end
+              end
+
+              scene.setup_navigation(navigation_radius)
+            else
+              # Use default if no player
+              puts "[NAVIGATION] Setting up navigation for scene '#{name}' with default radius"
+              scene.setup_navigation
+            end
+          end
+
           # Update camera for new scene
           if camera = @camera
-            if bg = scene.background
-              if scene.enable_camera_scrolling
-                camera.set_scene_size(bg.width, bg.height)
-                # Center camera on player if present
-                if player = @player
-                  camera.center_on(player.position.x, player.position.y)
-                else
-                  camera.center_on((bg.width / 2).to_f32, (bg.height / 2).to_f32)
-                end
+            if scene.enable_camera_scrolling
+              # Use logical dimensions for camera bounds, not texture size!
+              camera.set_scene_size(scene.logical_width, scene.logical_height)
+              # Center camera on player if present
+              if player = @player
+                camera.center_on(player.position.x, player.position.y)
               else
-                # Disable scrolling for this scene by setting scene size to viewport size
-                camera.set_scene_size(camera.viewport_width, camera.viewport_height)
-                camera.center_on((camera.viewport_width / 2).to_f32, (camera.viewport_height / 2).to_f32)
+                # Center on logical scene center
+                camera.center_on((scene.logical_width / 2).to_f32, (scene.logical_height / 2).to_f32)
               end
+            else
+              # Disable scrolling for this scene by setting scene size to viewport size
+              camera.set_scene_size(camera.viewport_width, camera.viewport_height)
+              camera.center_on((camera.viewport_width / 2).to_f32, (camera.viewport_height / 2).to_f32)
             end
           end
 

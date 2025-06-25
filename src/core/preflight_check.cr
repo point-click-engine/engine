@@ -297,7 +297,43 @@ module PointClickEngine
         elsif !in_walkable_area && walkable_areas.any? { |a| a[:walkable] }
           result.warnings << "Player starting position (#{player_x}, #{player_y}) may not be in any walkable area in scene '#{scene_name}'"
         else
-          result.info << "✓ Player starting position is in walkable area in scene '#{scene_name}'"
+          # Also check with character radius for navigation grid compatibility
+          # Use a conservative radius check (10 pixels as per current engine settings)
+          character_radius = 10.0
+          check_points = [
+            {x: player_x - character_radius, y: player_y - character_radius},
+            {x: player_x + character_radius, y: player_y - character_radius},
+            {x: player_x - character_radius, y: player_y + character_radius},
+            {x: player_x + character_radius, y: player_y + character_radius},
+          ]
+
+          all_corners_walkable = true
+          check_points.each do |point|
+            corner_in_walkable = false
+            corner_in_non_walkable = false
+
+            walkable_areas.each do |area|
+              if point_in_polygon?(point[:x], point[:y], area[:vertices])
+                if area[:walkable]
+                  corner_in_walkable = true
+                else
+                  corner_in_non_walkable = true
+                end
+              end
+            end
+
+            if corner_in_non_walkable || (!corner_in_walkable && walkable_areas.any? { |a| a[:walkable] })
+              all_corners_walkable = false
+              break
+            end
+          end
+
+          if all_corners_walkable
+            result.info << "✓ Player starting position is in walkable area in scene '#{scene_name}'"
+          else
+            result.passed = false
+            result.errors << "Player starting position (#{player_x}, #{player_y}) is too close to non-walkable areas. The navigation system requires at least #{character_radius} pixels clearance. Consider moving the spawn position to (#{player_x + 20}, #{player_y + 20}) or another location with more clearance."
+          end
         end
       rescue ex
         result.warnings << "Could not validate player walkable position in scene '#{scene_name}': #{ex.message}"

@@ -282,7 +282,7 @@ module PointClickEngine
         end
 
         # Create from scene hotspots and objects
-        def self.from_scene(scene : Scenes::Scene, width : Int32, height : Int32, cell_size : Int32 = 32) : NavigationGrid
+        def self.from_scene(scene : Scenes::Scene, width : Int32, height : Int32, cell_size : Int32 = 32, character_radius : Float32 = 32.0_f32) : NavigationGrid
           grid_width = (width / cell_size).to_i + 1
           grid_height = (height / cell_size).to_i + 1
           grid = new(grid_width, grid_height, cell_size)
@@ -290,11 +290,33 @@ module PointClickEngine
           # Apply walkable area restrictions if defined
           if walkable_area = scene.walkable_area
             # Mark all cells based on walkable area
+            # We need to ensure a character can fit, so we check a radius around each cell
+            total_walkable_cells = 0
             (0...grid.height).each do |y|
               (0...grid.width).each do |x|
                 world_x, world_y = grid.grid_to_world(x, y)
                 world_pos = RL::Vector2.new(x: world_x, y: world_y)
-                is_walkable = walkable_area.is_point_walkable?(world_pos)
+
+                # Check if a character-sized area can fit here
+                # We use a more lenient approach: check center and a smaller radius
+                # This prevents overly restrictive navigation grids
+                reduced_radius = character_radius * 0.7_f32 # Use 70% of actual radius for more flexibility
+
+                check_points = [
+                  world_pos, # Center must always be walkable
+                  RL::Vector2.new(x: world_x - reduced_radius, y: world_y - reduced_radius),
+                  RL::Vector2.new(x: world_x + reduced_radius, y: world_y - reduced_radius),
+                  RL::Vector2.new(x: world_x - reduced_radius, y: world_y + reduced_radius),
+                  RL::Vector2.new(x: world_x + reduced_radius, y: world_y + reduced_radius),
+                ]
+
+                # Center must be walkable, and at least 3 out of 5 points should be walkable
+                center_walkable = walkable_area.is_point_walkable?(world_pos)
+                points_walkable_count = check_points.count { |point| walkable_area.is_point_walkable?(point) }
+                is_walkable = center_walkable && points_walkable_count >= 3
+
+                # Count walkable cells (this was incorrectly inside the debug block!)
+                total_walkable_cells += 1 if is_walkable
                 grid.set_walkable(x, y, is_walkable)
               end
             end
@@ -341,13 +363,23 @@ module PointClickEngine
         start_grid = @grid.world_to_grid(start_x, start_y)
         end_grid = @grid.world_to_grid(end_x, end_y)
 
-        # Check if start and end are walkable
-        return nil unless @grid.is_walkable?(start_grid[0], start_grid[1])
+        # Only check if end is walkable - start position doesn't need to be walkable since we're already there
         return nil unless @grid.is_walkable?(end_grid[0], end_grid[1])
 
-        # Special case: already at destination
+        # Special case: already at destination grid cell
         if start_grid[0] == end_grid[0] && start_grid[1] == end_grid[1]
-          return [Raylib::Vector2.new(x: end_x, y: end_y)]
+          # If we're in the same grid cell but at different positions,
+          # return direct path to exact target position
+          start_pos = Raylib::Vector2.new(x: start_x, y: start_y)
+          end_pos = Raylib::Vector2.new(x: end_x, y: end_y)
+          distance = Math.sqrt((end_x - start_x)**2 + (end_y - start_y)**2)
+
+          # Only return direct path if there's meaningful distance
+          if distance > 1.0
+            return [start_pos, end_pos]
+          else
+            return [end_pos]
+          end
         end
 
         # A* algorithm with priority queue

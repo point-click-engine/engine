@@ -312,13 +312,37 @@ module PointClickEngine
       ##
       # # NOTE: Respects `movement_enabled` flag
       def handle_click(mouse_pos : RL::Vector2, scene : Scenes::Scene)
+        puts "[PLAYER] Mouse clicked at #{mouse_pos}, player at #{@position}"
         return unless @movement_enabled
 
-        # Check if the target is walkable
-        return unless scene.is_walkable?(mouse_pos)
+        # Don't move if clicking very close to current position
+        distance_to_target = Math.sqrt((mouse_pos.x - @position.x)**2 + (mouse_pos.y - @position.y)**2)
+        puts "[PLAYER] Distance to target: #{distance_to_target}"
+        if distance_to_target < 2.0 # Minimum movement threshold
+          puts "[PLAYER] Click too close to current position, ignoring"
+          return
+        end
 
-        # Start walking with enhanced animations
-        walk_to(mouse_pos)
+        # If the target is walkable, move directly there
+        if scene.is_walkable?(mouse_pos)
+          puts "[PLAYER] Target #{mouse_pos} is walkable, moving directly"
+          walk_to(mouse_pos, use_pathfinding: @use_pathfinding)
+        else
+          puts "[PLAYER] Target #{mouse_pos} is not walkable, finding nearest walkable point"
+          # Find the nearest walkable point to the target
+          if walkable_area = scene.walkable_area
+            nearest_point = walkable_area.find_nearest_walkable_point(mouse_pos)
+            puts "[PLAYER] Nearest walkable point: #{nearest_point}"
+            # Only move if we found a walkable point that's different from target
+            if scene.is_walkable?(nearest_point) &&
+               ((nearest_point.x - mouse_pos.x).abs > 1.0 || (nearest_point.y - mouse_pos.y).abs > 1.0)
+              puts "[PLAYER] Moving to nearest walkable point #{nearest_point}"
+              walk_to(nearest_point, use_pathfinding: @use_pathfinding)
+            else
+              puts "[PLAYER] Nearest point #{nearest_point} is not suitable for movement"
+            end
+          end
+        end
       end
 
       # # Plays item usage animation facing the target.

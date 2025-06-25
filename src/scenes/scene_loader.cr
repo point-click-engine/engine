@@ -48,6 +48,15 @@ module PointClickEngine
           scene.navigation_cell_size = navigation_cell_size.as_i
         end
 
+        # Load logical dimensions (default to 1024x768 if not specified)
+        if logical_width = scene_data["logical_width"]?
+          scene.logical_width = logical_width.as_i
+        end
+
+        if logical_height = scene_data["logical_height"]?
+          scene.logical_height = logical_height.as_i
+        end
+
         if hotspots = scene_data["hotspots"]?
           hotspots.as_a.each do |hotspot_data|
             hotspot_type = hotspot_data["type"]?.try(&.as_s) || "rectangle"
@@ -258,6 +267,8 @@ module PointClickEngine
 
               walkable_area.regions << region
             end
+            # Ensure bounds are updated after loading all regions
+            walkable_area.update_bounds
           end
 
           # Load walk-behind regions

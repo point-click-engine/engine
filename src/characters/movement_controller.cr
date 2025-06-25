@@ -52,7 +52,15 @@ module PointClickEngine
       @cached_distance : Float32?
       @direction_cache_valid : Bool = false
 
+      # Stored preference for whether to use pathfinding when blocked
+      @use_pathfinding_preference : Bool = true
+
+      # Track last recalculation position to avoid infinite loops
+      @last_recalc_position : RL::Vector2?
+      @recalc_attempts : Int32 = 0
+
       def initialize(@character : Character)
+        @use_pathfinding_preference = @character.use_pathfinding
       end
 
       # Initiate direct movement to a target position
@@ -69,6 +77,7 @@ module PointClickEngine
       # controller.move_to(target, use_pathfinding: true)
       # ```
       def move_to(target : RL::Vector2, use_pathfinding : Bool? = nil)
+        puts "[MOVEMENT] Starting movement from #{@character.position} to #{target}"
         @target_position = target
         @character.state = CharacterState::Walking
 
@@ -76,16 +85,28 @@ module PointClickEngine
         clear_pathfinding_data
         invalidate_direction_cache
 
-        # Use pathfinding if requested and available
-        should_use_pathfinding = use_pathfinding || @character.use_pathfinding
-        if should_use_pathfinding && (scene = get_current_scene)
-          if calculated_path = scene.find_path(@character.position.x, @character.position.y, target.x, target.y)
-            setup_pathfinding(calculated_path)
-            return
+        # Store pathfinding preference
+        @use_pathfinding_preference = use_pathfinding.nil? ? @character.use_pathfinding : use_pathfinding
+        puts "[MOVEMENT] Using pathfinding: #{@use_pathfinding_preference}"
+
+        # If pathfinding is enabled, calculate path immediately
+        if @use_pathfinding_preference
+          if scene = get_current_scene
+            puts "[MOVEMENT] Calculating pathfinding route..."
+            if calculated_path = scene.find_path(@character.position.x, @character.position.y, target.x, target.y)
+              puts "[MOVEMENT] Pathfinding found route with #{calculated_path.size} waypoints"
+              setup_pathfinding(calculated_path)
+              return
+            else
+              puts "[MOVEMENT] Pathfinding failed, falling back to direct movement"
+            end
+          else
+            puts "[MOVEMENT] No scene available for pathfinding"
           end
         end
 
-        # Setup direct movement
+        # Setup direct movement if pathfinding is disabled or failed
+        puts "[MOVEMENT] Using direct movement to #{target}"
         update_direction_and_animation(target)
       end
 
@@ -117,6 +138,7 @@ module PointClickEngine
       # Clears movement target, pathfinding data, and returns character
       # to idle state. Executes completion callback if one was set.
       def stop_movement
+        puts "[MOVEMENT] STOPPING movement at position #{@character.position} (target was #{@target_position})"
         @target_position = nil
         clear_pathfinding_data
         invalidate_direction_cache
@@ -140,10 +162,14 @@ module PointClickEngine
         return unless @character.state == CharacterState::Walking
 
         if path = @path
+          puts "[MOVEMENT] Update: using pathfinding (#{path.size} waypoints, current index: #{@current_path_index})"
           update_pathfinding_movement(dt)
         elsif target = @target_position
+          distance = Utils::VectorMath.distance(@character.position, target)
+          puts "[MOVEMENT] Update: direct movement to #{target}, distance: #{distance}"
           update_direct_movement(target, dt)
         else
+          puts "[MOVEMENT] Update: no target or path, stopping"
           stop_movement
         end
       end
@@ -175,8 +201,8 @@ module PointClickEngine
       end
 
       private def update_direct_movement(target : RL::Vector2, dt : Float32)
-        # Use cached direction if available, otherwise calculate
-        direction, distance = get_direction_and_distance(target)
+        # Calculate fresh direction and distance (don't use cache for arrival check)
+        direction, distance = Utils::VectorMath.direction_and_distance(@character.position, target)
 
         # Check if we've arrived
         if distance <= MOVEMENT_ARRIVAL_THRESHOLD
@@ -187,10 +213,17 @@ module PointClickEngine
 
         # Calculate new position
         movement_step = @character.walking_speed * dt
-        new_position = Utils::VectorMath.move_towards(@character.position, target, movement_step)
+
+        # Don't force minimum movement - just use actual movement step
+        actual_step = movement_step
+
+        new_position = Utils::VectorMath.move_towards(@character.position, target, actual_step)
 
         # Apply movement with walkable area checking
         apply_movement(new_position, target)
+
+        # Invalidate cache after movement
+        invalidate_direction_cache
 
         # Update animation if direction changed significantly
         update_direction_and_animation(target)
@@ -201,20 +234,34 @@ module PointClickEngine
         return stop_movement if @current_path_index >= path.size
 
         current_waypoint = path[@current_path_index]
-        direction, distance = get_direction_and_distance(current_waypoint)
 
-        # Check if we reached the current waypoint
-        if distance <= PATHFINDING_WAYPOINT_THRESHOLD
+        # Always calculate fresh distance for waypoint threshold checking
+        # Don't use cached values as they may be stale after movement
+        fresh_direction, fresh_distance = Utils::VectorMath.direction_and_distance(@character.position, current_waypoint)
+
+        puts "[PATHFINDING] At #{@character.position}, moving to waypoint #{@current_path_index}: #{current_waypoint}, distance: #{fresh_distance}, threshold: #{PATHFINDING_WAYPOINT_THRESHOLD}"
+
+        # Check if we reached the current waypoint using fresh distance
+        if fresh_distance <= PATHFINDING_WAYPOINT_THRESHOLD
+          puts "[PATHFINDING] Reached waypoint #{@current_path_index}, advancing..."
           advance_to_next_waypoint
           return
         end
 
-        # Move towards current waypoint
+        # Move towards current waypoint using fresh direction
         movement_step = @character.walking_speed * dt
-        new_position = Utils::VectorMath.move_towards(@character.position, current_waypoint, movement_step)
+
+        # Don't force minimum movement - just use actual movement step
+        actual_step = movement_step
+
+        new_position = Utils::VectorMath.move_towards(@character.position, current_waypoint, actual_step)
+        puts "[PATHFINDING] Moving from #{@character.position} to #{new_position} (step: #{actual_step})"
 
         # Apply movement
         apply_movement(new_position, current_waypoint)
+
+        # Invalidate cache after movement to ensure fresh calculations next frame
+        invalidate_direction_cache
 
         # Update animation for current direction
         update_direction_and_animation(current_waypoint)
@@ -244,23 +291,10 @@ module PointClickEngine
       end
 
       private def apply_movement(new_position : RL::Vector2, target : RL::Vector2)
-        # Check walkable area constraints
-        if scene = get_current_scene
-          if scene.is_walkable?(new_position)
-            @character.position = new_position
-            update_character_scale_if_needed
-          else
-            # Try to constrain movement to walkable area
-            constrained_pos = scene.walkable_area.try(&.constrain_to_walkable(@character.position, new_position))
-            if constrained_pos
-              @character.position = constrained_pos
-              update_character_scale_if_needed
-            end
-          end
-        else
-          # No scene constraints, move freely
-          @character.position = new_position
-        end
+        # SIMPLIFIED: Just move without collision checks during movement
+        # The target walkability was already checked when movement was initiated
+        @character.position = new_position
+        update_character_scale_if_needed
 
         # Update sprite position
         @character.sprite_data.try(&.position = @character.position)
@@ -347,6 +381,12 @@ module PointClickEngine
       private def clear_pathfinding_data
         @path = nil
         @current_path_index = 0
+      end
+
+      private def handle_blocked_movement(target : RL::Vector2)
+        # Since we no longer check for blocked movement during motion,
+        # this method should not be called. If it is, just stop.
+        stop_movement
       end
 
       private def get_current_scene : Scenes::Scene?

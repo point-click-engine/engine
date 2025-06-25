@@ -92,6 +92,10 @@ name: String              # Unique scene identifier
 background_path: String   # Path to background image
 script_path: String?      # Associated Lua script
 
+# Logical dimensions (texture-independent coordinate system)
+logical_width: Int32?     # Logical scene width (default: 1024)
+logical_height: Int32?    # Logical scene height (default: 768)
+
 # Pathfinding configuration
 enable_pathfinding: Bool  # Enable A* pathfinding
 navigation_cell_size: Int32 # Grid cell size for pathfinding

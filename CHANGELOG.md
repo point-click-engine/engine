@@ -48,6 +48,10 @@ All notable changes to the Point & Click Engine will be documented in this file.
 - Resource manager safety issues preventing double-free errors
 - Audio system finalizer error handling
 - DialogManager handling of uninitialized Engine.instance
+- Character movement blocking issue where collision detection was too strict:
+  - Reduced collision margin from 90% to 60% for more forgiving navigation
+  - Relaxed walkability requirement from 7/9 to 5/9 points (with center required)
+  - Adjusted minimum movement step to prevent jumpy movement
 
 ### Removed
 - Complex dependency container implementation

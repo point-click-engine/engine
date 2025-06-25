@@ -1,5 +1,7 @@
 name: library
 background_path: assets/backgrounds/library.png
+logical_width: 1024
+logical_height: 768
 enable_pathfinding: true
 navigation_cell_size: 16
 enable_camera_scrolling: false  # Library fits in viewport

@@ -2,6 +2,7 @@ require "./exceptions"
 require "./validators/config_validator"
 require "./validators/asset_validator"
 require "./validators/scene_validator"
+require "./validators/scene_coordinate_validator"
 require "./game_config"
 require "./error_reporter"
 require "file_utils"
@@ -99,6 +100,24 @@ module PointClickEngine
         else
           result.passed = false
           result.errors.concat(scene_errors)
+        end
+
+        # Step 3.5: Validate scene coordinates
+        puts "\n3.5. Checking scene coordinate consistency..."
+        coord_validator = Validators::SceneCoordinateValidator.new
+        coord_result = coord_validator.validate(config)
+
+        unless coord_result.errors.empty?
+          result.passed = false
+          result.errors.concat(coord_result.errors)
+        end
+
+        unless coord_result.warnings.empty?
+          result.warnings.concat(coord_result.warnings)
+        end
+
+        unless coord_result.info.empty?
+          result.info.concat(coord_result.info)
         end
 
         # Enhanced validation steps

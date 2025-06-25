@@ -252,13 +252,8 @@ module PointClickEngine
         end
 
         private def handle_walk_to(player : Characters::Character, scene : Scenes::Scene, target : RL::Vector2)
-          if player.responds_to?(:use_pathfinding) && player.use_pathfinding && scene.enable_pathfinding
-            if path = scene.find_path(player.position.x, player.position.y, target.x, target.y)
-              player.walk_to_with_path(path)
-            else
-              player.walk_to(target)
-            end
-          elsif player.responds_to?(:handle_click)
+          # Always use handle_click if available, let it handle pathfinding
+          if player.responds_to?(:handle_click)
             player.handle_click(target, scene)
           else
             player.walk_to(target)

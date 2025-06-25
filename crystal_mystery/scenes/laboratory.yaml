@@ -1,5 +1,7 @@
 name: laboratory
 background_path: assets/backgrounds/laboratory.png
+logical_width: 1024
+logical_height: 768
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/laboratory.lua

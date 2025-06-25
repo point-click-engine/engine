@@ -103,6 +103,11 @@ module PointClickEngine
       # This is used when no duration is specified in transition commands
       property default_transition_duration : Float32 = 1.0f32
 
+      # Logical dimensions of the scene (independent of texture size)
+      # These define the coordinate space for all scene elements
+      property logical_width : Int32 = 1024
+      property logical_height : Int32 = 768
+
       # Creates a new scene with empty name and collections
       def initialize
         @name = ""
@@ -482,18 +487,67 @@ module PointClickEngine
       # scene.load_background("room.png")
       # scene.setup_navigation
       # ```
-      def setup_navigation
+      def setup_navigation(character_radius : Float32 = 56.0_f32)
         return unless @enable_pathfinding
         return unless bg = @background
 
+        # Use the provided character radius or a reasonable default
+        # This ensures paths leave enough room for characters to pass
+        # Default increased from 32 to 56 to better match typical character sizes
+
+        # Get logical scene dimensions from game config or scene properties
+        # This should NOT depend on texture size!
+        logical_width = @logical_width
+        logical_height = @logical_height
+
+        puts "[NAVIGATION] Background texture dimensions: #{bg.width}x#{bg.height}"
+        puts "[NAVIGATION] Logical scene dimensions: #{logical_width}x#{logical_height}"
+        puts "[NAVIGATION] Creating grid with cell size: #{@navigation_cell_size}"
+
+        # Validate that walkable areas fit within logical dimensions
+        if walkable = @walkable_area
+          walkable.regions.each do |region|
+            region.vertices.each do |vertex|
+              if vertex.x < 0 || vertex.x > logical_width || vertex.y < 0 || vertex.y > logical_height
+                puts "[WARNING] Walkable region '#{region.name}' has vertex outside logical bounds: #{vertex}"
+              end
+            end
+          end
+        end
+
         @navigation_grid = Navigation::Pathfinding::NavigationGrid.from_scene(
           self,
-          bg.width,
-          bg.height,
-          @navigation_cell_size
+          logical_width,
+          logical_height,
+          @navigation_cell_size,
+          character_radius
         )
 
         @pathfinder = Navigation::Pathfinding.new(@navigation_grid.not_nil!)
+
+        # Debug: Count walkable cells
+        if grid = @navigation_grid
+          walkable_count = 0
+          total_count = 0
+          grid.walkable.each do |row|
+            row.each do |cell|
+              total_count += 1
+              walkable_count += 1 if cell
+            end
+          end
+          puts "\n========== NAVIGATION GRID DEBUG =========="
+          puts "[NAVIGATION] Grid created: #{grid.width}x#{grid.height} cells (cell size: #{@navigation_cell_size})"
+          puts "[NAVIGATION] Total cells: #{total_count}, Walkable: #{walkable_count} (#{(walkable_count * 100.0 / total_count).round(1)}%)"
+
+          if walkable_count == 0
+            puts "[NAVIGATION] WARNING: No walkable cells found! This means pathfinding will not work."
+            puts "[NAVIGATION] This could be caused by:"
+            puts "[NAVIGATION]   1. Walkable area not properly defined"
+            puts "[NAVIGATION]   2. Character radius too large for the space"
+            puts "[NAVIGATION]   3. Bug in navigation grid generation"
+          end
+          puts "=========================================\n"
+        end
       end
 
       # Checks if a point is walkable within the scene
@@ -512,6 +566,70 @@ module PointClickEngine
           # If no walkable area defined, allow movement everywhere
           true
         end
+      end
+
+      # Checks if a character-sized area is walkable
+      #
+      # Tests multiple points around the character's bounds to ensure
+      # the entire character can fit in the space, not just their center point.
+      #
+      # - *center* : Center position of the character
+      # - *size* : Character's size (width, height)
+      # - *scale* : Character's scale factor
+      def is_area_walkable?(center : RL::Vector2, size : RL::Vector2, scale : Float32 = 1.0) : Bool
+        return true unless walkable = @walkable_area
+
+        # Calculate half extents with scale
+        half_width = (size.x * scale) / 2.0
+        half_height = (size.y * scale) / 2.0
+
+        # Use a significantly smaller collision box to allow for easier movement
+        # This prevents characters from getting stuck on edges and allows smoother navigation
+        collision_margin = 0.6_f32 # Use 60% of actual size for more forgiving collision
+
+        # Check multiple points around the character bounds
+        # We check corners and midpoints for better accuracy
+        check_points = [
+          # Center
+          center,
+          # Corners (with margin)
+          RL::Vector2.new(x: center.x - half_width * collision_margin, y: center.y - half_height * collision_margin),
+          RL::Vector2.new(x: center.x + half_width * collision_margin, y: center.y - half_height * collision_margin),
+          RL::Vector2.new(x: center.x - half_width * collision_margin, y: center.y + half_height * collision_margin),
+          RL::Vector2.new(x: center.x + half_width * collision_margin, y: center.y + half_height * collision_margin),
+          # Midpoints of edges (with margin)
+          RL::Vector2.new(x: center.x, y: center.y - half_height * collision_margin),
+          RL::Vector2.new(x: center.x, y: center.y + half_height * collision_margin),
+          RL::Vector2.new(x: center.x - half_width * collision_margin, y: center.y),
+          RL::Vector2.new(x: center.x + half_width * collision_margin, y: center.y),
+        ]
+
+        # Debug - check which points are failing
+        if Core::Engine.debug_mode
+          failed_points = [] of RL::Vector2
+          check_points.each do |point|
+            unless walkable.is_point_walkable?(point)
+              failed_points << point
+            end
+          end
+
+          if failed_points.size > 0
+            puts "[AREA_CHECK] #{failed_points.size}/#{check_points.size} points failed at center #{center}"
+            puts "[AREA_CHECK] Character bounds: #{size.x * scale}x#{size.y * scale}"
+            failed_points.first(3).each do |fp|
+              puts "[AREA_CHECK]   Failed point: #{fp}"
+            end
+          end
+        end
+
+        # Require at least 5 out of 9 points to be walkable (very lenient)
+        # This allows characters to navigate tight spaces and clip corners without getting stuck
+        # The center point must always be walkable, plus at least 4 other points
+        walkable_count = check_points.count { |point| walkable.is_point_walkable?(point) }
+        center_walkable = walkable.is_point_walkable?(center)
+
+        # Center must be walkable AND at least 4 other points (5 total)
+        center_walkable && walkable_count >= 5
       end
 
       # Gets the character scale factor at a specific Y position
@@ -540,6 +658,44 @@ module PointClickEngine
       # Returns: Array of waypoints forming the path, or `nil` if no path exists
       def find_path(start_x : Float32, start_y : Float32, end_x : Float32, end_y : Float32) : Array(Raylib::Vector2)?
         return nil unless pf = @pathfinder
+        return nil unless grid = @navigation_grid
+
+        # Debug: Check if start/end positions are walkable
+        start_grid_x, start_grid_y = grid.world_to_grid(start_x, start_y)
+        end_grid_x, end_grid_y = grid.world_to_grid(end_x, end_y)
+
+        start_walkable = grid.is_walkable?(start_grid_x, start_grid_y)
+        end_walkable = grid.is_walkable?(end_grid_x, end_grid_y)
+
+        puts "[PATHFINDING] Start (#{start_x.round(1)}, #{start_y.round(1)}) -> Grid(#{start_grid_x}, #{start_grid_y}) walkable: #{start_walkable}"
+        puts "[PATHFINDING] End (#{end_x.round(1)}, #{end_y.round(1)}) -> Grid(#{end_grid_x}, #{end_grid_y}) walkable: #{end_walkable}"
+
+        # Debug: Check if this is near the player spawn
+        if (start_x - 300).abs < 10 && (start_y - 500).abs < 10
+          puts "[DEBUG] This is near player spawn (300, 500)!"
+          # Check surrounding cells
+          (-1..1).each do |dy|
+            (-1..1).each do |dx|
+              gx = start_grid_x + dx
+              gy = start_grid_y + dy
+              if gx >= 0 && gy >= 0 && gx < grid.width && gy < grid.height
+                walkable = grid.is_walkable?(gx, gy)
+                wx, wy = grid.grid_to_world(gx, gy)
+                puts "[DEBUG]   Grid(#{gx}, #{gy}) at world(#{wx}, #{wy}) = #{walkable ? "WALK" : "BLOCK"}"
+              end
+            end
+          end
+        end
+
+        if !end_walkable
+          puts "[PATHFINDING] Cannot find path: end position is not walkable!"
+          return nil
+        end
+
+        if !start_walkable
+          puts "[PATHFINDING] Warning: Start position is not walkable, but attempting pathfinding anyway (character is already there)"
+        end
+
         pf.find_path(start_x, start_y, end_x, end_y)
       end
 

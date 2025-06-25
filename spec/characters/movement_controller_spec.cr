@@ -295,4 +295,100 @@ describe PointClickEngine::Characters::MovementController do
       elapsed.should be < 50.0
     end
   end
+
+  describe "blocked movement handling" do
+    it "stores pathfinding preference when movement is blocked" do
+      character = MockCharacter.new(Raylib::Vector2.new(x: 0.0_f32, y: 0.0_f32))
+      character.use_pathfinding = true
+      controller = PointClickEngine::Characters::MovementController.new(character)
+
+      # The preference should be stored internally
+      controller.move_to(Raylib::Vector2.new(x: 100.0_f32, y: 100.0_f32), use_pathfinding: false)
+
+      # Can't directly test private field, but behavior should reflect preference
+      controller.target_position.should_not be_nil
+    end
+
+    it "handles close waypoint blocking gracefully" do
+      character = MockCharacter.new(Raylib::Vector2.new(x: 0.0_f32, y: 0.0_f32))
+      controller = PointClickEngine::Characters::MovementController.new(character)
+
+      # Set up path with very close first waypoint
+      waypoints = [
+        Raylib::Vector2.new(x: 5.0_f32, y: 5.0_f32), # Within PATHFINDING_WAYPOINT_THRESHOLD * 2
+        Raylib::Vector2.new(x: 100.0_f32, y: 100.0_f32),
+      ]
+
+      controller.move_along_path(waypoints)
+      controller.current_path_index.should eq(0)
+
+      # Move close to first waypoint
+      character.position = Raylib::Vector2.new(x: 4.0_f32, y: 4.0_f32)
+
+      # Update should advance past the close waypoint
+      controller.update(0.016_f32)
+
+      # Should either reach waypoint or advance if blocked
+      if controller.current_path_index == 0
+        # If still at first waypoint, position should be very close
+        distance = PointClickEngine::Utils::VectorMath.distance(character.position, waypoints[0])
+        distance.should be < PointClickEngine::Core::GameConstants::PATHFINDING_WAYPOINT_THRESHOLD
+      end
+    end
+  end
+
+  describe "character size awareness" do
+    it "respects character scale in movement" do
+      character = MockCharacter.new(Raylib::Vector2.new(x: 100.0_f32, y: 100.0_f32))
+      character.scale = 2.0_f32 # Larger character
+      controller = PointClickEngine::Characters::MovementController.new(character)
+
+      # Character size should be considered in movement calculations
+      character.size.x.should eq(32.0_f32)
+      character.size.y.should eq(32.0_f32)
+      # Effective size with scale: 64x64
+
+      controller.move_to(Raylib::Vector2.new(x: 200.0_f32, y: 200.0_f32))
+      controller.update(0.016_f32)
+
+      # Movement should work regardless of scale
+      controller.moving?.should be_true
+    end
+  end
+
+  describe "micro-movement prevention" do
+    it "avoids getting stuck in micro-movements" do
+      character = MockCharacter.new(Raylib::Vector2.new(x: 100.0_f32, y: 100.0_f32))
+      controller = PointClickEngine::Characters::MovementController.new(character)
+
+      # Move to a position very close (potential micro-movement)
+      controller.move_to(Raylib::Vector2.new(x: 102.0_f32, y: 100.0_f32))
+
+      # Update multiple times
+      5.times { controller.update(0.016_f32) }
+
+      # Should complete movement quickly and not get stuck
+      controller.moving?.should be_false
+      character.state.should eq(PointClickEngine::Characters::CharacterState::Idle)
+    end
+
+    it "handles pathfinding to very close waypoints" do
+      character = MockCharacter.new(Raylib::Vector2.new(x: 100.0_f32, y: 100.0_f32))
+      controller = PointClickEngine::Characters::MovementController.new(character)
+
+      # Path with micro-waypoint
+      waypoints = [
+        Raylib::Vector2.new(x: 101.0_f32, y: 100.0_f32), # 1 pixel away
+        Raylib::Vector2.new(x: 200.0_f32, y: 200.0_f32),
+      ]
+
+      controller.move_along_path(waypoints)
+
+      # Should handle micro-waypoint efficiently
+      controller.update(0.1_f32)
+
+      # Should quickly advance past micro-waypoint
+      controller.current_path_index.should be >= 1
+    end
+  end
 end

@@ -220,12 +220,18 @@ module PointClickEngine
     class WalkableArea
       include YAML::Serializable
 
-      property regions : Array(PolygonRegion) = [] of PolygonRegion
+      getter regions : Array(PolygonRegion) = [] of PolygonRegion
       property walk_behind_regions : Array(WalkBehindRegion) = [] of WalkBehindRegion
       property scale_zones : Array(ScaleZone) = [] of ScaleZone
 
       @[YAML::Field(ignore: true)]
       property bounds : RL::Rectangle = RL::Rectangle.new(x: 0, y: 0, width: 0, height: 0)
+
+      # Custom setter for regions that updates bounds
+      def regions=(value : Array(PolygonRegion))
+        @regions = value
+        update_bounds
+      end
 
       def initialize
         @regions = [] of PolygonRegion
@@ -263,7 +269,9 @@ module PointClickEngine
 
         # Quick bounds check
         if @bounds.width > 0 && @bounds.height > 0
-          return false unless RL.check_collision_point_rec?(point, @bounds)
+          in_bounds = RL.check_collision_point_rec?(point, @bounds)
+          # Don't log during grid generation - too noisy
+          return false unless in_bounds
         end
 
         # Check each region
@@ -334,6 +342,35 @@ module PointClickEngine
         end
 
         best_point
+      end
+
+      # Find the nearest walkable point to a given position
+      def find_nearest_walkable_point(target : RL::Vector2) : RL::Vector2
+        # If the target is already walkable, return it
+        return target if is_point_walkable?(target)
+
+        # Search in expanding circles to find the nearest walkable point
+        max_radius = 200.0_f32
+        step_radius = 10.0_f32
+        angle_steps = 16
+
+        (step_radius..max_radius).step(step_radius).each do |radius|
+          (0...angle_steps).each do |i|
+            angle = (i.to_f32 / angle_steps) * Math::TAU
+            test_point = RL::Vector2.new(
+              x: target.x + Math.cos(angle) * radius,
+              y: target.y + Math.sin(angle) * radius
+            )
+
+            if is_point_walkable?(test_point)
+              return test_point
+            end
+          end
+        end
+
+        # If no walkable point found within radius, return original target
+        # This shouldn't happen in a well-designed level
+        target
       end
 
       # Update the overall bounds
