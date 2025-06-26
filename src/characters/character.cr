@@ -185,11 +185,14 @@ module PointClickEngine
         @sprite_data = value
       end
 
-      # Name of the currently playing animation
-      property current_animation : String = "idle"
+      # Animation controller for managing all character animations
+      property animation_controller : AnimationController?
 
-      # Collection of defined animations by name
-      property animations : Hash(String, AnimationData) = {} of String => AnimationData
+      # 8-directional facing for enhanced animations
+      property direction_8 : Direction8 = Direction8::South
+
+      # Current animation state
+      property movement_state : AnimationState = AnimationState::Idle
 
       # Name of character currently in conversation with (for serialization)
       property conversation_partner_name : String?
@@ -213,7 +216,7 @@ module PointClickEngine
         super(RL::Vector2.new, RL::Vector2.new)
         @name = ""
         @description = ""
-        @animations = {} of String => AnimationData
+        @animation_controller = AnimationController.new
         @dialogue_system_data = Dialogue::CharacterDialogue.new(self)
         @movement_controller = MovementController.new(self)
       end
@@ -227,7 +230,7 @@ module PointClickEngine
         super(position, size)
         @description = "A character named #{@name}"
         @dialogue_system_data = Dialogue::CharacterDialogue.new(self)
-        @animations = {} of String => AnimationData
+        @animation_controller = AnimationController.new
         @movement_controller = MovementController.new(self)
       end
 
@@ -257,12 +260,29 @@ module PointClickEngine
       # ```
       # character.load_spritesheet("hero.png", 32, 48)
       # ```
-      def load_spritesheet(path : String, frame_width : Int32, frame_height : Int32)
+      def load_spritesheet(path : String, frame_width : Int32, frame_height : Int32,
+                           directions : Int32 = 8, frames_per_direction : Int32 = 4)
         @sprite_data = Graphics::AnimatedSprite.new(@position, frame_width, frame_height, 1)
         @sprite_data.not_nil!.load_texture(path)
         @sprite_data.not_nil!.scale = calculate_scale(frame_width, frame_height)
         @size = RL::Vector2.new(x: frame_width * @sprite_data.not_nil!.scale, y: frame_height * @sprite_data.not_nil!.scale)
         @sprite_data.not_nil!.size = @size
+
+        if controller = @animation_controller
+          # Setup directional walking animations
+          controller.add_directional_animation("walk", 0, frames_per_direction)
+
+          # Setup idle variations if enough frames
+          total_walk_frames = directions * frames_per_direction
+          if sprite_data.try(&.frame_count) && sprite_data.not_nil!.frame_count > total_walk_frames
+            remaining_frames = sprite_data.not_nil!.frame_count - total_walk_frames
+            idle_start = total_walk_frames
+
+            # Add idle variations
+            controller.add_idle_variation("look_around", idle_start, 4)
+            controller.add_idle_variation("tap_foot", idle_start + 4, 6) if remaining_frames >= 10
+          end
+        end
       end
 
       # Defines a named animation for the character
@@ -282,7 +302,7 @@ module PointClickEngine
       # ```
       def add_animation(name : String, start_frame : Int32, frame_count : Int32,
                         frame_speed : Float32 = Core::GameConstants::DEFAULT_ANIMATION_SPEED, loop : Bool = true)
-        @animations[name] = AnimationData.new(start_frame, frame_count, frame_speed, loop)
+        @animation_controller.try(&.add_animation(name, start_frame, frame_count, frame_speed, loop))
       end
 
       # Plays a named animation
@@ -298,19 +318,7 @@ module PointClickEngine
       # character.play_animation("idle", force_restart: false)
       # ```
       def play_animation(name : String, force_restart : Bool = true)
-        return unless @animations.has_key?(name)
-        return if !force_restart && @current_animation == name && @sprite_data.try(&.playing)
-
-        @current_animation = name
-        anim_data = @animations[name]
-
-        if sprite = @sprite_data
-          sprite.current_frame = anim_data.start_frame
-          sprite.frame_count = anim_data.frame_count
-          sprite.frame_speed = anim_data.frame_speed
-          sprite.loop = anim_data.loop
-          sprite.play
-        end
+        @animation_controller.try(&.play_animation(name, force_restart))
       end
 
       # Initiates movement to a target position
@@ -330,6 +338,20 @@ module PointClickEngine
         @target_position = target
         @state = CharacterState::Walking
         @movement_controller.try(&.move_to(target, use_pathfinding))
+
+        # Calculate direction based on movement for enhanced animations
+        if target_pos = @target_position
+          velocity = RL::Vector2.new(
+            x: target_pos.x - @position.x,
+            y: target_pos.y - @position.y
+          )
+
+          if velocity.x != 0 || velocity.y != 0
+            @direction_8 = Direction8.from_velocity(velocity)
+            @movement_state = AnimationState::Walking
+            @animation_controller.try(&.update_directional_animation(@movement_state, @direction_8))
+          end
+        end
       end
 
       # Initiates movement along a predefined path
@@ -395,7 +417,7 @@ module PointClickEngine
       # ```
       def say(text : String, &block : -> Nil)
         @state = CharacterState::Talking
-        play_animation("talk") if @animations.has_key?("talk")
+        play_animation("talk") if @animation_controller.try(&.has_animation?("talk"))
 
         if dialogue = @dialogue_system_data
           dialogue.say(text) do
@@ -424,7 +446,7 @@ module PointClickEngine
       # ```
       def ask(question : String, choices : Array(Tuple(String, Proc(Nil))))
         @state = CharacterState::Talking
-        play_animation("talk") if @animations.has_key?("talk")
+        play_animation("talk") if @animation_controller.try(&.has_animation?("talk"))
 
         if dialogue = @dialogue_system_data
           dialogue.ask(question, choices) do
@@ -445,6 +467,18 @@ module PointClickEngine
         @movement_controller.try(&.update(dt))
         update_animation(dt)
         @dialogue_system_data.try &.update(dt)
+
+        # Update animation controller
+        if controller = @animation_controller
+          controller.sprite = @sprite_data
+          controller.update(dt)
+        end
+
+        # Update movement state
+        if @state == CharacterState::Walking && @target_position.nil?
+          @movement_state = AnimationState::Idle
+          @animation_controller.try(&.play_animation("idle"))
+        end
       end
 
       # Renders the character sprite and dialogue
@@ -597,9 +631,9 @@ module PointClickEngine
             if new_direction != @direction
               @direction = new_direction
               if @direction == Direction::Left
-                play_animation("walk_left") if @animations.has_key?("walk_left")
+                play_animation("walk_left") if @animation_controller.try(&.has_animation?("walk_left"))
               else
-                play_animation("walk_right") if @animations.has_key?("walk_right")
+                play_animation("walk_right") if @animation_controller.try(&.has_animation?("walk_right"))
               end
             end
           end
@@ -641,9 +675,9 @@ module PointClickEngine
               if new_direction != @direction
                 @direction = new_direction
                 if @direction == Direction::Left
-                  play_animation("walk_left") if @animations.has_key?("walk_left")
+                  play_animation("walk_left") if @animation_controller.try(&.has_animation?("walk_left"))
                 else
-                  play_animation("walk_right") if @animations.has_key?("walk_right")
+                  play_animation("walk_right") if @animation_controller.try(&.has_animation?("walk_right"))
                 end
               end
             end
@@ -713,37 +747,13 @@ module PointClickEngine
                     end
 
         # Only play mood animation if it exists and character is idle
-        if @animations.has_key?(mood_anim) && @state == CharacterState::Idle
+        if @animation_controller.try(&.has_animation?(mood_anim)) && @state == CharacterState::Idle
           play_animation(mood_anim, force_restart: false)
         end
       end
 
       private def update_animation(dt : Float32)
-        if @sprite_data && @animations.has_key?(@current_animation)
-          anim_data = @animations[@current_animation]
-          current_sprite = @sprite_data.not_nil!
-
-          if current_sprite.playing
-            current_sprite.frame_timer += dt
-            if current_sprite.frame_timer >= current_sprite.frame_speed
-              current_sprite.frame_timer = 0.0
-
-              current_sprite.current_frame += 1
-
-              if current_sprite.current_frame >= anim_data.start_frame + anim_data.frame_count
-                if anim_data.loop
-                  current_sprite.current_frame = anim_data.start_frame
-                else
-                  current_sprite.current_frame = anim_data.start_frame + anim_data.frame_count - 1
-                  current_sprite.stop
-                  if @state != CharacterState::Talking
-                    stop_walking
-                  end
-                end
-              end
-            end
-          end
-        end
+        @animation_controller.try(&.update(dt, @sprite_data))
       end
 
       private def calculate_scale(frame_width : Int32, frame_height : Int32) : Float32
@@ -751,6 +761,36 @@ module PointClickEngine
         scale_x = @size.x / frame_width
         scale_y = @size.y / frame_height
         Math.min(scale_x, scale_y).to_f32
+      end
+
+      # Play animation with animation state and direction
+      def play_animation(state : AnimationState, direction : Direction8? = nil)
+        actual_direction = direction || @direction_8
+        @animation_controller.try(&.update_directional_animation(state, actual_direction, force: true))
+        @movement_state = state
+      end
+
+      # Add custom animation
+      def add_custom_animation(name : String, start_frame : Int32, frame_count : Int32,
+                               frame_speed : Float32 = 0.1, loop : Bool = true,
+                               priority : Int32 = 0, sound_effect : String? = nil)
+        @animation_controller.try(&.add_animation(name, start_frame, frame_count, frame_speed,
+          loop, priority, true, true, sound_effect))
+      end
+
+      # Perform action with animation
+      def perform_action(action : AnimationState, target_position : RL::Vector2? = nil)
+        if target_position
+          # Calculate direction to target
+          direction_vec = RL::Vector2.new(
+            x: target_position.x - @position.x,
+            y: target_position.y - @position.y
+          )
+          direction = Direction8.from_velocity(direction_vec)
+          play_animation(action, direction)
+        else
+          play_animation(action)
+        end
       end
     end
   end

@@ -17,13 +17,15 @@ describe PointClickEngine::Characters::Character do
       character = TestCharacter.new("Hero", RL::Vector2.new(x: 100, y: 100), RL::Vector2.new(x: 32, y: 32))
 
       character.add_animation("walk_right", 0, 4, 0.1_f32, true)
-      character.animations.has_key?("walk_right").should be_true
+      character.animation_controller.should_not be_nil
+      character.animation_controller.try(&.has_animation?("walk_right")).should be_true
 
-      anim = character.animations["walk_right"]
-      anim.start_frame.should eq(0)
-      anim.frame_count.should eq(4)
-      anim.frame_speed.should eq(0.1_f32)
-      anim.loop.should be_true
+      anim = character.animation_controller.try(&.get_animation("walk_right"))
+      anim.should_not be_nil
+      anim.try(&.start_frame).should eq(0)
+      anim.try(&.frame_count).should eq(4)
+      anim.try(&.frame_speed).should eq(0.1_f32)
+      anim.try(&.loop).should be_true
     end
   end
 

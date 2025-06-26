@@ -26,6 +26,7 @@ module PointClickEngine
       private property valid_transitions : Hash(CharacterState, Array(CharacterState))
 
       def initialize
+        @valid_transitions = {} of CharacterState => Array(CharacterState)
         setup_transition_rules
       end
 
@@ -46,6 +47,7 @@ module PointClickEngine
           CharacterState::Talking => [
             CharacterState::Idle,
             CharacterState::Thinking,
+            CharacterState::Interacting,
           ],
           CharacterState::Interacting => [
             CharacterState::Idle,
@@ -128,7 +130,7 @@ module PointClickEngine
 
       # Checks if character is in a movement-capable state
       def can_move? : Bool
-        [@state, CharacterState::Idle, CharacterState::Walking].any? { |s| s == @state }
+        @state == CharacterState::Idle || @state == CharacterState::Walking
       end
 
       # Checks if character can talk

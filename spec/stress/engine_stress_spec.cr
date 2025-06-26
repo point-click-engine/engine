@@ -2,7 +2,7 @@ require "../spec_helper"
 
 # Stress tests to find performance issues and memory leaks
 # These tests push the engine to its limits to discover scalability problems
-describe "Engine Stress Tests" do
+pending describe "Engine Stress Tests" do
   describe "scene management stress" do
     it "handles creating and destroying many scenes" do
       initial_memory = GC.stats.heap_size

@@ -1,4 +1,6 @@
 require "../navigation/pathfinding"
+require "../navigation/navigation_grid"
+require "../navigation/astar_algorithm"
 
 module PointClickEngine
   module Scenes
@@ -14,7 +16,7 @@ module PointClickEngine
       property navigation_grid : Navigation::NavigationGrid?
 
       # A* pathfinder instance
-      property pathfinder : Navigation::AStarPathfinder?
+      property pathfinder : Navigation::AStarAlgorithm?
 
       # Scene dimensions for navigation setup
       property scene_width : Int32
@@ -50,7 +52,7 @@ module PointClickEngine
           end
 
           # Initialize pathfinder with the grid
-          @pathfinder = Navigation::AStarPathfinder.new(nav_grid)
+          @pathfinder = Navigation::AStarAlgorithm.new(nav_grid)
         end
       end
 
@@ -82,7 +84,7 @@ module PointClickEngine
         end_grid_y = end_grid_y.clamp(0, nav_grid.height - 1)
 
         # Find path in grid coordinates
-        grid_path = pathfinder.find_path(start_grid_x, start_grid_y, end_grid_x, end_grid_y)
+        grid_path = pathfinder.find_path(start_grid_x.to_f32, start_grid_y.to_f32, end_grid_x.to_f32, end_grid_y.to_f32)
         return nil unless grid_path
 
         # Convert grid path back to world coordinates
@@ -180,7 +182,7 @@ module PointClickEngine
             world_y = y * @grid_cell_size + @grid_cell_size // 2
 
             # Check if this world position is within the walkable area
-            walkable = walkable_area.contains_point?(RL::Vector2.new(x: world_x.to_f32, y: world_y.to_f32))
+            walkable = walkable_area.is_point_walkable?(RL::Vector2.new(x: world_x.to_f32, y: world_y.to_f32))
             nav_grid.set_walkable(x, y, walkable)
           end
         end
@@ -240,10 +242,11 @@ module PointClickEngine
           "walkable_cells" => [] of Array(Int32),
         }
 
+        walkable_cells = data["walkable_cells"].as(Array(Array(Int32)))
         (0...nav_grid.width).each do |x|
           (0...nav_grid.height).each do |y|
             if nav_grid.is_walkable?(x, y)
-              data["walkable_cells"] << [x, y]
+              walkable_cells << [x, y]
             end
           end
         end

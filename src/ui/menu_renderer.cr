@@ -237,10 +237,10 @@ module PointClickEngine
         @animation.animation_time = Time.monotonic.total_seconds
 
         # Update highlight pulse
-        @animation.highlight_pulse = (Math.sin(@animation.animation_time * @pulse_speed) + 1.0) / 2.0
+        @animation.highlight_pulse = ((Math.sin(@animation.animation_time * @pulse_speed) + 1.0) / 2.0).to_f32
 
         # Update slide offset (subtle breathing effect)
-        @animation.slide_offset = Math.sin(@animation.animation_time * 1.5) * 2.0
+        @animation.slide_offset = (Math.sin(@animation.animation_time * 1.5) * 2.0).to_f32
       end
 
       # Applies fade effect to color
@@ -266,19 +266,19 @@ module PointClickEngine
 
       # Sets fade animation state
       def set_fade_alpha(alpha : Float32)
-        @animation.fade_alpha = alpha.clamp(0.0, 1.0)
+        @animation.fade_alpha = alpha.clamp(0.0f32, 1.0f32)
       end
 
       # Animates fade in effect
       def animate_fade_in(duration : Float32 = 0.3)
         # This would be called externally to control fade timing
-        @animation.fade_alpha = 0.0
+        @animation.fade_alpha = 0.0f32
       end
 
       # Animates fade out effect
       def animate_fade_out(duration : Float32 = 0.3)
         # This would be called externally to control fade timing
-        @animation.fade_alpha = 1.0
+        @animation.fade_alpha = 1.0f32
       end
 
       # Updates theme from configuration

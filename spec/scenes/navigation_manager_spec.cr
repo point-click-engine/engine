@@ -2,10 +2,9 @@ require "../spec_helper"
 require "../../src/scenes/navigation_manager"
 
 describe PointClickEngine::Scenes::NavigationManager do
-  let(manager) { PointClickEngine::Scenes::NavigationManager.new(800, 600) }
-
   describe "initialization" do
     it "initializes with scene dimensions" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
       manager.scene_width.should eq(800)
       manager.scene_height.should eq(600)
       manager.grid_cell_size.should eq(10) # default
@@ -21,6 +20,7 @@ describe PointClickEngine::Scenes::NavigationManager do
 
   describe "navigation setup" do
     it "sets up navigation grid without walkable area" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
       manager.setup_navigation
 
       manager.initialized?.should be_true
@@ -29,6 +29,7 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "creates grid with correct dimensions" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
       manager.setup_navigation
 
       if nav_grid = manager.navigation_grid
@@ -41,6 +42,7 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "marks all cells as walkable when no walkable area provided" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
       manager.setup_navigation
 
       # All positions should be navigable
@@ -50,11 +52,17 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "respects walkable area constraints" do
-      # Create a mock walkable area that only allows center region
-      walkable_area = double("WalkableArea")
-      walkable_area.stub(:contains_point?) do |point|
-        point.x >= 200 && point.x <= 600 && point.y >= 150 && point.y <= 450
-      end
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      # Create a real walkable area that only allows center region
+      walkable_area = PointClickEngine::Scenes::WalkableArea.new
+      center_region = PointClickEngine::Scenes::PolygonRegion.new("center", true)
+      center_region.vertices = [
+        RL::Vector2.new(200, 150),
+        RL::Vector2.new(600, 150),
+        RL::Vector2.new(600, 450),
+        RL::Vector2.new(200, 450),
+      ]
+      walkable_area.regions = [center_region]
 
       manager.setup_navigation(walkable_area)
 
@@ -68,11 +76,9 @@ describe PointClickEngine::Scenes::NavigationManager do
   end
 
   describe "pathfinding" do
-    before_each do
-      manager.setup_navigation
-    end
-
     it "finds path between valid points" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       path = manager.find_path(100, 100, 700, 500)
 
       path.should_not be_nil
@@ -86,12 +92,31 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "returns nil when no path exists" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
       # Create walkable area with blocked middle section
-      walkable_area = double("WalkableArea")
-      walkable_area.stub(:contains_point?) do |point|
-        # Block middle vertical strip
-        !(point.x >= 350 && point.x <= 450)
-      end
+      walkable_area = PointClickEngine::Scenes::WalkableArea.new
+
+      # Create left walkable region
+      left_region = PointClickEngine::Scenes::PolygonRegion.new("left", walkable: true)
+      left_region.vertices = [
+        RL::Vector2.new(0, 0),
+        RL::Vector2.new(350, 0),
+        RL::Vector2.new(350, 600),
+        RL::Vector2.new(0, 600),
+      ]
+      walkable_area.regions << left_region
+
+      # Create right walkable region
+      right_region = PointClickEngine::Scenes::PolygonRegion.new("right", walkable: true)
+      right_region.vertices = [
+        RL::Vector2.new(450, 0),
+        RL::Vector2.new(800, 0),
+        RL::Vector2.new(800, 600),
+        RL::Vector2.new(450, 600),
+      ]
+      walkable_area.regions << right_region
+
+      walkable_area.update_bounds
 
       manager.setup_navigation(walkable_area)
 
@@ -101,12 +126,16 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "handles out-of-bounds coordinates" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       # Should clamp coordinates to grid bounds
       path = manager.find_path(-100, -100, 1000, 1000)
       path.should_not be_nil # Should find path between clamped points
     end
 
     it "converts grid coordinates to world coordinates correctly" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       path = manager.find_path(0, 0, 100, 100)
 
       if path
@@ -122,11 +151,9 @@ describe PointClickEngine::Scenes::NavigationManager do
   end
 
   describe "navigation queries" do
-    before_each do
-      manager.setup_navigation
-    end
-
     it "checks if positions are navigable" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       # Most positions should be navigable with default setup
       manager.is_navigable?(100, 100).should be_true
       manager.is_navigable?(400, 300).should be_true
@@ -134,6 +161,8 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "handles out-of-bounds position queries" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       manager.is_navigable?(-50, 100).should be_false
       manager.is_navigable?(1000, 100).should be_false
       manager.is_navigable?(400, -50).should be_false
@@ -141,6 +170,8 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "provides navigation statistics" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       stats = manager.get_navigation_stats
 
       stats["total_cells"].should be > 0
@@ -153,17 +184,23 @@ describe PointClickEngine::Scenes::NavigationManager do
   end
 
   describe "navigation updates" do
-    before_each do
-      manager.setup_navigation
-    end
-
     it "updates navigation with new walkable area" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       # Initially all walkable
       manager.is_navigable?(100, 100).should be_true
 
-      # Create restrictive walkable area
-      restricted_area = double("WalkableArea")
-      restricted_area.stub(:contains_point?) { |point| point.x >= 400 && point.y >= 300 }
+      # Create restrictive walkable area (only bottom-right is walkable)
+      restricted_area = PointClickEngine::Scenes::WalkableArea.new
+      walkable_region = PointClickEngine::Scenes::PolygonRegion.new("restricted", walkable: true)
+      walkable_region.vertices = [
+        RL::Vector2.new(400, 300),
+        RL::Vector2.new(800, 300),
+        RL::Vector2.new(800, 600),
+        RL::Vector2.new(400, 600),
+      ]
+      restricted_area.regions << walkable_region
+      restricted_area.update_bounds
 
       manager.update_navigation(restricted_area)
 
@@ -174,6 +211,8 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "clears navigation data" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       manager.initialized?.should be_true
 
       manager.clear_navigation
@@ -185,11 +224,11 @@ describe PointClickEngine::Scenes::NavigationManager do
   end
 
   describe "debug visualization" do
-    before_each do
+    # NOTE: These tests require a Raylib window context to run properly
+    # They should be tested in integration tests with a proper window
+    pending "draws navigation debug when debug mode enabled" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
       manager.setup_navigation
-    end
-
-    it "draws navigation debug when debug mode enabled" do
       # Enable debug mode
       PointClickEngine::Core::Engine.debug_mode = true
 
@@ -199,7 +238,9 @@ describe PointClickEngine::Scenes::NavigationManager do
       manager.draw_navigation_debug(camera_offset)
     end
 
-    it "skips debug drawing when debug mode disabled" do
+    pending "skips debug drawing when debug mode disabled" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       # Disable debug mode
       PointClickEngine::Core::Engine.debug_mode = false
 
@@ -209,7 +250,9 @@ describe PointClickEngine::Scenes::NavigationManager do
       manager.draw_navigation_debug(camera_offset)
     end
 
-    it "handles camera offset in debug rendering" do
+    pending "handles camera offset in debug rendering" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       PointClickEngine::Core::Engine.debug_mode = true
 
       camera_offset = RL::Vector2.new(100, 50)
@@ -220,22 +263,22 @@ describe PointClickEngine::Scenes::NavigationManager do
   end
 
   describe "data export/import" do
-    before_each do
-      manager.setup_navigation
-    end
-
     it "exports navigation data" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       data = manager.export_navigation_data
 
       data.should_not be_empty
       # Should be valid JSON
       parsed = JSON.parse(data)
-      parsed["width"].should be > 0
-      parsed["height"].should be > 0
-      parsed["cell_size"].should eq(10)
+      parsed["width"].as_i.should be > 0
+      parsed["height"].as_i.should be > 0
+      parsed["cell_size"].as_i.should eq(10)
     end
 
     it "handles export with no navigation data" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
+      manager.setup_navigation
       manager.clear_navigation
 
       data = manager.export_navigation_data
@@ -259,6 +302,7 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "optimizes navigation efficiently" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
       manager.setup_navigation
 
       start_time = Time.monotonic
@@ -280,6 +324,7 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "handles very small grid cell sizes" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
       manager.grid_cell_size = 1
 
       # Should not crash but may be slow
@@ -288,6 +333,7 @@ describe PointClickEngine::Scenes::NavigationManager do
     end
 
     it "handles pathfinding with same start and end points" do
+      manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
       manager.setup_navigation
 
       path = manager.find_path(400, 300, 400, 300)

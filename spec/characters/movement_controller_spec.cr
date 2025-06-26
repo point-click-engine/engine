@@ -6,11 +6,11 @@ require "../../src/characters/character"
 class MockCharacter < PointClickEngine::Characters::Character
   def initialize(position : Raylib::Vector2, @walking_speed : Float32 = 100.0_f32)
     super("TestCharacter", position, Raylib::Vector2.new(x: 32.0_f32, y: 32.0_f32))
-    @animations["idle"] = PointClickEngine::Characters::AnimationData.new(0, 1, 0.1_f32, false)
-    @animations["walk_left"] = PointClickEngine::Characters::AnimationData.new(1, 4, 0.1_f32, true)
-    @animations["walk_right"] = PointClickEngine::Characters::AnimationData.new(5, 4, 0.1_f32, true)
-    @animations["walk_up"] = PointClickEngine::Characters::AnimationData.new(9, 4, 0.1_f32, true)
-    @animations["walk_down"] = PointClickEngine::Characters::AnimationData.new(13, 4, 0.1_f32, true)
+    @animation_controller.try(&.add_animation("idle", 0, 1, 0.1_f32, false))
+    @animation_controller.try(&.add_animation("walk_left", 1, 4, 0.1_f32, true))
+    @animation_controller.try(&.add_animation("walk_right", 5, 4, 0.1_f32, true))
+    @animation_controller.try(&.add_animation("walk_up", 9, 4, 0.1_f32, true))
+    @animation_controller.try(&.add_animation("walk_down", 13, 4, 0.1_f32, true))
   end
 
   def on_interact(interactor : PointClickEngine::Characters::Character)
@@ -88,7 +88,7 @@ describe PointClickEngine::Characters::MovementController do
       controller.move_to(target)
       controller.update(0.01_f32)
 
-      character.current_animation.should eq("walk_right")
+      character.animation_controller.try(&.current_animation).should eq("walk_right")
     end
 
     it "sets walking animation when moving left" do
@@ -99,7 +99,7 @@ describe PointClickEngine::Characters::MovementController do
       controller.move_to(target)
       controller.update(0.01_f32)
 
-      character.current_animation.should eq("walk_left")
+      character.animation_controller.try(&.current_animation).should eq("walk_left")
     end
 
     it "returns to idle animation when movement stops" do
@@ -109,7 +109,7 @@ describe PointClickEngine::Characters::MovementController do
       controller.stop_movement
 
       character.state.should eq(PointClickEngine::Characters::CharacterState::Idle)
-      character.current_animation.should eq("idle")
+      character.animation_controller.try(&.current_animation).should eq("idle")
     end
   end
 

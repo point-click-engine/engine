@@ -70,28 +70,32 @@ describe "Character and Pathfinding Comprehensive Tests" do
       character.add_animation("one_shot", 11, 3, 0.2_f32, false)
 
       # Verify animations were added
-      character.animations.size.should eq(5)
-      character.animations.has_key?("idle").should be_true
-      character.animations.has_key?("walk_right").should be_true
-      character.animations.has_key?("walk_left").should be_true
-      character.animations.has_key?("talk").should be_true
-      character.animations.has_key?("one_shot").should be_true
+      character.animation_controller.should_not be_nil
+      # Note: AnimationController may have default animations, so we just check for our added ones
+      character.animation_controller.try(&.has_animation?("idle")).should be_true
+      character.animation_controller.try(&.has_animation?("walk_right")).should be_true
+      character.animation_controller.try(&.has_animation?("walk_left")).should be_true
+      character.animation_controller.try(&.has_animation?("talk")).should be_true
+      character.animation_controller.try(&.has_animation?("one_shot")).should be_true
 
       # Check animation data
-      idle_anim = character.animations["idle"]
-      idle_anim.start_frame.should eq(0)
-      idle_anim.frame_count.should eq(1)
-      idle_anim.frame_speed.should eq(0.5_f32)
-      idle_anim.loop.should be_true
+      idle_anim = character.animation_controller.try(&.get_animation("idle"))
+      idle_anim.should_not be_nil
+      idle_anim.try(&.start_frame).should eq(0)
+      idle_anim.try(&.frame_count).should eq(1)
+      idle_anim.try(&.frame_speed).should eq(0.5_f32)
+      idle_anim.try(&.loop).should be_true
 
-      walk_anim = character.animations["walk_right"]
-      walk_anim.start_frame.should eq(1)
-      walk_anim.frame_count.should eq(4)
-      walk_anim.frame_speed.should eq(0.15_f32)
-      walk_anim.loop.should be_true
+      walk_anim = character.animation_controller.try(&.get_animation("walk_right"))
+      walk_anim.should_not be_nil
+      walk_anim.try(&.start_frame).should eq(1)
+      walk_anim.try(&.frame_count).should eq(4)
+      walk_anim.try(&.frame_speed).should eq(0.15_f32)
+      walk_anim.try(&.loop).should be_true
 
-      one_shot_anim = character.animations["one_shot"]
-      one_shot_anim.loop.should be_false
+      one_shot_anim = character.animation_controller.try(&.get_animation("one_shot"))
+      one_shot_anim.should_not be_nil
+      one_shot_anim.try(&.loop).should be_false
     end
 
     it "handles animation playback requests" do
@@ -103,14 +107,14 @@ describe "Character and Pathfinding Comprehensive Tests" do
 
       # Test playing animations
       character.play_animation("test_anim1")
-      character.current_animation.should eq("test_anim1")
+      character.animation_controller.try(&.current_animation).should eq("test_anim1")
 
       character.play_animation("test_anim2")
-      character.current_animation.should eq("test_anim2")
+      character.animation_controller.try(&.current_animation).should eq("test_anim2")
 
       # Test invalid animation (should not crash)
       character.play_animation("nonexistent")
-      character.current_animation.should eq("test_anim2") # Should remain unchanged
+      character.animation_controller.try(&.current_animation).should eq("test_anim2") # Should remain unchanged
     end
   end
 

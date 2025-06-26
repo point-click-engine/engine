@@ -233,7 +233,7 @@ module PointClickEngine
           if sprite_path = player_config.sprite_path
             full_player_sprite_path = File.join(config_base_dir, sprite_path)
             if sprite_info = player_config.sprite
-              player_obj.load_enhanced_spritesheet(
+              player_obj.load_spritesheet(
                 full_player_sprite_path,
                 sprite_info.frame_width,
                 sprite_info.frame_height,

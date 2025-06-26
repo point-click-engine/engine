@@ -1,0 +1,12 @@
+game:
+  title: "State Change Test"
+
+assets:
+  scenes: ["test_scenes/*.yaml"]
+  quests: ["test_quests/*.yaml"]
+
+start_scene: "test_scene"
+
+initial_state:
+  flags:
+    game_started: true

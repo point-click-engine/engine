@@ -11,7 +11,7 @@ end
 
 def cleanup_test_assets(files : Array(String))
   files.each { |f| File.delete(f) if File.exists?(f) }
-  ["test_assets", "test_scenes", "test_audio"].each { |d| Dir.rmdir(d) if Dir.exists?(d) rescue nil }
+  ["test_assets", "test_scenes", "test_audio"].each { |d| Dir.delete(d) if Dir.exists?(d) rescue nil }
 end
 
 describe "Performance Validation" do

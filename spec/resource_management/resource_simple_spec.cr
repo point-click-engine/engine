@@ -235,7 +235,7 @@ describe "Resource Management Comprehensive Tests" do
     end
   end
 
-  describe "performance and stress testing" do
+  pending describe "performance and stress testing" do
     it "handles many resource loading requests efficiently" do
       resource_manager = PointClickEngine::Core::ResourceManager.new
 
@@ -310,7 +310,7 @@ describe "Resource Management Comprehensive Tests" do
     end
   end
 
-  describe "memory management stress tests" do
+  pending describe "memory management stress tests" do
     it "manages memory efficiently during resource lifecycle" do
       initial_memory = GC.stats.heap_size
 

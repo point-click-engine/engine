@@ -186,7 +186,8 @@ module PointClickEngine
       def update_action(progress : Float32)
         if @wait_for_completion && @character.sprite
           sprite = @character.sprite.not_nil!
-          if !sprite.playing && @character.current_animation == @animation_name
+          current_anim = @character.animation_controller.try(&.current_animation) || ""
+          if !sprite.playing && current_anim == @animation_name
             @completed = true
           end
         end

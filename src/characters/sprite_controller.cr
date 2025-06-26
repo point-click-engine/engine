@@ -29,6 +29,9 @@ module PointClickEngine
       # Character's current scale factor
       property scale : Float32 = 1.0_f32
 
+      # Visibility state (independent of sprite)
+      property visible : Bool = true
+
       def initialize(@position : RL::Vector2, @size : RL::Vector2)
       end
 
@@ -40,6 +43,7 @@ module PointClickEngine
         if sprite = @sprite
           sprite.load_texture(path)
           sprite.scale = calculate_scale(frame_width, frame_height)
+          sprite.visible = @visible
 
           # Update character size based on sprite dimensions
           @size = RL::Vector2.new(
@@ -69,6 +73,7 @@ module PointClickEngine
 
       # Renders the sprite with current settings
       def draw
+        return unless @visible
         return unless sprite = @sprite
 
         # Apply character scale temporarily for rendering
@@ -113,10 +118,10 @@ module PointClickEngine
           scaled_height = base_height * @scale
 
           RL::Rectangle.new(
-            x: @position.x - scaled_width / 2,
-            y: @position.y - scaled_height,
-            width: scaled_width,
-            height: scaled_height
+            x: @position.x - scaled_width.abs / 2,
+            y: @position.y - scaled_height.abs,
+            width: scaled_width.abs,
+            height: scaled_height.abs
           )
         else
           # Fallback bounds based on size
@@ -176,19 +181,14 @@ module PointClickEngine
         sprite.size = @size
       end
 
-      # Sets sprite visibility
-      def visible=(visible : Bool)
-        @sprite.try(&.visible = visible)
-      end
-
       # Gets sprite visibility
       def visible? : Bool
-        @sprite.try(&.visible?) || false
+        @visible && @sprite != nil
       end
 
       # Unloads sprite resources
       def unload
-        @sprite.try(&.unload)
+        # AnimatedSprite doesn't have an unload method
         @sprite = nil
         @sprite_path = nil
       end
@@ -196,13 +196,14 @@ module PointClickEngine
       # Creates a copy of this sprite controller
       def clone
         new_controller = SpriteController.new(@position, @size)
-        new_controller.sprite_path = @sprite_path
         new_controller.manual_scale = @manual_scale
         new_controller.scale = @scale
 
-        # Deep copy sprite if it exists
+        # Recreate sprite if it exists
         if sprite = @sprite
-          new_controller.sprite = sprite.clone
+          if path = @sprite_path
+            new_controller.load_spritesheet(path, sprite.frame_width, sprite.frame_height)
+          end
         end
 
         new_controller

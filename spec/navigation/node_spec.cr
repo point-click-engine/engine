@@ -135,9 +135,8 @@ describe PointClickEngine::Navigation::Node do
   end
 
   describe "adjacency checking" do
-    let(center) { PointClickEngine::Navigation::Node.new(5, 5) }
-
     it "detects adjacent nodes including diagonals" do
+      center = PointClickEngine::Navigation::Node.new(5, 5)
       adjacent_positions = [
         {4, 4}, {4, 5}, {4, 6}, # Left column
         {5, 4}, {5, 6},         # Above and below center
@@ -151,6 +150,7 @@ describe PointClickEngine::Navigation::Node do
     end
 
     it "rejects non-adjacent nodes" do
+      center = PointClickEngine::Navigation::Node.new(5, 5)
       non_adjacent_positions = [
         {3, 5}, {7, 5}, {5, 3}, {5, 7}, # Two steps away
         {3, 3}, {3, 7}, {7, 3}, {7, 7}, # Two steps diagonally
@@ -164,11 +164,13 @@ describe PointClickEngine::Navigation::Node do
     end
 
     it "rejects same position as adjacent" do
+      center = PointClickEngine::Navigation::Node.new(5, 5)
       same = PointClickEngine::Navigation::Node.new(5, 5)
       center.adjacent_to?(same).should be_false
     end
 
     it "detects orthogonally adjacent nodes" do
+      center = PointClickEngine::Navigation::Node.new(5, 5)
       orthogonal_positions = [
         {4, 5}, {6, 5}, {5, 4}, {5, 6},
       ]
@@ -180,6 +182,7 @@ describe PointClickEngine::Navigation::Node do
     end
 
     it "rejects diagonal nodes as orthogonally adjacent" do
+      center = PointClickEngine::Navigation::Node.new(5, 5)
       diagonal_positions = [
         {4, 4}, {4, 6}, {6, 4}, {6, 6},
       ]
@@ -191,6 +194,7 @@ describe PointClickEngine::Navigation::Node do
     end
 
     it "detects diagonally adjacent nodes" do
+      center = PointClickEngine::Navigation::Node.new(5, 5)
       diagonal_positions = [
         {4, 4}, {4, 6}, {6, 4}, {6, 6},
       ]
@@ -202,6 +206,7 @@ describe PointClickEngine::Navigation::Node do
     end
 
     it "rejects orthogonal nodes as diagonally adjacent" do
+      center = PointClickEngine::Navigation::Node.new(5, 5)
       orthogonal_positions = [
         {4, 5}, {6, 5}, {5, 4}, {5, 6},
       ]

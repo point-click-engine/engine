@@ -2,10 +2,9 @@ require "../spec_helper"
 require "../../src/ui/configuration_manager"
 
 describe PointClickEngine::UI::ConfigurationManager do
-  let(manager) { PointClickEngine::UI::ConfigurationManager.new }
-
   describe "initialization" do
     it "initializes with default configuration" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.config.resolution.width.should eq(1024)
       manager.config.resolution.height.should eq(768)
       manager.config.fullscreen.should be_false
@@ -18,6 +17,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "sets up available options" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.available_resolutions.should_not be_empty
       manager.available_languages.should contain("en")
       manager.available_languages.should contain("es")
@@ -27,12 +27,14 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "starts with no unsaved changes" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.has_unsaved_changes.should be_false
     end
   end
 
   describe "resolution management" do
     it "sets resolution and marks changes" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       new_resolution = PointClickEngine::UI::ConfigurationManager::Resolution.new(1920, 1080)
       manager.set_resolution(new_resolution)
 
@@ -42,6 +44,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "doesn't mark changes for same resolution" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       original_resolution = manager.config.resolution
       manager.has_unsaved_changes = false
 
@@ -50,6 +53,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "sets resolution by index" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_resolution_by_index(1) # Should be 1024x768
 
       manager.config.resolution.width.should eq(1024)
@@ -57,6 +61,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "ignores invalid resolution index" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       original_resolution = manager.config.resolution
       manager.set_resolution_by_index(100) # Invalid index
 
@@ -64,6 +69,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "gets current resolution index" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       # Set to known resolution
       target_resolution = manager.available_resolutions[2]
       manager.set_resolution(target_resolution)
@@ -75,6 +81,7 @@ describe PointClickEngine::UI::ConfigurationManager do
 
   describe "display settings" do
     it "sets fullscreen mode" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_fullscreen(true)
 
       manager.config.fullscreen.should be_true
@@ -82,6 +89,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "sets vsync setting" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_vsync(false)
 
       manager.config.vsync.should be_false
@@ -89,6 +97,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "doesn't mark changes for same values" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.has_unsaved_changes = false
       manager.set_fullscreen(false) # Already false
 
@@ -98,6 +107,7 @@ describe PointClickEngine::UI::ConfigurationManager do
 
   describe "audio settings" do
     it "sets master volume with clamping" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_master_volume(1.5) # Above max
       manager.config.master_volume.should eq(1.0)
 
@@ -110,6 +120,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "sets music volume with validation" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_music_volume(0.5)
 
       manager.config.music_volume.should eq(0.5)
@@ -117,6 +128,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "sets sfx volume with validation" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_sfx_volume(0.9)
 
       manager.config.sfx_volume.should eq(0.9)
@@ -124,6 +136,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "sets voice volume with validation" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_voice_volume(0.6)
 
       manager.config.voice_volume.should eq(0.6)
@@ -131,6 +144,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "doesn't mark changes for same volume values" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.has_unsaved_changes = false
       original_volume = manager.config.master_volume
 
@@ -141,6 +155,7 @@ describe PointClickEngine::UI::ConfigurationManager do
 
   describe "gameplay settings" do
     it "sets text speed with clamping" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_text_speed(5.0) # Above max
       manager.config.text_speed.should eq(3.0)
 
@@ -153,6 +168,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "sets auto save setting" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_auto_save(false)
 
       manager.config.auto_save.should be_false
@@ -160,6 +176,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "sets difficulty level" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_difficulty("hard")
 
       manager.config.difficulty.should eq("hard")
@@ -167,6 +184,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "ignores invalid difficulty" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       original_difficulty = manager.config.difficulty
       manager.set_difficulty("impossible") # Not in available list
 
@@ -176,6 +194,7 @@ describe PointClickEngine::UI::ConfigurationManager do
 
   describe "language and localization" do
     it "sets language" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_language("es")
 
       manager.config.language.should eq("es")
@@ -183,6 +202,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "ignores invalid language" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       original_language = manager.config.language
       manager.set_language("invalid") # Not in available list
 
@@ -192,6 +212,7 @@ describe PointClickEngine::UI::ConfigurationManager do
 
   describe "configuration retrieval" do
     it "gets setting by key" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.get_setting("resolution").should eq("1024x768")
       manager.get_setting("fullscreen").should eq("false")
       manager.get_setting("master_volume").should eq("1.0")
@@ -200,10 +221,12 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "returns empty string for unknown key" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.get_setting("unknown_key").should eq("")
     end
 
     it "provides configuration summary" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       summary = manager.get_config_summary
 
       summary["Resolution"].should eq("1024x768")
@@ -216,6 +239,7 @@ describe PointClickEngine::UI::ConfigurationManager do
 
   describe "configuration reset" do
     it "resets to defaults" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       # Change some settings
       manager.set_fullscreen(true)
       manager.set_master_volume(0.5)
@@ -230,6 +254,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "resets display category to defaults" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_fullscreen(true)
       manager.set_vsync(false)
 
@@ -241,6 +266,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "resets audio category to defaults" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_master_volume(0.5)
       manager.set_music_volume(0.3)
 
@@ -252,6 +278,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "resets gameplay category to defaults" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_text_speed(2.0)
       manager.set_auto_save(false)
       manager.set_difficulty("hard")
@@ -267,11 +294,13 @@ describe PointClickEngine::UI::ConfigurationManager do
 
   describe "configuration validation" do
     it "validates correct configuration" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       issues = manager.validate_configuration
       issues.should be_empty
     end
 
     it "detects invalid resolution" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.config.resolution = PointClickEngine::UI::ConfigurationManager::Resolution.new(-100, -200)
       issues = manager.validate_configuration
 
@@ -280,6 +309,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "detects volume out of range" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.config.master_volume = 2.0 # Above max
       issues = manager.validate_configuration
 
@@ -288,6 +318,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "detects invalid difficulty" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.config.difficulty = "invalid_difficulty"
       issues = manager.validate_configuration
 
@@ -296,6 +327,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "detects invalid language" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.config.language = "invalid_language"
       issues = manager.validate_configuration
 
@@ -305,9 +337,10 @@ describe PointClickEngine::UI::ConfigurationManager do
   end
 
   describe "file operations" do
-    let(temp_config_file) { "test_settings.json" }
+    temp_config_file = "test_config.json"
 
     before_each do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.config_file_path = temp_config_file
       # Clean up any existing test file
       File.delete(temp_config_file) if File.exists?(temp_config_file)
@@ -319,6 +352,8 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "saves configuration to file" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
+      manager.config_file_path = temp_config_file
       manager.set_fullscreen(true)
       manager.set_master_volume(0.7)
 
@@ -329,6 +364,8 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "loads configuration from file" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
+      manager.config_file_path = temp_config_file
       # Save a configuration first
       manager.set_fullscreen(true)
       manager.set_master_volume(0.7)
@@ -347,11 +384,15 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "handles missing configuration file" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
+      manager.config_file_path = temp_config_file
       success = manager.load_configuration
       success.should be_false
     end
 
     it "handles malformed configuration file" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
+      manager.config_file_path = temp_config_file
       # Create invalid JSON file
       File.write(temp_config_file, "invalid json content")
 
@@ -362,6 +403,7 @@ describe PointClickEngine::UI::ConfigurationManager do
 
   describe "callbacks" do
     it "calls resolution changed callback" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       callback_called = false
       new_resolution = nil.as(PointClickEngine::UI::ConfigurationManager::Resolution?)
 
@@ -378,6 +420,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "calls volume changed callback" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       callback_called = false
       volume_type = ""
       volume_value = 0.0_f32
@@ -396,6 +439,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     end
 
     it "calls setting changed callback" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       callback_called = false
       setting_key = ""
       setting_value = ""
@@ -433,26 +477,31 @@ describe PointClickEngine::UI::ConfigurationManager do
 
   describe "edge cases and error handling" do
     it "handles zero volume settings" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_master_volume(0.0)
       manager.config.master_volume.should eq(0.0)
     end
 
     it "handles maximum volume settings" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_master_volume(1.0)
       manager.config.master_volume.should eq(1.0)
     end
 
     it "handles minimum text speed" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_text_speed(0.1)
       manager.config.text_speed.should eq(0.1)
     end
 
     it "handles maximum text speed" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_text_speed(3.0)
       manager.config.text_speed.should eq(3.0)
     end
 
     it "maintains configuration integrity after multiple operations" do
+      manager = PointClickEngine::UI::ConfigurationManager.new
       # Perform many operations
       manager.set_resolution_by_index(3)
       manager.set_fullscreen(true)

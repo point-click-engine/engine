@@ -76,29 +76,29 @@ module PointClickEngine
         end
 
         # Navigation keys
-        if RL.is_key_pressed(RL::Key::Up) || RL.is_key_pressed(RL::Key::W)
+        if RL.key_pressed?(RL::KeyboardKey::Up) || RL.key_pressed?(RL::KeyboardKey::W)
           @last_input_time = current_time
           @on_navigate.try(&.call(InputAction::NavigateUp))
           return InputAction::NavigateUp
-        elsif RL.is_key_pressed(RL::Key::Down) || RL.is_key_pressed(RL::Key::S)
+        elsif RL.key_pressed?(RL::KeyboardKey::Down) || RL.key_pressed?(RL::KeyboardKey::S)
           @last_input_time = current_time
           @on_navigate.try(&.call(InputAction::NavigateDown))
           return InputAction::NavigateDown
-        elsif RL.is_key_pressed(RL::Key::Left) || RL.is_key_pressed(RL::Key::A)
+        elsif RL.key_pressed?(RL::KeyboardKey::Left) || RL.key_pressed?(RL::KeyboardKey::A)
           @last_input_time = current_time
           @on_navigate.try(&.call(InputAction::NavigateLeft))
           return InputAction::NavigateLeft
-        elsif RL.is_key_pressed(RL::Key::Right) || RL.is_key_pressed(RL::Key::D)
+        elsif RL.key_pressed?(RL::KeyboardKey::Right) || RL.key_pressed?(RL::KeyboardKey::D)
           @last_input_time = current_time
           @on_navigate.try(&.call(InputAction::NavigateRight))
           return InputAction::NavigateRight
         end
 
         # Action keys
-        if RL.is_key_pressed(RL::Key::Enter) || RL.is_key_pressed(RL::Key::Space)
+        if RL.key_pressed?(RL::KeyboardKey::Enter) || RL.key_pressed?(RL::KeyboardKey::Space)
           @last_input_time = current_time
           return InputAction::Select
-        elsif RL.is_key_pressed(RL::Key::Escape)
+        elsif RL.key_pressed?(RL::KeyboardKey::Escape)
           @last_input_time = current_time
           @on_cancel.try(&.call)
           return InputAction::Cancel
@@ -110,7 +110,7 @@ module PointClickEngine
       # Processes mouse input and interaction
       private def process_mouse_input : InputAction
         # Check for mouse click
-        if RL.is_mouse_button_pressed(RL::MouseButton::Left)
+        if RL::MouseButton::Left.pressed?
           return InputAction::MouseClick
         end
 
@@ -148,7 +148,7 @@ module PointClickEngine
         if is_hovering
           @on_mouse_hover.try(&.call(item_index))
 
-          if RL.is_mouse_button_pressed(RL::MouseButton::Left)
+          if RL::MouseButton::Left.pressed?
             @on_select.try(&.call(item_index))
             return true
           end
@@ -204,16 +204,16 @@ module PointClickEngine
 
       # Checks if any navigation key is currently held
       def navigation_key_held? : Bool
-        RL.is_key_down(RL::Key::Up) || RL.is_key_down(RL::Key::Down) ||
-          RL.is_key_down(RL::Key::Left) || RL.is_key_down(RL::Key::Right) ||
-          RL.is_key_down(RL::Key::W) || RL.is_key_down(RL::Key::S) ||
-          RL.is_key_down(RL::Key::A) || RL.is_key_down(RL::Key::D)
+        RL.key_down?(RL::KeyboardKey::Up) || RL.key_down?(RL::KeyboardKey::Down) ||
+          RL.key_down?(RL::KeyboardKey::Left) || RL.key_down?(RL::KeyboardKey::Right) ||
+          RL.key_down?(RL::KeyboardKey::W) || RL.key_down?(RL::KeyboardKey::S) ||
+          RL.key_down?(RL::KeyboardKey::A) || RL.key_down?(RL::KeyboardKey::D)
       end
 
       # Checks if any action key is currently held
       def action_key_held? : Bool
-        RL.is_key_down(RL::Key::Enter) || RL.is_key_down(RL::Key::Space) ||
-          RL.is_key_down(RL::Key::Escape)
+        RL.key_down?(RL::KeyboardKey::Enter) || RL.key_down?(RL::KeyboardKey::Space) ||
+          RL.key_down?(RL::KeyboardKey::Escape)
       end
 
       # Resets input state (useful for menu transitions)
@@ -238,7 +238,7 @@ module PointClickEngine
       end
 
       # Gets input statistics for debugging
-      def get_input_stats : Hash(String, String | Float64 | Bool)
+      def get_input_stats : Hash(String, Bool | Float32 | Float64)
         {
           "keyboard_enabled" => @keyboard_navigation_enabled,
           "mouse_enabled"    => @mouse_navigation_enabled,

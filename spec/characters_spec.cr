@@ -42,12 +42,16 @@ describe PointClickEngine::Characters do
       char = TestCharacter.new("Hero", vec2(0, 0), vec2(32, 48))
       char.add_animation("walk", 0, 4, 0.15_f32, true)
 
-      char.animations.has_key?("walk").should be_true
-      anim = char.animations["walk"]
-      anim.start_frame.should eq(0)
-      anim.frame_count.should eq(4)
-      anim.frame_speed.should eq(0.15_f32)
-      anim.loop.should be_true
+      char.animation_controller.should_not be_nil
+      char.animation_controller.try(&.has_animation?("walk")).should be_true
+      anim = char.animation_controller.try(&.get_animation("walk"))
+      anim.should_not be_nil
+      if anim
+        anim.start_frame.should eq(0)
+        anim.frame_count.should eq(4)
+        anim.frame_speed.should eq(0.15_f32)
+        anim.loop.should be_true
+      end
     end
 
     it "can set walk targets" do
@@ -94,17 +98,18 @@ describe PointClickEngine::Characters do
       player = PointClickEngine::Characters::Player.new("Hero", vec2(0, 0), vec2(32, 48))
 
       # Should have basic animations
-      player.animations.has_key?("idle").should be_true
-      player.animations.has_key?("idle_right").should be_true
-      player.animations.has_key?("idle_left").should be_true
-      player.animations.has_key?("walk_right").should be_true
-      player.animations.has_key?("walk_left").should be_true
-      player.animations.has_key?("talk").should be_true
+      player.animation_controller.should_not be_nil
+      player.animation_controller.try(&.has_animation?("idle")).should be_true
+      player.animation_controller.try(&.has_animation?("idle_right")).should be_true
+      player.animation_controller.try(&.has_animation?("idle_left")).should be_true
+      player.animation_controller.try(&.has_animation?("walk_right")).should be_true
+      player.animation_controller.try(&.has_animation?("walk_left")).should be_true
+      player.animation_controller.try(&.has_animation?("talk")).should be_true
     end
 
     it "starts with idle_right animation" do
       player = PointClickEngine::Characters::Player.new("Hero", vec2(0, 0), vec2(32, 48))
-      player.current_animation.should eq("idle_right")
+      player.animation_controller.try(&.current_animation).should eq("idle_right")
     end
   end
 

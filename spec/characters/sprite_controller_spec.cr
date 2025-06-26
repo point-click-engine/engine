@@ -2,12 +2,11 @@ require "../spec_helper"
 require "../../src/characters/sprite_controller"
 
 describe PointClickEngine::Characters::SpriteController do
-  let(position) { RL::Vector2.new(100, 200) }
-  let(size) { RL::Vector2.new(64, 64) }
-  let(controller) { PointClickEngine::Characters::SpriteController.new(position, size) }
-
   describe "initialization" do
     it "initializes with position and size" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
       controller.position.should eq(position)
       controller.size.should eq(size)
       controller.scale.should eq(1.0)
@@ -15,6 +14,9 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "starts without sprite loaded" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
       controller.sprite.should be_nil
       controller.sprite_path.should be_nil
       controller.loaded?.should be_false
@@ -23,6 +25,9 @@ describe PointClickEngine::Characters::SpriteController do
 
   describe "sprite loading" do
     it "loads spritesheet with correct dimensions" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
       # Note: This would normally require actual image file
       # For testing, we mock the sprite creation
       controller.load_spritesheet("test_sprite.png", 32, 48)
@@ -56,6 +61,9 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "updates size based on scaled sprite dimensions" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 64.0_f32, y: 64.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
       controller.load_spritesheet("test.png", 32, 48)
 
       if sprite = controller.sprite
@@ -69,11 +77,12 @@ describe PointClickEngine::Characters::SpriteController do
   end
 
   describe "position management" do
-    before_each do
-      controller.load_spritesheet("test.png", 32, 32)
-    end
-
     it "updates sprite position when character position changes" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 32)
+
       new_position = RL::Vector2.new(300, 400)
       controller.update_position(new_position)
 
@@ -84,6 +93,11 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "synchronizes position with sprite" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 32)
+
       initial_pos = RL::Vector2.new(150, 250)
       controller.update_position(initial_pos)
 
@@ -93,16 +107,20 @@ describe PointClickEngine::Characters::SpriteController do
   end
 
   describe "scale management" do
-    before_each do
-      controller.load_spritesheet("test.png", 32, 32)
-    end
-
     it "updates character scale" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 32)
       controller.update_scale(2.0)
       controller.scale.should eq(2.0)
     end
 
     it "handles manual scale override" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 32)
       controller.set_manual_scale(1.5)
       controller.update_scale(2.0)
 
@@ -111,6 +129,10 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "clears manual scale override" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 32)
       controller.set_manual_scale(1.5)
       controller.clear_manual_scale
 
@@ -120,13 +142,13 @@ describe PointClickEngine::Characters::SpriteController do
   end
 
   describe "bounds calculation" do
-    before_each do
+    it "calculates sprite bounds correctly" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
       controller.load_spritesheet("test.png", 32, 48)
       controller.update_position(RL::Vector2.new(100, 200))
       controller.update_scale(2.0)
-    end
-
-    it "calculates sprite bounds correctly" do
       bounds = controller.get_bounds
 
       # For 32x48 sprite at scale 2.0, positioned at (100, 200)
@@ -142,6 +164,12 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "handles point collision detection" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 48)
+      controller.update_position(RL::Vector2.new(100, 200))
+      controller.update_scale(2.0)
       # Point inside sprite bounds
       inside_point = RL::Vector2.new(100, 170) # Near character center
       controller.contains_point?(inside_point).should be_true
@@ -165,11 +193,12 @@ describe PointClickEngine::Characters::SpriteController do
   end
 
   describe "rendering" do
-    before_each do
-      controller.load_spritesheet("test.png", 32, 32)
-    end
-
     it "applies scale during rendering" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 32)
+
       controller.update_scale(1.5)
       controller.set_manual_scale(2.0)
 
@@ -183,6 +212,11 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "handles visibility control" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 32)
+
       controller.visible = false
       controller.visible?.should be_false
 
@@ -193,6 +227,9 @@ describe PointClickEngine::Characters::SpriteController do
 
   describe "utility methods" do
     it "provides frame dimensions" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
       controller.frame_width.should eq(0) # No sprite loaded
       controller.frame_height.should eq(0)
 
@@ -202,6 +239,9 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "reloads texture" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
       controller.load_spritesheet("original.png", 32, 32)
       original_path = controller.sprite_path
 
@@ -210,6 +250,9 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "updates size from sprite dimensions" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
       controller.load_spritesheet("test.png", 32, 48)
       controller.set_manual_scale(3.0)
 
@@ -223,11 +266,12 @@ describe PointClickEngine::Characters::SpriteController do
   end
 
   describe "resource management" do
-    before_each do
-      controller.load_spritesheet("test.png", 32, 32)
-    end
-
     it "unloads resources" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 32)
+
       controller.loaded?.should be_true
 
       controller.unload
@@ -238,6 +282,11 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "creates controller copy" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 32)
+
       controller.set_manual_scale(1.5)
       controller.update_scale(2.0)
 
@@ -255,11 +304,12 @@ describe PointClickEngine::Characters::SpriteController do
   end
 
   describe "serialization support" do
-    before_each do
-      controller.load_spritesheet("test.png", 32, 32)
-    end
-
     it "handles YAML deserialization" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      controller.load_spritesheet("test.png", 32, 32)
+
       # Simulate YAML deserialization
       ctx = YAML::ParseContext.new
       new_position = RL::Vector2.new(300, 400)
@@ -276,6 +326,9 @@ describe PointClickEngine::Characters::SpriteController do
 
   describe "edge cases" do
     it "handles zero frame dimensions gracefully" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
       # Should not crash with zero dimensions
       controller.load_spritesheet("empty.png", 0, 0)
 
@@ -285,6 +338,9 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "handles operations without loaded sprite" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
       # All operations should work gracefully without sprite
       controller.update_position(RL::Vector2.new(10, 20))
       controller.update_scale(2.0)
@@ -295,6 +351,10 @@ describe PointClickEngine::Characters::SpriteController do
     end
 
     it "handles negative scale values" do
+      position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
+      size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
+      controller = PointClickEngine::Characters::SpriteController.new(position, size)
+
       controller.load_spritesheet("test.png", 32, 32)
       controller.update_scale(-1.0)
 

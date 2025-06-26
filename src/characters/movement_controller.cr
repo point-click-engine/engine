@@ -404,7 +404,8 @@ module PointClickEngine
         new_direction = target.x < @character.position.x ? Direction::Left : Direction::Right
 
         # Update character direction and animation if changed or not walking
-        if new_direction != @character.direction || !@character.current_animation.starts_with?("walk")
+        current_anim = @character.animation_controller.try(&.current_animation) || ""
+        if new_direction != @character.direction || !current_anim.starts_with?("walk")
           @character.direction = new_direction
           play_walking_animation(new_direction)
         end
@@ -419,15 +420,15 @@ module PointClickEngine
                          else              "walk_right" # Default fallback
                          end
 
-        @character.play_animation(animation_name) if @character.animations.has_key?(animation_name)
+        @character.play_animation(animation_name) if @character.animation_controller.try(&.has_animation?(animation_name))
       end
 
       private def play_idle_animation
         base_idle = @character.direction == Direction::Left ? "idle_left" : "idle_right"
 
-        if @character.animations.has_key?(base_idle)
+        if @character.animation_controller.try(&.has_animation?(base_idle))
           @character.play_animation(base_idle)
-        elsif @character.animations.has_key?("idle")
+        elsif @character.animation_controller.try(&.has_animation?("idle"))
           @character.play_animation("idle")
         end
       end
