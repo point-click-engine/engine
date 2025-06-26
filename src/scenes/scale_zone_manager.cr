@@ -71,9 +71,9 @@ module PointClickEngine
             errors << "Scale zone #{i} has negative scale values"
           end
 
-          # Check for overlaps with other zones
+          # Check for overlaps with other zones (only check zones after current one to avoid duplicates)
           @scale_zones.each_with_index do |other_zone, j|
-            next if i == j
+            next if i >= j # Skip if same zone or already checked
 
             if zones_overlap?(zone, other_zone)
               errors << "Scale zones #{i} and #{j} overlap"
@@ -87,9 +87,9 @@ module PointClickEngine
       private def zones_overlap?(zone1 : ScaleZone, zone2 : ScaleZone) : Bool
         # Zones overlap if one's min is between the other's min and max
         (zone1.min_y >= zone2.min_y && zone1.min_y <= zone2.max_y) ||
-        (zone1.max_y >= zone2.min_y && zone1.max_y <= zone2.max_y) ||
-        (zone2.min_y >= zone1.min_y && zone2.min_y <= zone1.max_y) ||
-        (zone2.max_y >= zone1.min_y && zone2.max_y <= zone1.max_y)
+          (zone1.max_y >= zone2.min_y && zone1.max_y <= zone2.max_y) ||
+          (zone2.min_y >= zone1.min_y && zone2.min_y <= zone1.max_y) ||
+          (zone2.max_y >= zone1.min_y && zone2.max_y <= zone1.max_y)
       end
     end
   end

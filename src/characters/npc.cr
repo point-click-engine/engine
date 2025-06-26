@@ -1,6 +1,7 @@
 # Non-Player Character (NPC) implementation
 
 require "yaml"
+require "./ai/behavior"
 
 module PointClickEngine
   module Characters

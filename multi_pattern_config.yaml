@@ -1,7 +1,0 @@
-game:
-  title: "Multi Pattern Test"
-
-assets:
-  scenes:
-    - "test_scenes/main/*.yaml"
-    - "test_scenes/bonus/*.yaml"

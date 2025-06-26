@@ -124,6 +124,10 @@ module PointClickEngine
         private def validate_audio_file_sizes(audio_files : Hash(String, String), category : String, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*)
           audio_files.each do |name, path|
             full_path = File.expand_path(path, context.base_dir)
+
+            # Always validate audio format, even if file doesn't exist
+            validate_audio_format(full_path, "#{category.downcase} '#{name}'", result)
+
             if File.exists?(full_path)
               size = File.size(full_path)
               total_size.value += size
@@ -133,9 +137,6 @@ module PointClickEngine
               if size_mb > threshold
                 large_assets << "#{category} '#{name}': #{size_mb.round(1)} MB"
               end
-
-              # Validate audio format
-              validate_audio_format(full_path, "#{category.downcase} '#{name}'", result)
             end
           end
         end
@@ -177,22 +178,21 @@ module PointClickEngine
             end
           end
 
-          # Check audio formats
+          # Check audio formats (check extensions even if files don't exist)
           if audio = assets.audio
             (audio.music.values + audio.sounds.values).each do |path|
               full_path = File.expand_path(path, context.base_dir)
-              if File.exists?(full_path)
-                ext = File.extname(full_path).downcase
-                unless [".wav", ".ogg", ".mp3", ".flac"].includes?(ext)
-                  unsupported_extensions << "#{File.basename(full_path)} (#{ext})"
-                end
+              ext = File.extname(full_path).downcase
+              unless [".wav", ".ogg", ".mp3", ".flac"].includes?(ext)
+                unsupported_extensions << "#{File.basename(full_path)} (#{ext})"
               end
             end
           end
 
           if unsupported_extensions.any?
-            result.add_warning("Potentially unsupported file formats found:")
-            unsupported_extensions.each { |file| result.add_warning("  - #{file}") }
+            unsupported_extensions.each do |file|
+              result.add_error("Unsupported audio format: #{file}")
+            end
           end
         end
 
@@ -224,6 +224,16 @@ module PointClickEngine
             if file_size > 5_000_000 # 5MB
               result.add_performance_hint("#{description} is a large WAV file - consider OGG compression")
             end
+          when ".mid", ".midi"
+            result.add_error("Unsupported audio format: #{description} uses MIDI format")
+          when ".aiff", ".aif"
+            result.add_error("Unsupported audio format: #{description} uses AIFF format")
+          when ".ogg"
+            # OGG is fine, no action needed
+          else
+            unless [".mp3", ".flac", ".wav"].includes?(ext)
+              result.add_error("Unsupported audio format: #{description} has extension #{ext}")
+            end
           end
         end
 
@@ -241,7 +251,7 @@ module PointClickEngine
                 validate_shader_files(shader_files, result)
               end
             else
-              result.add_warning("Shaders enabled but shaders directory not found")
+              result.add_warning("Shaders enabled but shader files not found")
             end
           end
         end

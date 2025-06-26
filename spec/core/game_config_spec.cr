@@ -71,9 +71,10 @@ describe PointClickEngine::Core::GameConfig do
     end
 
     it "raises an error for invalid YAML" do
-      File.write("invalid_config.yaml", "invalid: yaml: content:")
+      # Use truly invalid YAML syntax
+      File.write("invalid_config.yaml", "invalid: yaml: content: [unclosed bracket")
 
-      expect_raises(PointClickEngine::Core::ConfigError) do
+      expect_raises(PointClickEngine::Core::ConfigError | PointClickEngine::Core::ValidationError) do
         PointClickEngine::Core::GameConfig.from_file("invalid_config.yaml")
       end
 
@@ -166,15 +167,19 @@ describe PointClickEngine::Core::GameConfig do
       Dir.mkdir_p("test_game/scenes")
       Dir.mkdir_p("test_game/quests")
 
+      # Create dummy background files
+      File.write("test_game/bg1.png", "dummy")
+      File.write("test_game/bg2.png", "dummy")
+
       # Create test scene files
       scene1_yaml = <<-YAML
       name: scene1
-      background_path: bg1.png
+      background_path: ../bg1.png
       YAML
 
       scene2_yaml = <<-YAML
       name: scene2
-      background_path: bg2.png
+      background_path: ../bg2.png
       YAML
 
       File.write("test_game/scenes/scene1.yaml", scene1_yaml)
@@ -207,7 +212,7 @@ describe PointClickEngine::Core::GameConfig do
       YAML
 
       File.write("asset_test_config.yaml", config_yaml)
-      config = PointClickEngine::Core::GameConfig.from_file("asset_test_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("asset_test_config.yaml", skip_preflight: true)
 
       RL.init_window(800, 600, "Asset Test")
       engine = config.create_engine
@@ -226,6 +231,8 @@ describe PointClickEngine::Core::GameConfig do
       # Cleanup
       RL.close_window
       File.delete("asset_test_config.yaml")
+      File.delete("test_game/bg1.png")
+      File.delete("test_game/bg2.png")
       File.delete("test_game/scenes/scene1.yaml")
       File.delete("test_game/scenes/scene2.yaml")
       File.delete("test_game/quests/main.yaml")

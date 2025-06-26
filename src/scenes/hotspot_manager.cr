@@ -279,29 +279,29 @@ module PointClickEngine
         # We need to check neighboring cells too, as hotspots can span multiple cells
         grid_x = (position.x / @spatial_grid_size).to_i
         grid_y = (position.y / @spatial_grid_size).to_i
-        
+
         checked_hotspots = Set(Hotspot).new
         result : Hotspot? = nil
-        
+
         # Debug output
         # puts "Looking for hotspot at position #{position}, grid cell (#{grid_x}, #{grid_y})"
         # puts "Spatial grid has #{@spatial_grid.size} cells"
-        
+
         # Check a 3x3 grid around the position to catch hotspots that span cells
         (-1..1).each do |dx|
           (-1..1).each do |dy|
             check_x = grid_x + dx
             check_y = grid_y + dy
             grid_key = get_grid_key((check_x * @spatial_grid_size).to_i, (check_y * @spatial_grid_size).to_i)
-            
+
             candidates = @spatial_grid[grid_key]?
             # puts "  Checking grid cell #{grid_key}: #{candidates.try(&.size) || 0} candidates"
             next unless candidates
-            
+
             candidates.each do |hotspot|
               next if checked_hotspots.includes?(hotspot)
               checked_hotspots << hotspot
-              
+
               if hotspot.visible && hotspot.contains_point?(position)
                 # Keep the topmost (highest z-order or last added if same z-order)
                 if result.nil? || hotspot.z_order > result.z_order
@@ -314,7 +314,7 @@ module PointClickEngine
             end
           end
         end
-        
+
         result
       end
 
@@ -323,31 +323,31 @@ module PointClickEngine
         # Check all grid cells that might contain hotspots overlapping this position
         grid_x = (position.x / @spatial_grid_size).to_i
         grid_y = (position.y / @spatial_grid_size).to_i
-        
+
         checked_hotspots = Set(Hotspot).new
         results = [] of Hotspot
-        
+
         # Check a 3x3 grid around the position to catch hotspots that span cells
         (-1..1).each do |dx|
           (-1..1).each do |dy|
             check_x = grid_x + dx
             check_y = grid_y + dy
             grid_key = get_grid_key((check_x * @spatial_grid_size).to_i, (check_y * @spatial_grid_size).to_i)
-            
+
             candidates = @spatial_grid[grid_key]?
             next unless candidates
-            
+
             candidates.each do |hotspot|
               next if checked_hotspots.includes?(hotspot)
               checked_hotspots << hotspot
-              
+
               if hotspot.visible && hotspot.contains_point?(position)
                 results << hotspot
               end
             end
           end
         end
-        
+
         results
       end
 
@@ -383,7 +383,7 @@ module PointClickEngine
 
         # Get the actual bounds of the hotspot (GameObject uses center-based positioning)
         bounds = hotspot.bounds
-        
+
         start_x = (bounds.x.to_i / @spatial_grid_size).to_i
         end_x = ((bounds.x + bounds.width).to_i / @spatial_grid_size).to_i
         start_y = (bounds.y.to_i / @spatial_grid_size).to_i

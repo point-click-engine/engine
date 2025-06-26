@@ -14,12 +14,12 @@ module PointClickEngine
       property sfx_volume : Float32 = 1.0
       property ambient_volume : Float32 = 0.7
       property voice_volume : Float32 = 0.9
-      
+
       # Mute states
       property muted : Bool = false
       property music_muted : Bool = false
       property sfx_muted : Bool = false
-      
+
       # Volume change callbacks
       @on_volume_change = [] of Proc(Symbol, Float32, Nil)
 
@@ -116,17 +116,16 @@ module PointClickEngine
         voice: Float32,
         muted: Bool,
         music_muted: Bool,
-        sfx_muted: Bool
-      )
+        sfx_muted: Bool)
         {
-          master: @master_volume,
-          music: @music_volume,
-          sfx: @sfx_volume,
-          ambient: @ambient_volume,
-          voice: @voice_volume,
-          muted: @muted,
+          master:      @master_volume,
+          music:       @music_volume,
+          sfx:         @sfx_volume,
+          ambient:     @ambient_volume,
+          voice:       @voice_volume,
+          muted:       @muted,
           music_muted: @music_muted,
-          sfx_muted: @sfx_muted
+          sfx_muted:   @sfx_muted,
         }
       end
 
@@ -140,7 +139,7 @@ module PointClickEngine
         @muted = settings[:muted]? || false
         @music_muted = settings[:music_muted]? || false
         @sfx_muted = settings[:sfx_muted]? || false
-        
+
         apply_master_volume
       end
 

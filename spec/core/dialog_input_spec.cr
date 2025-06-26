@@ -26,7 +26,7 @@ describe "Dialog input blocking" do
     # Show a dialog with choices
     choices = [
       PointClickEngine::UI::DialogChoice.new("Choice 1", -> { }),
-      PointClickEngine::UI::DialogChoice.new("Choice 2", -> { })
+      PointClickEngine::UI::DialogChoice.new("Choice 2", -> { }),
     ]
 
     engine.dialog_manager.try(&.show_dialog("Test Character", "Test dialog", choices))

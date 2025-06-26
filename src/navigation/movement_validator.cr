@@ -148,9 +148,8 @@ module PointClickEngine
         return false unless grid.is_walkable?(start_grid_x, start_grid_y)
         return false unless grid.is_walkable?(end_grid_x, end_grid_y)
 
-        # Check if start and end are different positions
-        return false if start_grid_x == end_grid_x && start_grid_y == end_grid_y
-
+        # Same-cell movements are valid - the algorithm handles them
+        # by returning a direct path from start to end
         true
       end
 

@@ -10,7 +10,7 @@ module PointClickEngine
     class SoundEffectManager
       # Cache of loaded sound effects
       getter sound_effects : Hash(String, SoundEffect) = {} of String => SoundEffect
-      
+
       # Global sound effects volume multiplier
       property sfx_volume : Float32 = 1.0
 
@@ -35,7 +35,7 @@ module PointClickEngine
           # Calculate distance-based volume
           distance = Math.sqrt((position.x - listener_pos.x)**2 + (position.y - listener_pos.y)**2)
           volume_factor = 1.0 - (distance / max_distance).clamp(0.0, 1.0)
-          
+
           sound.volume = (volume_factor * @sfx_volume).to_f32
           sound.play
         end

@@ -218,18 +218,18 @@ module PointClickEngine
           elsif width > 7680 || height > 4320
             result.add_warning("Window is very large: #{width}x#{height} - may cause performance issues")
           end
-          
+
           # Check for standard resolutions
           standard_resolutions = [
             {640, 480}, {800, 600}, {1024, 768}, {1280, 720}, {1280, 1024},
             {1366, 768}, {1440, 900}, {1600, 900}, {1680, 1050}, {1920, 1080},
-            {1920, 1200}, {2560, 1440}, {2560, 1600}, {3840, 2160}
+            {1920, 1200}, {2560, 1440}, {2560, 1600}, {3840, 2160},
           ]
-          
+
           unless standard_resolutions.includes?({width, height})
             result.add_warning("Non-standard resolution: #{width}x#{height}")
           end
-          
+
           # Warn about resolutions larger than 1920x1080
           if width > 1920 || height > 1080
             result.add_warning("Resolution is larger than 1920x1080 - may impact performance")
@@ -237,11 +237,11 @@ module PointClickEngine
               result.add_performance_hint("High resolution (#{width}x#{height}) - ensure adequate GPU performance")
             end
           end
-          
+
           # Check aspect ratio
           aspect_ratio = width.to_f / height.to_f
           common_ratios = [4.0/3.0, 16.0/9.0, 16.0/10.0, 21.0/9.0]
-          
+
           ratio_match = common_ratios.any? { |ratio| (aspect_ratio - ratio).abs < 0.1 }
           unless ratio_match
             result.add_warning("Unusual aspect ratio: #{aspect_ratio.round(2)} - may cause display issues")

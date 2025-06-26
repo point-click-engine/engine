@@ -67,7 +67,7 @@ describe "Keyboard Shortcuts During Dialog" do
 
     # Get the input manager and block input simulating dialog behavior
     input_manager = engine.input_manager
-    
+
     # Simulate what the dialog manager would do when showing a dialog
     if dialog_manager = engine.dialog_manager
       dialog_manager.show_message("Test dialog")
@@ -122,7 +122,7 @@ describe "Keyboard Shortcuts During Dialog" do
 
     # Enable verb input system first
     engine.enable_verb_input
-    
+
     # Create scene with verb system
     scene = PointClickEngine::Scenes::Scene.new("test_scene")
     engine.add_scene(scene)
@@ -138,10 +138,10 @@ describe "Keyboard Shortcuts During Dialog" do
     # but we can verify the verb system is enabled and responsive
     verb_system = engine.verb_input_system
     verb_system.should_not be_nil
-    
+
     if vs = verb_system
       vs.enabled.should be_true
-      
+
       # Get the current verb through the cursor manager's getter
       cursor_manager = vs.cursor_manager
       initial_verb = cursor_manager.current_verb

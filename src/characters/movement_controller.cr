@@ -301,8 +301,8 @@ module PointClickEngine
           puts "[PATHFINDING] At #{@character.position}, moving to waypoint #{@current_path_index}: #{current_waypoint}, distance: #{fresh_distance}, threshold: #{PATHFINDING_WAYPOINT_THRESHOLD}"
         end
 
-        # Check if we reached the current waypoint using fresh distance
-        if fresh_distance <= PATHFINDING_WAYPOINT_THRESHOLD
+        # Check if we're very close to the waypoint (use arrival threshold, not waypoint threshold)
+        if fresh_distance <= MOVEMENT_ARRIVAL_THRESHOLD
           if Core::DebugConfig.should_log?(:pathfinding)
             puts "[PATHFINDING] Reached waypoint #{@current_path_index}, advancing..."
           end

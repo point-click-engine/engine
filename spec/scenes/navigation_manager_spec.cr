@@ -111,7 +111,7 @@ describe PointClickEngine::Scenes::NavigationManager do
       ]
       walkable_area.regions << left_region
 
-      # Create right walkable region  
+      # Create right walkable region
       right_region = PointClickEngine::Scenes::PolygonRegion.new("right", walkable: true)
       right_region.vertices = [
         RL::Vector2.new(500, 0),
@@ -120,7 +120,7 @@ describe PointClickEngine::Scenes::NavigationManager do
         RL::Vector2.new(500, 600),
       ]
       walkable_area.regions << right_region
-      
+
       # Add explicit non-walkable barrier in the middle
       barrier = PointClickEngine::Scenes::PolygonRegion.new("barrier", walkable: false)
       barrier.vertices = [

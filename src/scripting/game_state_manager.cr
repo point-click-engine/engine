@@ -12,13 +12,13 @@ module PointClickEngine
       # Set a game state value
       def set_state(key : String, value : Luajit::LuaAny?)
         old_value = @game_state[key]?
-        
+
         if value
           @game_state[key] = value
         else
           @game_state.delete(key)
         end
-        
+
         # Notify callbacks
         @state_change_callbacks.each do |callback|
           callback.call(key, value)
@@ -39,12 +39,12 @@ module PointClickEngine
       def remove_state(key : String) : Bool
         if @game_state.has_key?(key)
           @game_state.delete(key)
-          
+
           # Notify callbacks with nil value
           @state_change_callbacks.each do |callback|
             callback.call(key, nil)
           end
-          
+
           true
         else
           false
@@ -79,13 +79,13 @@ module PointClickEngine
       # Get state filtered by prefix
       def get_states_with_prefix(prefix : String) : Hash(String, Luajit::LuaAny)
         result = {} of String => Luajit::LuaAny
-        
+
         @game_state.each do |key, value|
           if key.starts_with?(prefix)
             result[key] = value
           end
         end
-        
+
         result
       end
 

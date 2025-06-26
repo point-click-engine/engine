@@ -2,6 +2,8 @@ require "./validation_result"
 require "./asset_validation_checker"
 require "./rendering_validation_checker"
 require "./performance_validation_checker"
+require "./security_validation_checker"
+require "./platform_info_validator"
 require "../validators/config_validator"
 require "../validators/asset_validator"
 require "../validators/scene_validator"
@@ -145,7 +147,9 @@ module PointClickEngine
 
         private def setup_default_validators
           # Add built-in validators in priority order
+          @validators << PlatformInfoValidator.new
           @validators << AssetValidationChecker.new
+          @validators << SecurityValidationChecker.new
           @validators << RenderingValidationChecker.new
           @validators << PerformanceValidationChecker.new
         end

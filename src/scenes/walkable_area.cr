@@ -213,19 +213,18 @@ module PointClickEngine
         obstacle_count: Int32,
         scale_zone_count: Int32,
         walk_behind_count: Int32,
-        total_vertices: Int32
-      )
+        total_vertices: Int32)
         walkable_count = @regions.count(&.walkable)
         obstacle_count = @regions.size - walkable_count
         total_vertices = @regions.sum { |r| r.vertices.size }
 
         {
-          region_count: @regions.size,
-          walkable_count: walkable_count,
-          obstacle_count: obstacle_count,
-          scale_zone_count: @scale_zone_manager.zones.size,
+          region_count:      @regions.size,
+          walkable_count:    walkable_count,
+          obstacle_count:    obstacle_count,
+          scale_zone_count:  @scale_zone_manager.zones.size,
           walk_behind_count: @walk_behind_manager.regions.size,
-          total_vertices: total_vertices
+          total_vertices:    total_vertices,
         }
       end
     end

@@ -18,7 +18,7 @@ module PointClickEngine
         regions : Array(PolygonRegion),
         max_radius : Float32 = 200.0,
         step_radius : Float32 = 10.0,
-        angle_steps : Int32 = 16
+        angle_steps : Int32 = 16,
       ) : RL::Vector2
         # If the target is already walkable, return it
         return target if is_point_walkable?(target, regions)
@@ -48,12 +48,10 @@ module PointClickEngine
         from : RL::Vector2,
         to : RL::Vector2,
         regions : Array(PolygonRegion),
-        sample_steps : Int32 = 10
+        sample_steps : Int32 = 10,
       ) : RL::Vector2
-        # If destination is walkable, return it
-        return to if is_point_walkable?(to, regions)
-
-        # Otherwise, find the closest walkable point along the line
+        # Always check the path, even if destination is walkable
+        # There might be obstacles in between
         best_point = from
 
         (1..sample_steps).each do |i|
@@ -66,6 +64,7 @@ module PointClickEngine
           if is_point_walkable?(test_point, regions)
             best_point = test_point
           else
+            # Hit an obstacle, stop here
             break
           end
         end

@@ -20,7 +20,7 @@ module PointClickEngine
 
       # Item state tracking
       private property enabled_items : Array(Bool) = [] of Bool
-      
+
       # Track if negative items were attempted (for validation)
       private property negative_items_attempted : Bool = false
 
@@ -40,7 +40,7 @@ module PointClickEngine
         if count < 0
           @negative_items_attempted = true
         end
-        
+
         # Ensure count is non-negative
         count = Math.max(0, count)
         @total_items = count
@@ -183,7 +183,7 @@ module PointClickEngine
             end
             next_index = next_index + 1
           end
-          
+
           attempts += 1
 
           # Found enabled item
@@ -223,7 +223,7 @@ module PointClickEngine
             end
             prev_index = prev_index - 1
           end
-          
+
           attempts += 1
 
           # Found enabled item

@@ -211,17 +211,20 @@ describe PointClickEngine::Characters::MovementController do
       controller = PointClickEngine::Characters::MovementController.new(character)
 
       waypoints = [
-        Raylib::Vector2.new(x: 10.0_f32, y: 0.0_f32), # Close waypoint
-        Raylib::Vector2.new(x: 20.0_f32, y: 0.0_f32),
+        Raylib::Vector2.new(x: 10.0_f32, y: 0.0_f32),  # Close waypoint
+        Raylib::Vector2.new(x: 200.0_f32, y: 0.0_f32), # Far waypoint to prevent completion
       ]
 
       controller.move_along_path(waypoints)
 
-      # Move enough to reach first waypoint
-      20.times { controller.update(0.1_f32) }
+      # Move enough to reach first waypoint and advance index
+      # With speed 100 and dt 0.1, we move 10 units per update
+      # First waypoint is at 10, so 1 update to reach + 1 to advance index
+      3.times { controller.update(0.1_f32) }
 
-      # Should have advanced past first waypoint
+      # Should have advanced past first waypoint and still be moving
       controller.current_path_index.should be >= 1
+      controller.moving?.should be_true
     end
   end
 

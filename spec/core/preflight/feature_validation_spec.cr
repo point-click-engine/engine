@@ -55,6 +55,9 @@ describe "PreflightCheck Feature Validation" do
 
       File.write("test_game.yaml", config_yaml)
 
+      # Remove shaders directory to test missing shader files scenario
+      FileUtils.rm_rf("shaders") if Dir.exists?("shaders")
+
       result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
       warning_found = result.warnings.any? { |w| w.includes?("shader") && w.includes?("not found") }

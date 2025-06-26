@@ -154,7 +154,7 @@ describe "Renderer Registration Fixes Documentation" do
       registered_components << "inventory"
     end
 
-    if engine.system_manager.menu_system.try(&.responds_to?(:draw))
+    if engine.system_manager.menu_system.try(&.responds_to?(:render))
       registered_components << "menu_system"
     end
 

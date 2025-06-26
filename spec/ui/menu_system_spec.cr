@@ -205,7 +205,7 @@ describe PointClickEngine::UI::MenuSystem do
       menu_system = PointClickEngine::UI::MenuSystem.new
       # Show a menu first so navigator has items
       menu_system.show("main")
-      
+
       issues = menu_system.validate_system
       issues.should be_a(Array(String))
       # With default settings, should have no issues

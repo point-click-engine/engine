@@ -93,13 +93,13 @@ module PointClickEngine
         @name = ""
         @description = ""
         @dialogue_system_data = Dialogue::CharacterDialogue.new(self)
-        
+
         # Initialize component controllers
         @animation_controller = AnimationController.new
         @sprite_controller = SpriteController.new(@position, @size)
         @state_manager = CharacterStateManager.new
         @movement_controller = MovementController.new(self)
-        
+
         setup_component_integration
       end
 
@@ -108,13 +108,13 @@ module PointClickEngine
         super(position, size)
         @description = "A character named #{@name}"
         @dialogue_system_data = Dialogue::CharacterDialogue.new(self)
-        
+
         # Initialize component controllers
         @animation_controller = AnimationController.new
         @sprite_controller = SpriteController.new(@position, @size)
         @state_manager = CharacterStateManager.new
         @movement_controller = MovementController.new(self)
-        
+
         setup_component_integration
       end
 
@@ -146,10 +146,10 @@ module PointClickEngine
         @sprite_controller.after_yaml_deserialize(ctx)
         @dialogue_system_data.try(&.character = self)
         @movement_controller = MovementController.new(self)
-        
+
         # Restore component integration
         setup_component_integration
-        
+
         # Restore current animation
         @animation_controller.play_animation(@animation_controller.current_animation, force_restart: false)
       end
@@ -163,7 +163,7 @@ module PointClickEngine
 
       # Defines a named animation for the character
       def add_animation(name : String, start_frame : Int32, frame_count : Int32,
-                        frame_speed : Float32 = Core::GameConstants::DEFAULT_ANIMATION_SPEED, 
+                        frame_speed : Float32 = Core::GameConstants::DEFAULT_ANIMATION_SPEED,
                         loop : Bool = true)
         @animation_controller.add_animation(name, start_frame, frame_count, frame_speed, loop)
       end
@@ -244,11 +244,11 @@ module PointClickEngine
       # Updates the character's state, movement, and animation
       def update(dt : Float32)
         return unless @active
-        
+
         @movement_controller.try(&.update(dt))
         @animation_controller.update(dt)
         @dialogue_system_data.try(&.update(dt))
-        
+
         # Update sprite position to match character position
         @sprite_controller.update_position(@position)
         @sprite_controller.update_scale(@scale)
@@ -257,7 +257,7 @@ module PointClickEngine
       # Renders the character sprite and dialogue
       def draw
         return unless @visible
-        
+
         @sprite_controller.draw
         @dialogue_system_data.try(&.draw)
 

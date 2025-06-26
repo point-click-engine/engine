@@ -135,7 +135,7 @@ describe "PreflightCheck Audio System Validation" do
       Dir.mkdir_p("test_game_dir/sounds")
 
       # Create a "large" test file
-      File.write("test_game_dir/sounds/big_sound.wav", "x" * 3_000_000) # 3MB
+      File.write("test_game_dir/sounds/big_sound.wav", "x" * 6_000_000) # 6MB
 
       config_yaml = <<-YAML
       game:
@@ -144,6 +144,7 @@ describe "PreflightCheck Audio System Validation" do
         width: 1024
         height: 768
       assets:
+        scenes: ["*.yaml"]
         audio:
           sounds:
             big: "sounds/big_sound.wav"
@@ -153,8 +154,8 @@ describe "PreflightCheck Audio System Validation" do
 
       result = PointClickEngine::Core::PreflightCheck.run("test_game_dir/game.yaml")
 
-      warning_found = result.warnings.any? { |w| w.includes?("Sound effect") && w.includes?("large") }
-      warning_found.should be_true
+      hint_found = result.performance_hints.any? { |h| h.includes?("Sound effect") && h.includes?("large") }
+      hint_found.should be_true
     end
 
     it "accepts reasonable sound effect sizes" do
@@ -212,49 +213,50 @@ describe "PreflightCheck Audio System Validation" do
     end
   end
 
-  describe "audio configuration validation" do
-    it "validates volume settings" do
+  describe "user settings validation" do
+    it "validates volume settings in user settings file" do
       config_yaml = <<-YAML
       game:
         title: "Test Game"
       window:
         width: 1024
         height: 768
+      YAML
+
+      user_settings_yaml = <<-YAML
       audio:
-        master_volume: 150
-        music_volume: -10
-        sfx_volume: 80
+        master_volume: 150.0
+        music_volume: -10.0
+        sfx_volume: 80.0
       YAML
 
       File.write("test_game.yaml", config_yaml)
+      File.write("user_settings.yaml", user_settings_yaml)
 
-      result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
+      user_settings = PointClickEngine::Core::UserSettings.load("user_settings.yaml")
+      validation_errors = user_settings.validate
 
-      # Should warn about invalid volume levels
-      volume_warnings = result.warnings.select { |w| w.includes?("volume") }
-      volume_warnings.should_not be_empty
+      # Should error about invalid volume levels
+      validation_errors.should_not be_empty
+      volume_errors = validation_errors.select { |e| e.includes?("volume") }
+      volume_errors.should_not be_empty
     end
 
-    it "accepts valid volume settings" do
-      config_yaml = <<-YAML
-      game:
-        title: "Test Game"
-      window:
-        width: 1024
-        height: 768
+    it "accepts valid volume settings in user settings file" do
+      user_settings_yaml = <<-YAML
       audio:
-        master_volume: 100
-        music_volume: 80
-        sfx_volume: 90
+        master_volume: 100.0
+        music_volume: 80.0
+        sfx_volume: 90.0
       YAML
 
-      File.write("test_game.yaml", config_yaml)
+      File.write("user_settings.yaml", user_settings_yaml)
 
-      result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
+      user_settings = PointClickEngine::Core::UserSettings.load("user_settings.yaml")
+      validation_errors = user_settings.validate
 
-      # Should not warn about valid volume levels
-      volume_warnings = result.warnings.select { |w| w.includes?("volume") && (w.includes?("invalid") || w.includes?("out of range")) }
-      volume_warnings.should be_empty
+      # Should not error about valid volume levels
+      validation_errors.should be_empty
     end
   end
 end

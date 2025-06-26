@@ -1,8 +1,0 @@
-game:
-  title: "Asset Test"
-
-assets:
-  scenes:
-    - "test_game/scenes/*.yaml"
-  quests:
-    - "test_game/quests/*.yaml"

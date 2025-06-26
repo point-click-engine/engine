@@ -189,16 +189,16 @@ module PointClickEngine::Core
       it "registers and resolves a resource loader" do
         container = DependencyContainer.new
         loader = MockResourceLoader.new
-        
+
         container.register_resource_loader(loader)
         resolved = container.resolve_resource_loader
-        
+
         resolved.should eq(loader)
       end
 
       it "raises error when no resource loader is registered" do
         container = DependencyContainer.new
-        
+
         expect_raises(DependencyError, "No resource loader registered") do
           container.resolve_resource_loader
         end
@@ -209,16 +209,16 @@ module PointClickEngine::Core
       it "registers and resolves a scene manager" do
         container = DependencyContainer.new
         manager = MockSceneManager.new
-        
+
         container.register_scene_manager(manager)
         resolved = container.resolve_scene_manager
-        
+
         resolved.should eq(manager)
       end
 
       it "raises error when no scene manager is registered" do
         container = DependencyContainer.new
-        
+
         expect_raises(DependencyError, "No scene manager registered") do
           container.resolve_scene_manager
         end
@@ -229,16 +229,16 @@ module PointClickEngine::Core
       it "registers and resolves an input manager" do
         container = DependencyContainer.new
         manager = MockInputManager.new
-        
+
         container.register_input_manager(manager)
         resolved = container.resolve_input_manager
-        
+
         resolved.should eq(manager)
       end
 
       it "raises error when no input manager is registered" do
         container = DependencyContainer.new
-        
+
         expect_raises(DependencyError, "No input manager registered") do
           container.resolve_input_manager
         end
@@ -249,16 +249,16 @@ module PointClickEngine::Core
       it "registers and resolves a render manager" do
         container = DependencyContainer.new
         manager = MockRenderManager.new
-        
+
         container.register_render_manager(manager)
         resolved = container.resolve_render_manager
-        
+
         resolved.should eq(manager)
       end
 
       it "raises error when no render manager is registered" do
         container = DependencyContainer.new
-        
+
         expect_raises(DependencyError, "No render manager registered") do
           container.resolve_render_manager
         end
@@ -269,16 +269,16 @@ module PointClickEngine::Core
       it "registers and resolves a config manager" do
         container = DependencyContainer.new
         manager = MockConfigManager.new
-        
+
         container.register_config_manager(manager)
         resolved = container.resolve_config_manager
-        
+
         resolved.should eq(manager)
       end
 
       it "raises error when no config manager is registered" do
         container = DependencyContainer.new
-        
+
         expect_raises(DependencyError, "No config manager registered") do
           container.resolve_config_manager
         end
@@ -289,16 +289,16 @@ module PointClickEngine::Core
       it "registers and resolves a performance monitor" do
         container = DependencyContainer.new
         monitor = MockPerformanceMonitor.new
-        
+
         container.register_performance_monitor(monitor)
         resolved = container.resolve_performance_monitor
-        
+
         resolved.should eq(monitor)
       end
 
       it "raises error when no performance monitor is registered" do
         container = DependencyContainer.new
-        
+
         expect_raises(DependencyError, "No performance monitor registered") do
           container.resolve_performance_monitor
         end
@@ -308,21 +308,21 @@ module PointClickEngine::Core
     describe "multiple registrations" do
       it "allows registering multiple different services" do
         container = DependencyContainer.new
-        
+
         resource_loader = MockResourceLoader.new
         scene_manager = MockSceneManager.new
         input_manager = MockInputManager.new
         render_manager = MockRenderManager.new
         config_manager = MockConfigManager.new
         performance_monitor = MockPerformanceMonitor.new
-        
+
         container.register_resource_loader(resource_loader)
         container.register_scene_manager(scene_manager)
         container.register_input_manager(input_manager)
         container.register_render_manager(render_manager)
         container.register_config_manager(config_manager)
         container.register_performance_monitor(performance_monitor)
-        
+
         container.resolve_resource_loader.should eq(resource_loader)
         container.resolve_scene_manager.should eq(scene_manager)
         container.resolve_input_manager.should eq(input_manager)
@@ -333,13 +333,13 @@ module PointClickEngine::Core
 
       it "overwrites existing registration when registering same type again" do
         container = DependencyContainer.new
-        
+
         loader1 = MockResourceLoader.new
         loader2 = MockResourceLoader.new
-        
+
         container.register_resource_loader(loader1)
         container.register_resource_loader(loader2)
-        
+
         container.resolve_resource_loader.should eq(loader2)
       end
     end

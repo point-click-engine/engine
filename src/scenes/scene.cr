@@ -31,30 +31,30 @@ module PointClickEngine
       # Scene components
       @[YAML::Field(ignore: true)]
       property navigation_manager : NavigationManager?
-      
+
       @[YAML::Field(ignore: true)]
       property background_renderer : BackgroundRenderer?
-      
+
       @[YAML::Field(ignore: true)]
       property hotspot_manager : HotspotManager?
 
       # Scene state
       @[YAML::Field(ignore: true)]
       property objects : Array(Core::GameObject) = [] of Core::GameObject
-      
+
       @[YAML::Field(ignore: true)]
       property characters : Array(Characters::Character) = [] of Characters::Character
-      
+
       @[YAML::Field(ignore: true)]
       property player : Characters::Character?
-      
+
       @[YAML::Field(ignore: true)]
       property walkable_area : WalkableArea?
 
       # Callbacks
       @[YAML::Field(ignore: true)]
       property on_enter : Proc(Nil)?
-      
+
       @[YAML::Field(ignore: true)]
       property on_exit : Proc(Nil)?
 
@@ -68,16 +68,16 @@ module PointClickEngine
       # Legacy compatibility - will be removed
       @[YAML::Field(ignore: true)]
       property background : RL::Texture2D?
-      
+
       @[YAML::Field(ignore: true)]
       property highlight_hotspots : Bool = false
-      
+
       @[YAML::Field(ignore: true)]
       property navigation_grid : Navigation::NavigationGrid?
-      
+
       @[YAML::Field(ignore: true)]
       property pathfinder : Navigation::Pathfinding?
-      
+
       @[YAML::Field(ignore: true)]
       property hotspots : Array(Hotspot) = [] of Hotspot
 
@@ -216,9 +216,9 @@ module PointClickEngine
         # Legacy support - need to create proper NavigationGrid from scene
         if walkable = @walkable_area
           @navigation_grid = Navigation::NavigationGrid.from_scene(
-            self, 
-            @logical_width, 
-            @logical_height, 
+            self,
+            @logical_width,
+            @logical_height,
             @navigation_cell_size,
             character_radius
           )
@@ -231,7 +231,7 @@ module PointClickEngine
           puts "[NAVIGATION] Background texture dimensions: #{@background_renderer.try(&.background_texture).try(&.width)}x#{@background_renderer.try(&.background_texture).try(&.height)}"
           puts "[NAVIGATION] Logical scene dimensions: #{@logical_width}x#{@logical_height}"
           puts "[NAVIGATION] Creating grid with cell size: #{@navigation_cell_size}"
-          
+
           if grid = @navigation_grid
             walkable_count = 0
             total_count = 0
@@ -243,7 +243,7 @@ module PointClickEngine
             end
             puts "[NAVIGATION] Grid created: #{grid.width}x#{grid.height} cells (cell size: #{@navigation_cell_size})"
             puts "[NAVIGATION] Total cells: #{total_count}, Walkable: #{walkable_count} (#{(walkable_count * 100.0 / total_count).round(1)}%)"
-            
+
             if walkable_count == 0
               puts "[NAVIGATION] WARNING: No walkable cells found! This means pathfinding will not work."
             end
@@ -267,30 +267,57 @@ module PointClickEngine
       end
 
       def is_area_walkable?(center : RL::Vector2, size : RL::Vector2, scale : Float32 = 1.0) : Bool
-        return true unless walkable = @walkable_area
+        # First check with walkable area polygons if available
+        if walkable = @walkable_area
+          # Use the same collision margin as original (90% for smoother gameplay)
+          collision_margin = 0.9_f32
+          half_width = (size.x * scale) / 2.0
+          half_height = (size.y * scale) / 2.0
 
-        # Use the same collision margin as original
-        collision_margin = 0.6_f32
-        half_width = (size.x * scale) / 2.0
-        half_height = (size.y * scale) / 2.0
+          check_points = [
+            center,
+            RL::Vector2.new(x: center.x - half_width * collision_margin, y: center.y - half_height * collision_margin),
+            RL::Vector2.new(x: center.x + half_width * collision_margin, y: center.y - half_height * collision_margin),
+            RL::Vector2.new(x: center.x - half_width * collision_margin, y: center.y + half_height * collision_margin),
+            RL::Vector2.new(x: center.x + half_width * collision_margin, y: center.y + half_height * collision_margin),
+            RL::Vector2.new(x: center.x, y: center.y - half_height * collision_margin),
+            RL::Vector2.new(x: center.x, y: center.y + half_height * collision_margin),
+            RL::Vector2.new(x: center.x - half_width * collision_margin, y: center.y),
+            RL::Vector2.new(x: center.x + half_width * collision_margin, y: center.y),
+          ]
 
-        check_points = [
-          center,
-          RL::Vector2.new(x: center.x - half_width * collision_margin, y: center.y - half_height * collision_margin),
-          RL::Vector2.new(x: center.x + half_width * collision_margin, y: center.y - half_height * collision_margin),
-          RL::Vector2.new(x: center.x - half_width * collision_margin, y: center.y + half_height * collision_margin),
-          RL::Vector2.new(x: center.x + half_width * collision_margin, y: center.y + half_height * collision_margin),
-          RL::Vector2.new(x: center.x, y: center.y - half_height * collision_margin),
-          RL::Vector2.new(x: center.x, y: center.y + half_height * collision_margin),
-          RL::Vector2.new(x: center.x - half_width * collision_margin, y: center.y),
-          RL::Vector2.new(x: center.x + half_width * collision_margin, y: center.y),
-        ]
+          walkable_count = check_points.count { |point| walkable.is_point_walkable?(point) }
+          center_walkable = walkable.is_point_walkable?(center)
 
-        walkable_count = check_points.count { |point| walkable.is_point_walkable?(point) }
-        center_walkable = walkable.is_point_walkable?(center)
+          # Require center to be walkable AND at least 7 other points (8 total out of 9)
+          # This provides a good balance between strictness and gameplay forgiveness
+          polygon_result = center_walkable && walkable_count >= 8
 
-        # Same logic: center must be walkable AND at least 4 other points (5 total)
-        center_walkable && walkable_count >= 5
+          # If navigation grid is available, also check grid-based walkability
+          if grid = @navigation_grid
+            # Check corners of the character bounds in the navigation grid
+            grid_points = [
+              RL::Vector2.new(x: center.x - half_width, y: center.y - half_height),
+              RL::Vector2.new(x: center.x + half_width, y: center.y - half_height),
+              RL::Vector2.new(x: center.x - half_width, y: center.y + half_height),
+              RL::Vector2.new(x: center.x + half_width, y: center.y + half_height),
+            ]
+
+            # All grid cells covered by character must be walkable
+            grid_walkable = grid_points.all? do |point|
+              grid_x, grid_y = grid.world_to_grid(point.x, point.y)
+              grid.is_walkable?(grid_x, grid_y)
+            end
+
+            # Both polygon and grid checks must pass
+            return polygon_result && grid_walkable
+          else
+            return polygon_result
+          end
+        end
+
+        # No walkable area defined, assume walkable
+        true
       end
 
       def get_character_scale(y_position : Float32) : Float32
@@ -306,7 +333,7 @@ module PointClickEngine
         if walkable = @walkable_area
           all_characters = @characters.dup
           @player.try { |p| all_characters << p unless all_characters.includes?(p) }
-          
+
           all_characters.each do |character|
             # Only apply dynamic scaling if no manual scale is set
             if character.manual_scale.nil?
@@ -321,7 +348,7 @@ module PointClickEngine
       def draw(camera : Graphics::Camera? = nil)
         # Calculate camera offset
         camera_offset = camera ? RL::Vector2.new(x: -camera.position.x, y: -camera.position.y) : RL::Vector2.new(x: 0, y: 0)
-        
+
         # Draw background
         if camera
           @background_renderer.not_nil!.draw(camera_offset)
@@ -376,7 +403,7 @@ module PointClickEngine
               end
             end
           end
-          
+
           # Then draw all characters in sorted order
           sorted_characters.each do |character|
             if camera
@@ -446,7 +473,7 @@ module PointClickEngine
         return unless script_path = @script_path
         engine.system_manager.script_engine.try &.execute_script_file(script_path)
       end
-      
+
       # Toggle hotspot highlighting
       def toggle_hotspot_highlight
         @highlight_hotspots = !@highlight_hotspots

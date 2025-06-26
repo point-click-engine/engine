@@ -1,6 +1,7 @@
 # Game configuration from YAML
 require "yaml"
 require "./engine"
+require "./user_settings"
 require "./game_state_manager"
 require "./quest_system"
 require "../characters/player"
@@ -93,9 +94,7 @@ module PointClickEngine
         include YAML::Serializable
         property debug_mode : Bool = false
         property show_fps : Bool = false
-        property master_volume : Float32 = 0.8
-        property music_volume : Float32 = 0.7
-        property sfx_volume : Float32 = 0.9
+        # Note: Audio volumes moved to UserSettings
       end
 
       class InitialState
@@ -239,6 +238,7 @@ module PointClickEngine
 
         # Configure player
         if player_config = player
+          puts "[DEBUG] Creating player object..." if Engine.debug_mode
           player_obj = Characters::Player.new(
             player_config.name,
             Raylib::Vector2.new(
@@ -255,11 +255,17 @@ module PointClickEngine
           if sprite_path = player_config.sprite_path
             full_player_sprite_path = File.join(config_base_dir, sprite_path)
             if sprite_info = player_config.sprite
-              player_obj.load_spritesheet(
-                full_player_sprite_path,
-                sprite_info.frame_width,
-                sprite_info.frame_height
-              )
+              begin
+                player_obj.load_spritesheet(
+                  full_player_sprite_path,
+                  sprite_info.frame_width,
+                  sprite_info.frame_height
+                )
+                puts "[DEBUG] Player sprite loaded successfully" if Engine.debug_mode
+              rescue ex
+                puts "[DEBUG] Failed to load player sprite: #{ex.message}" if Engine.debug_mode
+                # Continue without sprite - player will still be created
+              end
             end
           end
 
@@ -271,6 +277,9 @@ module PointClickEngine
           player_obj.walking_speed = GameConstants::SCALED_WALKING_SPEED
 
           engine.player = player_obj
+          puts "[DEBUG] Player assigned to engine" if Engine.debug_mode
+        else
+          puts "[DEBUG] No player config found" if Engine.debug_mode
         end
 
         # Apply settings
@@ -279,14 +288,20 @@ module PointClickEngine
           engine.show_fps = s.show_fps
         end
 
-        # Configure audio volumes
-        if audio = engine.system_manager.audio_manager
-          if s = settings
-            audio.master_volume = s.master_volume
-            audio.music_volume = s.music_volume
-            audio.sfx_volume = s.sfx_volume
-          end
+        # Load and apply user settings (creates default file if none exists)
+        user_settings_path = File.join(config_base_dir, "user_settings.yaml")
+        user_settings = UserSettings.load(user_settings_path)
+
+        # Validate user settings and warn about issues
+        validation_errors = user_settings.validate
+        unless validation_errors.empty?
+          puts "Warning: User settings validation issues:"
+          validation_errors.each { |error| puts "  - #{error}" }
+          puts "Using corrected values..."
         end
+
+        # Apply user settings to engine
+        user_settings.apply_to_engine(engine)
 
         # Set target FPS
         engine.target_fps = window.try(&.target_fps) || 60

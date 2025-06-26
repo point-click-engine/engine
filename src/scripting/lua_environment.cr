@@ -169,8 +169,24 @@ module PointClickEngine
       def call_function(name : String, *args) : Luajit::LuaAny?
         begin
           @lua.get_global(name)
+
+          # Check if the function exists
+          if @lua.is_nil?(-1)
+            @lua.pop(1)
+            return nil
+          end
+
           args.each { |arg| @lua.push(arg) }
-          @lua.pcall(args.size, 1, 0)
+
+          # Use pcall and check for errors
+          if @lua.pcall(args.size, 1, 0) != 0
+            # Error occurred, get error message and return nil
+            error_msg = @lua.to_string(-1)
+            @lua.pop(1)
+            puts "Lua function error: #{error_msg}"
+            return nil
+          end
+
           @lua.to_any?(-1).tap { @lua.pop(1) }
         rescue ex
           puts "Function call error: #{ex.message}"

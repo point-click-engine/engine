@@ -1,0 +1,8 @@
+game:
+  title: "Test Game"
+assets:
+  audio:
+    music:
+      theme: "theme.midi"
+    sounds:
+      click: "click.aiff"

@@ -16,26 +16,26 @@ module PointClickEngine::Scripting
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
         env.setup
-        
+
         # Check log function exists
         lua.get_global("log")
         lua.is_function?(-1).should be_true
         lua.pop(1)
-        
+
         # Check table_contains exists
         lua.get_global("table_contains")
         lua.is_function?(-1).should be_true
         lua.pop(1)
-        
+
         # Check math helpers exist
         lua.get_global("lerp")
         lua.is_function?(-1).should be_true
         lua.pop(1)
-        
+
         lua.get_global("clamp")
         lua.is_function?(-1).should be_true
         lua.pop(1)
-        
+
         lua.get_global("distance")
         lua.is_function?(-1).should be_true
         lua.pop(1)
@@ -45,16 +45,16 @@ module PointClickEngine::Scripting
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
         env.setup
-        
+
         # Check event functions exist
         lua.get_global("register_event_handler")
         lua.is_function?(-1).should be_true
         lua.pop(1)
-        
+
         lua.get_global("trigger_event")
         lua.is_function?(-1).should be_true
         lua.pop(1)
-        
+
         # Test event system
         lua.execute! <<-LUA
           local test_value = 0
@@ -64,7 +64,7 @@ module PointClickEngine::Scripting
           trigger_event("test_event", {value = 42})
           return test_value
         LUA
-        
+
         lua.to_i32(-1).should eq(42)
         lua.pop(1)
       end
@@ -73,16 +73,16 @@ module PointClickEngine::Scripting
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
         env.setup
-        
+
         # Check timer functions exist
         lua.get_global("create_timer")
         lua.is_function?(-1).should be_true
         lua.pop(1)
-        
+
         lua.get_global("cancel_timer")
         lua.is_function?(-1).should be_true
         lua.pop(1)
-        
+
         # Test timer creation
         lua.execute!("return create_timer(1.0, function() end, false)")
         lua.to_i32(-1).should eq(1) # First timer ID
@@ -93,7 +93,7 @@ module PointClickEngine::Scripting
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
         env.setup
-        
+
         # Test split_string
         lua.execute!(<<-LUA)
           result = split_string("a,b,c", ",")
@@ -101,7 +101,7 @@ module PointClickEngine::Scripting
         LUA
         lua.to_i32(-1).should eq(3)
         lua.pop(1)
-        
+
         # Test trim
         lua.execute!(<<-LUA)
           return trim("  hello  ")
@@ -114,7 +114,7 @@ module PointClickEngine::Scripting
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
         env.setup
-        
+
         # Test deep_copy
         lua.execute! <<-LUA
           local orig = {a = 1, b = {c = 2}}
@@ -124,7 +124,7 @@ module PointClickEngine::Scripting
         LUA
         lua.to_i32(-1).should eq(2) # Original unchanged
         lua.pop(1)
-        
+
         # Test table_merge
         lua.execute! <<-LUA
           local t1 = {a = 1}
@@ -141,10 +141,10 @@ module PointClickEngine::Scripting
       it "executes valid Lua code" do
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
-        
+
         result = env.execute("test_var = 42")
         result.should be_true
-        
+
         lua.get_global("test_var")
         lua.to_i32(-1).should eq(42)
         lua.pop(1)
@@ -153,7 +153,7 @@ module PointClickEngine::Scripting
       it "returns false for invalid Lua code" do
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
-        
+
         result = env.execute("invalid syntax {{")
         result.should be_false
       end
@@ -163,9 +163,9 @@ module PointClickEngine::Scripting
       it "calls Lua function with arguments" do
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
-        
+
         lua.execute!("function add(a, b) return a + b end")
-        
+
         result = env.call_function("add", 5, 3)
         result.should eq(8)
       end
@@ -173,7 +173,7 @@ module PointClickEngine::Scripting
       it "returns nil for non-existent function" do
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
-        
+
         result = env.call_function("nonexistent")
         result.should be_nil
       end
@@ -181,9 +181,9 @@ module PointClickEngine::Scripting
       it "handles function errors gracefully" do
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
-        
+
         lua.execute!("function error_func() error('test error') end")
-        
+
         result = env.call_function("error_func")
         result.should be_nil
       end
@@ -193,11 +193,11 @@ module PointClickEngine::Scripting
       it "sets and gets global variables" do
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
-        
+
         env.set_global("my_number", 42)
         env.set_global("my_string", "hello")
         env.set_global("my_bool", true)
-        
+
         env.get_global("my_number").should eq(42)
         env.get_global("my_string").should eq("hello")
         env.get_global("my_bool").should eq(true)
@@ -206,7 +206,7 @@ module PointClickEngine::Scripting
       it "returns nil for non-existent global" do
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
-        
+
         env.get_global("nonexistent").should be_nil
       end
     end
@@ -215,9 +215,9 @@ module PointClickEngine::Scripting
       it "checks if global exists" do
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
-        
+
         env.set_global("exists", 123)
-        
+
         env.has_global?("exists").should be_true
         env.has_global?("does_not_exist").should be_false
       end
@@ -227,24 +227,24 @@ module PointClickEngine::Scripting
       it "executes Lua file content" do
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
-        
+
         # Create temp file
         temp_file = File.tempfile("test_script", ".lua") do |file|
           file.print("file_var = 999")
         end
-        
+
         result = env.execute_file(temp_file.path)
         result.should be_true
-        
+
         env.get_global("file_var").should eq(999)
-        
+
         File.delete(temp_file.path)
       end
 
       it "returns false for non-existent file" do
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
-        
+
         result = env.execute_file("/nonexistent/file.lua")
         result.should be_false
       end
@@ -255,7 +255,7 @@ module PointClickEngine::Scripting
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
         env.setup
-        
+
         lua.execute!("return lerp(0, 100, 0.5)")
         lua.to_f32(-1).should eq(50.0f32)
         lua.pop(1)
@@ -265,15 +265,15 @@ module PointClickEngine::Scripting
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
         env.setup
-        
+
         lua.execute!("return clamp(150, 0, 100)")
         lua.to_i32(-1).should eq(100)
         lua.pop(1)
-        
+
         lua.execute!("return clamp(-50, 0, 100)")
         lua.to_i32(-1).should eq(0)
         lua.pop(1)
-        
+
         lua.execute!("return clamp(50, 0, 100)")
         lua.to_i32(-1).should eq(50)
         lua.pop(1)
@@ -283,7 +283,7 @@ module PointClickEngine::Scripting
         lua = Luajit.new_with_defaults
         env = LuaEnvironment.new(lua)
         env.setup
-        
+
         lua.execute!("return distance(0, 0, 3, 4)")
         lua.to_f32(-1).should eq(5.0f32)
         lua.pop(1)

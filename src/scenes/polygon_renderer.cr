@@ -35,7 +35,7 @@ module PointClickEngine
         vertices : Array(RL::Vector2),
         fill_color : RL::Color,
         outline_color : RL::Color,
-        outline_thickness : Float32 = 1.0
+        outline_thickness : Float32 = 1.0,
       ) : Nil
         draw_filled(vertices, fill_color)
         draw_outline(vertices, outline_color, outline_thickness)
@@ -76,7 +76,7 @@ module PointClickEngine
         return if zones.empty?
 
         x = screen_width - 50
-        
+
         zones.each do |zone|
           # Draw gradient bar
           steps = 20

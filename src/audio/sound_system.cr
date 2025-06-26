@@ -177,33 +177,33 @@ module PointClickEngine
       getter music_manager : MusicManager
       getter volume_controller : VolumeController
       getter resource_cache : AudioResourceCache
-      
+
       # Legacy property mappings for compatibility
       delegate master_volume, to: @volume_controller
       delegate muted, to: @volume_controller
       delegate current_music, to: @music_manager
-      
+
       # Manual delegation for setters and nested properties
       def master_volume=(value : Float32)
         @volume_controller.master_volume = value
       end
-      
+
       def music_volume
         @volume_controller.music_volume
       end
-      
+
       def music_volume=(value : Float32)
         @volume_controller.music_volume = value
       end
-      
+
       def sfx_volume
         @volume_controller.sfx_volume
       end
-      
+
       def sfx_volume=(value : Float32)
         @volume_controller.sfx_volume = value
       end
-      
+
       def muted=(value : Bool)
         @volume_controller.muted = value
       end
@@ -216,13 +216,13 @@ module PointClickEngine
         {% if flag?(:with_audio) %}
           RAudio.init_audio_device
         {% end %}
-        
+
         # Initialize components
         @sound_effect_manager = SoundEffectManager.new
         @music_manager = MusicManager.new
         @volume_controller = VolumeController.new
         @resource_cache = AudioResourceCache.new
-        
+
         # Wire up volume changes
         setup_volume_callbacks
       end
@@ -230,24 +230,24 @@ module PointClickEngine
       # Sound effect methods (delegate to manager)
       def load_sound_effect(name : String, file_path : String)
         sound = @sound_effect_manager.load_sound(name, file_path)
-        
+
         # Track in resource cache (estimate size - could be improved)
-        estimated_size = 1_000_000_u64  # 1MB estimate per sound
+        estimated_size = 1_000_000_u64 # 1MB estimate per sound
         @resource_cache.register_resource(name, estimated_size)
-        
+
         sound
       end
 
       def play_sound_effect(name : String)
         return if @volume_controller.muted
-        
+
         @resource_cache.access_resource(name)
         @sound_effect_manager.play_sound(name, @volume_controller.effective_sfx_volume)
       end
 
       def play_sound_at(name : String, position : RL::Vector2, listener_pos : RL::Vector2, max_distance : Float32 = 500.0)
         return if @volume_controller.muted
-        
+
         @resource_cache.access_resource(name)
         @sound_effect_manager.play_sound_at(name, position, listener_pos, max_distance)
       end
@@ -255,24 +255,24 @@ module PointClickEngine
       # Music methods (delegate to manager)
       def load_music(name : String, file_path : String)
         music = @music_manager.load_music(name, file_path)
-        
+
         # Track in resource cache
-        estimated_size = 5_000_000_u64  # 5MB estimate per music track
+        estimated_size = 5_000_000_u64 # 5MB estimate per music track
         @resource_cache.register_resource("music_#{name}", estimated_size)
-        
+
         music
       end
 
       def play_music(name : String, loop : Bool = true)
         return if @volume_controller.muted || @volume_controller.music_muted
-        
+
         @resource_cache.access_resource("music_#{name}")
         @music_manager.play_music(name, loop)
       end
 
       def crossfade_to(name : String, duration : Float32 = 2.0, loop : Bool = true)
         return if @volume_controller.muted || @volume_controller.music_muted
-        
+
         @resource_cache.access_resource("music_#{name}")
         @music_manager.crossfade_to(name, duration, loop)
       end
@@ -309,7 +309,7 @@ module PointClickEngine
       # Batch operations
       def preload_sounds(sounds : Array(Tuple(String, String)))
         @sound_effect_manager.preload_sounds(sounds)
-        
+
         sounds.each do |name, _|
           @resource_cache.register_resource(name, 1_000_000_u64)
         end
@@ -317,7 +317,7 @@ module PointClickEngine
 
       def preload_music(tracks : Array(Tuple(String, String)))
         @music_manager.preload_tracks(tracks)
-        
+
         tracks.each do |name, _|
           @resource_cache.register_resource("music_#{name}", 5_000_000_u64)
         end
@@ -347,7 +347,7 @@ module PointClickEngine
       # Update method (must be called each frame)
       def update(dt : Float32 = 0.016f32)
         @music_manager.update(dt)
-        
+
         # Handle cache eviction if needed
         if @resource_cache.needs_eviction?
           evict_least_used_resources
@@ -367,7 +367,7 @@ module PointClickEngine
         begin
           @sound_effect_manager.finalize
           @music_manager.finalize
-          
+
           {% if flag?(:with_audio) %}
             if RAudio.is_audio_device_ready?
               RAudio.close_audio_device
@@ -391,7 +391,7 @@ module PointClickEngine
 
       private def evict_least_used_resources
         lru_resources = @resource_cache.get_lru_resources(5)
-        
+
         lru_resources.each do |resource_name|
           if resource_name.starts_with?("music_")
             music_name = resource_name.lchop("music_")
@@ -399,7 +399,7 @@ module PointClickEngine
           else
             @sound_effect_manager.unload_sound(resource_name)
           end
-          
+
           @resource_cache.remove_resource(resource_name)
         end
       end

@@ -1,0 +1,14 @@
+game:
+  title: "Adventure v2 Enhanced"
+
+window:
+  width: 1920
+  height: 1080
+
+features:
+  - shaders
+  - portraits
+
+settings:
+  master_volume: 0.8
+  show_fps: true

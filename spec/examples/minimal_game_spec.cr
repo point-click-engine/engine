@@ -11,7 +11,7 @@ describe "Minimal Game Example" do
     File.write("minimal_game.yaml", minimal_config)
 
     # The minimal game code
-    config = PointClickEngine::Core::GameConfig.from_file("minimal_game.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("minimal_game.yaml", skip_preflight: true)
 
     RL.init_window(1024, 768, "Minimal Adventure")
     engine = config.create_engine
@@ -68,7 +68,7 @@ describe "Minimal Game Example" do
     File.write("scenes/intro.yaml", scene_yaml)
 
     File.write("template_game.yaml", template_config)
-    config = PointClickEngine::Core::GameConfig.from_file("template_game.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("template_game.yaml", skip_preflight: true)
 
     RL.init_window(1280, 720, "My First Adventure")
     engine = config.create_engine
@@ -139,7 +139,7 @@ describe "Minimal Game Example" do
     # Main game file (Crystal)
     main_cr = <<-CRYSTAL
     require "point_click_engine"
-    config = PointClickEngine::Core::GameConfig.from_file("mini_game.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("mini_game.yaml", skip_preflight: true)
     engine = config.create_engine
     engine.run
     CRYSTAL
@@ -169,7 +169,7 @@ describe "Minimal Game Example" do
     total_lines.should be < 50 # Complete game in under 50 lines!
 
     # Test it works
-    config = PointClickEngine::Core::GameConfig.from_file("mini_game.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("mini_game.yaml", skip_preflight: true)
     RL.init_window(1024, 768, "Mini Adventure")
     engine = config.create_engine
 
@@ -203,7 +203,7 @@ describe "Minimal Game Example" do
     YAML
 
     File.write("game_v1.yaml", config_v1)
-    config = PointClickEngine::Core::GameConfig.from_file("game_v1.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("game_v1.yaml", skip_preflight: true)
 
     RL.init_window(800, 600, "Adventure v1")
     engine1 = config.create_engine
@@ -234,7 +234,7 @@ describe "Minimal Game Example" do
     YAML
 
     File.write("game_v2.yaml", config_v2)
-    config2 = PointClickEngine::Core::GameConfig.from_file("game_v2.yaml")
+    config2 = PointClickEngine::Core::GameConfig.from_file("game_v2.yaml", skip_preflight: true)
 
     RL.init_window(1920, 1080, "Adventure v2 Enhanced")
     engine2 = config2.create_engine

@@ -86,11 +86,11 @@ module PointClickEngine
             height = state.to_f32(5)
 
             hotspot = Scenes::Hotspot.new(
-              name, 
-              RL::Vector2.new(x: x, y: y), 
+              name,
+              RL::Vector2.new(x: x, y: y),
               RL::Vector2.new(x: width, y: height)
             )
-            
+
             if scene = Core::Engine.instance.current_scene
               scene.add_hotspot(hotspot)
               state.push(true)
@@ -130,7 +130,7 @@ module PointClickEngine
           if state.size >= 2
             x = state.to_f32(1)
             y = state.to_f32(2)
-            
+
             if scene = Core::Engine.instance.current_scene
               if hotspot = scene.get_hotspot_at(RL::Vector2.new(x: x, y: y))
                 state.push(hotspot.name)
@@ -151,7 +151,7 @@ module PointClickEngine
           if state.size >= 2
             name = state.to_string(1)
             enabled = state.to_boolean(2)
-            
+
             if scene = Core::Engine.instance.current_scene
               if hotspot = scene.hotspots.find { |h| h.name == name }
                 hotspot.visible = enabled

@@ -1,7 +1,0 @@
-game:
-  title: "Multi-Scene Test"
-
-assets:
-  scenes: ["scenes/*.yaml"]
-
-start_scene: "room1"

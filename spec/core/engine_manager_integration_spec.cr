@@ -110,7 +110,7 @@ describe "Engine-Manager Integration" do
       # Register a handler
       engine.input_manager.register_handler("test_handler", 10)
 
-      # Check if input is consumed  
+      # Check if input is consumed
       engine.input_manager.input_blocked?.should be_false
 
       # Block input temporarily
@@ -133,7 +133,7 @@ describe "Engine-Manager Integration" do
       # Modify layer properties
       engine.render_manager.set_layer_enabled("ui", false)
 
-      # Performance tracking  
+      # Performance tracking
       stats = engine.render_manager.get_render_stats
       stats.should_not be_nil
     end

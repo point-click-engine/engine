@@ -41,7 +41,7 @@ module PointClickEngine
       property inventory : Inventory::InventorySystem = Inventory::InventorySystem.new
       property game_state_manager : GameStateManager?
       property quest_manager : QuestManager?
-      
+
       # Core components
       @input_handler : EngineComponents::InputHandler?
       @render_coordinator : EngineComponents::RenderCoordinator = EngineComponents::RenderCoordinator.new
@@ -64,6 +64,9 @@ module PointClickEngine
       # Global camera
       property camera : Graphics::Camera?
 
+      # Temporary player storage until a scene is available
+      @pending_player : Characters::Character?
+
       # Singleton accessor
       def self.instance : Engine
         @@instance || raise "Engine not initialized. Call Engine.new first."
@@ -72,19 +75,19 @@ module PointClickEngine
       def self.instance? : Engine?
         @@instance
       end
-      
+
       # Reset instance for testing purposes
       def self.reset_instance
         @@instance = nil
       end
-      
+
       # Class-level debug mode setter/getter
       @@debug_mode : Bool = false
-      
+
       def self.debug_mode=(value : Bool)
         @@debug_mode = value
       end
-      
+
       def self.debug_mode
         @@debug_mode
       end
@@ -136,9 +139,9 @@ module PointClickEngine
           # Render phase
           RL.begin_drawing
           RL.clear_background(RL::BLACK)
-          
+
           render
-          
+
           RL.end_drawing
         end
 
@@ -174,10 +177,10 @@ module PointClickEngine
         # Update camera
         mouse_pos = RL.get_mouse_position
         @camera.try(&.update(dt, mouse_pos.x.to_i, mouse_pos.y.to_i))
-        
+
         # Handle auto-save
         handle_auto_save(dt)
-        
+
         # Call update callback if set
         @update_callback.try(&.call(dt))
       end
@@ -203,7 +206,7 @@ module PointClickEngine
         y_offset = 10
         RL.draw_text("DEBUG MODE", 10, y_offset, 20, RL::RED)
         y_offset += 25
-        
+
         RL.draw_fps(10, y_offset)
         y_offset += 25
 
@@ -219,7 +222,7 @@ module PointClickEngine
       # Cleans up all resources
       private def cleanup
         @system_manager.cleanup_systems
-        
+
         RL.close_window
         @@instance = nil
       end
@@ -235,7 +238,7 @@ module PointClickEngine
 
       # Convenience accessors
       def player : Characters::Character?
-        @current_scene.try(&.player)
+        @current_scene.try(&.player) || @pending_player
       end
 
       def scenes : Hash(String, Scenes::Scene)
@@ -247,74 +250,80 @@ module PointClickEngine
         @verb_input_system ||= EngineComponents::VerbInputSystem.new(self)
         @verb_input_system.not_nil!.enabled = true
       end
-      
+
       def verb_input_system
         @verb_input_system
       end
-      
+
       def shader_system
         @system_manager.shader_system
       end
-      
+
       def display_manager
         @system_manager.display_manager
       end
-      
+
       def gui
         @system_manager.gui
       end
-      
+
       def show_fps=(value : Bool)
         @@debug_mode = value
       end
-      
+
       def show_fps
         @@debug_mode
       end
-      
+
       def event_system
         @system_manager.event_system
       end
-      
+
       def player=(value : Characters::Character?)
-        @current_scene.try { |scene| scene.player = value }
+        if scene = @current_scene
+          scene.player = value
+          @pending_player = nil
+        else
+          # Store player until a scene is available
+          @pending_player = value
+        end
       end
-      
+
       def on_update=(callback : Proc(Float32, Nil)?)
         @update_callback = callback
       end
-      
+
       def on_update
         @update_callback
       end
-      
+
       def enable_auto_save(interval : Float32)
         @auto_save_interval = interval
         @auto_save_timer = 0.0_f32
         puts "Auto-save enabled with interval: #{interval} seconds" if interval > 0
       end
-      
+
       def start_game
         # Start the game
         puts "Game started"
       end
-      
+
       def dialog_manager
         @system_manager.dialog_manager
       end
-      
+
       def script_engine
         @system_manager.script_engine
       end
-      
+
       def show_main_menu
         @system_manager.menu_system.try(&.show_main_menu)
       end
-      
+
       def menu_system
         @system_manager.menu_system
       end
-      
+
       def toggle_hotspot_highlight
         # Toggle hotspot highlighting in current scene
         @current_scene.try(&.toggle_hotspot_highlight)
@@ -326,19 +335,24 @@ module PointClickEngine
         case result
         when .success?
           @current_scene = result.value
+          # Assign pending player if any
+          if pending = @pending_player
+            @current_scene.try { |scene| scene.player = pending }
+            @pending_player = nil
+          end
           @current_scene.try(&.on_enter)
         when .failure?
           raise "Failed to change scene: #{result.error.message}"
         end
       end
-      
+
       def change_scene_with_transition(scene_name : String, effect : Graphics::Transitions::TransitionEffect?, duration : Float32, position : RL::Vector2? = nil)
         # Start transition if effect specified
         if effect && (tm = @system_manager.transition_manager)
           tm.start_transition(effect, duration) do
             # Change scene at halfway point
             change_scene(scene_name)
-            
+
             # If position provided, move player
             if pos = position
               if player = self.player
@@ -349,7 +363,7 @@ module PointClickEngine
         else
           # No transition, just change scene
           change_scene(scene_name)
-          
+
           # If position provided, move player
           if pos = position
             if player = self.player
@@ -391,24 +405,22 @@ module PointClickEngine
         @camera.try(&.set_bounds(0, 0, width, height))
       end
 
-
       # Auto-save handling
       private def handle_auto_save(dt : Float32)
         return if @auto_save_interval <= 0.0_f32
-        
+
         @auto_save_timer += dt
         if @auto_save_timer >= @auto_save_interval
           # Create saves directory if it doesn't exist
           Dir.mkdir_p("saves") unless Dir.exists?("saves")
-          
+
           # Save the game
           save_game("autosave")
-          
+
           # Reset timer
           @auto_save_timer = 0.0_f32
         end
       end
-
     end
   end
 end

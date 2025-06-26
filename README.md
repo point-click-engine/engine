@@ -128,6 +128,9 @@ That's it! You have a working adventure game.
   - **[Asset Guide](docs/user-guide/ASSET_GUIDE.md)** - Asset requirements and guidelines
 
 ### 🔧 Developer Guide
+- **[Developer Quick Start](docs/DEVELOPER_QUICK_START.md)** - Quick guide for developers new to the codebase
+- **[Architecture Overview](docs/ARCHITECTURE_OVERVIEW.md)** - High-level architecture and design philosophy
+- **[Component Reference](docs/COMPONENT_REFERENCE.md)** - Comprehensive component documentation
 - **[Architecture](docs/developer-guide/ARCHITECTURE.md)** - Technical architecture and design
 - **[Component Architecture](docs/developer-guide/COMPONENT_ARCHITECTURE.md)** - Modular component system overview
 - **[Testing Guide](docs/developer-guide/TESTING_GUIDE.md)** - Testing strategies and implementation

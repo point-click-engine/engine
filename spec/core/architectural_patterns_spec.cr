@@ -107,11 +107,7 @@ describe "Architectural Pattern Compliance" do
       # components that have draw() methods but aren't registered anywhere
 
       RL.init_window(800, 600, "Missing Registration Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Missing Registration Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Missing Registration Test")
       engine.init
 
       # Test that all major UI systems are reachable from render pipeline
@@ -135,11 +131,7 @@ describe "Architectural Pattern Compliance" do
       RL.init_window(800, 600, "Coordinate Mismatch Test")
 
       # Create engine with different game vs screen resolution
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Coordinate Test",
-        window_width: 1024, # Game size
-        window_height: 768
-      )
+      engine = PointClickEngine::Core::Engine.new(1024, 768, "Coordinate Test") # Game size
       engine.init
 
       # Test that UI components handle coordinate transformation correctly

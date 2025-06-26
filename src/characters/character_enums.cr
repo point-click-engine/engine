@@ -37,6 +37,27 @@ module PointClickEngine
           raise "Unknown state: #{self}"
         end
       end
+
+      def to_s : String
+        case self
+        when .idle?        then "idle"
+        when .walking?     then "walking"
+        when .talking?     then "talking"
+        when .picking_up?  then "picking_up"
+        when .using?       then "using"
+        when .pushing?     then "pushing"
+        when .pulling?     then "pulling"
+        when .climbing?    then "climbing"
+        when .sitting?     then "sitting"
+        when .standing?    then "standing"
+        when .dying?       then "dying"
+        when .interacting? then "interacting"
+        when .looking?     then "looking"
+        when .thinking?    then "thinking"
+        else
+          raise "Unknown state: #{self}"
+        end
+      end
     end
 
     # Basic directional movement for 2D adventure games
@@ -48,6 +69,17 @@ module PointClickEngine
 
       def to_s(io)
         io << case self
+        when .left?  then "left"
+        when .right? then "right"
+        when .up?    then "up"
+        when .down?  then "down"
+        else
+          raise "Unknown direction: #{self}"
+        end
+      end
+
+      def to_s : String
+        case self
         when .left?  then "left"
         when .right? then "right"
         when .up?    then "up"
@@ -95,6 +127,24 @@ module PointClickEngine
 
       def to_s(io)
         io << case self
+        when .neutral?    then "neutral"
+        when .happy?      then "happy"
+        when .sad?        then "sad"
+        when .angry?      then "angry"
+        when .friendly?   then "friendly"
+        when .hostile?    then "hostile"
+        when .wise?       then "wise"
+        when .curious?    then "curious"
+        when .confused?   then "confused"
+        when .grateful?   then "grateful"
+        when .suspicious? then "suspicious"
+        else
+          raise "Unknown mood: #{self}"
+        end
+      end
+
+      def to_s : String
+        case self
         when .neutral?    then "neutral"
         when .happy?      then "happy"
         when .sad?        then "sad"

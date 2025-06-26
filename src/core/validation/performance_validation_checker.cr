@@ -22,6 +22,8 @@ module PointClickEngine
           analyze_rendering_performance(config, result)
           analyze_memory_usage(config, context, result)
           analyze_audio_performance(config, context, result)
+          validate_audio_volume_settings(config, result)
+          validate_feature_compatibility(config, result)
           provide_optimization_hints(config, result)
 
           result
@@ -316,6 +318,45 @@ module PointClickEngine
           # Check sound effect count
           if audio.sounds.size > 50
             result.add_performance_hint("Many sound effects (#{audio.sounds.size}) - consider sound pooling and limits")
+          end
+        end
+
+        # Audio volume validation is now handled by UserSettings validation
+        # This method is kept for compatibility but does nothing
+        private def validate_audio_volume_settings(config : GameConfig, result : ValidationResult)
+          # Audio volume settings have been moved to UserSettings
+          # Validation is handled separately when UserSettings.validate is called
+        end
+
+        # Validates feature compatibility and conflicts
+        private def validate_feature_compatibility(config : GameConfig, result : ValidationResult)
+          features = config.features
+
+          # Check for conflicting features
+          conflicting_pairs = {
+            {"shaders", "low_end_mode"}            => "Shaders and low-end mode conflict - shaders require GPU capabilities",
+            {"high_quality_audio", "low_end_mode"} => "High quality audio and low-end mode conflict - consider audio quality settings",
+            {"networking", "offline_mode"}         => "Networking and offline mode conflict - clarify intended behavior",
+            {"physics", "simple_mode"}             => "Advanced physics and simple mode conflict - choose appropriate complexity level",
+          }
+
+          conflicting_pairs.each do |pair, message|
+            feature1, feature2 = pair
+            if features.includes?(feature1) && features.includes?(feature2)
+              result.add_warning("Feature conflict detected: #{message}")
+            end
+          end
+
+          # Check for performance-heavy feature combinations
+          heavy_features = features.select { |f| ["shaders", "physics", "networking", "high_quality_audio"].includes?(f) }
+          if heavy_features.size >= 3
+            result.add_performance_hint("Multiple performance-heavy features enabled (#{heavy_features.join(", ")}) - ensure adequate system requirements")
+          end
+
+          # Check mobile compatibility
+          mobile_incompatible = features.select { |f| ["shaders", "high_quality_audio", "physics"].includes?(f) }
+          if mobile_incompatible.size >= 2
+            result.add_performance_hint("Features may impact mobile performance: #{mobile_incompatible.join(", ")}")
           end
         end
 

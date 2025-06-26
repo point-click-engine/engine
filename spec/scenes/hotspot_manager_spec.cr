@@ -3,7 +3,6 @@ require "../../src/scenes/hotspot_manager"
 
 # Monkey patch to fix type issues in HotspotManager
 class PointClickEngine::Scenes::HotspotManager
-
   # Fix export_hotspots to match its type signature
   def export_hotspots : Array(Hash(String, String | Int32 | Float32))
     @hotspots.map do |hotspot|
@@ -337,14 +336,13 @@ describe PointClickEngine::Scenes::HotspotManager do
       # hotspot_15 is at (150, 75) with size (20, 15), center at (160, 82.5)
       # The bounds should be from (150, 75) to (170, 90)
       # Position (155, 77) is within these bounds
-      
+
       # Get result without optimization (spatial optimization is off by default)
       result_without = manager.get_hotspot_at(position)
 
       # Get result with optimization
       manager.enable_spatial_optimization
       result_with = manager.get_hotspot_at(position)
-
 
       # Results should be the same
       result_without.should eq(result_with)
@@ -591,7 +589,7 @@ describe PointClickEngine::Scenes::HotspotManager do
       # Check exact center point
       found = manager.get_hotspot_at(RL::Vector2.new(100, 100))
       found.should be_nil
-      
+
       # Also check nearby points
       found = manager.get_hotspot_at(RL::Vector2.new(100.1, 100.1))
       found.should be_nil

@@ -19,14 +19,14 @@ module PointClickEngine
     # - GameStateManager: Script-accessible game state
     class ScriptEngine
       getter lua : Luajit::LuaState
-      
+
       # Component managers
       @environment : LuaEnvironment
       @registry : ScriptAPIRegistry
       @scene_api : SceneScriptAPI
       @character_api : CharacterScriptAPI
       @state_manager : GameStateManager
-      
+
       # Legacy property for compatibility
       def game_state : Hash(String, Luajit::LuaAny)
         @state_manager.to_hash
@@ -34,14 +34,14 @@ module PointClickEngine
 
       def initialize
         @lua = Luajit.new_with_defaults
-        
+
         # Initialize components
         @environment = LuaEnvironment.new(@lua)
         @registry = ScriptAPIRegistry.new(@lua)
         @scene_api = SceneScriptAPI.new(@lua, @registry)
         @character_api = CharacterScriptAPI.new(@lua, @registry)
         @state_manager = GameStateManager.new
-        
+
         # Setup environment and register APIs
         setup_engine
       end
@@ -85,7 +85,7 @@ module PointClickEngine
       private def setup_engine
         # Setup Lua environment
         @environment.setup
-        
+
         # Register all API modules
         @scene_api.register
         @character_api.register
@@ -178,20 +178,20 @@ module PointClickEngine
 
         @registry.register_value_function("_engine_inventory_get_all_items", 1) do |state|
           items = Core::Engine.instance.inventory.items
-          
+
           state.new_table
           items.each_with_index do |item, i|
-            state.push(i + 1)  # Lua arrays are 1-indexed
-            
+            state.push(i + 1) # Lua arrays are 1-indexed
+
             state.new_table
             state.push("name")
             state.push(item.name)
             state.set_table(-3)
-            
+
             state.push("description")
             state.push(item.description)
             state.set_table(-3)
-            
+
             state.set_table(-3)
           end
         end
@@ -246,7 +246,7 @@ module PointClickEngine
             if state.is_table?(2)
               state.push_value(2)
               state.push(nil)
-              
+
               while state.next(-2)
                 if state.is_table?(-1)
                   choice_text = ""
@@ -390,7 +390,7 @@ module PointClickEngine
           if state.size >= 1
             seconds = state.to_f64(1)
             # Note: This would need to be handled differently in a real game loop
-            sleep seconds
+            sleep seconds.seconds
           end
         end
 

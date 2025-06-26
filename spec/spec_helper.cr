@@ -58,7 +58,7 @@ module RaylibContext
       if @@window_initialized && !RL.window_ready?
         @@window_initialized = false
       end
-      
+
       RL.init_window(width, height, title)
       @@window_initialized = true
       @@window_width = width
@@ -70,33 +70,33 @@ module RaylibContext
       @@window_width = width
       @@window_height = height
     end
-    
+
     yield
   ensure
     # Don't close window here, let it persist for other tests
   end
-  
+
   def self.ensure_window(width = 800, height = 600, title = "Test")
     if !@@window_initialized || !RL.window_ready?
       # Close any existing window first
       if @@window_initialized && !RL.window_ready?
         @@window_initialized = false
       end
-      
+
       RL.init_window(width, height, title)
       @@window_initialized = true
       @@window_width = width
       @@window_height = height
     end
   end
-  
+
   def self.cleanup
     if @@window_initialized && RL.window_ready?
       RL.close_window
       @@window_initialized = false
     end
   end
-  
+
   def self.window_initialized?
     @@window_initialized && RL.window_ready?
   end
@@ -105,4 +105,11 @@ end
 # Ensure window is closed at end of spec run
 Spec.after_suite do
   RaylibContext.cleanup
+end
+
+# Reset Engine singleton after each test to ensure test isolation
+Spec.after_each do
+  if PointClickEngine::Core::Engine.instance?
+    PointClickEngine::Core::Engine.reset_instance
+  end
 end

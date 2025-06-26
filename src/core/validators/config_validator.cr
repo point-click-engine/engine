@@ -160,6 +160,13 @@ module PointClickEngine
           if audio = assets.audio
             audio.music.each do |name, path|
               full_path = File.expand_path(path, base_dir)
+
+              # Check audio format (regardless of file existence)
+              ext = File.extname(path).downcase
+              unless [".wav", ".ogg", ".mp3", ".flac"].includes?(ext)
+                errors << "Unsupported audio format: #{File.basename(path)} (#{ext})"
+              end
+
               unless File.exists?(full_path)
                 errors << "Music file '#{name}' not found at: #{path}"
               end
@@ -167,6 +174,13 @@ module PointClickEngine
 
             audio.sounds.each do |name, path|
               full_path = File.expand_path(path, base_dir)
+
+              # Check audio format (regardless of file existence)
+              ext = File.extname(path).downcase
+              unless [".wav", ".ogg", ".mp3", ".flac"].includes?(ext)
+                errors << "Unsupported audio format: #{File.basename(path)} (#{ext})"
+              end
+
               unless File.exists?(full_path)
                 errors << "Sound file '#{name}' not found at: #{path}"
               end
@@ -189,15 +203,8 @@ module PointClickEngine
         end
 
         private def self.validate_settings_config(settings : GameConfig::SettingsConfig, errors : Array(String))
-          if settings.master_volume < 0 || settings.master_volume > 1
-            errors << "master_volume must be between 0 and 1 (got #{settings.master_volume})"
-          end
-          if settings.music_volume < 0 || settings.music_volume > 1
-            errors << "music_volume must be between 0 and 1 (got #{settings.music_volume})"
-          end
-          if settings.sfx_volume < 0 || settings.sfx_volume > 1
-            errors << "sfx_volume must be between 0 and 1 (got #{settings.sfx_volume})"
-          end
+          # Settings validation - volume settings moved to UserSettings
+          # No current validation needed for basic settings
         end
 
         private def self.validate_initial_state(state : GameConfig::InitialState, errors : Array(String))
