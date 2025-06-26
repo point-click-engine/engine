@@ -1,187 +1,16 @@
-# Sound and Music system for adventure games
+# Sound and Music system for adventure games - Refactored with components
 
 # Only require audio if explicitly enabled
 {% if flag?(:with_audio) %}
   require "raylib-cr/audio"
 {% end %}
 
+require "./sound_effect_manager"
+require "./music_manager"
+require "./volume_controller"
+require "./audio_resource_cache"
+
 module PointClickEngine
-  # # Audio system for sound effects, music, and ambient sounds.
-  ##
-  # # The `Audio` module provides comprehensive audio management for adventure games,
-  # # including background music, sound effects, 3D positional audio, and ambient
-  # # soundscapes. The module gracefully handles systems without audio support.
-  ##
-  # # ## Features
-  ##
-  # # - Sound effects with volume control
-  # # - Looping background music with crossfading
-  # # - 3D positional audio for spatial effects
-  # # - Ambient sound layers
-  # # - Audio caching and resource management
-  # # - Graceful fallback when audio unavailable
-  ##
-  # # ## Compilation Flags
-  ##
-  # # Audio requires the `:with_audio` flag during compilation:
-  # # ```bash
-  # # crystal build main.cr -D with_audio
-  # # ```
-  ##
-  # # Without this flag, all audio calls become no-ops for compatibility.
-  ##
-  # # ## Basic Usage
-  ##
-  # # ```crystal
-  # # # Check if audio is available
-  # # if Audio.available?
-  # #   AudioManager.init
-  # # end
-  ##
-  # # # Play sound effect
-  # # AudioManager.play_sound("door_open.wav")
-  ##
-  # # # Play background music
-  # # AudioManager.play_music("theme.ogg", loop: true)
-  ##
-  # # # 3D positional sound
-  # # AudioManager.play_sound_at("footstep.wav", Vector2.new(400, 300))
-  # # ```
-  ##
-  # # ## Sound Effects
-  ##
-  # # ```crystal
-  # # # Load and cache sound effect
-  # # effect = SoundEffect.new("explosion", "assets/sounds/explosion.wav")
-  # # effect.volume = 0.8
-  # # effect.play
-  ##
-  # # # One-shot playback
-  # # AudioManager.play_sound("click.wav", volume: 0.5)
-  # # ```
-  ##
-  # # ## Background Music
-  ##
-  # # ```crystal
-  # # # Play looping music
-  # # music = Music.new("main_theme", "assets/music/theme.ogg")
-  # # music.volume = 0.6
-  # # music.play(loop: true)
-  ##
-  # # # Crossfade between tracks
-  # # AudioManager.crossfade_to("battle_theme.ogg", duration: 2.0)
-  # # ```
-  ##
-  # # ## 3D Positional Audio
-  ##
-  # # ```crystal
-  # # # Sound gets quieter with distance
-  # # explosion_pos = Vector2.new(600, 400)
-  # # player_pos = Vector2.new(100, 300)
-  ##
-  # # AudioManager.play_sound_at("explosion.wav", explosion_pos)
-  # # # Volume automatically adjusted based on distance from player
-  # # ```
-  ##
-  # # ## Ambient Soundscapes
-  ##
-  # # ```crystal
-  # # # Layer multiple ambient sounds
-  # # ambient = AmbientSoundManager.new
-  # # ambient.add_layer("wind.ogg", volume: 0.3)
-  # # ambient.add_layer("birds.ogg", volume: 0.2)
-  # # ambient.add_layer("water.ogg", volume: 0.4)
-  ##
-  # # # Fade layers in/out based on location
-  # # ambient.set_layer_volume("water", 0.0)  # Fade out water sounds
-  # # ```
-  ##
-  # # ## Audio Configuration
-  ##
-  # # ```crystal
-  # # # Global audio settings
-  # # AudioManager.master_volume = 0.8
-  # # AudioManager.sound_volume = 1.0
-  # # AudioManager.music_volume = 0.7
-  ##
-  # # # Save/load audio preferences
-  # # settings = {
-  # #   master: AudioManager.master_volume,
-  # #   sound: AudioManager.sound_volume,
-  # #   music: AudioManager.music_volume
-  # # }
-  # # ```
-  ##
-  # # ## Resource Management
-  ##
-  # # ```crystal
-  # # # Preload sounds for performance
-  # # AudioManager.preload_sounds([
-  # #   "footstep.wav",
-  # #   "door_open.wav",
-  # #   "item_pickup.wav"
-  # # ])
-  ##
-  # # # Unload unused sounds
-  # # AudioManager.unload_sound("explosion.wav")
-  ##
-  # # # Clear all audio cache
-  # # AudioManager.clear_cache
-  # # ```
-  ##
-  # # ## Common Gotchas
-  ##
-  # # 1. **Audio flag required**: Must compile with `-D with_audio`
-  # #    ```crystal
-  # #    # Always check availability
-  # #    if Audio.available?
-  # #      AudioManager.play_sound("beep.wav")
-  # #    end
-  # #    ```
-  ##
-  # # 2. **File formats**: Supports WAV, OGG, MP3 (OGG recommended)
-  # #    ```crystal
-  # #    # OGG for music (smaller files)
-  # #    play_music("theme.ogg")
-  ##
-  # #    # WAV for short effects (lower latency)
-  # #    play_sound("click.wav")
-  # #    ```
-  ##
-  # # 3. **Resource limits**: Limited simultaneous sounds
-  # #    ```crystal
-  # #    # Reuse sound instances when possible
-  # #    @footstep_sound ||= AudioManager.get_sound("footstep.wav")
-  # #    @footstep_sound.play
-  # #    ```
-  ##
-  # # 4. **Music updates**: Must update music streams each frame
-  # #    ```crystal
-  # #    def update(dt)
-  # #      AudioManager.update_music_stream  # Required!
-  # #    end
-  # #    ```
-  ##
-  # # ## Performance Tips
-  ##
-  # # - Preload frequently used sounds
-  # # - Use OGG for music, WAV for effects
-  # # - Limit simultaneous sounds to ~32
-  # # - Disable 3D audio calculations when not needed
-  # # - Stream music, don't load entirely into memory
-  ##
-  # # ## Platform Notes
-  ##
-  # # - **Windows**: Requires OpenAL installation
-  # # - **macOS**: Audio works out of the box
-  # # - **Linux**: May need PulseAudio/ALSA setup
-  ##
-  # # ## See Also
-  ##
-  # # - `AudioManager` - High-level audio interface
-  # # - `AmbientSoundManager` - Environmental audio
-  # # - `FootstepSystem` - Automatic footstep sounds
-  # # - `Engine#audio_manager` - Global audio access
   module Audio
     # Check if audio is available
     def self.available?
@@ -193,76 +22,16 @@ module PointClickEngine
     end
 
     {% if flag?(:with_audio) %}
-      # # Represents a loaded sound effect for playback.
-      ##
-      # # `SoundEffect` manages individual sound files, providing volume control
-      # # and playback management. Sounds are loaded into memory for low-latency
-      # # playback, making them ideal for UI feedback, impacts, and short effects.
-      ##
-      # # ## Usage
-      ##
-      # # ```crystal
-      # # # Load a sound effect
-      # # door_sound = SoundEffect.new("door", "assets/sounds/door_creak.wav")
-      # # door_sound.volume = 0.7
-      ##
-      # # # Play the sound
-      # # door_sound.play
-      ##
-      # # # Stop if needed (for longer sounds)
-      # # door_sound.stop
-      # # ```
-      ##
-      # # ## Volume Control
-      ##
-      # # ```crystal
-      # # # Individual sound volume (0.0 to 1.0)
-      # # explosion.volume = 0.8
-      ##
-      # # # Affected by global sound volume
-      # # # Final volume = sound.volume * AudioManager.sound_volume * AudioManager.master_volume
-      # # ```
-      ##
-      # # ## Resource Management
-      ##
-      # # ```crystal
-      # # # Sounds are automatically cleaned up when garbage collected
-      # # # For manual cleanup:
-      # # sound.finalize  # Unloads from memory
-      # # ```
-      ##
-      # # NOTE: For music or long audio, use `Music` class instead
-      ##
-      # # PERFORMANCE: Keep sound files under 10 seconds for optimal memory usage
+      # Sound effect class for individual sound playback
       class SoundEffect
-        # # Identifier for this sound effect
         property name : String
-
-        # # Internal Raylib sound resource
         property sound : RAudio::Sound?
-
-        # # Volume level (0.0 = silent, 1.0 = full volume)
         property volume : Float32 = 1.0
 
-        # # Creates a new sound effect from a file.
-        ##
-        # # - *name* : Identifier for this sound
-        # # - *file_path* : Path to WAV, OGG, or MP3 file
-        ##
-        # # RAISES: `AudioError` if file cannot be loaded
         def initialize(@name : String, file_path : String)
           @sound = RAudio.load_sound(file_path)
         end
 
-        # # Plays the sound effect.
-        ##
-        # # Multiple overlapping playbacks are supported. Each call
-        # # starts a new instance of the sound.
-        ##
-        # # ```crystal
-        # # # Rapid fire sounds
-        # # 3.times { gunshot.play }  # Three overlapping gunshots
-        # # ```
         def play
           if sound = @sound
             RAudio.set_sound_volume(sound, @volume)
@@ -270,23 +39,15 @@ module PointClickEngine
           end
         end
 
-        # # Stops all instances of this sound effect.
-        ##
-        # # Useful for interrupting longer sound effects.
         def stop
           if sound = @sound
             RAudio.stop_sound(sound)
           end
         end
 
-        # # Releases audio resources.
-        ##
-        # # Called automatically by garbage collector, but can be
-        # # called manually for immediate cleanup.
         def finalize
           if sound = @sound
             begin
-              # Only unload if the sound is valid
               if sound.frame_count > 0
                 RAudio.unload_sound(sound)
               end
@@ -297,10 +58,7 @@ module PointClickEngine
         end
       end
     {% else %}
-      # # Stub implementation when audio is disabled.
-      ##
-      # # Provides the same interface as the real SoundEffect class
-      # # but all methods are no-ops for compatibility.
+      # Stub implementation when audio is disabled
       class SoundEffect
         property name : String
         property volume : Float32 = 1.0
@@ -320,7 +78,7 @@ module PointClickEngine
     {% end %}
 
     {% if flag?(:with_audio) %}
-      # Background music manager (full implementation)
+      # Background music class for streaming audio
       class Music
         property name : String
         property music : RAudio::Music?
@@ -369,7 +127,6 @@ module PointClickEngine
         def finalize
           if music = @music
             begin
-              # Only unload if the music is valid
               if music.frame_count > 0
                 RAudio.unload_music_stream(music)
               end
@@ -380,7 +137,7 @@ module PointClickEngine
         end
       end
     {% else %}
-      # Stub music manager (no audio)
+      # Stub music class when audio is disabled
       class Music
         property name : String
         property volume : Float32 = 0.5
@@ -413,15 +170,43 @@ module PointClickEngine
       end
     {% end %}
 
-    # Audio manager for the entire game
+    # Main audio manager using component-based architecture
     class AudioManager
-      property sound_effects : Hash(String, SoundEffect) = {} of String => SoundEffect
-      property music_tracks : Hash(String, Music) = {} of String => Music
-      property current_music : Music?
-      property master_volume : Float32 = 1.0
-      property music_volume : Float32 = 0.5
-      property sfx_volume : Float32 = 1.0
-      property muted : Bool = false
+      # Component managers
+      getter sound_effect_manager : SoundEffectManager
+      getter music_manager : MusicManager
+      getter volume_controller : VolumeController
+      getter resource_cache : AudioResourceCache
+      
+      # Legacy property mappings for compatibility
+      delegate master_volume, to: @volume_controller
+      delegate muted, to: @volume_controller
+      delegate current_music, to: @music_manager
+      
+      # Manual delegation for setters and nested properties
+      def master_volume=(value : Float32)
+        @volume_controller.master_volume = value
+      end
+      
+      def music_volume
+        @volume_controller.music_volume
+      end
+      
+      def music_volume=(value : Float32)
+        @volume_controller.music_volume = value
+      end
+      
+      def sfx_volume
+        @volume_controller.sfx_volume
+      end
+      
+      def sfx_volume=(value : Float32)
+        @volume_controller.sfx_volume = value
+      end
+      
+      def muted=(value : Bool)
+        @volume_controller.muted = value
+      end
 
       def self.available?
         Audio.available?
@@ -431,92 +216,158 @@ module PointClickEngine
         {% if flag?(:with_audio) %}
           RAudio.init_audio_device
         {% end %}
+        
+        # Initialize components
+        @sound_effect_manager = SoundEffectManager.new
+        @music_manager = MusicManager.new
+        @volume_controller = VolumeController.new
+        @resource_cache = AudioResourceCache.new
+        
+        # Wire up volume changes
+        setup_volume_callbacks
       end
 
+      # Sound effect methods (delegate to manager)
       def load_sound_effect(name : String, file_path : String)
-        @sound_effects[name] = SoundEffect.new(name, file_path)
-      end
-
-      def load_music(name : String, file_path : String)
-        @music_tracks[name] = Music.new(name, file_path)
+        sound = @sound_effect_manager.load_sound(name, file_path)
+        
+        # Track in resource cache (estimate size - could be improved)
+        estimated_size = 1_000_000_u64  # 1MB estimate per sound
+        @resource_cache.register_resource(name, estimated_size)
+        
+        sound
       end
 
       def play_sound_effect(name : String)
-        return if @muted
-        if sfx = @sound_effects[name]?
-          sfx.volume = @sfx_volume * @master_volume
-          sfx.play
-        end
+        return if @volume_controller.muted
+        
+        @resource_cache.access_resource(name)
+        @sound_effect_manager.play_sound(name, @volume_controller.effective_sfx_volume)
+      end
+
+      def play_sound_at(name : String, position : RL::Vector2, listener_pos : RL::Vector2, max_distance : Float32 = 500.0)
+        return if @volume_controller.muted
+        
+        @resource_cache.access_resource(name)
+        @sound_effect_manager.play_sound_at(name, position, listener_pos, max_distance)
+      end
+
+      # Music methods (delegate to manager)
+      def load_music(name : String, file_path : String)
+        music = @music_manager.load_music(name, file_path)
+        
+        # Track in resource cache
+        estimated_size = 5_000_000_u64  # 5MB estimate per music track
+        @resource_cache.register_resource("music_#{name}", estimated_size)
+        
+        music
       end
 
       def play_music(name : String, loop : Bool = true)
-        return if @muted
+        return if @volume_controller.muted || @volume_controller.music_muted
+        
+        @resource_cache.access_resource("music_#{name}")
+        @music_manager.play_music(name, loop)
+      end
 
-        # Stop current music if playing
-        @current_music.try(&.stop)
-
-        if music = @music_tracks[name]?
-          music.volume = @music_volume * @master_volume
-          music.play(loop)
-          @current_music = music
-        end
+      def crossfade_to(name : String, duration : Float32 = 2.0, loop : Bool = true)
+        return if @volume_controller.muted || @volume_controller.music_muted
+        
+        @resource_cache.access_resource("music_#{name}")
+        @music_manager.crossfade_to(name, duration, loop)
       end
 
       def stop_music
-        @current_music.try(&.stop)
-        @current_music = nil
+        @music_manager.stop_music
       end
 
       def pause_music
-        @current_music.try(&.pause)
+        @music_manager.pause_music
       end
 
       def resume_music
-        @current_music.try(&.resume)
+        @music_manager.resume_music unless @volume_controller.muted || @volume_controller.music_muted
       end
 
+      # Volume control methods
       def set_master_volume(volume : Float32)
-        @master_volume = volume.clamp(0.0f32, 1.0f32)
-        {% if flag?(:with_audio) %}
-          RAudio.set_master_volume(@master_volume)
-        {% end %}
+        @volume_controller.set_master_volume(volume)
       end
 
       def set_music_volume(volume : Float32)
-        @music_volume = volume.clamp(0.0f32, 1.0f32)
-        @current_music.try do |music|
-          music.volume = @music_volume * @master_volume
-          {% if flag?(:with_audio) %}
-            if actual_music = music.music
-              RAudio.set_music_volume(actual_music, music.volume)
-            end
-          {% end %}
-        end
+        @volume_controller.set_music_volume(volume)
       end
 
       def set_sfx_volume(volume : Float32)
-        @sfx_volume = volume.clamp(0.0f32, 1.0f32)
+        @volume_controller.set_sfx_volume(volume)
       end
 
       def toggle_mute
-        @muted = !@muted
-        {% if flag?(:with_audio) %}
-          if @muted
-            RAudio.set_master_volume(0.0)
-          else
-            RAudio.set_master_volume(@master_volume)
-          end
-        {% end %}
+        @volume_controller.toggle_mute
       end
 
-      def update
-        @current_music.try(&.update)
+      # Batch operations
+      def preload_sounds(sounds : Array(Tuple(String, String)))
+        @sound_effect_manager.preload_sounds(sounds)
+        
+        sounds.each do |name, _|
+          @resource_cache.register_resource(name, 1_000_000_u64)
+        end
+      end
+
+      def preload_music(tracks : Array(Tuple(String, String)))
+        @music_manager.preload_tracks(tracks)
+        
+        tracks.each do |name, _|
+          @resource_cache.register_resource("music_#{name}", 5_000_000_u64)
+        end
+      end
+
+      # Resource management
+      def unload_sound(name : String)
+        @sound_effect_manager.unload_sound(name)
+        @resource_cache.remove_resource(name)
+      end
+
+      def unload_music(name : String)
+        @music_manager.unload_music(name)
+        @resource_cache.remove_resource("music_#{name}")
+      end
+
+      def clear_cache
+        @sound_effect_manager.clear_cache
+        @music_manager.finalize
+        @resource_cache = AudioResourceCache.new
+      end
+
+      def get_cache_stats
+        @resource_cache.get_stats
+      end
+
+      # Update method (must be called each frame)
+      def update(dt : Float32 = 0.016f32)
+        @music_manager.update(dt)
+        
+        # Handle cache eviction if needed
+        if @resource_cache.needs_eviction?
+          evict_least_used_resources
+        end
+      end
+
+      # Settings persistence
+      def save_settings
+        @volume_controller.to_settings
+      end
+
+      def load_settings(settings)
+        @volume_controller.from_settings(settings)
       end
 
       def finalize
         begin
-          @sound_effects.each_value(&.finalize)
-          @music_tracks.each_value(&.finalize)
+          @sound_effect_manager.finalize
+          @music_manager.finalize
+          
           {% if flag?(:with_audio) %}
             if RAudio.is_audio_device_ready?
               RAudio.close_audio_device
@@ -524,6 +375,32 @@ module PointClickEngine
           {% end %}
         rescue ex
           # Ignore errors during finalization
+        end
+      end
+
+      private def setup_volume_callbacks
+        @volume_controller.on_volume_change do |type, volume|
+          case type
+          when :music
+            @music_manager.set_volume(volume)
+          when :sfx
+            @sound_effect_manager.update_volume(volume)
+          end
+        end
+      end
+
+      private def evict_least_used_resources
+        lru_resources = @resource_cache.get_lru_resources(5)
+        
+        lru_resources.each do |resource_name|
+          if resource_name.starts_with?("music_")
+            music_name = resource_name.lchop("music_")
+            @music_manager.unload_music(music_name)
+          else
+            @sound_effect_manager.unload_sound(resource_name)
+          end
+          
+          @resource_cache.remove_resource(resource_name)
         end
       end
     end

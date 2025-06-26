@@ -190,7 +190,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
       height = 600
       cell_size = 32
 
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(
+      grid = PointClickEngine::Navigation::NavigationGrid.new(
         (width / cell_size).to_i,
         (height / cell_size).to_i,
         cell_size
@@ -209,7 +209,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
     end
 
     it "handles walkable area modifications" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # Mark some cells as non-walkable
       grid.set_walkable(5, 5, false)
@@ -228,7 +228,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
     end
 
     it "handles coordinate transformations correctly" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # Test world to grid conversion
       grid_coords = grid.world_to_grid(64.0_f32, 96.0_f32)
@@ -253,7 +253,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
     end
 
     it "handles rectangular area blocking" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
 
       # Block a rectangular area
       rect_x = 128
@@ -276,7 +276,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
     end
 
     it "handles boundary conditions properly" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(5, 5, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(5, 5, 32)
 
       # Test boundary access
       grid.is_walkable?(-1, 0).should be_false # Outside left
@@ -296,19 +296,21 @@ describe "Character and Pathfinding Comprehensive Tests" do
 
   describe "A* pathfinding algorithm" do
     it "creates pathfinding instance correctly" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
-      pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: true)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
+      movement_validator = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: true)
+      pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator)
 
       pathfinder.grid.should eq(grid)
-      pathfinder.allow_diagonal.should be_true
+      pathfinder.algorithm.movement_validator.allow_diagonal.should be_true
 
       # Test with diagonal disabled
-      pathfinder_no_diag = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: false)
-      pathfinder_no_diag.allow_diagonal.should be_false
+      movement_validator_no_diag = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: false)
+      pathfinder_no_diag = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator_no_diag)
+      pathfinder_no_diag.algorithm.movement_validator.allow_diagonal.should be_false
     end
 
     it "finds simple direct paths" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
       # Test straight line path
@@ -335,7 +337,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
     end
 
     it "handles blocked paths gracefully" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # Create a wall blocking the path
       (0...grid.height).each do |y|
@@ -363,7 +365,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
     end
 
     it "handles impossible paths" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # Completely block the destination
       grid.set_walkable(8, 8, false)
@@ -384,14 +386,16 @@ describe "Character and Pathfinding Comprehensive Tests" do
     end
 
     it "respects diagonal movement settings" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(5, 5, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(5, 5, 32)
 
       # Test with diagonals enabled
-      pathfinder_diag = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: true)
+      movement_validator_diag = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: true)
+      pathfinder_diag = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator_diag)
       path_diag = pathfinder_diag.find_path(16.0_f32, 16.0_f32, 144.0_f32, 144.0_f32)
 
       # Test with diagonals disabled
-      pathfinder_no_diag = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: false)
+      movement_validator_no_diag = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: false)
+      pathfinder_no_diag = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator_no_diag)
       path_no_diag = pathfinder_no_diag.find_path(16.0_f32, 16.0_f32, 144.0_f32, 144.0_f32)
 
       # Both should find paths, but diagonal path might be shorter
@@ -410,7 +414,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
   describe "pathfinding edge cases and stress tests" do
     it "handles very large grids efficiently" do
       # Test with reasonably large grid
-      large_grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(100, 100, 16)
+      large_grid = PointClickEngine::Navigation::NavigationGrid.new(100, 100, 16)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(large_grid)
 
       start_time = Time.monotonic
@@ -427,7 +431,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
     end
 
     it "handles complex maze-like environments" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
 
       # Create a maze-like pattern
       (0...grid.height).each do |y|
@@ -457,7 +461,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
     end
 
     it "handles single cell paths" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(5, 5, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(5, 5, 32)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
       # Path from one cell to itself (very short path)
@@ -470,7 +474,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
     end
 
     it "handles boundary to boundary paths" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
       # Path from one corner to opposite corner
@@ -583,7 +587,7 @@ describe "Character and Pathfinding Comprehensive Tests" do
       initial_memory = GC.stats.heap_size
 
       # Perform many pathfinding operations
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(50, 50, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(50, 50, 16)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
       paths = [] of Array(RL::Vector2)?

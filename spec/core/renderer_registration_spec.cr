@@ -3,11 +3,7 @@ require "../spec_helper"
 describe "Renderer Registration System" do
   it "registers dialog manager in render pipeline" do
     RL.init_window(800, 600, "Dialog Manager Renderer Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Dialog Renderer Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Renderer Test")
     engine.init
 
     # Test that dialog manager is accessible via system manager
@@ -35,11 +31,7 @@ describe "Renderer Registration System" do
 
   it "registers verb input system cursor in UI layer" do
     RL.init_window(800, 600, "Cursor Renderer Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Cursor Renderer Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Cursor Renderer Test")
     engine.init
 
     # Enable verb input system (required for cursor rendering)
@@ -71,11 +63,7 @@ describe "Renderer Registration System" do
 
   it "registers achievement manager in UI layer" do
     RL.init_window(800, 600, "Achievement Renderer Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Achievement Renderer Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Achievement Renderer Test")
     engine.init
 
     # Test that achievement manager is accessible via system manager
@@ -99,11 +87,7 @@ describe "Renderer Registration System" do
 
   it "validates render layer structure and component registration" do
     RL.init_window(800, 600, "Render Layer Structure Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Layer Structure Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Layer Structure Test")
     engine.init
 
     # Test that render manager is properly initialized
@@ -126,11 +110,7 @@ describe "Renderer Registration System" do
 
   it "ensures UI components are properly layered for rendering order" do
     RL.init_window(800, 600, "Render Order Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Render Order Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Render Order Test")
     engine.init
     engine.enable_verb_input
 
@@ -185,11 +165,7 @@ describe "Renderer Registration System" do
 
   it "validates floating dialog rendering integration" do
     RL.init_window(800, 600, "Floating Dialog Renderer Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Floating Dialog Renderer Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Floating Dialog Renderer Test")
     engine.init
 
     # Test dialog manager floating system
@@ -220,11 +196,7 @@ describe "Renderer Registration System" do
 
   it "tests cursor visual feedback rendering system" do
     RL.init_window(800, 600, "Cursor Visual Feedback Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Cursor Visual Feedback Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Cursor Visual Feedback Test")
     engine.init
     engine.enable_verb_input
 
@@ -261,11 +233,7 @@ describe "Renderer Registration System" do
 
   it "validates achievement notification rendering" do
     RL.init_window(800, 600, "Achievement Notification Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Achievement Notification Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Achievement Notification Test")
     engine.init
 
     # Test achievement manager notification system
@@ -290,11 +258,7 @@ describe "Renderer Registration System" do
 
   it "ensures render pipeline completeness" do
     RL.init_window(800, 600, "Render Pipeline Completeness Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Pipeline Completeness Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Pipeline Completeness Test")
     engine.init
     engine.enable_verb_input
 

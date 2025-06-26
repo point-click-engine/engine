@@ -6,11 +6,7 @@ describe "Coordinate System Consistency" do
       RL.init_window(800, 600, "Coordinate Audit Test")
 
       # Create engine with different game resolution than screen resolution
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Coordinate Audit",
-        window_width: 1024, # Game coordinates
-        window_height: 768
-      )
+      engine = PointClickEngine::Core::Engine.new(1024, 768, "Coordinate Audit")
       engine.init
 
       # Test FloatingText (potential issue found)
@@ -36,11 +32,7 @@ describe "Coordinate System Consistency" do
       RL.init_window(1200, 800, "Dialog Positioning Test")
 
       # Test with game resolution different from screen
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Dialog Position Test",
-        window_width: 1024,
-        window_height: 768
-      )
+      engine = PointClickEngine::Core::Engine.new(1024, 768, "Dialog Position Test")
       engine.init
 
       dialog_manager = engine.system_manager.dialog_manager.not_nil!
@@ -68,11 +60,7 @@ describe "Coordinate System Consistency" do
     it "verifies display manager coordinate transformations" do
       RL.init_window(800, 600, "Display Manager Test")
 
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Display Test",
-        window_width: 1024,
-        window_height: 768
-      )
+      engine = PointClickEngine::Core::Engine.new(1024, 768, "Display Test")
       engine.init
 
       display_manager = engine.system_manager.display_manager.not_nil!
@@ -102,11 +90,7 @@ describe "Coordinate System Consistency" do
     it "ensures UI components render in correct layers" do
       RL.init_window(800, 600, "Render Layer Test")
 
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Layer Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Layer Test")
       engine.init
 
       # Create scene with various components

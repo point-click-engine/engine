@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../src/core/state_value"
 
 # Memory leak detection tests
 # These tests are specifically designed to detect memory leaks and unbounded growth

@@ -11,6 +11,7 @@ require "../characters/dialogue/dialog_tree"
 require "./exceptions"
 require "./validators/config_validator"
 require "./error_reporter"
+require "./preflight_check"
 
 module PointClickEngine
   module Core
@@ -38,6 +39,7 @@ module PointClickEngine
         property scaling_mode : String = "FitWithBars"
         property target_width : Int32 = 1024
         property target_height : Int32 = 768
+        property vsync : Bool = true
       end
 
       class SpriteInfo
@@ -46,6 +48,15 @@ module PointClickEngine
         property frame_height : Int32
         property columns : Int32
         property rows : Int32
+        property fps : Float32 = 12.0
+        property animations : Hash(String, AnimationConfig) = {} of String => AnimationConfig
+      end
+
+      class AnimationConfig
+        include YAML::Serializable
+        property start_frame : Int32?
+        property end_frame : Int32?
+        property loop : Bool = true
       end
 
       class Position
@@ -68,6 +79,7 @@ module PointClickEngine
         property scenes : Array(String) = [] of String
         property dialogs : Array(String) = [] of String
         property quests : Array(String) = [] of String
+        property sprites : Array(String) = [] of String
         property audio : AudioConfig?
       end
 
@@ -121,9 +133,19 @@ module PointClickEngine
       property config_base_dir : String = ""
 
       # Load configuration from YAML file
-      def self.from_file(path : String) : GameConfig
+      def self.from_file(path : String, skip_preflight : Bool = false) : GameConfig
         unless File.exists?(path)
           raise ConfigError.new("Configuration file not found", path)
+        end
+
+        # Run preflight checks unless explicitly skipped
+        unless skip_preflight
+          begin
+            PreflightCheck.run!(path)
+          rescue ex : ValidationError
+            puts "\n❌ Game failed pre-flight checks. Please fix these issues before running."
+            raise ex
+          end
         end
 
         begin
@@ -184,9 +206,9 @@ module PointClickEngine
           when "verbs"
             engine.enable_verb_input
           when "floating_dialogs"
-            engine.dialog_manager.try { |dm| dm.enable_floating = true }
+            engine.system_manager.dialog_manager.try { |dm| dm.enable_floating = true }
           when "portraits"
-            engine.dialog_manager.try { |dm| dm.enable_portraits = true }
+            engine.system_manager.dialog_manager.try { |dm| dm.enable_portraits = true }
           when "shaders"
             setup_shaders(engine)
           when "auto_save"
@@ -236,9 +258,7 @@ module PointClickEngine
               player_obj.load_spritesheet(
                 full_player_sprite_path,
                 sprite_info.frame_width,
-                sprite_info.frame_height,
-                sprite_info.columns,
-                sprite_info.rows
+                sprite_info.frame_height
               )
             end
           end
@@ -260,7 +280,7 @@ module PointClickEngine
         end
 
         # Configure audio volumes
-        if audio = engine.audio_manager
+        if audio = engine.system_manager.audio_manager
           if s = settings
             audio.master_volume = s.master_volume
             audio.music_volume = s.music_volume
@@ -313,7 +333,7 @@ module PointClickEngine
               dialog_tree = Characters::Dialogue::DialogTree.load_from_file(path)
               puts "Loaded dialog tree '#{dialog_tree.name}' with #{dialog_tree.nodes.size} nodes"
               # Store dialog tree in engine for character access
-              if dm = engine.dialog_manager
+              if dm = engine.system_manager.dialog_manager
                 dm.add_dialog_tree(dialog_tree)
               end
               ErrorReporter.report_progress_done(true)
@@ -341,7 +361,7 @@ module PointClickEngine
         end
 
         # Load audio
-        if audio = engine.audio_manager
+        if audio = engine.system_manager.audio_manager
           assets.try(&.audio).try do |audio_config|
             # Load music
             audio_config.music.each do |name, path|
@@ -405,13 +425,13 @@ module PointClickEngine
 
           # Play start music
           if music_name = start_music_name
-            engine.audio_manager.try &.play_music(music_name, true)
+            engine.system_manager.audio_manager.try &.play_music(music_name, true)
           end
 
           # Show opening message
           if u = ui_config
             if msg = u.opening_message
-              engine.dialog_manager.try &.show_message(msg)
+              engine.system_manager.dialog_manager.try &.show_message(msg)
             end
 
             # Show hints

@@ -36,7 +36,7 @@ module PointClickEngine
         end
 
         # Validates player sprite file exists and properties
-        private def validate_player_sprite_file(player : PlayerConfig, context : ValidationContext, result : ValidationResult)
+        private def validate_player_sprite_file(player : GameConfig::PlayerConfig, context : ValidationContext, result : ValidationResult)
           if sprite_path = player.sprite_path
             full_sprite_path = File.expand_path(sprite_path, context.base_dir)
             if File.exists?(full_sprite_path)
@@ -77,7 +77,7 @@ module PointClickEngine
         end
 
         # Validates player sprite dimensions and frame configuration
-        private def validate_player_sprite_dimensions(player : PlayerConfig, result : ValidationResult)
+        private def validate_player_sprite_dimensions(player : GameConfig::PlayerConfig, result : ValidationResult)
           if sprite_config = player.sprite
             if sprite_config.frame_width && sprite_config.frame_height
               frame_width = sprite_config.frame_width.not_nil!
@@ -114,7 +114,7 @@ module PointClickEngine
         end
 
         # Validates player starting position
-        private def validate_player_starting_position(player : PlayerConfig, result : ValidationResult)
+        private def validate_player_starting_position(player : GameConfig::PlayerConfig, result : ValidationResult)
           if start_pos = player.start_position
             if start_pos.x < 0 || start_pos.y < 0
               result.add_error("Player starting position has negative coordinates: (#{start_pos.x}, #{start_pos.y})")
@@ -140,7 +140,7 @@ module PointClickEngine
         end
 
         # Validates display scaling mode
-        private def validate_scaling_mode(display : DisplayConfig, result : ValidationResult)
+        private def validate_scaling_mode(display : GameConfig::DisplayConfig, result : ValidationResult)
           if scaling_mode = display.scaling_mode
             valid_modes = ["None", "FitWithBars", "Stretch", "PixelPerfect"]
             if valid_modes.includes?(scaling_mode)
@@ -161,7 +161,7 @@ module PointClickEngine
         end
 
         # Validates target resolution settings
-        private def validate_target_resolution(display : DisplayConfig, config : GameConfig, result : ValidationResult)
+        private def validate_target_resolution(display : GameConfig::DisplayConfig, config : GameConfig, result : ValidationResult)
           if window = config.window
             window_width = window.width
             window_height = window.height
@@ -194,41 +194,75 @@ module PointClickEngine
         # Validates general display settings
         private def validate_display_settings(config : GameConfig, result : ValidationResult)
           if window = config.window
-            validate_window_settings(window, result)
+            validate_window_settings(window, config, result)
+            validate_fullscreen_settings(window, result)
           end
 
           if display = config.display
             validate_vsync_settings(display, result)
-            validate_fullscreen_settings(display, result)
           end
         end
 
         # Validates window configuration
-        private def validate_window_settings(window : WindowConfig, result : ValidationResult)
+        private def validate_window_settings(window : GameConfig::WindowConfig, config : GameConfig, result : ValidationResult)
           width = window.width
           height = window.height
 
           # Check for reasonable window dimensions
           if width <= 0 || height <= 0
             result.add_error("Window dimensions must be positive: #{width}x#{height}")
-          elsif width < 320 || height < 240
+          elsif width <= 320 || height <= 240
+            result.add_error("Window resolution is too small: #{width}x#{height} - minimum supported is 640x480")
+          elsif width < 640 || height < 480
             result.add_warning("Window is very small: #{width}x#{height} - may cause usability issues")
           elsif width > 7680 || height > 4320
             result.add_warning("Window is very large: #{width}x#{height} - may cause performance issues")
           end
+          
+          # Check for standard resolutions
+          standard_resolutions = [
+            {640, 480}, {800, 600}, {1024, 768}, {1280, 720}, {1280, 1024},
+            {1366, 768}, {1440, 900}, {1600, 900}, {1680, 1050}, {1920, 1080},
+            {1920, 1200}, {2560, 1440}, {2560, 1600}, {3840, 2160}
+          ]
+          
+          unless standard_resolutions.includes?({width, height})
+            result.add_warning("Non-standard resolution: #{width}x#{height}")
+          end
+          
+          # Warn about resolutions larger than 1920x1080
+          if width > 1920 || height > 1080
+            result.add_warning("Resolution is larger than 1920x1080 - may impact performance")
+            if width >= 3840 || height >= 2160
+              result.add_performance_hint("High resolution (#{width}x#{height}) - ensure adequate GPU performance")
+            end
+          end
+          
+          # Check aspect ratio
+          aspect_ratio = width.to_f / height.to_f
+          common_ratios = [4.0/3.0, 16.0/9.0, 16.0/10.0, 21.0/9.0]
+          
+          ratio_match = common_ratios.any? { |ratio| (aspect_ratio - ratio).abs < 0.1 }
+          unless ratio_match
+            result.add_warning("Unusual aspect ratio: #{aspect_ratio.round(2)} - may cause display issues")
+          end
 
-          # Check title
-          if title = window.title
-            if title.empty?
-              result.add_warning("Window title is empty")
-            elsif title.size > 100
-              result.add_warning("Window title is very long (#{title.size} characters)")
+          # Check title from GameInfo
+          if game = config.game
+            if title = game.title
+              if title.empty?
+                result.add_warning("Window title is empty")
+              elsif title.size > 100
+                result.add_warning("Window title is very long (#{title.size} characters)")
+              end
+            else
+              result.add_warning("No window title specified")
             end
           end
         end
 
         # Validates VSync settings
-        private def validate_vsync_settings(display : DisplayConfig, result : ValidationResult)
+        private def validate_vsync_settings(display : GameConfig::DisplayConfig, result : ValidationResult)
           if vsync = display.vsync
             if vsync
               result.add_info("✓ VSync enabled - provides smooth animation")
@@ -239,10 +273,12 @@ module PointClickEngine
         end
 
         # Validates fullscreen settings
-        private def validate_fullscreen_settings(display : DisplayConfig, result : ValidationResult)
-          if fullscreen = display.fullscreen
+        private def validate_fullscreen_settings(window : GameConfig::WindowConfig, result : ValidationResult)
+          if fullscreen = window.fullscreen
             if fullscreen
-              result.add_info("✓ Fullscreen mode enabled")
+              result.add_info("✓ Display mode: fullscreen")
+            else
+              result.add_info("✓ Display mode: windowed")
             end
           end
         end
@@ -258,7 +294,7 @@ module PointClickEngine
         end
 
         # Validates animation frame timing
-        private def validate_animation_frame_timing(sprite_config : SpriteConfig, result : ValidationResult)
+        private def validate_animation_frame_timing(sprite_config : GameConfig::SpriteInfo, result : ValidationResult)
           if fps = sprite_config.fps
             if fps <= 0
               result.add_error("Animation FPS must be positive: #{fps}")
@@ -273,7 +309,7 @@ module PointClickEngine
         end
 
         # Validates animation sequences
-        private def validate_animation_sequences(sprite_config : SpriteConfig, result : ValidationResult)
+        private def validate_animation_sequences(sprite_config : GameConfig::SpriteInfo, result : ValidationResult)
           if animations = sprite_config.animations
             if animations.empty?
               result.add_warning("No animations defined for player sprite")
@@ -286,7 +322,7 @@ module PointClickEngine
         end
 
         # Validates a single animation configuration
-        private def validate_single_animation(name : String, anim_config : AnimationConfig, sprite_config : SpriteConfig, result : ValidationResult)
+        private def validate_single_animation(name : String, anim_config : GameConfig::AnimationConfig, sprite_config : GameConfig::SpriteInfo, result : ValidationResult)
           if start_frame = anim_config.start_frame
             if end_frame = anim_config.end_frame
               if start_frame < 0 || end_frame < 0

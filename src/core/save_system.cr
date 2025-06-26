@@ -67,7 +67,7 @@ module PointClickEngine
           save_data.inventory_items = engine.inventory.items.dup
 
           # Save game variables (from script engine or dialog trees)
-          if script_engine = engine.script_engine
+          if script_engine = engine.system_manager.script_engine
             # Get game time from script engine if available
             if game_time = script_engine.get_global("game_time")
               save_data.game_variables["game_time"] = game_time.to_s

@@ -24,7 +24,7 @@ module PointClickEngine
       end
 
       # Current input state
-      property mouse_position : RL::Vector2 = RL::Vector2.new(0, 0)
+      property mouse_position : RL::Vector2 = RL::Vector2.new(x: 0, y: 0)
       property last_input_time : Float64 = 0.0
       property input_repeat_delay : Float64 = 0.15
 
@@ -219,7 +219,7 @@ module PointClickEngine
       # Resets input state (useful for menu transitions)
       def reset_input_state
         @last_input_time = 0.0
-        @mouse_position = RL::Vector2.new(0, 0)
+        @mouse_position = RL::Vector2.new(x: 0, y: 0)
       end
 
       # Updates input configuration from settings

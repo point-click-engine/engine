@@ -40,15 +40,14 @@ module PointClickEngine
             analyze_audio_asset_performance(audio, context, result, large_assets, pointerof(total_asset_size))
           end
 
-          # Analyze sprite asset performance
-          analyze_sprite_asset_performance(assets, context, result, large_assets, pointerof(total_asset_size), pointerof(texture_memory_usage))
+          # Skip sprite analysis - sprites are defined in scenes, not in assets config
 
           # Report overall findings
           report_asset_performance_summary(large_assets, total_asset_size, texture_memory_usage, result)
         end
 
         # Analyzes audio asset performance
-        private def analyze_audio_asset_performance(audio : AudioConfig, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*)
+        private def analyze_audio_asset_performance(audio : GameConfig::AudioConfig, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*)
           # Check music files
           audio.music.each do |name, path|
             full_path = File.expand_path(path, context.base_dir)
@@ -92,7 +91,7 @@ module PointClickEngine
         end
 
         # Analyzes sprite asset performance
-        private def analyze_sprite_asset_performance(assets : AssetsConfig, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*, texture_memory : Int64*)
+        private def analyze_sprite_asset_performance(assets : GameConfig::AssetsConfig, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*, texture_memory : Int64*)
           sprite_count = 0
           large_texture_count = 0
 
@@ -229,7 +228,7 @@ module PointClickEngine
         end
 
         # Estimates audio memory usage
-        private def estimate_audio_memory_usage(audio : AudioConfig, context : ValidationContext) : Int64
+        private def estimate_audio_memory_usage(audio : GameConfig::AudioConfig, context : ValidationContext) : Int64
           total_audio_memory = 0_i64
 
           # Music typically streams, so estimate buffer size
@@ -250,13 +249,34 @@ module PointClickEngine
         end
 
         # Estimates total texture memory usage
-        private def estimate_total_texture_memory(assets : AssetsConfig, context : ValidationContext) : Int64
+        private def estimate_total_texture_memory(assets : GameConfig::AssetsConfig, context : ValidationContext) : Int64
           total_texture_memory = 0_i64
 
+          # Process sprites
           assets.sprites.each do |pattern|
             Dir.glob(File.join(context.base_dir, pattern)).each do |sprite_path|
               if File.exists?(sprite_path)
                 total_texture_memory += estimate_texture_memory_usage(sprite_path)
+              end
+            end
+          end
+
+          # Process scene backgrounds
+          assets.scenes.each do |pattern|
+            Dir.glob(File.join(context.base_dir, pattern)).each do |scene_path|
+              if File.exists?(scene_path) && scene_path.ends_with?(".yaml")
+                begin
+                  scene_content = File.read(scene_path)
+                  if match = scene_content.match(/background_path:\s*(.+)/)
+                    background_path = match[1].strip
+                    full_path = File.join(context.base_dir, background_path)
+                    if File.exists?(full_path)
+                      total_texture_memory += estimate_texture_memory_usage(full_path)
+                    end
+                  end
+                rescue
+                  # Ignore errors reading scene files
+                end
               end
             end
           end
@@ -268,9 +288,9 @@ module PointClickEngine
         private def estimate_scene_memory_usage(config : GameConfig, context : ValidationContext) : Int64
           return 0_i64 unless assets = config.assets
 
-          scene_count = 0
+          scene_count = 0_i64
           assets.scenes.each do |pattern|
-            scene_count += Dir.glob(File.join(context.base_dir, pattern)).size
+            scene_count += Dir.glob(File.join(context.base_dir, pattern)).size.to_i64
           end
 
           # Rough estimate: 1MB per scene for data structures, scripts, etc.

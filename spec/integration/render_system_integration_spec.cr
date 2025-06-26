@@ -4,11 +4,7 @@ describe "Render System Integration" do
   describe "Renderer Registration" do
     it "ensures all UI components with draw methods are registered with render layers" do
       RL.init_window(800, 600, "Renderer Registration Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Renderer Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Renderer Test")
       engine.init
 
       # Get render manager and check that all components with draw methods are registered
@@ -49,11 +45,7 @@ describe "Render System Integration" do
 
     it "verifies all render layers have at least one renderer registered" do
       RL.init_window(800, 600, "Layer Coverage Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Layer Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Layer Test")
       engine.init
 
       # The engine should register renderers for all major layers
@@ -71,11 +63,7 @@ describe "Render System Integration" do
   describe "Input Consumption Logic" do
     it "ensures floating dialogs don't block input" do
       RL.init_window(800, 600, "Input Consumption Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test")
       engine.init
 
       dialog_manager = engine.system_manager.dialog_manager.not_nil!
@@ -104,11 +92,7 @@ describe "Render System Integration" do
 
     it "ensures verb input system works when floating dialogs are present" do
       RL.init_window(800, 600, "Verb Input Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Verb Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Verb Test")
       engine.init
 
       # Create scene with verb system
@@ -138,11 +122,7 @@ describe "Render System Integration" do
   describe "Coordinate System Consistency" do
     it "ensures UI components use game coordinates not screen coordinates" do
       RL.init_window(800, 600, "Coordinate System Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Coordinate Test",
-        window_width: 1024, # Different from screen size
-        window_height: 768
-      )
+      engine = PointClickEngine::Core::Engine.new(1024, 768, "Coordinate Test") # Different from screen size
       engine.init
 
       # Test floating dialog positioning
@@ -166,11 +146,7 @@ describe "Render System Integration" do
   describe "Integration Smoke Tests" do
     it "runs a complete rendering cycle with all systems active" do
       RL.init_window(800, 600, "Full Integration Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Integration Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Integration Test")
       engine.init
 
       # Create scene

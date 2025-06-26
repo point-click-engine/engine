@@ -298,7 +298,8 @@ module PointClickEngine
         scene.add_character(character)
 
         # Point inside character bounds
-        found = scene.get_character_at(Raylib::Vector2.new(x: 220f32, y: 240f32))
+        # Character at (200, 200) with size (64, 96) has bounds from (168, 104) to (232, 200)
+        found = scene.get_character_at(Raylib::Vector2.new(x: 200f32, y: 150f32))
         found.should eq(character)
 
         # Point outside character bounds
@@ -316,7 +317,8 @@ module PointClickEngine
         scene.set_player(player)
 
         # Point inside player bounds
-        found = scene.get_character_at(Raylib::Vector2.new(x: 220f32, y: 240f32))
+        # Player at (200, 200) with size (64, 96) has bounds from (168, 104) to (232, 200)
+        found = scene.get_character_at(Raylib::Vector2.new(x: 200f32, y: 150f32))
         found.should be_nil # Player should be excluded
       end
     end

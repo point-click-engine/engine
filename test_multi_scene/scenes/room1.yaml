@@ -1,0 +1,15 @@
+name: room1
+background_path: "assets/room1.png"
+
+hotspots:
+  - name: door
+    x: 400
+    y: 200
+    width: 80
+    height: 160
+    description: "Door to room 2"
+    default_verb: open
+    object_type: door
+    actions:
+      open: "transition:room2:fade:1.0:100,300"
+      use: "transition:room2:fade:1.0:100,300"

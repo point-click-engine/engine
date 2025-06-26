@@ -10,7 +10,7 @@ describe PointClickEngine::Core::Engine do
 
         engine.window_width.should eq(800)
         engine.window_height.should eq(600)
-        engine.title.should eq("Test Game")
+        engine.window_title.should eq("Test Game")
         engine.target_fps.should eq(60)
         engine.fullscreen.should be_false
       end
@@ -102,7 +102,7 @@ describe PointClickEngine::Core::Engine do
         engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
         # Should not crash even if some assets are missing
         engine.init
-        engine.initialized.should be_true
+        engine.engine_ready?.should be_true
       end
 
       # Window dimension and FPS validation would need to be implemented in Engine
@@ -117,14 +117,14 @@ describe PointClickEngine::Core::Engine do
     context "state management during initialization" do
       it "starts in uninitialized state" do
         engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
-        engine.initialized.should be_false
+        engine.engine_ready?.should be_false
       end
 
       it "transitions to initialized state after init" do
         engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
         engine.init
 
-        engine.initialized.should be_true
+        engine.engine_ready?.should be_true
       end
 
       it "handles double initialization safely" do
@@ -133,7 +133,7 @@ describe PointClickEngine::Core::Engine do
 
         # Second init should be safe but not duplicate work
         engine.init # Should not raise
-        engine.initialized.should be_true
+        engine.engine_ready?.should be_true
       end
     end
 

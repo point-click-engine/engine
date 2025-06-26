@@ -5,7 +5,7 @@ describe PointClickEngine::Navigation::Pathfinding do
   describe "same grid cell movement" do
     it "returns proper path when moving within same grid cell" do
       # Create a small navigation grid
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 16)
 
       # Make all cells walkable
       10.times do |y|
@@ -35,7 +35,7 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "returns single point when distance is negligible" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 16)
 
       # Make all cells walkable
       10.times do |y|
@@ -61,7 +61,7 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "finds proper path when moving between different grid cells" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 16)
 
       # Make all cells walkable
       10.times do |y|

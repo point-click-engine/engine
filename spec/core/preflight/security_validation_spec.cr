@@ -1,6 +1,6 @@
 require "./spec_helper"
 
-# NOTE: These tests expect security validation features that are only available in EnhancedPreflightCheck,
+# NOTE: These tests expect security validation features that are only available in PreflightCheck,
 # not in the basic PreflightCheck. They have been commented out since the basic PreflightCheck
 # doesn't implement security checks.
 
@@ -268,9 +268,9 @@ pending "PreflightCheck Security Validation" do
 end
 
 # To properly fix these tests, either:
-# 1. Update them to use EnhancedPreflightCheck instead of PreflightCheck:
+# 1. Update them to use PreflightCheck instead of PreflightCheck:
 #    - Change: PointClickEngine::Core::PreflightCheck.run(...)
-#    - To: PointClickEngine::Core::EnhancedPreflightCheck.run(...)
+#    - To: PointClickEngine::Core::PreflightCheck.run(...)
 #    - And require the enhanced version in spec_helper
 #
 # 2. Or implement the security validation features in the basic PreflightCheck class

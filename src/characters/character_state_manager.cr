@@ -1,3 +1,5 @@
+require "./character_enums"
+
 module PointClickEngine
   module Characters
     # Manages character state transitions and state-dependent behavior

@@ -18,7 +18,7 @@ describe "Minimal Game Example" do
 
     # Engine should be created with defaults
     engine.should_not be_nil
-    engine.title.should eq("Minimal Adventure")
+    engine.window_title.should eq("Minimal Adventure")
     engine.window_width.should eq(1024)
     engine.window_height.should eq(768)
 
@@ -74,7 +74,7 @@ describe "Minimal Game Example" do
     engine = config.create_engine
 
     # Verify template configuration
-    engine.title.should eq("My First Adventure")
+    engine.window_title.should eq("My First Adventure")
     engine.window_width.should eq(1280)
     engine.window_height.should eq(720)
     engine.target_fps.should eq(60)

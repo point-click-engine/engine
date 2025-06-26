@@ -1,12 +1,5 @@
 require "../spec_helper"
 
-# Initialize Raylib once for all transition manager tests
-RL.init_window(800, 600, "TransitionManager Tests")
-
-Spec.after_suite do
-  RL.close_window
-end
-
 describe PointClickEngine::Graphics::TransitionManager do
   describe "initialization" do
     it "creates a transition manager with specified dimensions" do
@@ -139,11 +132,7 @@ end
 describe "Engine transition integration" do
   it "transition manager is accessible through engine systems" do
     # Use existing window
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
     engine.init
 
     # Transition manager should be initialized
@@ -151,6 +140,6 @@ describe "Engine transition integration" do
     engine.system_manager.transition_manager.should_not be_nil
 
     # Access through convenience method
-    engine.transition_manager.should_not be_nil
+    engine.system_manager.transition_manager.should_not be_nil
   end
 end

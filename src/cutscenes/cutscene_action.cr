@@ -90,6 +90,7 @@ module PointClickEngine
       def start
         @character.say(@text) do
           @dialog_completed = true
+          nil
         end
       end
 
@@ -253,9 +254,9 @@ module PointClickEngine
       def start
         # This would need UI visibility control in Engine
         if @show_ui
-          Core::Engine.instance.show_ui
+          Core::Engine.instance.render_manager.show_ui
         else
-          Core::Engine.instance.hide_ui
+          Core::Engine.instance.render_manager.hide_ui
         end
       end
 

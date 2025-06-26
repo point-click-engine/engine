@@ -50,7 +50,7 @@ module PointClickEngine
                 # Default character interaction - show dialog or description
                 if engine = Engine.instance
                   # Check if character has a dialog tree
-                  if dialog_manager = engine.dialog_manager
+                  if dialog_manager = engine.system_manager.dialog_manager
                     if dialog_manager.has_dialog?(clicked_character.name)
                       # Start character's dialog tree
                       dialog_manager.start_dialog(clicked_character.name)

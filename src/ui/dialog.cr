@@ -2,6 +2,7 @@
 
 require "yaml"
 require "../core/game_object"
+require "../core/input_state"
 
 module PointClickEngine
   # # User interface components and systems.

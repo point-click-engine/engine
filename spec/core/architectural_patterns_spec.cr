@@ -8,11 +8,7 @@ describe "Architectural Pattern Compliance" do
       # from within a registered renderer
 
       RL.init_window(800, 600, "Component Registration Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Registration Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Registration Test")
       engine.init
 
       # Check that systems with draw methods are accessible via render pipeline
@@ -38,11 +34,7 @@ describe "Architectural Pattern Compliance" do
       # should have clear priority order and not conflict
 
       RL.init_window(800, 600, "Input Hierarchy Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test")
       engine.init
 
       dialog_manager = engine.system_manager.dialog_manager.not_nil!
@@ -69,11 +61,7 @@ describe "Architectural Pattern Compliance" do
   describe "System Coordination Patterns" do
     it "ensures systems don't have circular dependencies" do
       RL.init_window(800, 600, "Dependency Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Dependency Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Dependency Test")
       engine.init
 
       # Systems should initialize independently
@@ -89,11 +77,7 @@ describe "Architectural Pattern Compliance" do
 
     it "validates layer-based rendering architecture" do
       RL.init_window(800, 600, "Layer Architecture Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Layer Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Layer Test")
       engine.init
 
       render_manager = engine.render_manager

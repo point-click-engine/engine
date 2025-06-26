@@ -2,7 +2,7 @@ require "../spec_helper"
 require "../../src/navigation/pathfinding"
 require "../../src/scenes/scene"
 
-describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
+describe PointClickEngine::Navigation::NavigationGrid do
   describe "grid generation with character radius" do
     it "creates appropriate walkable cells with character radius" do
       scene = PointClickEngine::Scenes::Scene.new("test_scene")
@@ -23,7 +23,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
 
       # Create navigation grid with character radius
       character_radius = 42.0_f32 # Typical for 1.5 scale character
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene,
         scene.logical_width,
         scene.logical_height,
@@ -75,7 +75,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
 
       # Create grid with typical character radius
       character_radius = 42.0_f32
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene,
         scene.logical_width,
         scene.logical_height,
@@ -111,7 +111,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
 
       # Create grid with character radius that would be too strict
       character_radius = 30.0_f32
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene,
         scene.logical_width,
         scene.logical_height,
@@ -141,7 +141,7 @@ describe PointClickEngine::Navigation::Pathfinding do
   describe "pathfinding from non-walkable start position" do
     it "allows pathfinding when start position is not walkable" do
       # Create a simple navigation grid
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 10)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 10)
 
       # Mark most cells as walkable
       (0...10).each do |y|
@@ -163,7 +163,7 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "returns nil when end position is not walkable" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 10)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 10)
 
       # Mark most cells as walkable
       (0...10).each do |y|
@@ -184,7 +184,7 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "handles character already in non-walkable position gracefully" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
 
       # Create a walkable area with an obstacle
       (0...20).each do |y|
@@ -214,7 +214,7 @@ describe PointClickEngine::Navigation::Pathfinding do
 
   describe "micro-path prevention" do
     it "handles very short paths efficiently" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 10)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 10)
 
       # All walkable
       (0...10).each do |y|
@@ -235,7 +235,7 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "avoids unnecessary waypoints for straight paths" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 10)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 10)
 
       # All walkable
       (0...20).each do |y|
@@ -285,7 +285,7 @@ describe PointClickEngine::Navigation::Pathfinding do
       scene.walkable_area = walkable_area
 
       # Create grid with character radius
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene,
         200, # width
         200, # height
@@ -331,11 +331,11 @@ describe PointClickEngine::Navigation::Pathfinding do
       small_radius = 10.0_f32
       large_radius = 30.0_f32
 
-      small_grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      small_grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 300, 300, 10, small_radius
       )
 
-      large_grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      large_grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 300, 300, 10, large_radius
       )
 
@@ -357,7 +357,7 @@ describe PointClickEngine::Navigation::Pathfinding do
 
   describe "path recalculation" do
     it "supports dynamic path recalculation" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 10)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 10)
 
       # Initially all walkable
       (0...20).each do |y|

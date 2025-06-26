@@ -11,10 +11,10 @@ module PointClickEngine
     class DependencyError < Exception
     end
 
-    # Simple dependency injection container
+    # Dependency injection container
     #
     # Uses separate storage for each interface type to avoid pointer issues
-    class SimpleDependencyContainer
+    class DependencyContainer
       include ErrorHelpers
 
       # Storage for each interface type

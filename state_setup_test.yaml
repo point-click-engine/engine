@@ -1,0 +1,19 @@
+game:
+  title: "State Setup Test"
+
+initial_state:
+  flags:
+    has_sword: true
+    defeated_boss: false
+    found_secret: true
+  variables:
+    player_level: 5
+    gold: 1000
+    player_name: "Adventurer"
+    completion_percentage: 25.5
+
+start_scene: "town"
+start_music: "town_theme"
+
+ui:
+  opening_message: "Welcome back, adventurer!"

@@ -1,0 +1,5 @@
+game:
+  title: "Auto-save Test"
+
+features:
+  - auto_save

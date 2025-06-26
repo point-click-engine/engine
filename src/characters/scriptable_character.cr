@@ -44,14 +44,14 @@ module PointClickEngine
 
       def add_event_handler(handler : Scripting::EventHandler)
         @event_handlers << handler
-        Core::Engine.instance.event_system.add_handler(handler)
+        Core::Engine.instance.system_manager.event_system.add_handler(handler)
       end
 
       def set_property(key : String, value : String)
         @custom_properties[key] = value
 
         # Trigger property changed event
-        Core::Engine.instance.event_system.trigger_event(
+        Core::Engine.instance.system_manager.event_system.trigger_event(
           "character_property_changed",
           {
             "character" => @name,
@@ -163,7 +163,7 @@ module PointClickEngine
       def walk_to(target : RL::Vector2)
         super(target)
 
-        Core::Engine.instance.event_system.trigger_event(
+        Core::Engine.instance.system_manager.event_system.trigger_event(
           Scripting::Events::PLAYER_MOVED,
           {
             "character" => @name,
@@ -174,11 +174,11 @@ module PointClickEngine
       end
 
       def stop_walking
-        was_walking = @state == CharacterState::Walking
+        was_walking = state == CharacterState::Walking
         super()
 
         if was_walking
-          Core::Engine.instance.event_system.trigger_event(
+          Core::Engine.instance.system_manager.event_system.trigger_event(
             Scripting::Events::CHARACTER_REACHED_TARGET,
             {
               "character"  => @name,
@@ -191,7 +191,7 @@ module PointClickEngine
 
       # Override say to trigger events
       def say(text : String, &block : -> Nil)
-        Core::Engine.instance.event_system.trigger_event(
+        Core::Engine.instance.system_manager.event_system.trigger_event(
           Scripting::Events::CHARACTER_SPEAK,
           {
             "character" => @name,

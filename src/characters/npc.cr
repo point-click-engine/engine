@@ -44,7 +44,7 @@ module PointClickEngine
       end
 
       def on_interact(interactor : Character)
-        return if @state == CharacterState::Talking
+        return if state == CharacterState::Talking
         face_character(interactor)
         start_conversation(interactor)
       end
@@ -54,10 +54,10 @@ module PointClickEngine
       end
 
       def on_talk
-        return if @state == CharacterState::Talking
+        return if state == CharacterState::Talking
 
         # Try to start dialog tree conversation first
-        if dm = Core::Engine.instance.dialog_manager
+        if dm = Core::Engine.instance.system_manager.dialog_manager
           if dialog_tree = dm.get_dialog_tree(@name)
             dm.start_dialog_tree(@name, "greeting")
             return

@@ -11,6 +11,7 @@ require "../config_manager"
 require "../../graphics/display_manager"
 require "../../graphics/transitions"
 require "../../ui/menu_system"
+require "./verb_input_system"
 
 module PointClickEngine
   module Core

@@ -1,6 +1,7 @@
 require "yaml"
 require "../core/game_constants"
 require "../graphics/animated_sprite"
+require "./character_enums"
 
 module PointClickEngine
   module Characters
@@ -194,7 +195,7 @@ module PointClickEngine
         add_animation("walk_east", 8, 4, 0.1f32)
         add_animation("walk_west", 12, 4, 0.1f32)
 
-        # Legacy 2D direction support
+        # 2D direction support
         add_animation("walk_down", 0, 4, 0.1f32)
         add_animation("walk_up", 4, 4, 0.1f32)
         add_animation("walk_right", 8, 4, 0.1f32)
@@ -456,14 +457,14 @@ module PointClickEngine
         @sprite.try(&.stop)
       end
 
-      # Pauses current animation
+      # Pauses current animation (preserves frame timer)
       def pause
-        @sprite.try(&.stop)
+        @sprite.try(&.playing = false)
       end
 
-      # Resumes paused animation
+      # Resumes paused animation (without resetting frame timer)
       def resume
-        @sprite.try(&.play)
+        @sprite.try(&.playing = true)
       end
 
       # Gets list of all available animation names

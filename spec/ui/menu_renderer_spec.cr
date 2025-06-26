@@ -257,13 +257,13 @@ describe PointClickEngine::UI::MenuRenderer do
     it "sets fade alpha within valid range" do
       renderer = PointClickEngine::UI::MenuRenderer.new
       renderer.set_fade_alpha(1.5) # Above max
-      renderer.animation.fade_alpha.should eq(1.0)
+      renderer.animation.fade_alpha.should eq(1.0_f32)
 
       renderer.set_fade_alpha(-0.5) # Below min
-      renderer.animation.fade_alpha.should eq(0.0)
+      renderer.animation.fade_alpha.should eq(0.0_f32)
 
       renderer.set_fade_alpha(0.7) # Valid value
-      renderer.animation.fade_alpha.should eq(0.7)
+      renderer.animation.fade_alpha.should eq(0.7_f32)
     end
   end
 
@@ -299,7 +299,10 @@ describe PointClickEngine::UI::MenuRenderer do
       renderer = PointClickEngine::UI::MenuRenderer.new
       content_bounds = RL::Rectangle.new(x: 0, y: 0, width: 200, height: 100)
 
-      height = renderer.draw_title(content_bounds, "")
+      height = 0
+      RaylibContext.with_window do
+        height = renderer.draw_title(content_bounds, "")
+      end
 
       height.should eq(0)
     end
@@ -310,7 +313,9 @@ describe PointClickEngine::UI::MenuRenderer do
       empty_items = [] of String
 
       # Should not crash
-      renderer.draw_menu_items(content_bounds, 50.0, empty_items, -1, nil)
+      RaylibContext.with_window do
+        renderer.draw_menu_items(content_bounds, 50.0, empty_items, -1, nil)
+      end
     end
 
     # Commented out - requires mocking library
@@ -407,12 +412,14 @@ describe PointClickEngine::UI::MenuRenderer do
 
   describe "edge cases" do
     it "handles zero-sized menu bounds" do
-      renderer = PointClickEngine::UI::MenuRenderer.new
-      zero_bounds = RL::Rectangle.new(x: 0, y: 0, width: 0, height: 0)
+      RaylibContext.with_window do
+        renderer = PointClickEngine::UI::MenuRenderer.new
+        zero_bounds = RL::Rectangle.new(x: 0, y: 0, width: 0, height: 0)
 
-      # Should not crash
-      renderer.draw_background(zero_bounds)
-      renderer.draw_border(zero_bounds)
+        # Should not crash
+        renderer.draw_background(zero_bounds)
+        renderer.draw_border(zero_bounds)
+      end
     end
 
     it "handles negative positioning" do

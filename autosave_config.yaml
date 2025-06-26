@@ -1,0 +1,5 @@
+game:
+  title: "Config Auto-Save Test"
+
+features:
+  - auto_save

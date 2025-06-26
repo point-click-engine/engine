@@ -296,11 +296,15 @@ module PointClickEngine
         end
 
         if font_size = config["font_size"]?
-          @theme.font_size = font_size.to_i
+          if value = font_size.to_i?
+            @theme.font_size = value
+          end
         end
 
         if padding = config["padding"]?
-          @theme.padding = padding.to_i
+          if value = padding.to_i?
+            @theme.padding = value
+          end
         end
       end
 

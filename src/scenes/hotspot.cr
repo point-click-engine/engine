@@ -156,6 +156,9 @@ module PointClickEngine
       # Optional script file path for this hotspot's behavior
       # If nil, the hotspot will use the scene's default script
       property script_path : String?
+      
+      # Z-order for depth sorting (higher values are drawn on top)
+      property z_order : Int32 = 0
 
       # Action commands mapped by verb type
       # e.g. {"use" => "transition:garden:swirl:4.5:300,400"}

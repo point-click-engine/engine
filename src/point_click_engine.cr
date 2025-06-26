@@ -132,7 +132,7 @@ require "./localization/localization_manager"
 module PointClickEngine
   VERSION = "0.3.0"
 
-  # Convenience aliases for backward compatibility
+  # Convenience aliases
   alias Game = Core::Engine
   alias GameObject = Core::GameObject
   alias Drawable = Core::Drawable
@@ -170,7 +170,7 @@ module PointClickEngine
   alias Direction8 = Characters::Direction8
   alias AnimationState = Characters::AnimationState
   alias AnimationController = Characters::AnimationController
-  alias NPCMood = Characters::CharacterMood # Legacy alias for backward compatibility
+  alias NPCMood = Characters::CharacterMood
   alias CharacterMood = Characters::CharacterMood
   alias AnimationData = Characters::AnimationData
   alias CharacterDialogue = Characters::Dialogue::CharacterDialogue
@@ -218,7 +218,7 @@ module PointClickEngine
 
   # Navigation aliases
   alias Pathfinding = Navigation::Pathfinding
-  alias NavigationGrid = Navigation::Pathfinding::NavigationGrid
+  alias NavigationGrid = Navigation::NavigationGrid
 
   # Cutscene aliases
   alias Cutscene = Cutscenes::Cutscene

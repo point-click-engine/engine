@@ -141,7 +141,7 @@ module PointClickEngine
         end
 
         # Validates sprite file sizes
-        private def validate_sprite_file_sizes(assets : AssetsConfig, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*)
+        private def validate_sprite_file_sizes(assets : GameConfig::AssetsConfig, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*)
           assets.sprites.each do |pattern|
             Dir.glob(File.join(context.base_dir, pattern)).each do |sprite_path|
               if File.exists?(sprite_path)

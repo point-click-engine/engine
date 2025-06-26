@@ -27,48 +27,34 @@ describe PointClickEngine::UI::MenuInputHandler do
   describe "input configuration" do
     it "enables and disables keyboard navigation" do
       handler = PointClickEngine::UI::MenuInputHandler.new
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.set_keyboard_navigation(false)
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.keyboard_navigation_enabled.should be_false
 
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.set_keyboard_navigation(true)
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.keyboard_navigation_enabled.should be_true
     end
 
     it "enables and disables mouse navigation" do
       handler = PointClickEngine::UI::MenuInputHandler.new
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.set_mouse_navigation(false)
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.mouse_navigation_enabled.should be_false
 
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.set_mouse_navigation(true)
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.mouse_navigation_enabled.should be_true
     end
 
     it "sets input repeat delay" do
       handler = PointClickEngine::UI::MenuInputHandler.new
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.set_input_repeat_delay(0.25)
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.input_repeat_delay.should eq(0.25)
     end
 
     it "enables and disables input repeat" do
       handler = PointClickEngine::UI::MenuInputHandler.new
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.set_input_repeat(false)
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.input_repeat_enabled.should be_false
 
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.set_input_repeat(true)
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.input_repeat_enabled.should be_true
     end
   end
@@ -455,11 +441,8 @@ describe PointClickEngine::UI::MenuInputHandler do
       handler = PointClickEngine::UI::MenuInputHandler.new
       handler.update_from_settings(settings)
 
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.input_repeat_delay.should eq(0.25)
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.keyboard_navigation_enabled.should be_false
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.mouse_navigation_enabled.should be_true
     end
 
@@ -488,7 +471,6 @@ describe PointClickEngine::UI::MenuInputHandler do
     it "handles very short repeat delays" do
       handler = PointClickEngine::UI::MenuInputHandler.new
       handler.set_input_repeat_delay(0.001)
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.input_repeat_delay.should eq(0.001)
     end
 
@@ -502,7 +484,6 @@ describe PointClickEngine::UI::MenuInputHandler do
     it "handles all input disabled" do
       handler = PointClickEngine::UI::MenuInputHandler.new
       handler.set_keyboard_navigation(false)
-      handler = PointClickEngine::UI::MenuInputHandler.new
       handler.set_mouse_navigation(false)
 
       issues = handler.validate_configuration

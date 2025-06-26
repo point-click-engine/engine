@@ -187,7 +187,7 @@ module PointClickEngine
         # Check for cutscene completion
         check_completion
 
-        # Call parent update for legacy actions
+        # Call parent update method
         super(dt * @cutscene_speed)
       end
 

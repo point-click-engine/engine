@@ -1,0 +1,12 @@
+game:
+  title: "Quest Test"
+
+assets:
+  scenes: ["scenes/*.yaml"]
+  quests: ["quests/*.yaml"]
+
+initial_state:
+  flags:
+    game_started: true
+
+start_scene: "test_scene"

@@ -1,5 +1,4 @@
 require "../src/point_click_engine"
-require "../src/core/preflight_check"
 
 # The Crystal Mystery - Simplified with YAML configuration
 class CrystalMysteryGame
@@ -8,15 +7,7 @@ class CrystalMysteryGame
   def initialize
     config_path = "crystal_mystery/game_config.yaml"
 
-    # Run pre-flight checks first
-    begin
-      PointClickEngine::Core::PreflightCheck.run!(config_path)
-    rescue ex : PointClickEngine::Core::ValidationError
-      puts "\n❌ Game failed pre-flight checks. Please fix these issues before running."
-      exit(1)
-    end
-
-    # Load entire game configuration from YAML
+    # Load entire game configuration from YAML (includes preflight checks)
     config = PointClickEngine::Core::GameConfig.from_file(config_path)
 
     # Create engine with all settings from config
@@ -27,19 +18,6 @@ class CrystalMysteryGame
 
     # Show main menu
     @engine.show_main_menu
-
-    # Debug: Check if menu is visible
-    if menu = @engine.system_manager.menu_system
-      puts "Menu system exists"
-      if menu.current_menu
-        puts "Current menu: #{menu.current_menu.class}"
-        puts "Menu visible: #{menu.current_menu.try(&.visible)}"
-      else
-        puts "No current menu set!"
-      end
-    else
-      puts "No menu system!"
-    end
   end
 
   def run

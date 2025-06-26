@@ -1,0 +1,27 @@
+game:
+  title: "My First Adventure"
+  version: "1.0.0"
+  author: "Game Developer"
+
+window:
+  width: 1280
+  height: 720
+  fullscreen: false
+  target_fps: 60
+
+features:
+  - verbs
+  - floating_dialogs
+
+assets:
+  scenes: ["scenes/*.yaml"]
+
+start_scene: "intro"
+
+ui:
+  hints:
+    - text: "Click to move your character"
+      duration: 5.0
+    - text: "Press I for inventory"
+      duration: 5.0
+  opening_message: "Welcome to the adventure!"

@@ -1,0 +1,8 @@
+- id: test_quest
+  name: "Test Quest"
+  description: "A test quest"
+  category: main
+  objectives:
+    - id: obj1
+      description: "Test objective"
+      condition: "test_flag"

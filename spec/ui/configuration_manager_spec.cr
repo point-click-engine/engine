@@ -10,7 +10,7 @@ describe PointClickEngine::UI::ConfigurationManager do
       manager.config.fullscreen.should be_false
       manager.config.vsync.should be_true
       manager.config.master_volume.should eq(1.0)
-      manager.config.music_volume.should eq(0.8)
+      manager.config.music_volume.should eq(0.8_f32)
       manager.config.text_speed.should eq(1.0)
       manager.config.difficulty.should eq("normal")
       manager.config.language.should eq("en")
@@ -115,7 +115,7 @@ describe PointClickEngine::UI::ConfigurationManager do
       manager.config.master_volume.should eq(0.0)
 
       manager.set_master_volume(0.7) # Valid value
-      manager.config.master_volume.should eq(0.7)
+      manager.config.master_volume.should eq(0.7_f32)
       manager.has_unsaved_changes.should be_true
     end
 
@@ -131,7 +131,7 @@ describe PointClickEngine::UI::ConfigurationManager do
       manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_sfx_volume(0.9)
 
-      manager.config.sfx_volume.should eq(0.9)
+      manager.config.sfx_volume.should eq(0.9_f32)
       manager.has_unsaved_changes.should be_true
     end
 
@@ -139,7 +139,7 @@ describe PointClickEngine::UI::ConfigurationManager do
       manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_voice_volume(0.6)
 
-      manager.config.voice_volume.should eq(0.6)
+      manager.config.voice_volume.should eq(0.6_f32)
       manager.has_unsaved_changes.should be_true
     end
 
@@ -160,7 +160,7 @@ describe PointClickEngine::UI::ConfigurationManager do
       manager.config.text_speed.should eq(3.0)
 
       manager.set_text_speed(0.05) # Below min
-      manager.config.text_speed.should eq(0.1)
+      manager.config.text_speed.should eq(0.1_f32)
 
       manager.set_text_speed(1.5) # Valid value
       manager.config.text_speed.should eq(1.5)
@@ -273,7 +273,7 @@ describe PointClickEngine::UI::ConfigurationManager do
       manager.reset_category_to_defaults(PointClickEngine::UI::ConfigurationManager::ConfigCategory::Audio)
 
       manager.config.master_volume.should eq(1.0)
-      manager.config.music_volume.should eq(0.8)
+      manager.config.music_volume.should eq(0.8_f32)
       manager.has_unsaved_changes.should be_true
     end
 
@@ -435,7 +435,7 @@ describe PointClickEngine::UI::ConfigurationManager do
 
       callback_called.should be_true
       volume_type.should eq("master")
-      volume_value.should eq(0.6)
+      volume_value.should eq(0.6_f32)
     end
 
     it "calls setting changed callback" do
@@ -491,7 +491,7 @@ describe PointClickEngine::UI::ConfigurationManager do
     it "handles minimum text speed" do
       manager = PointClickEngine::UI::ConfigurationManager.new
       manager.set_text_speed(0.1)
-      manager.config.text_speed.should eq(0.1)
+      manager.config.text_speed.should eq(0.1_f32)
     end
 
     it "handles maximum text speed" do

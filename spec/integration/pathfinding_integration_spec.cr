@@ -34,7 +34,7 @@ describe "Pathfinding Integration" do
 
       # Create navigation grid with character radius
       character_radius = 40.0_f32
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 800, 600, 20, character_radius
       )
 
@@ -76,7 +76,7 @@ describe "Pathfinding Integration" do
 
       # Create navigation grid
       character_radius = 40.0_f32
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 800, 600, 20, character_radius
       )
 

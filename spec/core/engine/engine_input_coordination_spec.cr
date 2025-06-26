@@ -65,8 +65,8 @@ describe PointClickEngine::Core::Engine do
         engine.init
 
         # Test high priority handler registration with string name
-        engine.register_input_handler("high_priority_handler", priority: 100)
-        engine.register_input_handler("low_priority_handler", priority: 1)
+        engine.input_manager.register_handler("high_priority_handler", priority: 100)
+        engine.input_manager.register_handler("low_priority_handler", priority: 1)
 
         # Input manager should have the handlers registered
         engine.input_manager.should_not be_nil
@@ -76,8 +76,8 @@ describe PointClickEngine::Core::Engine do
         engine = PointClickEngine::Core::Engine.new(800, 600, "Test Game")
         engine.init
 
-        engine.register_input_handler("test_handler", priority: 50)
-        engine.unregister_input_handler("test_handler")
+        engine.input_manager.register_handler("test_handler", priority: 50)
+        engine.input_manager.unregister_handler("test_handler")
 
         # Handler should be removed from the system
       end
@@ -330,7 +330,7 @@ describe PointClickEngine::Core::Engine do
 
         # Register many named input handlers
         100.times do |i|
-          engine.register_input_handler("handler_#{i}", priority: i)
+          engine.input_manager.register_handler("handler_#{i}", priority: i)
         end
 
         # NOTE: Cannot test actual input processing because update_input doesn't exist

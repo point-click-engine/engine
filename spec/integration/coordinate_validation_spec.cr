@@ -53,7 +53,7 @@ describe "Coordinate validation integration" do
     scene.walkable_area = walkable_area
 
     # Generate navigation grid using logical dimensions
-    grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+    grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
       scene, scene.logical_width, scene.logical_height, 32
     )
 

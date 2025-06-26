@@ -362,7 +362,7 @@ module PointClickEngine
         update_character_scale_if_needed
 
         # Update sprite position
-        @character.sprite_data.try(&.position = @character.position)
+        @character.sprite_controller.update_position(@character.position)
       end
 
       private def update_character_scale_if_needed
