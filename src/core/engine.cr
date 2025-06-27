@@ -473,6 +473,11 @@ module PointClickEngine
         @system_manager.menu_system.try(&.hide)
         @system_manager.menu_system.try(&.enter_game)
 
+        # Trigger the game:new event
+        puts "[Engine] Triggering game:new event"
+        @system_manager.event_system.trigger("game:new")
+        puts "[Engine] Event triggered"
+
         # Load the starting scene from scene manager
         if scene_name = @scene_manager.start_scene
           puts "[Engine] Changing to start scene: #{scene_name}"

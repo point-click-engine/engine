@@ -1,9 +1,6 @@
 # Sound and Music system for adventure games - Refactored with components
 
-# Only require audio if explicitly enabled
-{% if flag?(:with_audio) %}
-  require "raylib-cr/audio"
-{% end %}
+require "raylib-cr/audio"
 
 require "./sound_effect_manager"
 require "./music_manager"
@@ -14,161 +11,103 @@ module PointClickEngine
   module Audio
     # Check if audio is available
     def self.available?
-      {% if flag?(:with_audio) %}
-        true
-      {% else %}
-        false
-      {% end %}
+      true
     end
 
-    {% if flag?(:with_audio) %}
-      # Sound effect class for individual sound playback
-      class SoundEffect
-        property name : String
-        property sound : RAudio::Sound?
-        property volume : Float32 = 1.0
+    # Sound effect class for individual sound playback
+    class SoundEffect
+      property name : String
+      property sound : RAudio::Sound?
+      property volume : Float32 = 1.0
 
-        def initialize(@name : String, file_path : String)
-          @sound = RAudio.load_sound(file_path)
+      def initialize(@name : String, file_path : String)
+        @sound = RAudio.load_sound(file_path)
+      end
+
+      def play
+        if sound = @sound
+          RAudio.set_sound_volume(sound, @volume)
+          RAudio.play_sound(sound)
         end
+      end
 
-        def play
-          if sound = @sound
-            RAudio.set_sound_volume(sound, @volume)
-            RAudio.play_sound(sound)
-          end
+      def stop
+        if sound = @sound
+          RAudio.stop_sound(sound)
         end
+      end
 
-        def stop
-          if sound = @sound
-            RAudio.stop_sound(sound)
-          end
-        end
-
-        def finalize
-          if sound = @sound
-            begin
-              if sound.frame_count > 0
-                RAudio.unload_sound(sound)
-              end
-            rescue ex
-              # Ignore errors during finalization
+      def finalize
+        if sound = @sound
+          begin
+            if sound.frame_count > 0
+              RAudio.unload_sound(sound)
             end
+          rescue ex
+            # Ignore errors during finalization
           end
         end
       end
-    {% else %}
-      # Stub implementation when audio is disabled
-      class SoundEffect
-        property name : String
-        property volume : Float32 = 1.0
+    end
 
-        def initialize(@name : String, file_path : String)
-        end
+    # Background music class for streaming audio
+    class Music
+      property name : String
+      property music : RAudio::Music?
+      property volume : Float32 = 0.5
+      property playing : Bool = false
 
-        def play
-        end
-
-        def stop
-        end
-
-        def finalize
-        end
+      def initialize(@name : String, file_path : String)
+        @music = RAudio.load_music_stream(file_path)
       end
-    {% end %}
 
-    {% if flag?(:with_audio) %}
-      # Background music class for streaming audio
-      class Music
-        property name : String
-        property music : RAudio::Music?
-        property volume : Float32 = 0.5
-        property playing : Bool = false
-
-        def initialize(@name : String, file_path : String)
-          @music = RAudio.load_music_stream(file_path)
-        end
-
-        def play(loop : Bool = true)
-          if music = @music
-            RAudio.set_music_volume(music, @volume)
-            RAudio.play_music_stream(music)
-            @playing = true
-          end
-        end
-
-        def pause
-          if music = @music
-            RAudio.pause_music_stream(music)
-            @playing = false
-          end
-        end
-
-        def resume
-          if music = @music
-            RAudio.resume_music_stream(music)
-            @playing = true
-          end
-        end
-
-        def stop
-          if music = @music
-            RAudio.stop_music_stream(music)
-            @playing = false
-          end
-        end
-
-        def update
-          if @playing && (music = @music)
-            RAudio.update_music_stream(music)
-          end
-        end
-
-        def finalize
-          if music = @music
-            begin
-              if music.frame_count > 0
-                RAudio.unload_music_stream(music)
-              end
-            rescue ex
-              # Ignore errors during finalization
-            end
-          end
-        end
-      end
-    {% else %}
-      # Stub music class when audio is disabled
-      class Music
-        property name : String
-        property volume : Float32 = 0.5
-        property playing : Bool = false
-
-        def initialize(@name : String, file_path : String)
-        end
-
-        def play(loop : Bool = true)
+      def play(loop : Bool = true)
+        if music = @music
+          RAudio.set_music_volume(music, @volume)
+          RAudio.play_music_stream(music)
           @playing = true
         end
+      end
 
-        def pause
+      def pause
+        if music = @music
+          RAudio.pause_music_stream(music)
           @playing = false
-        end
-
-        def resume
-          @playing = true
-        end
-
-        def stop
-          @playing = false
-        end
-
-        def update
-        end
-
-        def finalize
         end
       end
-    {% end %}
+
+      def resume
+        if music = @music
+          RAudio.resume_music_stream(music)
+          @playing = true
+        end
+      end
+
+      def stop
+        if music = @music
+          RAudio.stop_music_stream(music)
+          @playing = false
+        end
+      end
+
+      def update
+        if @playing && (music = @music)
+          RAudio.update_music_stream(music)
+        end
+      end
+
+      def finalize
+        if music = @music
+          begin
+            if music.frame_count > 0
+              RAudio.unload_music_stream(music)
+            end
+          rescue ex
+            # Ignore errors during finalization
+          end
+        end
+      end
+    end
 
     # Main audio manager using component-based architecture
     class AudioManager
@@ -213,9 +152,7 @@ module PointClickEngine
       end
 
       def initialize
-        {% if flag?(:with_audio) %}
-          RAudio.init_audio_device
-        {% end %}
+        RAudio.init_audio_device
 
         # Initialize components
         @sound_effect_manager = SoundEffectManager.new
@@ -368,9 +305,7 @@ module PointClickEngine
           @sound_effect_manager.finalize
           @music_manager.finalize
 
-          {% if flag?(:with_audio) %}
-            RAudio.close_audio_device
-          {% end %}
+          RAudio.close_audio_device
         rescue ex
           # Ignore errors during finalization
         end

@@ -1,8 +1,6 @@
 # Sound effect management component
 
-{% if flag?(:with_audio) %}
-  require "raylib-cr/audio"
-{% end %}
+require "raylib-cr/audio"
 
 module PointClickEngine
   module Audio

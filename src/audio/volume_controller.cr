@@ -1,8 +1,6 @@
 # Volume control and audio settings component
 
-{% if flag?(:with_audio) %}
-  require "raylib-cr/audio"
-{% end %}
+require "raylib-cr/audio"
 
 module PointClickEngine
   module Audio
@@ -144,10 +142,8 @@ module PointClickEngine
       end
 
       private def apply_master_volume : Nil
-        {% if flag?(:with_audio) %}
-          volume = @muted ? 0.0f32 : @master_volume
-          RAudio.set_master_volume(volume)
-        {% end %}
+        volume = @muted ? 0.0f32 : @master_volume
+        RAudio.set_master_volume(volume)
       end
 
       private def notify_change(type : Symbol, volume : Float32) : Nil

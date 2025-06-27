@@ -119,7 +119,7 @@ module PointClickEngine
           @dialog_manager.try(&.update(dt))
           @transition_manager.try(&.update(dt))
           @menu_system.try(&.update(dt))
-          # @event_system.update # No update method
+          @event_system.process_events
         end
 
         # Cleanup all systems

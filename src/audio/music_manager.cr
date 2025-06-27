@@ -1,8 +1,6 @@
 # Music playback and management component
 
-{% if flag?(:with_audio) %}
-  require "raylib-cr/audio"
-{% end %}
+require "raylib-cr/audio"
 
 module PointClickEngine
   module Audio
@@ -172,11 +170,9 @@ module PointClickEngine
       end
 
       private def update_music_volume(music : Music) : Nil
-        {% if flag?(:with_audio) %}
-          if actual_music = music.music
-            RAudio.set_music_volume(actual_music, music.volume)
-          end
-        {% end %}
+        if actual_music = music.music
+          RAudio.set_music_volume(actual_music, music.volume)
+        end
       end
     end
   end

@@ -94,7 +94,11 @@ module PointClickEngine
         include YAML::Serializable
         property debug_mode : Bool = false
         property show_fps : Bool = false
-        # Note: Audio volumes moved to UserSettings
+        property log_player_input : Bool = false
+        property master_volume : Float32 = 1.0
+        property music_volume : Float32 = 0.7
+        property sfx_volume : Float32 = 1.0
+        # Note: Audio volumes can also be in UserSettings for per-user preferences
       end
 
       class InitialState
@@ -383,17 +387,30 @@ module PointClickEngine
           assets.try(&.audio).try do |audio_config|
             # Load music
             audio_config.music.each do |name, path|
-              if File.exists?(path)
-                audio.load_music(name, path)
+              full_path = File.join(config_base_dir, path)
+              if File.exists?(full_path)
+                audio.load_music(name, full_path)
+              else
+                puts "WARNING: Music file not found: #{full_path}"
               end
             end
 
             # Load sounds
             audio_config.sounds.each do |name, path|
-              if File.exists?(path)
-                audio.load_sound_effect(name, path)
+              full_path = File.join(config_base_dir, path)
+              if File.exists?(full_path)
+                audio.load_sound_effect(name, full_path)
+              else
+                puts "WARNING: Sound file not found: #{full_path}"
               end
             end
+          end
+          
+          # Apply volume settings
+          if settings = self.settings
+            audio.set_master_volume(settings.master_volume)
+            audio.set_music_volume(settings.music_volume)
+            audio.set_sfx_volume(settings.sfx_volume)
           end
         end
       end
@@ -435,7 +452,9 @@ module PointClickEngine
         start_scene_name = self.start_scene
         start_music_name = self.start_music
 
-        engine.event_system.on("game:new") do
+        puts "[DEBUG] Setting up game:new event handler"
+        engine.system_manager.event_system.on("game:new") do
+          puts "[DEBUG] game:new event triggered!"
           # Change to start scene
           if scene_name = start_scene_name
             engine.change_scene(scene_name)
@@ -443,7 +462,11 @@ module PointClickEngine
 
           # Play start music
           if music_name = start_music_name
-            engine.system_manager.audio_manager.try &.play_music(music_name, true)
+            puts "[Engine] Playing start music: #{music_name}"
+            engine.system_manager.audio_manager.try do |audio|
+              audio.play_music(music_name, true)
+              puts "[Engine] Music play command sent"
+            end
           end
 
           # Show opening message
