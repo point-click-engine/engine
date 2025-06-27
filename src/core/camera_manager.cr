@@ -180,40 +180,40 @@ module PointClickEngine
         end
 
         duration = effect_params["duration"]?.as?(Float32) || 0.0f32
-        
+
         # Create specific effect instances
         effect = case type
-        when :shake
-          intensity = effect_params["intensity"]?.as?(Float32) || 10.0f32
-          frequency = effect_params["frequency"]?.as?(Float32) || 10.0f32
-          ShakeEffect.new(intensity, frequency, duration)
-        when :zoom
-          target = effect_params["target"]?.as?(Float32) || effect_params["factor"]?.as?(Float32) || 1.0f32
-          ZoomEffect.new(target, duration)
-        when :sway
-          amplitude = effect_params["amplitude"]?.as?(Float32) || 20.0f32
-          frequency = effect_params["frequency"]?.as?(Float32) || 0.5f32
-          vertical_factor = effect_params["vertical_factor"]?.as?(Float32) || 0.5f32
-          rotation_amplitude = effect_params["rotation_amplitude"]?.as?(Float32) || 2.0f32
-          SwayEffect.new(amplitude, frequency, vertical_factor, rotation_amplitude, duration)
-        when :rotation
-          target = effect_params["target"]?.as?(Float32) || 0.0f32
-          RotationEffect.new(target, duration)
-        when :pan
-          target_x = effect_params["target_x"]?.as?(Float32) || @current_camera.position.x
-          target_y = effect_params["target_y"]?.as?(Float32) || @current_camera.position.y
-          PanEffect.new(target_x, target_y, duration)
-        when :follow
-          target = effect_params["target"]?.as?(Characters::Character)
-          return unless target  # Can't create follow effect without target
-          smooth = effect_params["smooth"]?.as?(Bool) || true
-          deadzone = effect_params["deadzone"]?.as?(Float32) || 50.0f32
-          speed = effect_params["speed"]?.as?(Float32) || 5.0f32
-          FollowEffect.new(target, smooth, deadzone, speed, duration)
-        else
-          CameraEffect.new(effect_type, duration, effect_params)
-        end
-        
+                 when :shake
+                   intensity = effect_params["intensity"]?.as?(Float32) || 10.0f32
+                   frequency = effect_params["frequency"]?.as?(Float32) || 10.0f32
+                   ShakeEffect.new(intensity, frequency, duration)
+                 when :zoom
+                   target = effect_params["target"]?.as?(Float32) || effect_params["factor"]?.as?(Float32) || 1.0f32
+                   ZoomEffect.new(target, duration)
+                 when :sway
+                   amplitude = effect_params["amplitude"]?.as?(Float32) || 20.0f32
+                   frequency = effect_params["frequency"]?.as?(Float32) || 0.5f32
+                   vertical_factor = effect_params["vertical_factor"]?.as?(Float32) || 0.5f32
+                   rotation_amplitude = effect_params["rotation_amplitude"]?.as?(Float32) || 2.0f32
+                   SwayEffect.new(amplitude, frequency, vertical_factor, rotation_amplitude, duration)
+                 when :rotation
+                   target = effect_params["target"]?.as?(Float32) || 0.0f32
+                   RotationEffect.new(target, duration)
+                 when :pan
+                   target_x = effect_params["target_x"]?.as?(Float32) || @current_camera.position.x
+                   target_y = effect_params["target_y"]?.as?(Float32) || @current_camera.position.y
+                   PanEffect.new(target_x, target_y, duration)
+                 when :follow
+                   target = effect_params["target"]?.as?(Characters::Character)
+                   return unless target # Can't create follow effect without target
+                   smooth = effect_params["smooth"]?.as?(Bool) || true
+                   deadzone = effect_params["deadzone"]?.as?(Float32) || 50.0f32
+                   speed = effect_params["speed"]?.as?(Float32) || 5.0f32
+                   FollowEffect.new(target, smooth, deadzone, speed, duration)
+                 else
+                   CameraEffect.new(effect_type, duration, effect_params)
+                 end
+
         @active_effects << effect
       end
 
