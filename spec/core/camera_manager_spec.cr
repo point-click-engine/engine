@@ -163,6 +163,49 @@ describe PointClickEngine::Core::CameraManager do
     end
   end
 
+  describe "#reset_effects" do
+    it "removes all active effects except zoom transition" do
+      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+
+      # Add multiple effects
+      manager.apply_effect(:shake, intensity: 10.0f32, duration: 1.0f32)
+      manager.apply_effect(:zoom, factor: 2.0f32, duration: 1.0f32)
+      manager.apply_effect(:sway, amplitude: 5.0f32, frequency: 1.0f32, duration: 2.0f32)
+
+      manager.active_effects.size.should eq(3)
+
+      # Reset all effects
+      manager.reset_effects(0.5f32)
+
+      # Should only have zoom transition back to 1.0
+      manager.active_effects.size.should eq(1)
+      zoom_effect = manager.active_effects.first
+      zoom_effect.type.should eq(PointClickEngine::Core::CameraEffectType::Zoom)
+    end
+
+    it "smoothly transitions zoom back to 1.0 when zoom effect was active" do
+      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+
+      # Apply zoom effect
+      manager.apply_effect(:zoom, factor: 2.0f32, duration: 0.1f32)
+
+      # Update to apply the zoom
+      manager.update(0.05f32, 0, 0)
+
+      # Zoom should be partially applied
+      manager.total_zoom.should_not eq(1.0f32)
+
+      # Now reset with smooth transition
+      manager.reset_effects(1.0f32)
+
+      # Should have a zoom effect transitioning back to 1.0
+      zoom_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Core::CameraEffectType::Zoom }
+      zoom_effects.size.should eq(1)
+      zoom_effect = zoom_effects.first
+      zoom_effect.parameters["factor"]?.should eq(1.0f32)
+    end
+  end
+
   describe "#remove_effect" do
     it "removes specific effect type" do
       manager = PointClickEngine::Core::CameraManager.new(800, 600)
@@ -232,6 +275,37 @@ describe PointClickEngine::Core::CameraManager do
       # Should be constrained to bounds
       manager.current_camera.position.x.should eq(0)
       manager.current_camera.position.y.should eq(0)
+    end
+
+    it "returns camera to base position after shake effect ends" do
+      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager.set_scene_bounds(1600, 1200)
+
+      # Set initial camera position and disable edge scrolling
+      initial_x = 100.0f32
+      initial_y = 50.0f32
+      manager.current_camera.position = RL::Vector2.new(x: initial_x, y: initial_y)
+      manager.current_camera.edge_scroll_enabled = false
+
+      # Update once to establish base position
+      manager.update(0.01f32, 400, 300)
+
+      # Apply short shake effect
+      manager.apply_effect(:shake, intensity: 20.0f32, duration: 0.1f32)
+
+      # Update a few times during shake
+      manager.update(0.05f32, 400, 300)
+
+      # Position should be offset during shake (but we won't check exact values due to randomness)
+      manager.has_effect?(:shake).should be_true
+
+      # Complete the shake and then some to ensure it's fully done
+      manager.update(0.1f32, 400, 300)
+
+      # Camera should return to initial position (within floating point tolerance)
+      manager.current_camera.position.x.should be_close(initial_x, 0.1)
+      manager.current_camera.position.y.should be_close(initial_y, 0.1)
+      manager.active_effects.size.should eq(0)
     end
   end
 

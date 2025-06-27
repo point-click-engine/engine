@@ -92,6 +92,7 @@ module PointClickEngine
         register_inventory_api
         register_dialog_api
         register_utility_api
+        register_camera_api
       end
 
       # Inventory API (keeping in main class for now as it's smaller)
@@ -218,6 +219,11 @@ module PointClickEngine
           function dialog.is_showing()
             return _engine_dialog_is_showing()
           end
+          
+          -- Start a dialog tree conversation
+          function start_dialog(tree_name, starting_node)
+            _engine_start_dialog_tree(tree_name, starting_node or "greeting")
+          end
         LUA
 
         register_dialog_callbacks
@@ -304,6 +310,17 @@ module PointClickEngine
             state.push(!!dialog_manager.current_dialog)
           else
             state.push(false)
+          end
+        end
+
+        @registry.register_void_function("_engine_start_dialog_tree") do |state|
+          if state.size >= 1
+            tree_name = state.to_string(1)
+            starting_node = state.size >= 2 ? state.to_string(2) : "greeting"
+
+            if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
+              dialog_manager.start_dialog_tree(tree_name, starting_node)
+            end
           end
         end
       end
@@ -440,6 +457,92 @@ module PointClickEngine
           if state.size >= 1
             key = state.to_string(1)
             @state_manager.remove_state(key)
+          end
+        end
+      end
+
+      # Camera API
+      private def register_camera_api
+        @lua.execute! <<-LUA
+          -- Camera system API
+          camera = {}
+          
+          function camera.shake(intensity, duration)
+            _engine_camera_shake(intensity or 1.0, duration or 1.0)
+          end
+          
+          function camera.zoom(factor, duration)
+            _engine_camera_zoom(factor or 1.0, duration or 1.0)
+          end
+          
+          function camera.pan(x, y, duration)
+            _engine_camera_pan(x, y, duration or 1.0)
+          end
+          
+          function camera.sway(amplitude, frequency, duration)
+            _engine_camera_sway(amplitude or 10.0, frequency or 1.0, duration or 0.0)
+          end
+          
+          function camera.reset(duration)
+            _engine_camera_reset(duration or 1.0)
+          end
+        LUA
+
+        register_camera_callbacks
+      end
+
+      private def register_camera_callbacks
+        @registry.register_void_function("_engine_camera_shake") do |state|
+          if state.size >= 2
+            intensity = state.to_f64(1).to_f32
+            duration = state.to_f64(2).to_f32
+
+            if engine = Core::Engine.instance
+              engine.camera_manager.apply_effect(:shake, intensity: intensity, duration: duration)
+            end
+          end
+        end
+
+        @registry.register_void_function("_engine_camera_zoom") do |state|
+          if state.size >= 2
+            factor = state.to_f64(1).to_f32
+            duration = state.to_f64(2).to_f32
+
+            if engine = Core::Engine.instance
+              engine.camera_manager.apply_effect(:zoom, factor: factor, duration: duration)
+            end
+          end
+        end
+
+        @registry.register_void_function("_engine_camera_pan") do |state|
+          if state.size >= 3
+            x = state.to_f64(1).to_f32
+            y = state.to_f64(2).to_f32
+            duration = state.to_f64(3).to_f32
+
+            if engine = Core::Engine.instance
+              engine.camera_manager.apply_effect(:pan, target_x: x, target_y: y, duration: duration)
+            end
+          end
+        end
+
+        @registry.register_void_function("_engine_camera_sway") do |state|
+          if state.size >= 3
+            amplitude = state.to_f64(1).to_f32
+            frequency = state.to_f64(2).to_f32
+            duration = state.to_f64(3).to_f32
+
+            if engine = Core::Engine.instance
+              engine.camera_manager.apply_effect(:sway, amplitude: amplitude, frequency: frequency, duration: duration)
+            end
+          end
+        end
+
+        @registry.register_void_function("_engine_camera_reset") do |state|
+          duration = state.size >= 1 ? state.to_f64(1).to_f32 : 1.0f32
+
+          if engine = Core::Engine.instance
+            engine.camera_manager.reset_effects(duration)
           end
         end
       end

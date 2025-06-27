@@ -255,6 +255,23 @@ module PointClickEngine
         @effect_rotation = 0.0f32
       end
 
+      # Reset all effects with smooth transition
+      def reset_effects(duration : Float32 = 1.0f32)
+        # Check if we need to transition zoom back
+        needs_zoom_reset = @effect_zoom != 1.0f32 || has_effect?(:zoom)
+
+        # Remove all current effects
+        @active_effects.clear
+
+        # If we had zoom effect, smoothly transition back
+        if needs_zoom_reset
+          apply_effect(:zoom, factor: 1.0f32, duration: duration)
+        end
+
+        # Note: Other effects like shake, sway naturally fade out when removed
+        # Pan and follow effects are also removed by clearing active_effects
+      end
+
       # Check if a specific effect is active
       def has_effect?(type : Symbol) : Bool
         effect_type = case type
@@ -280,10 +297,13 @@ module PointClickEngine
         # Update camera transition
         update_transition(dt)
 
-        # Store base camera state
-        @base_position = @current_camera.position.dup
-        @base_zoom = @current_camera.zoom
-        @base_rotation = @current_camera.rotation
+        # Store base camera state only when we don't have active effects
+        # This ensures the base position is the "resting" position without effects
+        if @active_effects.empty?
+          @base_position = @current_camera.position.dup
+          @base_zoom = @current_camera.zoom
+          @base_rotation = @current_camera.rotation
+        end
 
         # Reset effect accumulation
         @effect_offset = RL::Vector2.new(x: 0, y: 0)
@@ -296,8 +316,8 @@ module PointClickEngine
         # Apply accumulated effects to camera
         apply_effects_to_camera
 
-        # Update the underlying camera
-        @current_camera.update(dt, mouse_x, mouse_y)
+        # Don't update the underlying camera - we're managing everything here
+        # @current_camera.update(dt, mouse_x, mouse_y)
       end
 
       # Set scene bounds for all cameras
@@ -443,7 +463,11 @@ module PointClickEngine
         # Update all effects and remove expired ones
         @active_effects.reject! do |effect|
           effect.update(dt)
-          !effect.active?
+          should_remove = !effect.active?
+          if should_remove
+            puts "[CameraManager] Removing expired effect: #{effect.type}"
+          end
+          should_remove
         end
 
         # Apply each active effect
@@ -486,7 +510,9 @@ module PointClickEngine
       end
 
       private def apply_zoom_effect(effect : CameraEffect)
-        target = effect.parameters["target"]?.as?(Float32) || 1.0f32
+        # Support both "target" and "factor" parameter names
+        target = effect.parameters["target"]?.as?(Float32) ||
+                 effect.parameters["factor"]?.as?(Float32) || 1.0f32
 
         # Interpolate zoom
         t = effect.progress
@@ -588,6 +614,15 @@ module PointClickEngine
         # Apply position offset
         @current_camera.position.x = @base_position.x + @effect_offset.x
         @current_camera.position.y = @base_position.y + @effect_offset.y
+
+        # Apply constraints when no effects are active
+        if @active_effects.empty?
+          # Ensure we reset to base position when no effects
+          max_x = Math.max(0.0f32, (@current_camera.scene_width - @current_camera.viewport_width).to_f32)
+          max_y = Math.max(0.0f32, (@current_camera.scene_height - @current_camera.viewport_height).to_f32)
+          @current_camera.position.x = @base_position.x.clamp(0.0f32, max_x)
+          @current_camera.position.y = @base_position.y.clamp(0.0f32, max_y)
+        end
 
         # Note: zoom and rotation would need to be added to Camera class
         # For now, we store them internally and use them in transform_position
