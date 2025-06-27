@@ -139,10 +139,17 @@ module PointClickEngine
         private def execute_verb_on_hotspot(verb : UI::VerbType, hotspot : Scenes::Hotspot, pos : RL::Vector2, player : Characters::Character?)
           # Check for action commands first (like scene transitions)
           verb_name = verb.to_s.downcase
+          puts "[VerbInput] Checking action for verb: #{verb_name} on hotspot: #{hotspot.name}"
           if command = hotspot.action_commands[verb_name]?
+            puts "[VerbInput] Found action command: #{command}"
             if Scenes::TransitionHelper.execute_transition(command, @engine)
+              puts "[VerbInput] Transition executed successfully"
               return
+            else
+              puts "[VerbInput] Not a transition command"
             end
+          else
+            puts "[VerbInput] No action command for verb #{verb_name}"
           end
 
           # Check for custom handler

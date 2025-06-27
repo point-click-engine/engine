@@ -53,19 +53,25 @@ module PointClickEngine
 
       # Execute a transition command
       def self.execute_transition(command : String, engine : Core::Engine) : Bool
+        puts "[TransitionHelper] Executing command: #{command}"
         if data = parse_transition_command(command)
+          puts "[TransitionHelper] Parsed: scene=#{data[:scene]}, effect=#{data[:effect]}, duration=#{data[:duration]}, position=#{data[:position]}"
           duration = data[:duration]
 
           # If duration is -1.0, use the current scene's default duration
           if duration < 0 && (scene = engine.current_scene)
             duration = scene.default_transition_duration
+            puts "[TransitionHelper] Using scene default duration: #{duration}"
           elsif duration < 0
             duration = 1.0f32 # Fallback if no scene
+            puts "[TransitionHelper] Using fallback duration: #{duration}"
           end
 
+          puts "[TransitionHelper] Calling engine.change_scene_with_transition"
           engine.change_scene_with_transition(data[:scene], data[:effect], duration, data[:position])
           true
         else
+          puts "[TransitionHelper] Failed to parse command"
           false
         end
       end

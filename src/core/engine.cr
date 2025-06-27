@@ -193,6 +193,22 @@ module PointClickEngine
 
       # Renders the game
       private def render
+        # Check if we're transitioning
+        if (tm = @system_manager.transition_manager) && tm.transitioning?
+          puts "[Engine] Rendering with transition"
+          tm.render_with_transition do
+            render_scene_content
+          end
+        else
+          render_scene_content
+        end
+        
+        # Draw verb cursor (on top of everything)
+        @verb_input_system.try(&.draw(self.display_manager))
+      end
+      
+      # Renders the scene content (separated for use with transitions)
+      private def render_scene_content
         # Render scene with camera
         @current_scene.try(&.draw(@camera))
 
@@ -205,9 +221,6 @@ module PointClickEngine
         @system_manager.dialog_manager.try(&.draw)
         @inventory.draw
         @system_manager.menu_system.try(&.render)
-        
-        # Draw verb cursor
-        @verb_input_system.try(&.draw(self.display_manager))
 
         # Debug rendering
         if @@debug_mode
@@ -408,9 +421,12 @@ module PointClickEngine
       end
 
       def change_scene_with_transition(scene_name : String, effect : Graphics::Transitions::TransitionEffect?, duration : Float32, position : RL::Vector2? = nil)
+        puts "[Engine] change_scene_with_transition: scene=#{scene_name}, effect=#{effect}, duration=#{duration}"
         # Start transition if effect specified
         if effect && (tm = @system_manager.transition_manager)
+          puts "[Engine] Starting transition with effect"
           tm.start_transition(effect, duration) do
+            puts "[Engine] Transition callback - changing scene"
             # Change scene at halfway point
             change_scene(scene_name)
 
@@ -418,10 +434,12 @@ module PointClickEngine
             if pos = position
               if player = self.player
                 player.position = pos
+                puts "[Engine] Moved player to #{pos}"
               end
             end
           end
         else
+          puts "[Engine] No transition effect or manager - direct scene change"
           # No transition, just change scene
           change_scene(scene_name)
 

@@ -56,9 +56,14 @@ module PointClickEngine
           return unless @active
 
           @progress += dt / @duration
+          
+          if (Time.monotonic.total_milliseconds.to_i % 300) < 20  # Print periodically
+            puts "[TransitionManager] Progress: #{@progress.round(2)}, Active: #{@active}"
+          end
 
           # Call the scene change callback at halfway point
           if @progress >= 0.5f32 && !@callback_called
+            puts "[TransitionManager] Triggering scene change callback at 50%"
             @on_complete.try(&.call)
             @callback_called = true
           end
@@ -66,6 +71,7 @@ module PointClickEngine
           if @progress >= 1.0f32
             @progress = 1.0f32
             @active = false
+            puts "[TransitionManager] Transition complete"
           end
 
           # Update current effect
@@ -95,6 +101,8 @@ module PointClickEngine
             return
           end
 
+          puts "[TransitionManager] render_with_transition called, active=#{@active}"
+          
           return yield unless texture = @render_texture
           return yield unless effect = @current_effect
 

@@ -32,6 +32,7 @@ module PointClickEngine
 
               # Use transition manager if available and active
               if transition_manager && transition_manager.transitioning?
+                puts "[RenderCoordinator] Rendering with transition"
                 transition_manager.render_with_transition do
                   render_scene_content(scene, dialogs, cutscene_manager, camera)
                 end
