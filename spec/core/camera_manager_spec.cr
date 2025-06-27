@@ -95,7 +95,7 @@ describe PointClickEngine::Graphics::Cameras::CameraManager do
         manager.apply_effect(:shake, intensity: 10.0f32, duration: 1.0f32)
         manager.apply_effect(:shake, intensity: 5.0f32, duration: 0.5f32)
 
-        shake_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::EffectType::Shake }
+        shake_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::Effects::Type::Shake }
         shake_effects.size.should eq(2)
       end
     end
@@ -114,7 +114,7 @@ describe PointClickEngine::Graphics::Cameras::CameraManager do
         manager.apply_effect(:zoom, target: 2.0f32, duration: 1.0f32)
         manager.apply_effect(:zoom, target: 0.5f32, duration: 0.5f32)
 
-        zoom_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::EffectType::Zoom }
+        zoom_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::Effects::Type::Zoom }
         zoom_effects.size.should eq(1)
         # Should have the latest zoom
         zoom_effects.first.parameters["target"].as(Float32).should eq(0.5f32)
@@ -147,7 +147,7 @@ describe PointClickEngine::Graphics::Cameras::CameraManager do
         manager.apply_effect(:follow, target: char1)
         manager.apply_effect(:follow, target: char2)
 
-        follow_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::EffectType::Follow }
+        follow_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::Effects::Type::Follow }
         follow_effects.size.should eq(1)
         follow_effects.first.parameters["target"].as(PointClickEngine::Characters::Character).should eq(char2)
       end
@@ -180,7 +180,7 @@ describe PointClickEngine::Graphics::Cameras::CameraManager do
       # Should only have zoom transition back to 1.0
       manager.active_effects.size.should eq(1)
       zoom_effect = manager.active_effects.first
-      zoom_effect.type.should eq(PointClickEngine::Graphics::Cameras::EffectType::Zoom)
+      zoom_effect.type.should eq(PointClickEngine::Graphics::Cameras::Effects::Type::Zoom)
     end
 
     it "smoothly transitions zoom back to 1.0 when zoom effect was active" do
@@ -199,7 +199,7 @@ describe PointClickEngine::Graphics::Cameras::CameraManager do
       manager.reset_effects(1.0f32)
 
       # Should have a zoom effect transitioning back to 1.0
-      zoom_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::EffectType::Zoom }
+      zoom_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::Effects::Type::Zoom }
       zoom_effects.size.should eq(1)
       zoom_effect = zoom_effects.first
       zoom_effect.parameters["factor"]?.should eq(1.0f32)

@@ -15,7 +15,7 @@ module PointClickEngine
       class CameraError < Core::LoadingError; end
     end
   end
-  
+
   module Core
     # Interface for resource loading operations
     module IResourceLoader
