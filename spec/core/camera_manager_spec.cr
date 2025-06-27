@@ -1,16 +1,16 @@
 require "../spec_helper"
 
-describe PointClickEngine::Core::CameraManager do
+describe PointClickEngine::Graphics::Cameras::CameraManager do
   describe "#initialize" do
     it "creates a camera manager with viewport dimensions" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       manager.viewport_width.should eq(800)
       manager.viewport_height.should eq(600)
       manager.current_camera.should_not be_nil
     end
 
     it "sets main camera as active by default" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       manager.active_camera_name.should eq("main")
       manager.current_camera.should eq(manager.get_camera("main"))
     end
@@ -18,7 +18,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#add_camera" do
     it "adds a new camera with unique name" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       cutscene_camera = PointClickEngine::Graphics::Camera.new(800, 600)
 
       result = manager.add_camera("cutscene", cutscene_camera)
@@ -27,7 +27,7 @@ describe PointClickEngine::Core::CameraManager do
     end
 
     it "fails when adding camera with duplicate name" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       camera = PointClickEngine::Graphics::Camera.new(800, 600)
 
       manager.add_camera("test", camera)
@@ -38,7 +38,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#switch_camera" do
     it "switches to a different camera" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       cutscene_camera = PointClickEngine::Graphics::Camera.new(800, 600)
       manager.add_camera("cutscene", cutscene_camera)
 
@@ -49,14 +49,14 @@ describe PointClickEngine::Core::CameraManager do
     end
 
     it "fails when switching to non-existent camera" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
       result = manager.switch_camera("non_existent")
       result.failure?.should be_true
     end
 
     it "supports smooth transitions between cameras" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       camera2 = PointClickEngine::Graphics::Camera.new(800, 600)
       camera2.position = RL::Vector2.new(x: 100, y: 100)
       manager.add_camera("camera2", camera2)
@@ -82,7 +82,7 @@ describe PointClickEngine::Core::CameraManager do
   describe "#apply_effect" do
     context "shake effect" do
       it "applies screen shake effect" do
-        manager = PointClickEngine::Core::CameraManager.new(800, 600)
+        manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
         manager.apply_effect(:shake, intensity: 10.0f32, duration: 1.0f32)
         manager.active_effects.size.should eq(1)
@@ -90,31 +90,31 @@ describe PointClickEngine::Core::CameraManager do
       end
 
       it "stacks multiple shake effects" do
-        manager = PointClickEngine::Core::CameraManager.new(800, 600)
+        manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
         manager.apply_effect(:shake, intensity: 10.0f32, duration: 1.0f32)
         manager.apply_effect(:shake, intensity: 5.0f32, duration: 0.5f32)
 
-        shake_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Core::CameraEffectType::Shake }
+        shake_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::CameraEffectType::Shake }
         shake_effects.size.should eq(2)
       end
     end
 
     context "zoom effect" do
       it "applies zoom effect" do
-        manager = PointClickEngine::Core::CameraManager.new(800, 600)
+        manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
         manager.apply_effect(:zoom, target: 2.0f32, duration: 1.0f32)
         manager.has_effect?(:zoom).should be_true
       end
 
       it "only allows one zoom effect at a time" do
-        manager = PointClickEngine::Core::CameraManager.new(800, 600)
+        manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
         manager.apply_effect(:zoom, target: 2.0f32, duration: 1.0f32)
         manager.apply_effect(:zoom, target: 0.5f32, duration: 0.5f32)
 
-        zoom_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Core::CameraEffectType::Zoom }
+        zoom_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::CameraEffectType::Zoom }
         zoom_effects.size.should eq(1)
         # Should have the latest zoom
         zoom_effects.first.parameters["target"].as(Float32).should eq(0.5f32)
@@ -123,7 +123,7 @@ describe PointClickEngine::Core::CameraManager do
 
     context "sway effect" do
       it "applies sea-like sway effect" do
-        manager = PointClickEngine::Core::CameraManager.new(800, 600)
+        manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
         manager.apply_effect(:sway, amplitude: 20.0f32, frequency: 0.5f32, duration: 5.0f32)
         manager.has_effect?(:sway).should be_true
@@ -132,7 +132,7 @@ describe PointClickEngine::Core::CameraManager do
 
     context "follow effect" do
       it "follows a character" do
-        manager = PointClickEngine::Core::CameraManager.new(800, 600)
+        manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
         character = PointClickEngine::Characters::Player.new("TestChar", RL::Vector2.new(x: 0, y: 0), RL::Vector2.new(x: 32, y: 64))
 
         manager.apply_effect(:follow, target: character, smooth: true, deadzone: 50.0f32)
@@ -140,14 +140,14 @@ describe PointClickEngine::Core::CameraManager do
       end
 
       it "only allows one follow effect at a time" do
-        manager = PointClickEngine::Core::CameraManager.new(800, 600)
+        manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
         char1 = PointClickEngine::Characters::Player.new("Char1", RL::Vector2.new(x: 0, y: 0), RL::Vector2.new(x: 32, y: 64))
         char2 = PointClickEngine::Characters::Player.new("Char2", RL::Vector2.new(x: 0, y: 0), RL::Vector2.new(x: 32, y: 64))
 
         manager.apply_effect(:follow, target: char1)
         manager.apply_effect(:follow, target: char2)
 
-        follow_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Core::CameraEffectType::Follow }
+        follow_effects = manager.active_effects.select { |e| e.type == PointClickEngine::Graphics::Cameras::CameraEffectType::Follow }
         follow_effects.size.should eq(1)
         follow_effects.first.parameters["target"].as(PointClickEngine::Characters::Character).should eq(char2)
       end
@@ -155,7 +155,7 @@ describe PointClickEngine::Core::CameraManager do
 
     context "pan effect" do
       it "pans to a position" do
-        manager = PointClickEngine::Core::CameraManager.new(800, 600)
+        manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
         manager.apply_effect(:pan, target_x: 500.0f32, target_y: 300.0f32, duration: 2.0f32)
         manager.has_effect?(:pan).should be_true
@@ -165,7 +165,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#reset_effects" do
     it "removes all active effects except zoom transition" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
       # Add multiple effects
       manager.apply_effect(:shake, intensity: 10.0f32, duration: 1.0f32)
@@ -180,11 +180,11 @@ describe PointClickEngine::Core::CameraManager do
       # Should only have zoom transition back to 1.0
       manager.active_effects.size.should eq(1)
       zoom_effect = manager.active_effects.first
-      zoom_effect.type.should eq(PointClickEngine::Core::CameraEffectType::Zoom)
+      zoom_effect.type.should eq(PointClickEngine::Graphics::Cameras::CameraEffectType::Zoom)
     end
 
     it "smoothly transitions zoom back to 1.0 when zoom effect was active" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
       # Apply zoom effect
       manager.apply_effect(:zoom, factor: 2.0f32, duration: 0.1f32)
@@ -208,7 +208,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#remove_effect" do
     it "removes specific effect type" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
       manager.apply_effect(:shake, intensity: 10.0f32, duration: 1.0f32)
       manager.apply_effect(:zoom, target: 2.0f32, duration: 1.0f32)
@@ -219,7 +219,7 @@ describe PointClickEngine::Core::CameraManager do
     end
 
     it "removes all effects" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
       manager.apply_effect(:shake, intensity: 10.0f32, duration: 1.0f32)
       manager.apply_effect(:zoom, target: 2.0f32, duration: 1.0f32)
@@ -231,7 +231,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#update" do
     it "updates active effects" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
       manager.apply_effect(:shake, intensity: 10.0f32, duration: 0.5f32)
       initial_effects = manager.active_effects.size
@@ -244,7 +244,7 @@ describe PointClickEngine::Core::CameraManager do
     end
 
     it "combines multiple effects" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       manager.set_scene_bounds(1600, 1200)
 
       # Manually move camera to test effects
@@ -264,7 +264,7 @@ describe PointClickEngine::Core::CameraManager do
     end
 
     it "respects scene bounds during effects" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       manager.set_scene_bounds(800, 600) # Same as viewport
 
       # Try to pan outside bounds
@@ -278,7 +278,7 @@ describe PointClickEngine::Core::CameraManager do
     end
 
     it "returns camera to base position after shake effect ends" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       manager.set_scene_bounds(1600, 1200)
 
       # Set initial camera position and disable edge scrolling
@@ -311,7 +311,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#transform_position" do
     it "applies camera transformations to world coordinates" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       manager.current_camera.position = RL::Vector2.new(x: 100, y: 50)
 
       world_pos = RL::Vector2.new(x: 500, y: 300)
@@ -322,7 +322,7 @@ describe PointClickEngine::Core::CameraManager do
     end
 
     it "applies zoom transformation" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
       # Directly set the zoom on the camera for testing coordinate transformation
       manager.current_camera.zoom = 2.0f32
@@ -348,7 +348,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#set_scene_bounds" do
     it "updates bounds for all cameras" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       camera2 = PointClickEngine::Graphics::Camera.new(800, 600)
       manager.add_camera("camera2", camera2)
 
@@ -363,7 +363,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#screen_to_world" do
     it "converts screen coordinates to world coordinates" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       manager.current_camera.position = RL::Vector2.new(x: 100, y: 50)
 
       screen_pos = RL::Vector2.new(x: 400, y: 300)
@@ -376,7 +376,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#is_visible?" do
     it "checks if world position is visible" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       manager.current_camera.position = RL::Vector2.new(x: 100, y: 100)
 
       manager.is_visible?(RL::Vector2.new(x: 150, y: 150)).should be_true
@@ -386,7 +386,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#center_on" do
     it "centers camera on a position" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       manager.set_scene_bounds(1600, 1200)
 
       manager.center_on(800.0f32, 600.0f32)
@@ -399,7 +399,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "#get_visible_area" do
     it "returns the visible rectangle in world coordinates" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
       manager.current_camera.position = RL::Vector2.new(x: 100, y: 200)
 
       area = manager.get_visible_area
@@ -412,7 +412,7 @@ describe PointClickEngine::Core::CameraManager do
 
   describe "effect persistence" do
     it "saves and restores camera state" do
-      manager = PointClickEngine::Core::CameraManager.new(800, 600)
+      manager = PointClickEngine::Graphics::Cameras::CameraManager.new(800, 600)
 
       # Set up camera state directly
       manager.current_camera.position = RL::Vector2.new(x: 100, y: 200)

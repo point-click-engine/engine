@@ -7,7 +7,8 @@ require "raylib-cr"
 require "./camera_effect"
 
 module PointClickEngine
-  module Core
+  module Graphics
+    module Cameras
     # Camera shake effect implementation
     class ShakeEffect < CameraEffect
       def initialize(
@@ -38,6 +39,7 @@ module PointClickEngine
 
         RL::Vector2.new(x: offset_x.to_f32, y: offset_y.to_f32)
       end
+    end
     end
   end
 end

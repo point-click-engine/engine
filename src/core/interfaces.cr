@@ -5,9 +5,17 @@
 
 require "raylib-cr"
 require "raylib-cr/audio"
+require "./error_handling"
 require "../graphics/camera"
 
 module PointClickEngine
+  # Forward declaration for CameraError
+  module Graphics
+    module Cameras
+      class CameraError < Core::LoadingError; end
+    end
+  end
+  
   module Core
     # Interface for resource loading operations
     module IResourceLoader
@@ -121,10 +129,10 @@ module PointClickEngine
 
     # Interface for camera management operations
     module ICameraManager
-      abstract def add_camera(name : String, camera : Graphics::Camera) : Result(Nil, CameraError)
-      abstract def switch_camera(name : String, transition_duration : Float32 = 0.0f32) : Result(Nil, CameraError)
+      abstract def add_camera(name : String, camera : Graphics::Camera) : Core::Result(Nil, Graphics::Cameras::CameraError)
+      abstract def switch_camera(name : String, transition_duration : Float32 = 0.0f32) : Core::Result(Nil, Graphics::Cameras::CameraError)
       abstract def get_camera(name : String) : Graphics::Camera?
-      abstract def remove_camera(name : String) : Result(Nil, CameraError)
+      abstract def remove_camera(name : String) : Core::Result(Nil, Graphics::Cameras::CameraError)
       abstract def apply_effect(type : Symbol, **params)
       abstract def remove_effect(type : Symbol)
       abstract def remove_all_effects
