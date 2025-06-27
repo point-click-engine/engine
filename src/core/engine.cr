@@ -62,7 +62,7 @@ module PointClickEngine
       property current_scene : Scenes::Scene?
 
       # Camera manager reference
-      def camera_manager : CameraManager
+      def camera_manager : Graphics::Cameras::CameraManager
         @system_manager.camera_manager.not_nil!
       end
 

@@ -58,7 +58,7 @@ require "./core/validators/asset_validator"
 require "./core/validators/scene_validator"
 require "./core/preflight_check"
 require "./core/error_reporter"
-require "./core/camera_manager"
+require "./graphics/cameras/camera_manager"
 require "./core/engine"
 require "./core/game_config"
 
@@ -242,9 +242,17 @@ module PointClickEngine
   alias LocalizationManager = Localization::LocalizationManager
 
   # Camera aliases
-  alias CameraManager = Core::CameraManager
-  alias CameraEffect = Core::CameraEffect
-  alias CameraEffectType = Core::CameraEffectType
-  alias CameraEasing = Core::CameraEasing
-  alias CameraState = Core::CameraState
+  alias CameraManager = Graphics::Cameras::CameraManager
+  alias CameraEffect = Graphics::Cameras::Effects::Effect
+  alias CameraEffectType = Graphics::Cameras::Effects::Type
+  alias CameraEasing = Graphics::Cameras::Effects::Easing
+  alias CameraState = Graphics::Cameras::State
+
+  # Camera effect aliases
+  alias ShakeEffect = Graphics::Cameras::Effects::Shake
+  alias ZoomEffect = Graphics::Cameras::Effects::Zoom
+  alias SwayEffect = Graphics::Cameras::Effects::Sway
+  alias RotationEffect = Graphics::Cameras::Effects::Rotation
+  alias PanEffect = Graphics::Cameras::Effects::Pan
+  alias FollowEffect = Graphics::Cameras::Effects::Follow
 end
