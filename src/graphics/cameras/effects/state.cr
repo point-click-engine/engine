@@ -9,7 +9,7 @@ module PointClickEngine
   module Graphics
     module Cameras
       # Camera state for saving/restoring
-      struct CameraState
+      struct State
         property position : RL::Vector2
         property zoom : Float32
         property rotation : Float32

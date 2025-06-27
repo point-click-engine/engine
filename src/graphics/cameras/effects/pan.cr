@@ -4,13 +4,13 @@
 # to a target position over a specified duration.
 
 require "raylib-cr"
-require "./camera_effect"
+require "./effect"
 
 module PointClickEngine
   module Graphics
     module Cameras
       # Camera pan effect implementation
-      class PanEffect < CameraEffect
+      class Pan < Effect
         # Pan state
         @start_position : RL::Vector2?
         @target_position : RL::Vector2
@@ -26,8 +26,8 @@ module PointClickEngine
 
           @target_position = RL::Vector2.new(x: target_x, y: target_y)
 
-          super(CameraEffectType::Pan, duration, parameters)
-          @easing = CameraEasing::EaseInOut
+          super(EffectType::Pan, duration, parameters)
+          @easing = Easing::EaseInOut
         end
 
         # Set the starting position when first applied

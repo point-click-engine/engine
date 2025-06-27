@@ -3,13 +3,13 @@
 # This effect interpolates the camera zoom factor over time,
 # allowing for smooth zoom in/out effects.
 
-require "./camera_effect"
+require "./effect"
 
 module PointClickEngine
   module Graphics
     module Cameras
       # Camera zoom effect implementation
-      class ZoomEffect < CameraEffect
+      class Zoom < Effect
         def initialize(
           target : Float32 = 1.0f32,
           duration : Float32 = 1.0f32,
@@ -18,8 +18,8 @@ module PointClickEngine
           parameters["target"] = target
           parameters["factor"] = target # Support both names
 
-          super(CameraEffectType::Zoom, duration, parameters)
-          @easing = CameraEasing::EaseInOut
+          super(EffectType::Zoom, duration, parameters)
+          @easing = Easing::EaseInOut
         end
 
         # Calculate zoom factor - exact logic from original camera_manager

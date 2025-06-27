@@ -4,14 +4,14 @@
 # movement and deadzone support.
 
 require "raylib-cr"
-require "./camera_effect"
+require "./effect"
 require "../../../characters/character"
 
 module PointClickEngine
   module Graphics
     module Cameras
       # Camera follow effect implementation
-      class FollowEffect < CameraEffect
+      class Follow < Effect
         @target : Characters::Character?
 
         def initialize(
@@ -29,7 +29,7 @@ module PointClickEngine
 
           @target = target
 
-          super(CameraEffectType::Follow, duration, parameters)
+          super(EffectType::Follow, duration, parameters)
         end
 
         # Calculate follow movement - exact logic from original camera_manager

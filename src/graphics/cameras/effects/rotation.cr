@@ -3,13 +3,13 @@
 # This effect interpolates the camera rotation over time,
 # allowing for smooth rotation effects.
 
-require "./camera_effect"
+require "./effect"
 
 module PointClickEngine
   module Graphics
     module Cameras
       # Camera rotation effect implementation
-      class RotationEffect < CameraEffect
+      class Rotation < Effect
         def initialize(
           target : Float32 = 0.0f32,
           duration : Float32 = 1.0f32,
@@ -17,8 +17,8 @@ module PointClickEngine
           parameters = {} of String => Float32 | Characters::Character | Bool
           parameters["target"] = target
 
-          super(CameraEffectType::Rotation, duration, parameters)
-          @easing = CameraEasing::EaseInOut
+          super(EffectType::Rotation, duration, parameters)
+          @easing = Easing::EaseInOut
         end
 
         # Calculate rotation amount - exact logic from original camera_manager

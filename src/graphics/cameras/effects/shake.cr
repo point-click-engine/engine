@@ -4,13 +4,13 @@
 # The intensity decays over time for a natural feel.
 
 require "raylib-cr"
-require "./camera_effect"
+require "./effect"
 
 module PointClickEngine
   module Graphics
     module Cameras
       # Camera shake effect implementation
-      class ShakeEffect < CameraEffect
+      class Shake < Effect
         def initialize(
           intensity : Float32 = 10.0f32,
           frequency : Float32 = 10.0f32,
@@ -20,7 +20,7 @@ module PointClickEngine
           parameters["intensity"] = intensity
           parameters["frequency"] = frequency
 
-          super(CameraEffectType::Shake, duration, parameters)
+          super(EffectType::Shake, duration, parameters)
         end
 
         # Calculate shake offset - exact logic from original camera_manager

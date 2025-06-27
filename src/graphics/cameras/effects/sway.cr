@@ -4,13 +4,13 @@
 # to both horizontal and vertical axes, with optional rotation.
 
 require "raylib-cr"
-require "./camera_effect"
+require "./effect"
 
 module PointClickEngine
   module Graphics
     module Cameras
       # Camera sway effect implementation
-      class SwayEffect < CameraEffect
+      class Sway < Effect
         def initialize(
           amplitude : Float32 = 20.0f32,
           frequency : Float32 = 0.5f32,
@@ -24,7 +24,7 @@ module PointClickEngine
           parameters["vertical_factor"] = vertical_factor
           parameters["rotation_amplitude"] = rotation_amplitude
 
-          super(CameraEffectType::Sway, duration, parameters)
+          super(EffectType::Sway, duration, parameters)
         end
 
         # Calculate sway offset and rotation - exact logic from original camera_manager

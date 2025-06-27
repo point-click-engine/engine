@@ -10,15 +10,15 @@ require "../../core/interfaces"
 require "../../core/game_constants"
 require "../camera"
 require "../../characters/character"
-require "./camera_effects/camera_enums"
-require "./camera_effects/camera_state"
-require "./camera_effects/camera_effect"
-require "./camera_effects/shake_effect"
-require "./camera_effects/zoom_effect"
-require "./camera_effects/sway_effect"
-require "./camera_effects/rotation_effect"
-require "./camera_effects/pan_effect"
-require "./camera_effects/follow_effect"
+require "./effects/enums"
+require "./effects/state"
+require "./effects/effect"
+require "./effects/shake"
+require "./effects/zoom"
+require "./effects/sway"
+require "./effects/rotation"
+require "./effects/pan"
+require "./effects/follow"
 
 module PointClickEngine
   module Graphics
@@ -62,14 +62,14 @@ module PointClickEngine
       getter cameras : Hash(String, Graphics::Camera) = {} of String => Graphics::Camera
 
       # Active effects
-      getter active_effects : Array(CameraEffect) = [] of CameraEffect
+      getter active_effects : Array(Effect) = [] of Effect
 
       # Camera transition state
       getter transition_start_camera : Graphics::Camera?
       getter transition_target_camera : Graphics::Camera?
       getter transition_duration : Float32 = 0.0f32
       getter transition_elapsed : Float32 = 0.0f32
-      getter transition_easing : CameraEasing = CameraEasing::EaseInOut
+      getter transition_easing : Easing = Easing::EaseInOut
 
       # Effect-specific state
       @base_position : RL::Vector2 = RL::Vector2.new(x: 0, y: 0)
@@ -98,7 +98,7 @@ module PointClickEngine
       end
 
       # Switch to a different camera
-      def switch_camera(name : String, transition_duration : Float32 = 0.0f32, easing : CameraEasing = CameraEasing::EaseInOut) : Core::Result(Nil, CameraError)
+      def switch_camera(name : String, transition_duration : Float32 = 0.0f32, easing : Easing = Easing::EaseInOut) : Core::Result(Nil, CameraError)
         unless @cameras.has_key?(name)
           return Core::Result(Nil, CameraError).failure(
             CameraError.new("Camera '#{name}' not found")
@@ -149,12 +149,12 @@ module PointClickEngine
       # Apply a camera effect
       def apply_effect(type : Symbol, **params)
         effect_type = case type
-                      when :shake    then CameraEffectType::Shake
-                      when :zoom     then CameraEffectType::Zoom
-                      when :pan      then CameraEffectType::Pan
-                      when :follow   then CameraEffectType::Follow
-                      when :sway     then CameraEffectType::Sway
-                      when :rotation then CameraEffectType::Rotation
+                      when :shake    then EffectType::Shake
+                      when :zoom     then EffectType::Zoom
+                      when :pan      then EffectType::Pan
+                      when :follow   then EffectType::Follow
+                      when :sway     then EffectType::Sway
+                      when :rotation then EffectType::Rotation
                       else
                         # Unknown effect type, ignore
                         return
@@ -188,32 +188,32 @@ module PointClickEngine
                  when :shake
                    intensity = effect_params["intensity"]?.as?(Float32) || 10.0f32
                    frequency = effect_params["frequency"]?.as?(Float32) || 10.0f32
-                   ShakeEffect.new(intensity, frequency, duration)
+                   Shake.new(intensity, frequency, duration)
                  when :zoom
                    target = effect_params["target"]?.as?(Float32) || effect_params["factor"]?.as?(Float32) || 1.0f32
-                   ZoomEffect.new(target, duration)
+                   Zoom.new(target, duration)
                  when :sway
                    amplitude = effect_params["amplitude"]?.as?(Float32) || 20.0f32
                    frequency = effect_params["frequency"]?.as?(Float32) || 0.5f32
                    vertical_factor = effect_params["vertical_factor"]?.as?(Float32) || 0.5f32
                    rotation_amplitude = effect_params["rotation_amplitude"]?.as?(Float32) || 2.0f32
-                   SwayEffect.new(amplitude, frequency, vertical_factor, rotation_amplitude, duration)
+                   Sway.new(amplitude, frequency, vertical_factor, rotation_amplitude, duration)
                  when :rotation
                    target = effect_params["target"]?.as?(Float32) || 0.0f32
-                   RotationEffect.new(target, duration)
+                   Rotation.new(target, duration)
                  when :pan
                    target_x = effect_params["target_x"]?.as?(Float32) || @current_camera.position.x
                    target_y = effect_params["target_y"]?.as?(Float32) || @current_camera.position.y
-                   PanEffect.new(target_x, target_y, duration)
+                   Pan.new(target_x, target_y, duration)
                  when :follow
                    target = effect_params["target"]?.as?(Characters::Character)
                    return unless target # Can't create follow effect without target
                    smooth = effect_params["smooth"]?.as?(Bool) || true
                    deadzone = effect_params["deadzone"]?.as?(Float32) || 50.0f32
                    speed = effect_params["speed"]?.as?(Float32) || 5.0f32
-                   FollowEffect.new(target, smooth, deadzone, speed, duration)
+                   Follow.new(target, smooth, deadzone, speed, duration)
                  else
-                   CameraEffect.new(effect_type, duration, effect_params)
+                   Effect.new(effect_type, duration, effect_params)
                  end
 
         @active_effects << effect
@@ -222,12 +222,12 @@ module PointClickEngine
       # Remove effects of a specific type
       def remove_effect(type : Symbol)
         effect_type = case type
-                      when :shake    then CameraEffectType::Shake
-                      when :zoom     then CameraEffectType::Zoom
-                      when :pan      then CameraEffectType::Pan
-                      when :follow   then CameraEffectType::Follow
-                      when :sway     then CameraEffectType::Sway
-                      when :rotation then CameraEffectType::Rotation
+                      when :shake    then EffectType::Shake
+                      when :zoom     then EffectType::Zoom
+                      when :pan      then EffectType::Pan
+                      when :follow   then EffectType::Follow
+                      when :sway     then EffectType::Sway
+                      when :rotation then EffectType::Rotation
                       else                return
                       end
 
@@ -262,12 +262,12 @@ module PointClickEngine
       # Check if a specific effect is active
       def has_effect?(type : Symbol) : Bool
         effect_type = case type
-                      when :shake    then CameraEffectType::Shake
-                      when :zoom     then CameraEffectType::Zoom
-                      when :pan      then CameraEffectType::Pan
-                      when :follow   then CameraEffectType::Follow
-                      when :sway     then CameraEffectType::Sway
-                      when :rotation then CameraEffectType::Rotation
+                      when :shake    then EffectType::Shake
+                      when :zoom     then EffectType::Zoom
+                      when :pan      then EffectType::Pan
+                      when :follow   then EffectType::Follow
+                      when :sway     then EffectType::Sway
+                      when :rotation then EffectType::Rotation
                       else                return false
                       end
 
@@ -388,8 +388,8 @@ module PointClickEngine
       end
 
       # Save current camera state
-      def save_state : CameraState
-        CameraState.new(
+      def save_state : State
+        State.new(
           position: @current_camera.position.dup,
           zoom: @base_zoom,
           rotation: @base_rotation,
@@ -398,7 +398,7 @@ module PointClickEngine
       end
 
       # Restore camera state
-      def restore_state(state : CameraState)
+      def restore_state(state : State)
         if camera = @cameras[state.active_camera]?
           @current_camera = camera
           @active_camera_name = state.active_camera
@@ -463,7 +463,7 @@ module PointClickEngine
         end
       end
 
-      private def apply_effect(effect : CameraEffect)
+      private def apply_effect(effect : Effect)
         case effect.type
         when .shake?
           apply_shake_effect(effect)
@@ -480,9 +480,9 @@ module PointClickEngine
         end
       end
 
-      private def apply_shake_effect(effect : CameraEffect)
+      private def apply_shake_effect(effect : Effect)
         # If it's a ShakeEffect instance, use its method
-        if effect.is_a?(ShakeEffect)
+        if effect.is_a?(Shake)
           shake_offset = effect.calculate_shake_offset
           @effect_offset.x += shake_offset.x
           @effect_offset.y += shake_offset.y
@@ -504,8 +504,8 @@ module PointClickEngine
         end
       end
 
-      private def apply_zoom_effect(effect : CameraEffect)
-        if effect.is_a?(ZoomEffect)
+      private def apply_zoom_effect(effect : Effect)
+        if effect.is_a?(Zoom)
           @effect_zoom = effect.calculate_zoom_factor
         else
           # Fallback to original logic for backward compatibility
@@ -515,14 +515,14 @@ module PointClickEngine
 
           # Interpolate zoom
           t = effect.progress
-          eased_t = apply_easing(t, CameraEasing::EaseInOut)
+          eased_t = apply_easing(t, Easing::EaseInOut)
 
           @effect_zoom = 1.0f32 + (target - 1.0f32) * eased_t
         end
       end
 
-      private def apply_pan_effect(effect : CameraEffect)
-        if effect.is_a?(PanEffect)
+      private def apply_pan_effect(effect : Effect)
+        if effect.is_a?(Pan)
           @current_camera.position = effect.calculate_position(@current_camera.position)
         else
           # Fallback to original logic for backward compatibility
@@ -540,7 +540,7 @@ module PointClickEngine
 
           # Interpolate position
           t = effect.progress
-          eased_t = apply_easing(t, CameraEasing::EaseInOut)
+          eased_t = apply_easing(t, Easing::EaseInOut)
 
           new_x = start_x + (target_x - start_x) * eased_t
           new_y = start_y + (target_y - start_y) * eased_t
@@ -549,8 +549,8 @@ module PointClickEngine
         end
       end
 
-      private def apply_follow_effect(effect : CameraEffect)
-        if effect.is_a?(FollowEffect)
+      private def apply_follow_effect(effect : Effect)
+        if effect.is_a?(Follow)
           delta = effect.calculate_follow_delta(@current_camera.position, @viewport_width, @viewport_height)
           @current_camera.position.x += delta.x
           @current_camera.position.y += delta.y
@@ -590,8 +590,8 @@ module PointClickEngine
         end
       end
 
-      private def apply_sway_effect(effect : CameraEffect)
-        if effect.is_a?(SwayEffect)
+      private def apply_sway_effect(effect : Effect)
+        if effect.is_a?(Sway)
           offset, rotation = effect.calculate_sway
           @effect_offset.x += offset.x
           @effect_offset.y += offset.y
@@ -620,8 +620,8 @@ module PointClickEngine
         end
       end
 
-      private def apply_rotation_effect(effect : CameraEffect)
-        if effect.is_a?(RotationEffect)
+      private def apply_rotation_effect(effect : Effect)
+        if effect.is_a?(Rotation)
           @effect_rotation = effect.calculate_rotation
         else
           # Fallback to original logic for backward compatibility
@@ -629,7 +629,7 @@ module PointClickEngine
 
           # Interpolate rotation
           t = effect.progress
-          eased_t = apply_easing(t, CameraEasing::EaseInOut)
+          eased_t = apply_easing(t, Easing::EaseInOut)
 
           @effect_rotation = target * eased_t
         end
@@ -653,7 +653,7 @@ module PointClickEngine
         # For now, we store them internally and use them in transform_position
       end
 
-      private def apply_easing(t : Float32, easing : CameraEasing) : Float32
+      private def apply_easing(t : Float32, easing : Easing) : Float32
         case easing
         when .linear?
           t

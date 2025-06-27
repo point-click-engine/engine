@@ -243,8 +243,8 @@ module PointClickEngine
 
   # Camera aliases
   alias CameraManager = Graphics::Cameras::CameraManager
-  alias CameraEffect = Graphics::Cameras::CameraEffect
-  alias CameraEffectType = Graphics::Cameras::CameraEffectType
-  alias CameraEasing = Graphics::Cameras::CameraEasing
-  alias CameraState = Graphics::Cameras::CameraState
+  alias CameraEffect = Graphics::Cameras::Effect
+  alias CameraEffectType = Graphics::Cameras::EffectType
+  alias CameraEasing = Graphics::Cameras::Easing
+  alias CameraState = Graphics::Cameras::State
 end

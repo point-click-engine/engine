@@ -6,7 +6,7 @@ module PointClickEngine
   module Graphics
     module Cameras
       # Camera effect types
-      enum CameraEffectType
+      enum EffectType
         Shake
         Zoom
         Pan
@@ -16,7 +16,7 @@ module PointClickEngine
       end
 
       # Camera transition easing types
-      enum CameraEasing
+      enum Easing
         Linear
         EaseIn
         EaseOut

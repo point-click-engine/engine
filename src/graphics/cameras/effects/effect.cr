@@ -3,21 +3,21 @@
 # Represents an active camera effect with common properties like duration,
 # elapsed time, and parameters.
 
-require "./camera_enums"
+require "./enums"
 require "../../../characters/character"
 
 module PointClickEngine
   module Graphics
     module Cameras
       # Represents an active camera effect
-      class CameraEffect
-        property type : CameraEffectType
+      class Effect
+        property type : EffectType
         property duration : Float32
         property elapsed : Float32 = 0.0f32
         property parameters : Hash(String, Float32 | Characters::Character | Bool)
-        property easing : CameraEasing = CameraEasing::Linear
+        property easing : Easing = Easing::Linear
 
-        def initialize(@type : CameraEffectType, @duration : Float32, @parameters : Hash(String, Float32 | Characters::Character | Bool))
+        def initialize(@type : EffectType, @duration : Float32, @parameters : Hash(String, Float32 | Characters::Character | Bool))
         end
 
         def active?
