@@ -1,6 +1,6 @@
 require "yaml"
 require "../core/game_constants"
-require "../graphics/animated_sprite"
+require "../graphics/sprites/animated"
 require "./character_enums"
 
 module PointClickEngine
@@ -154,7 +154,7 @@ module PointClickEngine
       property animations : Hash(String, AnimationData) = {} of String => AnimationData
 
       # Reference to the sprite being animated
-      property sprite : Graphics::AnimatedSprite?
+      property sprite : Graphics::Sprites::Animated?
 
       # Current character mood for mood-based animations
       property mood : CharacterMood = CharacterMood::Neutral
@@ -180,7 +180,7 @@ module PointClickEngine
       IDLE_TRIGGER_TIME    = 8.0f32
       TURN_ANIMATION_SPEED = 2.0f32
 
-      def initialize(@sprite : Graphics::AnimatedSprite? = nil)
+      def initialize(@sprite : Graphics::Sprites::Animated? = nil)
         @animations = {} of String => AnimationData
       end
 
@@ -310,7 +310,7 @@ module PointClickEngine
       end
 
       # Update with sprite reference (for compatibility)
-      def update(dt : Float32, sprite : Graphics::AnimatedSprite?)
+      def update(dt : Float32, sprite : Graphics::Sprites::Animated?)
         @sprite = sprite if sprite
         update(dt)
       end
@@ -483,7 +483,7 @@ module PointClickEngine
       end
 
       # Sets the sprite to animate
-      def sprite=(sprite : Graphics::AnimatedSprite)
+      def sprite=(sprite : Graphics::Sprites::Animated)
         @sprite = sprite
       end
     end

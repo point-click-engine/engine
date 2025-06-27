@@ -64,7 +64,7 @@ require "./core/game_config"
 
 # Graphics modules
 require "./graphics/display_manager"
-require "./graphics/animated_sprite"
+require "./graphics/sprites/animated"
 require "./graphics/particles"
 require "./graphics/transitions"
 require "./graphics/shaders/shader_system"
@@ -156,7 +156,7 @@ module PointClickEngine
   alias DialogStyle = UI::DialogStyle
   alias InventoryItem = Inventory::InventoryItem
   alias InventoryUI = Inventory::InventorySystem
-  alias AnimatedSprite = Graphics::AnimatedSprite
+  alias AnimatedSprite = Graphics::Sprites::Animated
   alias DisplayManager = Graphics::DisplayManager
   alias ParticleSystem = Graphics::ParticleSystem
   alias Particle = Graphics::Particle

@@ -62,10 +62,10 @@ describe PointClickEngine::Characters::Character do
   end
 end
 
-describe PointClickEngine::Graphics::AnimatedSprite do
+describe PointClickEngine::Graphics::Sprites::Animated do
   describe "#new" do
     it "creates animated sprite with correct properties" do
-      sprite = PointClickEngine::Graphics::AnimatedSprite.new(
+      sprite = PointClickEngine::Graphics::Sprites::Animated.new(
         RL::Vector2.new(x: 100, y: 100), 32, 32, 8
       )
 
@@ -79,7 +79,7 @@ describe PointClickEngine::Graphics::AnimatedSprite do
 
   describe "#play and #stop" do
     it "controls animation playback" do
-      sprite = PointClickEngine::Graphics::AnimatedSprite.new(
+      sprite = PointClickEngine::Graphics::Sprites::Animated.new(
         RL::Vector2.new(x: 100, y: 100), 32, 32, 4
       )
 

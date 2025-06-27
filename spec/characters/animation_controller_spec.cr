@@ -1,9 +1,9 @@
 require "../spec_helper"
 require "../../src/characters/animation_controller"
-require "../../src/graphics/animated_sprite"
+require "../../src/graphics/sprites/animated"
 
 def create_mock_sprite
-  sprite = PointClickEngine::Graphics::AnimatedSprite.new(RL::Vector2.new(0, 0), 32, 32, 1)
+  sprite = PointClickEngine::Graphics::Sprites::Animated.new(RL::Vector2.new(0, 0), 32, 32, 1)
   sprite.current_frame = 0
   sprite.frame_timer = 0.0
   sprite.playing = false

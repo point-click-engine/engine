@@ -1,4 +1,4 @@
-require "../graphics/animated_sprite"
+require "../graphics/sprites/animated"
 require "../core/game_object"
 
 module PointClickEngine
@@ -12,7 +12,7 @@ module PointClickEngine
     # - Rendering coordination
     class SpriteController
       # The animated sprite data
-      property sprite : Graphics::AnimatedSprite?
+      property sprite : Graphics::Sprites::Animated?
 
       # Path to the sprite/spritesheet file
       property sprite_path : String?
@@ -38,7 +38,7 @@ module PointClickEngine
       # Loads a spritesheet for character animation
       def load_spritesheet(path : String, frame_width : Int32, frame_height : Int32)
         @sprite_path = path
-        @sprite = Graphics::AnimatedSprite.new(@position, frame_width, frame_height, 1)
+        @sprite = Graphics::Sprites::Animated.new(@position, frame_width, frame_height, 1)
 
         if sprite = @sprite
           sprite.load_texture(path)
