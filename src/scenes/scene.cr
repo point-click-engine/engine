@@ -121,6 +121,11 @@ module PointClickEngine
           found_player = @characters.find { |char| char.name == name }.as?(Characters::Player)
           @player = found_player if found_player
         end
+        
+        # Setup navigation if enabled
+        if @enable_pathfinding && @walkable_area
+          setup_navigation
+        end
       end
 
       # Background management (delegates to BackgroundRenderer)
@@ -213,22 +218,19 @@ module PointClickEngine
       # Navigation setup (delegates to NavigationManager)
       def setup_navigation(character_radius : Float32 = 56.0_f32)
         return unless @enable_pathfinding
-        return unless @background_renderer.try(&.background_texture)
+        # Navigation should work even without a background texture
 
         @navigation_manager = NavigationManager.new(@logical_width, @logical_height)
         @navigation_manager.not_nil!.grid_cell_size = @navigation_cell_size
         @navigation_manager.not_nil!.setup_navigation(@walkable_area)
 
-        # Legacy support - need to create proper NavigationGrid from scene
-        if walkable = @walkable_area
-          @navigation_grid = Navigation::NavigationGrid.from_scene(
-            self,
-            @logical_width,
-            @logical_height,
-            @navigation_cell_size,
-            character_radius
-          )
-          @pathfinder = Navigation::Pathfinding.new(@navigation_grid.not_nil!)
+        # Legacy support - create NavigationGrid and Pathfinding from NavigationManager
+        if nm = @navigation_manager
+          @navigation_grid = nm.navigation_grid
+          # Create Pathfinding wrapper if we have a navigation grid
+          if grid = @navigation_grid
+            @pathfinder = Navigation::Pathfinding.new(grid)
+          end
         end
 
         # Debug output
@@ -260,7 +262,13 @@ module PointClickEngine
 
       # Pathfinding (delegates to NavigationManager)
       def find_path(start_x : Float32, start_y : Float32, end_x : Float32, end_y : Float32) : Array(Raylib::Vector2)?
-        @navigation_manager.try(&.find_path(start_x.to_i, start_y.to_i, end_x.to_i, end_y.to_i))
+        # Try NavigationManager first
+        if nm = @navigation_manager
+          return nm.find_path(start_x.to_i, start_y.to_i, end_x.to_i, end_y.to_i)
+        end
+        
+        # Fallback to legacy pathfinder
+        @pathfinder.try(&.find_path(start_x, start_y, end_x, end_y))
       end
 
       # Walkability checks

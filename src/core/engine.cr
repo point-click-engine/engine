@@ -205,6 +205,9 @@ module PointClickEngine
         @system_manager.dialog_manager.try(&.draw)
         @inventory.draw
         @system_manager.menu_system.try(&.render)
+        
+        # Draw verb cursor
+        @verb_input_system.try(&.draw(self.display_manager))
 
         # Debug rendering
         if @@debug_mode

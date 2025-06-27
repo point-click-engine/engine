@@ -83,19 +83,9 @@ module PointClickEngine
         end_grid_x = end_grid_x.clamp(0, nav_grid.width - 1)
         end_grid_y = end_grid_y.clamp(0, nav_grid.height - 1)
 
-        # Find path in grid coordinates
-        grid_path = pathfinder.find_path(start_grid_x.to_f32, start_grid_y.to_f32, end_grid_x.to_f32, end_grid_y.to_f32)
-        return nil unless grid_path
-
-        # Convert grid path back to world coordinates
-        world_path = [] of RL::Vector2
-        grid_path.each do |node|
-          world_x = node.x * @grid_cell_size + @grid_cell_size // 2
-          world_y = node.y * @grid_cell_size + @grid_cell_size // 2
-          world_path << RL::Vector2.new(x: world_x.to_f32, y: world_y.to_f32)
-        end
-
-        world_path
+        # Find path using AStarAlgorithm
+        # Note: AStarAlgorithm expects world coordinates and returns world coordinates!
+        pathfinder.find_path(start_x.to_f32, start_y.to_f32, end_x.to_f32, end_y.to_f32)
       end
 
       # Checks if a specific position is navigable

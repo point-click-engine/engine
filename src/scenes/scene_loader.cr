@@ -312,6 +312,11 @@ module PointClickEngine
           scene.walkable_area = walkable_area
         end
 
+        # Setup navigation after loading walkable areas
+        if scene.enable_pathfinding && scene.walkable_area
+          scene.setup_navigation
+        end
+
         scene
       end
 

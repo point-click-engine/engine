@@ -199,7 +199,7 @@ describe "Minimal Game Example" do
       height: 600
     
     settings:
-      master_volume: 0.5
+      debug_mode: false
     YAML
 
     File.write("game_v1.yaml", config_v1)
@@ -211,7 +211,8 @@ describe "Minimal Game Example" do
     engine1.window_width.should eq(800)
     # Audio manager would be initialized when the engine starts running
     # For this test, just verify the config was loaded correctly
-    config.settings.not_nil!.master_volume.should eq(0.5_f32)
+    # Audio volumes are now in UserSettings, not in the main config
+    config.settings.not_nil!.debug_mode.should eq(false)
 
     RL.close_window
 
@@ -229,7 +230,7 @@ describe "Minimal Game Example" do
       - portraits
     
     settings:
-      master_volume: 0.8
+      debug_mode: false
       show_fps: true
     YAML
 
@@ -241,7 +242,8 @@ describe "Minimal Game Example" do
 
     # Everything changed without touching code!
     engine2.window_width.should eq(1920)
-    config2.settings.not_nil!.master_volume.should eq(0.8_f32)
+    # Audio volumes are now in UserSettings, not in the main config
+    config2.settings.not_nil!.debug_mode.should eq(false)
     config2.settings.not_nil!.show_fps.should be_true
     config2.features.includes?("shaders").should be_true
 
