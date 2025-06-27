@@ -7,7 +7,7 @@ require "../../scenes/transition_helper"
 require "../../characters/character"
 require "../../inventory/inventory_system"
 require "../../ui/dialog_manager"
-require "../../audio/sound_system"
+require "../../audio/audio_manager"
 require "../../graphics/camera"
 
 module PointClickEngine

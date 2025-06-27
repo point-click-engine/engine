@@ -1,7 +1,7 @@
 # Engine system initialization and management
 
 require "../achievement_manager"
-require "../../audio/sound_system"
+require "../../audio/audio_manager"
 require "../../graphics/shaders/shader_system"
 require "../../ui/gui_manager"
 require "../../scripting/script_engine"

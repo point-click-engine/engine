@@ -1,4 +1,4 @@
-# Sound and Music system for adventure games - Refactored with components
+# Audio manager for adventure games - Refactored with components
 
 require "raylib-cr/audio"
 

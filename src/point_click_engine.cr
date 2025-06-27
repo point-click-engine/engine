@@ -108,7 +108,7 @@ require "./characters/scriptable_character"
 require "./core/save_system"
 
 # Audio modules (optional - only if audio is enabled)
-require "./audio/sound_system"
+require "./audio/audio_manager"
 require "./audio/ambient_sound_manager"
 require "./audio/footstep_system"
 
