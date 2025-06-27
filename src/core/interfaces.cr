@@ -5,6 +5,7 @@
 
 require "raylib-cr"
 require "raylib-cr/audio"
+require "../graphics/camera"
 
 module PointClickEngine
   module Core
@@ -116,6 +117,25 @@ module PointClickEngine
       abstract def get_memory_usage : {current: Int64, peak: Int64, by_category: Hash(String, Int64)}
       abstract def trigger_cleanup
       abstract def set_memory_limit(limit : Int64)
+    end
+
+    # Interface for camera management operations
+    module ICameraManager
+      abstract def add_camera(name : String, camera : Graphics::Camera) : Result(Nil, CameraError)
+      abstract def switch_camera(name : String, transition_duration : Float32 = 0.0f32) : Result(Nil, CameraError)
+      abstract def get_camera(name : String) : Graphics::Camera?
+      abstract def remove_camera(name : String) : Result(Nil, CameraError)
+      abstract def apply_effect(type : Symbol, **params)
+      abstract def remove_effect(type : Symbol)
+      abstract def remove_all_effects
+      abstract def has_effect?(type : Symbol) : Bool
+      abstract def update(dt : Float32, mouse_x : Int32, mouse_y : Int32)
+      abstract def set_scene_bounds(width : Int32, height : Int32)
+      abstract def transform_position(world_pos : RL::Vector2) : RL::Vector2
+      abstract def screen_to_world(screen_pos : RL::Vector2) : RL::Vector2
+      abstract def is_visible?(world_pos : RL::Vector2, margin : Float32 = 0.0f32) : Bool
+      abstract def center_on(x : Float32, y : Float32)
+      abstract def get_visible_area : RL::Rectangle
     end
   end
 end

@@ -306,7 +306,7 @@ module PointClickEngine
           if input_manager.key_pressed?(Raylib::KeyboardKey::Tab)
             @engine.toggle_hotspot_highlight
           end
-          
+
           # F1 for debug mode
           if input_manager.key_pressed?(Raylib::KeyboardKey::F1)
             Core::Engine.debug_mode = !Core::Engine.debug_mode

@@ -162,7 +162,7 @@ module PointClickEngine
 
         private def handle_edge_scroll_toggle
           if engine = Engine.instance
-            if camera = engine.camera
+            if camera = engine.camera_manager.current_camera
               camera.edge_scroll_enabled = !camera.edge_scroll_enabled
               puts "Camera edge scrolling: #{camera.edge_scroll_enabled ? "enabled" : "disabled"}"
             end

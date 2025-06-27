@@ -84,6 +84,7 @@ The foundation of the engine containing:
 - **InputManager**: Priority-based input handling
 - **RenderManager**: Layer-based rendering pipeline
 - **ResourceManager**: Asset loading and caching
+- **CameraManager**: Advanced camera system with effects
 - **GameStateManager**: Global game state
 - **QuestSystem**: Quest and objective tracking
 - **SaveSystem**: Game persistence
@@ -160,11 +161,13 @@ Pathfinding
 
 Rendering and visual effects:
 
-- **Camera**: Viewport and scrolling
+- **Camera**: Basic viewport and scrolling
+- **CameraManager**: Advanced camera system with effects
 - **AnimatedSprite**: Sprite animations
 - **ParticleSystem**: Particle effects
 - **TransitionManager**: Scene transitions
 - **DisplayManager**: Resolution handling
+- **RenderContext**: Camera-aware rendering
 
 ### 7. Audio Module (`src/audio/`)
 
@@ -206,12 +209,13 @@ Cinematic sequences:
 ### Direct Dependencies
 ```
 Engine
-  ├── SystemManager
-  │     ├── SceneManager → Scene → [Components]
-  │     ├── InputManager → InputHandlers
-  │     ├── RenderManager → Renderers
-  │     └── UIManager → UI Components
-  └── Camera
+  └── SystemManager
+        ├── SceneManager → Scene → [Components]
+        ├── InputManager → InputHandlers
+        ├── RenderManager → Renderers
+        ├── UIManager → UI Components
+        ├── CameraManager → Camera → Effects
+        └── Other Managers...
 ```
 
 ### Event-Based Communication

@@ -309,7 +309,7 @@ describe PointClickEngine::UI::MenuSystem do
       menu_system.show("main")
       new_game_index = menu_system.menu_items["main"].index("New Game") || -1
       menu_system.navigator.navigate_to(new_game_index)
-      
+
       # Should not crash when callback is nil
       menu_system.execute_current_action
     end
@@ -324,7 +324,7 @@ describe PointClickEngine::UI::MenuSystem do
       menu_system.on_quit = -> { callbacks_called << "quit" }
 
       menu_system.show("main")
-      
+
       # Test New Game
       new_game_index = menu_system.menu_items["main"].index("New Game") || -1
       menu_system.navigator.navigate_to(new_game_index)

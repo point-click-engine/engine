@@ -405,7 +405,7 @@ module PointClickEngine
               end
             end
           end
-          
+
           # Apply volume settings
           if settings = self.settings
             audio.set_master_volume(settings.master_volume)

@@ -8,6 +8,7 @@ require "../../scripting/script_engine"
 require "../../scripting/event_system"
 require "../../ui/dialog_manager"
 require "../config_manager"
+require "../camera_manager"
 require "../../graphics/display_manager"
 require "../../graphics/transitions"
 require "../../ui/menu_system"
@@ -26,6 +27,7 @@ module PointClickEngine
         property event_system : Scripting::EventSystem
         property dialog_manager : UI::DialogManager?
         property config : ConfigManager?
+        property camera_manager : CameraManager?
         property display_manager : Graphics::DisplayManager?
         property transition_manager : Graphics::TransitionManager?
         property menu_system : UI::MenuSystem?
@@ -38,6 +40,9 @@ module PointClickEngine
         def initialize_systems(width : Int32, height : Int32)
           # Initialize display manager first
           @display_manager = Graphics::DisplayManager.new(width, height)
+
+          # Initialize camera manager
+          @camera_manager = CameraManager.new(width, height)
 
           # Initialize audio system
           if Audio::AudioManager.available?
@@ -84,7 +89,7 @@ module PointClickEngine
             engine.start_new_game
           }
 
-          # Load Game callback  
+          # Load Game callback
           @menu_system.not_nil!.on_load_game = -> {
             @menu_system.not_nil!.switch_to_menu("load")
           }

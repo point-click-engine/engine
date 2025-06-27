@@ -511,19 +511,71 @@ engine.run
 
 ### Camera
 **Location**: `src/graphics/camera.cr`  
-**Purpose**: Viewport and scrolling management
+**Purpose**: Basic camera functionality for viewport management
 
 **Features**:
-- Smooth scrolling
-- Target following
-- Boundary constraints
-- Zoom support
+- Viewport positioning
+- Scene boundary constraints
+- Character following
+- Edge scrolling
+- Zoom and rotation properties
 
 **Key Methods**:
-- `follow(target)` - Follow target
-- `set_position(position)` - Set position
-- `apply_transform()` - Apply to rendering
-- `screen_to_world(point)` - Convert coordinates
+- `follow(character)` - Follow a character
+- `center_on(x, y)` - Center on position
+- `screen_to_world(x, y)` - Convert screen to world
+- `world_to_screen(x, y)` - Convert world to screen
+- `is_visible?(x, y, margin)` - Check visibility
+
+### CameraManager
+**Location**: `src/core/camera_manager.cr`  
+**Purpose**: Advanced camera system with effects and transitions
+
+**Responsibilities**:
+- Manage multiple named cameras
+- Apply visual effects
+- Handle smooth transitions
+- Coordinate camera state
+
+**Key Effects**:
+- **Shake** - Earthquake-like screen shake
+- **Zoom** - Smooth zoom in/out
+- **Pan** - Smooth movement to target
+- **Follow** - Follow characters with deadzone
+- **Sway** - Sea-like swaying motion
+- **Rotation** - Camera rotation
+
+**Key Methods**:
+- `add_camera(name, camera)` - Add named camera
+- `switch_camera(name, duration)` - Switch cameras
+- `apply_effect(type, **params)` - Apply effect
+- `remove_effect(type)` - Remove specific effect
+- `remove_all_effects()` - Clear all effects
+- `has_effect?(type)` - Check if effect active
+- `save_state()` - Save camera state
+- `restore_state(state)` - Restore saved state
+
+**Usage Example**:
+```crystal
+# Apply shake effect
+camera_manager.apply_effect(:shake, 
+  intensity: 10.0f32, 
+  duration: 1.0f32
+)
+
+# Zoom with smooth transition
+camera_manager.apply_effect(:zoom, 
+  target: 2.0f32, 
+  duration: 2.0f32
+)
+
+# Follow character smoothly
+camera_manager.apply_effect(:follow,
+  target: player,
+  smooth: true,
+  deadzone: 50.0f32
+)
+```
 
 ### AnimatedSprite
 **Location**: `src/graphics/animated_sprite.cr`  

@@ -61,8 +61,10 @@ module PointClickEngine
       # Current scene reference
       property current_scene : Scenes::Scene?
 
-      # Global camera
-      property camera : Graphics::Camera?
+      # Camera manager reference
+      def camera_manager : CameraManager
+        @system_manager.camera_manager.not_nil!
+      end
 
       # Temporary player storage until a scene is available
       @pending_player : Characters::Character?
@@ -113,10 +115,6 @@ module PointClickEngine
         # Initialize input handler
         @input_handler = EngineComponents::InputHandler.new
 
-        # Setup camera
-        @camera = Graphics::Camera.new(@window_width, @window_height)
-        @camera.not_nil!.set_scene_size(@window_width, @window_height)
-
         # Mark as initialized
         @engine_initialized = true
       end
@@ -160,13 +158,13 @@ module PointClickEngine
       def update(dt : Float32)
         # Update input manager first
         @input_manager.process_input(dt)
-        
+
         # Handle input - use verb input if enabled, otherwise standard input
         if @verb_input_system && @verb_input_system.not_nil!.enabled
-          @verb_input_system.not_nil!.process_input(@current_scene, player, display_manager, @camera)
+          @verb_input_system.not_nil!.process_input(@current_scene, player, display_manager, camera_manager.current_camera)
         else
           @input_handler.try do |handler|
-            handler.handle_click(@current_scene, player, @camera)
+            handler.handle_click(@current_scene, player, camera_manager.current_camera)
             handler.handle_keyboard_input
           end
         end
@@ -180,9 +178,9 @@ module PointClickEngine
         # Update inventory
         @inventory.update(dt)
 
-        # Update camera
+        # Update camera manager
         mouse_pos = RL.get_mouse_position
-        @camera.try(&.update(dt, mouse_pos.x.to_i, mouse_pos.y.to_i))
+        camera_manager.update(dt, mouse_pos.x.to_i, mouse_pos.y.to_i)
 
         # Handle auto-save
         handle_auto_save(dt)
@@ -202,15 +200,15 @@ module PointClickEngine
         else
           render_scene_content
         end
-        
+
         # Draw verb cursor (on top of everything)
         @verb_input_system.try(&.draw(self.display_manager))
       end
-      
+
       # Renders the scene content (separated for use with transitions)
       private def render_scene_content
         # Render scene with camera
-        @current_scene.try(&.draw(@camera))
+        @current_scene.try(&.draw(camera_manager.current_camera))
 
         # Render highlighted hotspots if enabled
         if @render_coordinator.hotspot_highlight_enabled && @current_scene
@@ -230,18 +228,19 @@ module PointClickEngine
 
       # Render hotspot highlights
       private def render_hotspot_highlights(scene : Scenes::Scene)
-        # Get camera offset if camera exists
-        camera_offset = @camera ? RL::Vector2.new(x: -@camera.not_nil!.position.x, y: -@camera.not_nil!.position.y) : RL::Vector2.new(x: 0, y: 0)
-        
+        # Get camera offset from camera manager
+        camera = camera_manager.current_camera
+        camera_offset = RL::Vector2.new(x: -camera.position.x, y: -camera.position.y)
+
         # Calculate pulsing effect
         time = RL.get_time
         pulse = ((Math.sin(time * 3.0) + 1.0) / 2.0).to_f32
         pulse_alpha = (80 + pulse * 40).to_u8
-        
+
         # Draw each hotspot with golden highlight
         scene.hotspot_manager.try(&.hotspots.each do |hotspot|
           next unless hotspot.visible
-          
+
           bounds = hotspot.bounds
           highlight_rect = RL::Rectangle.new(
             x: bounds.x + camera_offset.x,
@@ -249,10 +248,10 @@ module PointClickEngine
             width: bounds.width,
             height: bounds.height
           )
-          
+
           # Draw filled rectangle with pulsing transparency
           RL.draw_rectangle_rec(highlight_rect, RL::Color.new(r: 255, g: 215, b: 0, a: pulse_alpha))
-          
+
           # Draw outline
           RL.draw_rectangle_lines_ex(highlight_rect, 3, RL::Color.new(r: 255, g: 215, b: 0, a: 255))
         end)
@@ -377,7 +376,6 @@ module PointClickEngine
         @system_manager.menu_system.try(&.show_main_menu)
       end
 
-
       def menu_system
         @system_manager.menu_system
       end
@@ -391,16 +389,24 @@ module PointClickEngine
       # Scene management
       def change_scene(scene_name : String)
         puts "[Engine] Changing scene to: #{scene_name}"
-        
+
         # Save current player before changing scene
         current_player = player
-        
+
         result = @scene_manager.change_scene(scene_name)
         case result
         when .success?
           @current_scene = result.value
           puts "[Engine] Scene changed successfully"
-          
+
+          # Update camera bounds for the new scene
+          if scene = @current_scene
+            scene_width = scene.background.try(&.width) || @window_width
+            scene_height = scene.background.try(&.height) || @window_height
+            camera_manager.set_scene_bounds(scene_width, scene_height)
+            puts "[Engine] Updated camera bounds to #{scene_width}x#{scene_height}"
+          end
+
           # Always assign player to new scene (either pending or current)
           if pending = @pending_player
             puts "[Engine] Assigning pending player to scene"
@@ -412,7 +418,7 @@ module PointClickEngine
           else
             puts "[Engine] No player to assign"
           end
-          
+
           puts "[Engine] Current scene player: #{@current_scene.try(&.player) ? "exists" : "nil"}"
           @current_scene.try(&.on_enter)
         when .failure?

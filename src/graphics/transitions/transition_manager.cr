@@ -56,8 +56,8 @@ module PointClickEngine
           return unless @active
 
           @progress += dt / @duration
-          
-          if (Time.monotonic.total_milliseconds.to_i % 300) < 20  # Print periodically
+
+          if (Time.monotonic.total_milliseconds.to_i % 300) < 20 # Print periodically
             puts "[TransitionManager] Progress: #{@progress.round(2)}, Active: #{@active}"
           end
 
@@ -102,7 +102,7 @@ module PointClickEngine
           end
 
           puts "[TransitionManager] render_with_transition called, active=#{@active}"
-          
+
           return yield unless texture = @render_texture
           return yield unless effect = @current_effect
 

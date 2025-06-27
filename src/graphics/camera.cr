@@ -18,6 +18,10 @@ module PointClickEngine
       property edge_scroll_speed : Float32 = 300.0f32
       property edge_scroll_enabled : Bool = true
 
+      # Camera transform properties
+      property zoom : Float32 = 1.0f32
+      property rotation : Float32 = 0.0f32
+
       # Camera bounds (calculated from scene and viewport)
       property min_x : Float32 = 0.0f32
       property max_x : Float32 = 0.0f32

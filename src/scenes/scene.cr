@@ -121,7 +121,7 @@ module PointClickEngine
           found_player = @characters.find { |char| char.name == name }.as?(Characters::Player)
           @player = found_player if found_player
         end
-        
+
         # Setup navigation if enabled
         if @enable_pathfinding && @walkable_area
           setup_navigation
@@ -266,7 +266,7 @@ module PointClickEngine
         if nm = @navigation_manager
           return nm.find_path(start_x.to_i, start_y.to_i, end_x.to_i, end_y.to_i)
         end
-        
+
         # Fallback to legacy pathfinder
         @pathfinder.try(&.find_path(start_x, start_y, end_x, end_y))
       end
@@ -342,7 +342,7 @@ module PointClickEngine
       def update(dt : Float32)
         # Update player
         @player.try(&.update(dt))
-        
+
         # Update all objects
         @objects.each(&.update(dt))
 

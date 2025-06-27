@@ -42,13 +42,14 @@ The engine follows a **component-based architecture** with these key principles:
 ### Core Structure
 ```
 Engine (Main Coordinator)
-  ├── SystemManager (Subsystem Management)
-  │     ├── SceneManager
-  │     ├── InputManager
-  │     ├── RenderManager
-  │     └── UIManager
-  ├── Camera (Viewport Control)
-  └── SaveSystem (Persistence)
+  └── SystemManager (Subsystem Management)
+        ├── SceneManager
+        ├── InputManager
+        ├── RenderManager
+        ├── UIManager
+        ├── CameraManager (Advanced Camera System)
+        ├── AudioManager
+        └── Other Managers...
 ```
 
 ### Key Design Patterns
@@ -178,6 +179,36 @@ registry.register_function("custom_function", ->lua_custom_function)
 3. Use in Lua:
 ```lua
 result = custom_function(10.5, 20.3)
+```
+
+### Working with Camera Effects
+
+Apply various camera effects through CameraManager:
+```crystal
+# Access camera manager
+camera_manager = engine.camera_manager
+
+# Apply shake effect (earthquake)
+camera_manager.apply_effect(:shake, 
+  intensity: 20.0f32, 
+  duration: 2.0f32
+)
+
+# Smooth zoom
+camera_manager.apply_effect(:zoom, 
+  target: 2.0f32, 
+  duration: 1.5f32
+)
+
+# Follow character
+camera_manager.apply_effect(:follow,
+  target: player,
+  smooth: true,
+  deadzone: 50.0f32
+)
+
+# Remove all effects
+camera_manager.remove_all_effects
 ```
 
 ### Implementing a New UI Element
