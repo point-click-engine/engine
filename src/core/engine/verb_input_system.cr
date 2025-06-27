@@ -64,9 +64,11 @@ module PointClickEngine
           input_manager = @engine.input_manager
 
           # Handle left click - execute current verb
-          if !input_manager.mouse_consumed? && input_manager.mouse_button_pressed?(Raylib::MouseButton::Left)
-            handle_verb_click(scene, player, world_mouse)
-            input_manager.consume_mouse_input
+          if input_manager.mouse_button_pressed?(Raylib::MouseButton::Left)
+            if !input_manager.mouse_consumed?
+              handle_verb_click(scene, player, world_mouse)
+              input_manager.consume_mouse_input
+            end
           end
 
           # Handle right click - always look (this works even if dialogs are up)
@@ -111,8 +113,10 @@ module PointClickEngine
 
           # Check for hotspot
           if hotspot = scene.get_hotspot_at(pos)
+            puts "[VerbInput] Found hotspot: #{hotspot.name}"
             execute_verb_on_hotspot(verb, hotspot, pos, player)
           elsif character = scene.get_character_at(pos)
+            puts "[VerbInput] Found character: #{character.name}"
             execute_verb_on_character(verb, character, player)
           else
             # No hotspot or character - handle walk
@@ -252,10 +256,13 @@ module PointClickEngine
         end
 
         private def handle_walk_to(player : Characters::Character, scene : Scenes::Scene, target : RL::Vector2)
+          puts "[VerbInput] handle_walk_to - player type: #{player.class.name}"
           # Always use handle_click if available, let it handle pathfinding
           if player.responds_to?(:handle_click)
+            puts "[VerbInput] Player responds to handle_click, calling it"
             player.handle_click(target, scene)
           else
+            puts "[VerbInput] Player doesn't respond to handle_click, calling walk_to"
             player.walk_to(target)
           end
         end
@@ -269,7 +276,11 @@ module PointClickEngine
         end
 
         private def setup_default_handlers
-          # Games can override these handlers as needed
+          # Default movement handler - allows click-to-move when no verb is selected
+          # or when using a movement verb like Walk
+          @verb_handlers[UI::VerbType::Walk] = ->(hotspot : Scenes::Hotspot, position : RL::Vector2) {
+            # Movement is handled below in the main input processing
+          }
         end
 
         # Handle keyboard input for debug and UI toggles
@@ -282,6 +293,16 @@ module PointClickEngine
 
           if input_manager.key_pressed?(Raylib::KeyboardKey::I)
             @engine.inventory.toggle_visibility
+          end
+
+          # Tab to highlight hotspots
+          if input_manager.key_pressed?(Raylib::KeyboardKey::Tab)
+            @engine.toggle_hotspot_highlight
+          end
+          
+          # F1 for debug mode
+          if input_manager.key_pressed?(Raylib::KeyboardKey::F1)
+            Core::Engine.debug_mode = !Core::Engine.debug_mode
           end
 
           # Verb selection with number keys (these are verb-specific, not global shortcuts)

@@ -257,9 +257,9 @@ module PointClickEngine
         enhanced_brightness = (255 * (0.7 + 0.3 * pulse_intensity)).to_u8
 
         RL::Color.new(
-          r: Math.min(255, (color.r * (0.8 + 0.4 * pulse_intensity)).to_u8),
-          g: Math.min(255, (color.g * (0.8 + 0.4 * pulse_intensity)).to_u8),
-          b: Math.min(255, (color.b * (0.8 + 0.4 * pulse_intensity)).to_u8),
+          r: Math.min(255, (color.r * (0.8 + 0.4 * pulse_intensity)).to_i).to_u8,
+          g: Math.min(255, (color.g * (0.8 + 0.4 * pulse_intensity)).to_i).to_u8,
+          b: Math.min(255, (color.b * (0.8 + 0.4 * pulse_intensity)).to_i).to_u8,
           a: color.a
         )
       end

@@ -37,6 +37,9 @@ module PointClickEngine
       # Currently active scene
       getter current_scene : Scenes::Scene?
 
+      # Starting scene name
+      property start_scene : String?
+
       # Collection of all loaded scenes
       getter scenes : Hash(String, Scenes::Scene) = {} of String => Scenes::Scene
 

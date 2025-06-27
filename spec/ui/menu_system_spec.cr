@@ -284,4 +284,59 @@ describe PointClickEngine::UI::MenuSystem do
       menu_system.execute_current_action
     end
   end
+
+  describe "menu callback integration" do
+    it "executes new game callback when New Game is selected" do
+      menu_system = PointClickEngine::UI::MenuSystem.new
+      callback_called = false
+
+      menu_system.on_new_game = -> {
+        callback_called = true
+      }
+
+      menu_system.show("main")
+      new_game_index = menu_system.menu_items["main"].index("New Game") || -1
+      menu_system.navigator.navigate_to(new_game_index)
+      menu_system.execute_current_action
+
+      callback_called.should be_true
+    end
+
+    it "allows callbacks to be nil without crashing" do
+      menu_system = PointClickEngine::UI::MenuSystem.new
+      menu_system.on_new_game = nil
+
+      menu_system.show("main")
+      new_game_index = menu_system.menu_items["main"].index("New Game") || -1
+      menu_system.navigator.navigate_to(new_game_index)
+      
+      # Should not crash when callback is nil
+      menu_system.execute_current_action
+    end
+
+    it "calls appropriate callback for each main menu action" do
+      menu_system = PointClickEngine::UI::MenuSystem.new
+      callbacks_called = [] of String
+
+      menu_system.on_new_game = -> { callbacks_called << "new_game" }
+      menu_system.on_load_game = -> { callbacks_called << "load_game" }
+      menu_system.on_options = -> { callbacks_called << "options" }
+      menu_system.on_quit = -> { callbacks_called << "quit" }
+
+      menu_system.show("main")
+      
+      # Test New Game
+      new_game_index = menu_system.menu_items["main"].index("New Game") || -1
+      menu_system.navigator.navigate_to(new_game_index)
+      menu_system.execute_current_action
+
+      # Test Quit
+      quit_index = menu_system.menu_items["main"].index("Quit") || -1
+      menu_system.navigator.navigate_to(quit_index)
+      menu_system.execute_current_action
+
+      callbacks_called.should contain("new_game")
+      callbacks_called.should contain("quit")
+    end
+  end
 end

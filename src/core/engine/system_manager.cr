@@ -62,6 +62,9 @@ module PointClickEngine
           # Initialize transition manager
           @transition_manager = Graphics::TransitionManager.new(width, height)
 
+          # Initialize menu system
+          @menu_system = UI::MenuSystem.new
+
           # Initialize scripting engine
           begin
             @script_engine = Scripting::ScriptEngine.new
@@ -72,6 +75,41 @@ module PointClickEngine
           end
         end
 
+        # Setup menu callbacks with engine reference
+        def setup_menu_callbacks(engine)
+          return unless @menu_system
+
+          # New Game callback
+          @menu_system.not_nil!.on_new_game = -> {
+            engine.start_new_game
+          }
+
+          # Load Game callback  
+          @menu_system.not_nil!.on_load_game = -> {
+            @menu_system.not_nil!.switch_to_menu("load")
+          }
+
+          # Save Game callback
+          @menu_system.not_nil!.on_save_game = -> {
+            engine.save_game("quicksave")
+          }
+
+          # Options callback
+          @menu_system.not_nil!.on_options = -> {
+            @menu_system.not_nil!.switch_to_menu("options")
+          }
+
+          # Resume callback
+          @menu_system.not_nil!.on_resume = -> {
+            @menu_system.not_nil!.hide
+          }
+
+          # Quit callback
+          @menu_system.not_nil!.on_quit = -> {
+            engine.stop
+          }
+        end
+
         # Update all systems
         def update_systems(dt : Float32)
           @achievement_manager.try(&.update(dt))
@@ -80,6 +118,7 @@ module PointClickEngine
           @gui.try(&.update(dt))
           @dialog_manager.try(&.update(dt))
           @transition_manager.try(&.update(dt))
+          @menu_system.try(&.update(dt))
           # @event_system.update # No update method
         end
 

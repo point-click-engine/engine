@@ -107,6 +107,9 @@ module PointClickEngine
         # Initialize subsystems
         @system_manager.initialize_systems(@window_width, @window_height)
 
+        # Setup menu callbacks via SystemManager
+        @system_manager.setup_menu_callbacks(self)
+
         # Initialize input handler
         @input_handler = EngineComponents::InputHandler.new
 
@@ -155,6 +158,9 @@ module PointClickEngine
 
       # Updates all game systems
       def update(dt : Float32)
+        # Update input manager first
+        @input_manager.process_input(dt)
+        
         # Handle input - use verb input if enabled, otherwise standard input
         if @verb_input_system && @verb_input_system.not_nil!.enabled
           @verb_input_system.not_nil!.process_input(@current_scene, player, display_manager, @camera)
@@ -190,6 +196,11 @@ module PointClickEngine
         # Render scene with camera
         @current_scene.try(&.draw(@camera))
 
+        # Render highlighted hotspots if enabled
+        if @render_coordinator.hotspot_highlight_enabled && @current_scene
+          render_hotspot_highlights(@current_scene.not_nil!)
+        end
+
         # Render UI and overlays
         @system_manager.dialog_manager.try(&.draw)
         @inventory.draw
@@ -199,6 +210,36 @@ module PointClickEngine
         if @@debug_mode
           render_debug_info
         end
+      end
+
+      # Render hotspot highlights
+      private def render_hotspot_highlights(scene : Scenes::Scene)
+        # Get camera offset if camera exists
+        camera_offset = @camera ? RL::Vector2.new(x: -@camera.not_nil!.position.x, y: -@camera.not_nil!.position.y) : RL::Vector2.new(x: 0, y: 0)
+        
+        # Calculate pulsing effect
+        time = RL.get_time
+        pulse = ((Math.sin(time * 3.0) + 1.0) / 2.0).to_f32
+        pulse_alpha = (80 + pulse * 40).to_u8
+        
+        # Draw each hotspot with golden highlight
+        scene.hotspot_manager.try(&.hotspots.each do |hotspot|
+          next unless hotspot.visible
+          
+          bounds = hotspot.bounds
+          highlight_rect = RL::Rectangle.new(
+            x: bounds.x + camera_offset.x,
+            y: bounds.y + camera_offset.y,
+            width: bounds.width,
+            height: bounds.height
+          )
+          
+          # Draw filled rectangle with pulsing transparency
+          RL.draw_rectangle_rec(highlight_rect, RL::Color.new(r: 255, g: 215, b: 0, a: pulse_alpha))
+          
+          # Draw outline
+          RL.draw_rectangle_lines_ex(highlight_rect, 3, RL::Color.new(r: 255, g: 215, b: 0, a: 255))
+        end)
       end
 
       # Renders debug information
@@ -320,26 +361,43 @@ module PointClickEngine
         @system_manager.menu_system.try(&.show_main_menu)
       end
 
+
       def menu_system
         @system_manager.menu_system
       end
 
       def toggle_hotspot_highlight
-        # Toggle hotspot highlighting in current scene
-        @current_scene.try(&.toggle_hotspot_highlight)
+        # Toggle hotspot highlighting in render coordinator
+        @render_coordinator.hotspot_highlight_enabled = !@render_coordinator.hotspot_highlight_enabled
+        puts "[Engine] Hotspot highlighting: #{@render_coordinator.hotspot_highlight_enabled ? "ON" : "OFF"}"
       end
 
       # Scene management
       def change_scene(scene_name : String)
+        puts "[Engine] Changing scene to: #{scene_name}"
+        
+        # Save current player before changing scene
+        current_player = player
+        
         result = @scene_manager.change_scene(scene_name)
         case result
         when .success?
           @current_scene = result.value
-          # Assign pending player if any
+          puts "[Engine] Scene changed successfully"
+          
+          # Always assign player to new scene (either pending or current)
           if pending = @pending_player
+            puts "[Engine] Assigning pending player to scene"
             @current_scene.try { |scene| scene.player = pending }
             @pending_player = nil
+          elsif current_player
+            puts "[Engine] Transferring current player to new scene"
+            @current_scene.try { |scene| scene.player = current_player }
+          else
+            puts "[Engine] No player to assign"
           end
+          
+          puts "[Engine] Current scene player: #{@current_scene.try(&.player) ? "exists" : "nil"}"
           @current_scene.try(&.on_enter)
         when .failure?
           raise "Failed to change scene: #{result.error.message}"
@@ -403,6 +461,22 @@ module PointClickEngine
         @window_height = height
         RL.set_window_size(width, height)
         @camera.try(&.set_bounds(0, 0, width, height))
+      end
+
+      # Start a new game
+      def start_new_game
+        puts "[Engine] Starting new game"
+        # Hide the menu
+        @system_manager.menu_system.try(&.hide)
+        @system_manager.menu_system.try(&.enter_game)
+
+        # Load the starting scene from scene manager
+        if scene_name = @scene_manager.start_scene
+          puts "[Engine] Changing to start scene: #{scene_name}"
+          change_scene(scene_name)
+        else
+          puts "Warning: No start scene defined in game config"
+        end
       end
 
       # Auto-save handling

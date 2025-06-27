@@ -306,6 +306,9 @@ module PointClickEngine
         # Set target FPS
         engine.target_fps = window.try(&.target_fps) || 60
 
+        # Set start scene
+        engine.scene_manager.start_scene = self.start_scene
+
         # Set up update callback for managers
         engine.on_update = ->(dt : Float32) do
           if gsm = engine.game_state_manager

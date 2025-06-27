@@ -128,7 +128,10 @@ module PointClickEngine
         @background_path = path
         @scale = scale
         @background_renderer.not_nil!.load_background(path)
-        @background_renderer.not_nil!.background_scale = scale
+        # Use Fit mode to maintain aspect ratio with letterboxing
+        if bg = @background_renderer
+          bg.set_scaling_mode(BackgroundRenderer::ScalingMode::Fit)
+        end
         # Legacy support
         @background = @background_renderer.try(&.background_texture)
       end
@@ -137,7 +140,10 @@ module PointClickEngine
         @background_path = original_path
         @scale = scale
         @background_renderer.not_nil!.load_background(path)
-        @background_renderer.not_nil!.background_scale = scale
+        # Use Fit mode to maintain aspect ratio with letterboxing
+        if bg = @background_renderer
+          bg.set_scaling_mode(BackgroundRenderer::ScalingMode::Fit)
+        end
         # Legacy support
         @background = @background_renderer.try(&.background_texture)
       end
@@ -326,6 +332,9 @@ module PointClickEngine
 
       # Update scene
       def update(dt : Float32)
+        # Update player
+        @player.try(&.update(dt))
+        
         # Update all objects
         @objects.each(&.update(dt))
 
@@ -348,6 +357,9 @@ module PointClickEngine
       def draw(camera : Graphics::Camera? = nil)
         # Calculate camera offset
         camera_offset = camera ? RL::Vector2.new(x: -camera.position.x, y: -camera.position.y) : RL::Vector2.new(x: 0, y: 0)
+
+        # Clear scene area with black for letterboxing
+        RL.draw_rectangle(0, 0, @logical_width, @logical_height, RL::BLACK)
 
         # Draw background
         if camera

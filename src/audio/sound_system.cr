@@ -369,9 +369,7 @@ module PointClickEngine
           @music_manager.finalize
 
           {% if flag?(:with_audio) %}
-            if RAudio.is_audio_device_ready?
-              RAudio.close_audio_device
-            end
+            RAudio.close_audio_device
           {% end %}
         rescue ex
           # Ignore errors during finalization
