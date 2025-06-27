@@ -9,65 +9,18 @@ require "./error_handling"
 require "./interfaces"
 require "../graphics/camera"
 require "../characters/character"
+require "./camera_effects/camera_enums"
+require "./camera_effects/camera_state"
+require "./camera_effects/camera_effect"
+require "./camera_effects/shake_effect"
+require "./camera_effects/zoom_effect"
+require "./camera_effects/sway_effect"
+require "./camera_effects/rotation_effect"
+require "./camera_effects/pan_effect"
+require "./camera_effects/follow_effect"
 
 module PointClickEngine
   module Core
-    # Camera effect types
-    enum CameraEffectType
-      Shake
-      Zoom
-      Pan
-      Follow
-      Sway
-      Rotation
-    end
-
-    # Camera transition easing types
-    enum CameraEasing
-      Linear
-      EaseIn
-      EaseOut
-      EaseInOut
-      Bounce
-      Elastic
-    end
-
-    # Represents an active camera effect
-    class CameraEffect
-      property type : CameraEffectType
-      property duration : Float32
-      property elapsed : Float32 = 0.0f32
-      property parameters : Hash(String, Float32 | Characters::Character | Bool)
-      property easing : CameraEasing = CameraEasing::Linear
-
-      def initialize(@type : CameraEffectType, @duration : Float32, @parameters : Hash(String, Float32 | Characters::Character | Bool))
-      end
-
-      def active?
-        @duration <= 0 || @elapsed < @duration
-      end
-
-      def progress
-        return 1.0f32 if @duration <= 0
-        (@elapsed / @duration).clamp(0.0f32, 1.0f32)
-      end
-
-      def update(dt : Float32)
-        @elapsed += dt
-      end
-    end
-
-    # Camera state for saving/restoring
-    struct CameraState
-      property position : RL::Vector2
-      property zoom : Float32
-      property rotation : Float32
-      property active_camera : String
-
-      def initialize(@position : RL::Vector2, @zoom : Float32, @rotation : Float32, @active_camera : String)
-      end
-    end
-
     # Manages all camera operations including multiple cameras and effects
     #
     # The CameraManager provides a centralized system for camera control,
@@ -227,8 +180,40 @@ module PointClickEngine
         end
 
         duration = effect_params["duration"]?.as?(Float32) || 0.0f32
-        effect = CameraEffect.new(effect_type, duration, effect_params)
-
+        
+        # Create specific effect instances
+        effect = case type
+        when :shake
+          intensity = effect_params["intensity"]?.as?(Float32) || 10.0f32
+          frequency = effect_params["frequency"]?.as?(Float32) || 10.0f32
+          ShakeEffect.new(intensity, frequency, duration)
+        when :zoom
+          target = effect_params["target"]?.as?(Float32) || effect_params["factor"]?.as?(Float32) || 1.0f32
+          ZoomEffect.new(target, duration)
+        when :sway
+          amplitude = effect_params["amplitude"]?.as?(Float32) || 20.0f32
+          frequency = effect_params["frequency"]?.as?(Float32) || 0.5f32
+          vertical_factor = effect_params["vertical_factor"]?.as?(Float32) || 0.5f32
+          rotation_amplitude = effect_params["rotation_amplitude"]?.as?(Float32) || 2.0f32
+          SwayEffect.new(amplitude, frequency, vertical_factor, rotation_amplitude, duration)
+        when :rotation
+          target = effect_params["target"]?.as?(Float32) || 0.0f32
+          RotationEffect.new(target, duration)
+        when :pan
+          target_x = effect_params["target_x"]?.as?(Float32) || @current_camera.position.x
+          target_y = effect_params["target_y"]?.as?(Float32) || @current_camera.position.y
+          PanEffect.new(target_x, target_y, duration)
+        when :follow
+          target = effect_params["target"]?.as?(Characters::Character)
+          return unless target  # Can't create follow effect without target
+          smooth = effect_params["smooth"]?.as?(Bool) || true
+          deadzone = effect_params["deadzone"]?.as?(Float32) || 50.0f32
+          speed = effect_params["speed"]?.as?(Float32) || 5.0f32
+          FollowEffect.new(target, smooth, deadzone, speed, duration)
+        else
+          CameraEffect.new(effect_type, duration, effect_params)
+        end
+        
         @active_effects << effect
       end
 
@@ -494,120 +479,158 @@ module PointClickEngine
       end
 
       private def apply_shake_effect(effect : CameraEffect)
-        intensity = effect.parameters["intensity"]?.as?(Float32) || 10.0f32
-        frequency = effect.parameters["frequency"]?.as?(Float32) || 10.0f32
+        # If it's a ShakeEffect instance, use its method
+        if effect.is_a?(ShakeEffect)
+          shake_offset = effect.calculate_shake_offset
+          @effect_offset.x += shake_offset.x
+          @effect_offset.y += shake_offset.y
+        else
+          # Fallback to original logic for backward compatibility
+          intensity = effect.parameters["intensity"]?.as?(Float32) || 10.0f32
+          frequency = effect.parameters["frequency"]?.as?(Float32) || 10.0f32
 
-        # Decay intensity over time
-        current_intensity = intensity * (1.0f32 - effect.progress)
+          # Decay intensity over time
+          current_intensity = intensity * (1.0f32 - effect.progress)
 
-        # Generate shake offset
-        time_factor = effect.elapsed * frequency
-        offset_x = Math.sin(time_factor * 2.1f32) * current_intensity * (Random.rand - 0.5f32) * 2
-        offset_y = Math.cos(time_factor * 1.7f32) * current_intensity * (Random.rand - 0.5f32) * 2
+          # Generate shake offset
+          time_factor = effect.elapsed * frequency
+          offset_x = Math.sin(time_factor * 2.1f32) * current_intensity * (Random.rand - 0.5f32) * 2
+          offset_y = Math.cos(time_factor * 1.7f32) * current_intensity * (Random.rand - 0.5f32) * 2
 
-        @effect_offset.x += offset_x.to_f32
-        @effect_offset.y += offset_y.to_f32
+          @effect_offset.x += offset_x.to_f32
+          @effect_offset.y += offset_y.to_f32
+        end
       end
 
       private def apply_zoom_effect(effect : CameraEffect)
-        # Support both "target" and "factor" parameter names
-        target = effect.parameters["target"]?.as?(Float32) ||
-                 effect.parameters["factor"]?.as?(Float32) || 1.0f32
+        if effect.is_a?(ZoomEffect)
+          @effect_zoom = effect.calculate_zoom_factor
+        else
+          # Fallback to original logic for backward compatibility
+          # Support both "target" and "factor" parameter names
+          target = effect.parameters["target"]?.as?(Float32) ||
+                   effect.parameters["factor"]?.as?(Float32) || 1.0f32
 
-        # Interpolate zoom
-        t = effect.progress
-        eased_t = apply_easing(t, CameraEasing::EaseInOut)
+          # Interpolate zoom
+          t = effect.progress
+          eased_t = apply_easing(t, CameraEasing::EaseInOut)
 
-        @effect_zoom = 1.0f32 + (target - 1.0f32) * eased_t
+          @effect_zoom = 1.0f32 + (target - 1.0f32) * eased_t
+        end
       end
 
       private def apply_pan_effect(effect : CameraEffect)
-        target_x = effect.parameters["target_x"]?.as?(Float32) || @current_camera.position.x
-        target_y = effect.parameters["target_y"]?.as?(Float32) || @current_camera.position.y
+        if effect.is_a?(PanEffect)
+          @current_camera.position = effect.calculate_position(@current_camera.position)
+        else
+          # Fallback to original logic for backward compatibility
+          target_x = effect.parameters["target_x"]?.as?(Float32) || @current_camera.position.x
+          target_y = effect.parameters["target_y"]?.as?(Float32) || @current_camera.position.y
 
-        # Store starting position on first application
-        unless effect.parameters.has_key?("start_x")
-          effect.parameters["start_x"] = @current_camera.position.x
-          effect.parameters["start_y"] = @current_camera.position.y
+          # Store starting position on first application
+          unless effect.parameters.has_key?("start_x")
+            effect.parameters["start_x"] = @current_camera.position.x
+            effect.parameters["start_y"] = @current_camera.position.y
+          end
+
+          start_x = effect.parameters["start_x"]?.as?(Float32) || @current_camera.position.x
+          start_y = effect.parameters["start_y"]?.as?(Float32) || @current_camera.position.y
+
+          # Interpolate position
+          t = effect.progress
+          eased_t = apply_easing(t, CameraEasing::EaseInOut)
+
+          new_x = start_x + (target_x - start_x) * eased_t
+          new_y = start_y + (target_y - start_y) * eased_t
+
+          @current_camera.position = RL::Vector2.new(x: new_x, y: new_y)
         end
-
-        start_x = effect.parameters["start_x"]?.as?(Float32) || @current_camera.position.x
-        start_y = effect.parameters["start_y"]?.as?(Float32) || @current_camera.position.y
-
-        # Interpolate position
-        t = effect.progress
-        eased_t = apply_easing(t, CameraEasing::EaseInOut)
-
-        new_x = start_x + (target_x - start_x) * eased_t
-        new_y = start_y + (target_y - start_y) * eased_t
-
-        @current_camera.position = RL::Vector2.new(x: new_x, y: new_y)
       end
 
       private def apply_follow_effect(effect : CameraEffect)
-        return unless target = effect.parameters["target"]?.as?(Characters::Character)
-
-        smooth = effect.parameters["smooth"]?.as?(Bool) || true
-        deadzone = effect.parameters["deadzone"]?.as?(Float32) || 50.0f32
-        speed = effect.parameters["speed"]?.as?(Float32) || 5.0f32
-
-        target_pos = target.position
-        center_x = target_pos.x - @viewport_width / 2
-        center_y = target_pos.y - @viewport_height / 2
-
-        if smooth
-          # Smooth following with deadzone
-          distance = Math.sqrt(
-            (center_x - @current_camera.position.x)**2 +
-            (center_y - @current_camera.position.y)**2
-          )
-
-          if distance > deadzone
-            # Move towards target
-            direction_x = (center_x - @current_camera.position.x) / distance
-            direction_y = (center_y - @current_camera.position.y) / distance
-
-            move_distance = speed * 0.016f32 * (distance - deadzone)
-
-            @current_camera.position.x += direction_x * move_distance
-            @current_camera.position.y += direction_y * move_distance
-          end
+        if effect.is_a?(FollowEffect)
+          delta = effect.calculate_follow_delta(@current_camera.position, @viewport_width, @viewport_height)
+          @current_camera.position.x += delta.x
+          @current_camera.position.y += delta.y
         else
-          # Instant following
-          @current_camera.position = RL::Vector2.new(x: center_x, y: center_y)
+          # Fallback to original logic for backward compatibility
+          return unless target = effect.parameters["target"]?.as?(Characters::Character)
+
+          smooth = effect.parameters["smooth"]?.as?(Bool) || true
+          deadzone = effect.parameters["deadzone"]?.as?(Float32) || 50.0f32
+          speed = effect.parameters["speed"]?.as?(Float32) || 5.0f32
+
+          target_pos = target.position
+          center_x = target_pos.x - @viewport_width / 2
+          center_y = target_pos.y - @viewport_height / 2
+
+          if smooth
+            # Smooth following with deadzone
+            distance = Math.sqrt(
+              (center_x - @current_camera.position.x)**2 +
+              (center_y - @current_camera.position.y)**2
+            )
+
+            if distance > deadzone
+              # Move towards target
+              direction_x = (center_x - @current_camera.position.x) / distance
+              direction_y = (center_y - @current_camera.position.y) / distance
+
+              move_distance = speed * 0.016f32 * (distance - deadzone)
+
+              @current_camera.position.x += direction_x * move_distance
+              @current_camera.position.y += direction_y * move_distance
+            end
+          else
+            # Instant following
+            @current_camera.position = RL::Vector2.new(x: center_x, y: center_y)
+          end
         end
       end
 
       private def apply_sway_effect(effect : CameraEffect)
-        amplitude = effect.parameters["amplitude"]?.as?(Float32) || 20.0f32
-        frequency = effect.parameters["frequency"]?.as?(Float32) || 0.5f32
-        vertical_factor = effect.parameters["vertical_factor"]?.as?(Float32) || 0.5f32
+        if effect.is_a?(SwayEffect)
+          offset, rotation = effect.calculate_sway
+          @effect_offset.x += offset.x
+          @effect_offset.y += offset.y
+          @effect_rotation += rotation
+        else
+          # Fallback to original logic for backward compatibility
+          amplitude = effect.parameters["amplitude"]?.as?(Float32) || 20.0f32
+          frequency = effect.parameters["frequency"]?.as?(Float32) || 0.5f32
+          vertical_factor = effect.parameters["vertical_factor"]?.as?(Float32) || 0.5f32
 
-        # Create wave motion
-        time = effect.elapsed * frequency
+          # Create wave motion
+          time = effect.elapsed * frequency
 
-        # Horizontal sway (main motion)
-        sway_x = Math.sin(time) * amplitude
+          # Horizontal sway (main motion)
+          sway_x = Math.sin(time) * amplitude
 
-        # Vertical sway (secondary motion, like boat rocking)
-        sway_y = Math.sin(time * 2.1f32) * amplitude * vertical_factor
+          # Vertical sway (secondary motion, like boat rocking)
+          sway_y = Math.sin(time * 2.1f32) * amplitude * vertical_factor
 
-        @effect_offset.x += sway_x.to_f32
-        @effect_offset.y += sway_y.to_f32
+          @effect_offset.x += sway_x.to_f32
+          @effect_offset.y += sway_y.to_f32
 
-        # Optional: Add slight rotation for more realistic boat effect
-        rotation_amplitude = effect.parameters["rotation_amplitude"]?.as?(Float32) || 2.0f32
-        @effect_rotation += (Math.sin(time * 0.7f32) * rotation_amplitude).to_f32
+          # Optional: Add slight rotation for more realistic boat effect
+          rotation_amplitude = effect.parameters["rotation_amplitude"]?.as?(Float32) || 2.0f32
+          @effect_rotation += (Math.sin(time * 0.7f32) * rotation_amplitude).to_f32
+        end
       end
 
       private def apply_rotation_effect(effect : CameraEffect)
-        target = effect.parameters["target"]?.as?(Float32) || 0.0f32
+        if effect.is_a?(RotationEffect)
+          @effect_rotation = effect.calculate_rotation
+        else
+          # Fallback to original logic for backward compatibility
+          target = effect.parameters["target"]?.as?(Float32) || 0.0f32
 
-        # Interpolate rotation
-        t = effect.progress
-        eased_t = apply_easing(t, CameraEasing::EaseInOut)
+          # Interpolate rotation
+          t = effect.progress
+          eased_t = apply_easing(t, CameraEasing::EaseInOut)
 
-        @effect_rotation = target * eased_t
+          @effect_rotation = target * eased_t
+        end
       end
 
       private def apply_effects_to_camera
