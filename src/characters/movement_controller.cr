@@ -301,8 +301,8 @@ module PointClickEngine
           puts "[PATHFINDING] At #{@character.position}, moving to waypoint #{@current_path_index}: #{current_waypoint}, distance: #{fresh_distance}, threshold: #{PATHFINDING_WAYPOINT_THRESHOLD}"
         end
 
-        # Check if we reached the current waypoint using fresh distance
-        if fresh_distance <= PATHFINDING_WAYPOINT_THRESHOLD
+        # Check if we're very close to the waypoint (use arrival threshold, not waypoint threshold)
+        if fresh_distance <= MOVEMENT_ARRIVAL_THRESHOLD
           if Core::DebugConfig.should_log?(:pathfinding)
             puts "[PATHFINDING] Reached waypoint #{@current_path_index}, advancing..."
           end
@@ -362,7 +362,7 @@ module PointClickEngine
         update_character_scale_if_needed
 
         # Update sprite position
-        @character.sprite_data.try(&.position = @character.position)
+        @character.sprite_controller.update_position(@character.position)
       end
 
       private def update_character_scale_if_needed
@@ -404,7 +404,8 @@ module PointClickEngine
         new_direction = target.x < @character.position.x ? Direction::Left : Direction::Right
 
         # Update character direction and animation if changed or not walking
-        if new_direction != @character.direction || !@character.current_animation.starts_with?("walk")
+        current_anim = @character.animation_controller.try(&.current_animation) || ""
+        if new_direction != @character.direction || !current_anim.starts_with?("walk")
           @character.direction = new_direction
           play_walking_animation(new_direction)
         end
@@ -419,15 +420,15 @@ module PointClickEngine
                          else              "walk_right" # Default fallback
                          end
 
-        @character.play_animation(animation_name) if @character.animations.has_key?(animation_name)
+        @character.play_animation(animation_name) if @character.animation_controller.try(&.has_animation?(animation_name))
       end
 
       private def play_idle_animation
         base_idle = @character.direction == Direction::Left ? "idle_left" : "idle_right"
 
-        if @character.animations.has_key?(base_idle)
+        if @character.animation_controller.try(&.has_animation?(base_idle))
           @character.play_animation(base_idle)
-        elsif @character.animations.has_key?("idle")
+        elsif @character.animation_controller.try(&.has_animation?("idle"))
           @character.play_animation("idle")
         end
       end

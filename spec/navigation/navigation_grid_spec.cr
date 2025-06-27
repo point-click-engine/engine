@@ -1,9 +1,9 @@
 require "../spec_helper"
 
-describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
+describe PointClickEngine::Navigation::NavigationGrid do
   describe "#initialize" do
     it "creates a grid with specified dimensions" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 15, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 15, 32)
 
       grid.width.should eq(10)
       grid.height.should eq(15)
@@ -11,7 +11,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
     end
 
     it "initializes all cells as walkable by default" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(5, 5, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(5, 5, 16)
 
       (0...5).each do |y|
         (0...5).each do |x|
@@ -23,7 +23,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
 
   describe "#world_to_grid" do
     it "converts world coordinates to grid coordinates" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 20)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 20)
 
       # Test various points
       grid_x, grid_y = grid.world_to_grid(0, 0)
@@ -40,7 +40,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
     end
 
     it "handles negative coordinates" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 20)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 20)
 
       grid_x, grid_y = grid.world_to_grid(-10, -10)
       # Crystal integer division truncates towards zero, so -10/20 = 0
@@ -51,7 +51,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
 
   describe "#grid_to_world" do
     it "converts grid coordinates to world center coordinates" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 20)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 20)
 
       # Grid cells are centered
       world_x, world_y = grid.grid_to_world(0, 0)
@@ -66,7 +66,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
 
   describe "#set_walkable and #is_walkable?" do
     it "allows setting and checking walkability of cells" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(5, 5, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(5, 5, 16)
 
       # Set some cells as non-walkable
       grid.set_walkable(2, 2, false)
@@ -79,7 +79,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
     end
 
     it "returns false for out-of-bounds coordinates" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(5, 5, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(5, 5, 16)
 
       grid.is_walkable?(-1, 0).should be_false
       grid.is_walkable?(0, -1).should be_false
@@ -92,7 +92,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
     it "creates a grid based on scene dimensions" do
       scene = PointClickEngine::Scenes::Scene.new("test")
 
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 640, 480, 32
       )
 
@@ -120,7 +120,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
       walkable_area.update_bounds
       scene.walkable_area = walkable_area
 
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 400, 300, 50, 32.0_f32
       )
 
@@ -151,7 +151,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
       scene.walkable_area = walkable_area
 
       # Create grid with large character radius
-      grid_large = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid_large = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 400, 300, 25, 45.0_f32
       )
 
@@ -164,7 +164,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
       grid_large.is_walkable?(grid_x_center, grid_y_center).should be_true
 
       # Now test with small character radius
-      grid_small = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid_small = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 400, 300, 25, 10.0_f32
       )
 
@@ -199,7 +199,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
       hotspot.blocks_movement = true
       scene.hotspots << hotspot
 
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 400, 300, 50
       )
 
@@ -235,7 +235,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
       scene.walkable_area = walkable_area
 
       # Create grid using logical dimensions, not texture dimensions
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, scene.logical_width, scene.logical_height, 32
       )
 

@@ -1,5 +1,5 @@
 require "../../spec_helper"
-require "../../../src/core/enhanced_preflight_check"
+require "../../../src/core/preflight_check"
 require "../../../src/core/game_config"
 
 def create_test_asset_files(files : Hash(String, Int32))
@@ -11,7 +11,7 @@ end
 
 def cleanup_test_assets(files : Array(String))
   files.each { |f| File.delete(f) if File.exists?(f) }
-  ["test_assets", "test_scenes", "test_audio"].each { |d| Dir.rmdir(d) if Dir.exists?(d) rescue nil }
+  ["test_assets", "test_scenes", "test_audio"].each { |d| Dir.delete(d) if Dir.exists?(d) rescue nil }
 end
 
 describe "Performance Validation" do
@@ -56,7 +56,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/test.yaml", scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should warn about large background image
       result.performance_hints.any? { |hint|
@@ -94,7 +94,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/test.yaml", scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should provide memory usage analysis
       result.info.any? { |info|
@@ -131,7 +131,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/test.yaml", scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should warn about high asset count
       result.performance_hints.any? { |hint|
@@ -170,7 +170,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/test.yaml", scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should suggest compression for large audio files
       result.performance_hints.any? { |hint|
@@ -207,7 +207,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/test.yaml", scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should warn about resolution mismatch
       result.performance_hints.any? { |hint|
@@ -247,7 +247,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/test.yaml", scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should suggest sprite optimization
       result.performance_hints.any? { |hint|
@@ -290,7 +290,7 @@ describe "Performance Validation" do
 
       File.write("test_config.yaml", config_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should provide memory usage estimates
       result.info.any? { |info|
@@ -327,7 +327,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/test.yaml", scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should warn about high memory usage
       result.performance_hints.any? { |hint|
@@ -369,7 +369,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/slow_scene.yaml", slow_scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should warn about slow loading times
       result.performance_hints.any? { |hint|
@@ -403,7 +403,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/test.yaml", scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should suggest specific optimization techniques
       result.performance_hints.any? { |hint|
@@ -444,7 +444,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/test.yaml", scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should apply mobile-specific performance warnings
       result.performance_hints.any? { |hint|
@@ -491,7 +491,7 @@ describe "Performance Validation" do
       File.write("test_config.yaml", config_content)
       File.write("test_scenes/test.yaml", scene_content)
 
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_config.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("test_config.yaml")
 
       # Should warn about performance impact at high FPS
       result.performance_hints.any? { |hint|

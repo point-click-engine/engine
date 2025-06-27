@@ -1,5 +1,5 @@
 require "../spec_helper"
-require "../../src/core/enhanced_preflight_check"
+require "../../src/core/preflight_check"
 require "../../src/core/game_config"
 
 describe "Simple Preflight Validation Tests" do
@@ -17,7 +17,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
         result.should_not be_nil
         result.passed.should be_true
       ensure
@@ -26,7 +26,7 @@ describe "Simple Preflight Validation Tests" do
     end
 
     it "detects missing config file" do
-      result = PointClickEngine::Core::EnhancedPreflightCheck.run("nonexistent.yaml")
+      result = PointClickEngine::Core::PreflightCheck.run("nonexistent.yaml")
 
       result.passed.should be_false
       result.errors.should_not be_empty
@@ -44,7 +44,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
         # Should have error about too small resolution
         error_found = result.errors.any? { |e| e.includes?("too small") }
@@ -70,7 +70,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
         # Should warn about missing start scene
         warning_found = result.warnings.any? { |w| w.includes?("Start scene") && w.includes?("not found") }
@@ -92,7 +92,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
         warning_found = result.warnings.any? { |w| w.includes?("larger than 1920x1080") }
         warning_found.should be_true
@@ -121,7 +121,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_dir/game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_dir/game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_dir/game.yaml")
 
         # Should have errors about unsupported formats
         format_errors = result.errors.select { |e| e.includes?("Unsupported audio format") }
@@ -147,7 +147,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
         warning_found = result.warnings.any? { |w| w.includes?("conflict") }
         warning_found.should be_true
@@ -175,7 +175,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
         # Should error about missing sprite
         error_found = result.errors.any? { |e| e.includes?("Player sprite not found") }
@@ -199,7 +199,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
         # Should detect sensitive data
         security_issues_found = result.security_issues.any? { |s| s.includes?("sensitive data") }
@@ -230,7 +230,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
         # Should have warnings about large assets
         large_asset_warning = result.warnings.any? { |w| w.includes?("Large assets") }
@@ -254,7 +254,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
         # Should have platform info
         platform_info = result.info.any? { |i| i.includes?("Running on") }
@@ -292,7 +292,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
         # Should detect broken reference
         error_found = result.errors.any? { |e| e.includes?("references non-existent scene") }
@@ -329,7 +329,7 @@ describe "Simple Preflight Validation Tests" do
       File.write("test_game.yaml", config_yaml)
 
       begin
-        result = PointClickEngine::Core::EnhancedPreflightCheck.run("test_game.yaml")
+        result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
         # Should have resource summary
         summary_found = result.info.any? { |i| i.includes?("Resource summary") }

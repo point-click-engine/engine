@@ -1,717 +1,468 @@
-# Comprehensive menu system for point-and-click games
-
+require "./menu_input_handler"
+require "./menu_renderer"
+require "./menu_navigator"
+require "./configuration_manager"
 require "./gui_manager"
 require "../core/save_system"
 
 module PointClickEngine
   module UI
-    # Menu item class (changed from struct to class for mutable properties)
-    class MenuItem
-      property text : String
-      property action : Proc(Nil)?
-      property enabled : Bool = true
-      property highlighted : Bool = false
+    # Menu system using component-based architecture
+    #
+    # This MenuSystem delegates responsibilities to specialized components:
+    # - MenuInputHandler: Processes all input (keyboard, mouse, gamepad)
+    # - MenuRenderer: Handles all visual rendering and themes
+    # - MenuNavigator: Manages navigation logic and item selection
+    # - ConfigurationManager: Handles game settings and configuration
+    class MenuSystem
+      # Menu components
+      property input_handler : MenuInputHandler
+      property renderer : MenuRenderer
+      property navigator : MenuNavigator
+      property config_manager : ConfigurationManager
 
-      def initialize(@text : String, @action : Proc(Nil)? = nil)
-      end
-    end
-
-    # Base menu class
-    abstract class BaseMenu
+      # Menu state
+      property current_menu : String = "main"
       property visible : Bool = false
-      property items : Array(MenuItem) = [] of MenuItem
-      property selected_index : Int32 = 0
-      property position : RL::Vector2
-      property size : RL::Vector2
-      property background_color : RL::Color = RL::Color.new(r: 0, g: 0, b: 0, a: 200)
-      property text_color : RL::Color = RL::WHITE
-      property highlight_color : RL::Color = RL::YELLOW
-      property font_size : Int32 = 24
-      property item_spacing : Float32 = 40f32
-      property title : String = ""
-      property title_font_size : Int32 = 36
+      property in_game : Bool = false
+      property game_paused : Bool = false
 
-      def initialize(@position : RL::Vector2, @size : RL::Vector2)
+      # Menu definitions
+      property menu_items : Hash(String, Array(String)) = {} of String => Array(String)
+      property menu_titles : Hash(String, String) = {} of String => String
+      property menu_enabled_items : Hash(String, Array(Bool)) = {} of String => Array(Bool)
+
+      # Layout properties
+      property menu_bounds : RL::Rectangle
+      property auto_layout : Bool = true
+
+      # Engine reference
+      property engine : Core::Engine?
+
+      # Callbacks for menu actions
+      property on_new_game : Proc(Nil)?
+      property on_load_game : Proc(Nil)?
+      property on_save_game : Proc(Nil)?
+      property on_options : Proc(Nil)?
+      property on_quit : Proc(Nil)?
+      property on_resume : Proc(Nil)?
+
+      def initialize(@engine : Core::Engine? = nil)
+        @input_handler = MenuInputHandler.new
+        @renderer = MenuRenderer.new
+        @navigator = MenuNavigator.new
+        @config_manager = ConfigurationManager.new
+
+        # Default menu bounds (will be auto-calculated if auto_layout is true)
+        @menu_bounds = RL::Rectangle.new(x: 300, y: 200, width: 400, height: 300)
+
+        setup_default_menus
+        setup_input_callbacks
+        setup_navigation_callbacks
       end
 
-      def add_item(text : String, &action : ->)
-        @items << MenuItem.new(text, action)
-      end
-
-      def add_item(text : String, action : Proc(Nil)? = nil)
-        @items << MenuItem.new(text, action)
-      end
-
-      def show
+      # Shows the menu system
+      def show(menu_name : String = "main")
+        @current_menu = menu_name
         @visible = true
-        @selected_index = 0
-        update_highlights
+
+        # Setup navigator for current menu
+        if items = @menu_items[@current_menu]?
+          @navigator.set_total_items(items.size)
+          if enabled = @menu_enabled_items[@current_menu]?
+            @navigator.set_enabled_items(enabled)
+          end
+          @navigator.navigate_to_first
+        end
+
+        update_layout if @auto_layout
       end
 
+      # Hides the menu system
       def hide
         @visible = false
       end
 
-      def toggle
-        if @visible
+      # Toggles the pause menu
+      def toggle_pause_menu
+        if @visible && @current_menu == "pause"
+          @game_paused = false
           hide
         else
-          show
+          @game_paused = true
+          show("pause")
         end
       end
 
-      def update(dt : Float32)
-        return unless @visible
-
-        # Keyboard navigation
-        if RL.key_pressed?(RL::KeyboardKey::Up)
-          navigate_up
-        elsif RL.key_pressed?(RL::KeyboardKey::Down)
-          navigate_down
-        elsif RL.key_pressed?(RL::KeyboardKey::Enter) || RL.key_pressed?(RL::KeyboardKey::Space)
-          select_current
-        elsif RL.key_pressed?(RL::KeyboardKey::Escape)
-          on_escape
-        end
-
-        # Mouse navigation
-        mouse_pos = RL.get_mouse_position
-        item_y = @position.y + 80f32 # Account for title
-
-        @items.each_with_index do |item, index|
-          item_rect = RL::Rectangle.new(
-            x: @position.x,
-            y: item_y + (index * @item_spacing),
-            width: @size.x,
-            height: @font_size + 10
-          )
-
-          if RL.check_collision_point_rec?(mouse_pos, item_rect)
-            if @selected_index != index
-              @selected_index = index
-              update_highlights
-            end
-
-            if RL.mouse_button_pressed?(RL::MouseButton::Left) && item.enabled
-              item.action.try &.call
-            end
-          end
-        end
-      end
-
-      def draw
-        return unless @visible
-
-        # Draw background
-        RL.draw_rectangle_rec(
-          RL::Rectangle.new(x: @position.x, y: @position.y, width: @size.x, height: @size.y),
-          @background_color
-        )
-
-        # Draw border
-        RL.draw_rectangle_lines_ex(
-          RL::Rectangle.new(x: @position.x, y: @position.y, width: @size.x, height: @size.y),
-          2,
-          RL::WHITE
-        )
-
-        # Draw title
-        if !@title.empty?
-          title_width = RL.measure_text(@title, @title_font_size)
-          title_x = @position.x + (@size.x - title_width) / 2
-          RL.draw_text(@title, title_x.to_i, (@position.y + 20).to_i, @title_font_size, RL::WHITE)
-        end
-
-        # Draw menu items
-        item_y = @position.y + 80f32
-        @items.each_with_index do |item, index|
-          # Draw highlight background for selected item
-          if item.highlighted
-            highlight_rect = RL::Rectangle.new(
-              x: @position.x + 20,
-              y: item_y - 5,
-              width: @size.x - 40,
-              height: @font_size + 10
-            )
-            # Draw glowing background
-            RL.draw_rectangle_rec(highlight_rect, RL::Color.new(r: 255, g: 215, b: 0, a: 30))
-            RL.draw_rectangle_lines_ex(highlight_rect, 2, RL::Color.new(r: 255, g: 215, b: 0, a: 100))
-          end
-
-          color = if !item.enabled
-                    RL::GRAY
-                  elsif item.highlighted
-                    @highlight_color
-                  else
-                    @text_color
-                  end
-
-          text = item.highlighted ? "> #{item.text} <" : "  #{item.text}"
-          text_width = RL.measure_text(text, @font_size)
-          text_x = @position.x + (@size.x - text_width) / 2
-
-          # Add subtle animation for highlighted item
-          if item.highlighted
-            offset = (Math.sin(RL.get_time * 3) * 2).to_f32
-            text_x += offset
-          end
-
-          RL.draw_text(text, text_x.to_i, item_y.to_i, @font_size, color)
-          item_y += @item_spacing
-        end
-      end
-
-      protected def navigate_up
-        return if @items.empty?
-
-        # Find previous enabled item
-        new_index = @selected_index - 1
-        while new_index >= 0 && !@items[new_index].enabled
-          new_index -= 1
-        end
-
-        if new_index < 0
-          # Wrap to bottom
-          new_index = @items.size - 1
-          while new_index > @selected_index && !@items[new_index].enabled
-            new_index -= 1
-          end
-        end
-
-        if new_index >= 0 && new_index < @items.size && @items[new_index].enabled
-          @selected_index = new_index
-          update_highlights
-        end
-      end
-
-      protected def navigate_down
-        return if @items.empty?
-
-        # Find next enabled item
-        new_index = @selected_index + 1
-        while new_index < @items.size && !@items[new_index].enabled
-          new_index += 1
-        end
-
-        if new_index >= @items.size
-          # Wrap to top
-          new_index = 0
-          while new_index < @selected_index && !@items[new_index].enabled
-            new_index += 1
-          end
-        end
-
-        if new_index >= 0 && new_index < @items.size && @items[new_index].enabled
-          @selected_index = new_index
-          update_highlights
-        end
-      end
-
-      protected def select_current
-        if @selected_index >= 0 && @selected_index < @items.size
-          item = @items[@selected_index]
-          puts "Menu: Selecting item #{@selected_index}: #{item.text}"
-          if item.enabled && item.action
-            puts "Menu: Calling action for #{item.text}"
-            item.action.not_nil!.call
-          else
-            puts "Menu: Item disabled or no action"
-          end
-        end
-      end
-
-      protected def update_highlights
-        @items.each_with_index do |item, index|
-          item.highlighted = (index == @selected_index)
-        end
-      end
-
-      # Override in subclasses for custom escape behavior
-      protected def on_escape
-        hide
-      end
-    end
-
-    # Main menu implementation
-    class MainMenu < BaseMenu
-      property on_new_game : Proc(Nil)?
-      property on_load_game : Proc(Nil)?
-      property on_options : Proc(Nil)?
-      property on_quit : Proc(Nil)?
-
-      def initialize(position : RL::Vector2, size : RL::Vector2)
-        super
-        @title = "Main Menu"
-        setup_menu_items
-      end
-
-      private def setup_menu_items
-        add_item("New Game") { @on_new_game.try &.call }
-        add_item("Load Game") { @on_load_game.try &.call }
-        add_item("Options") { @on_options.try &.call }
-        add_item("Quit") { @on_quit.try &.call }
-      end
-    end
-
-    # Pause menu (shown during gameplay)
-    class PauseMenu < BaseMenu
-      property on_resume : Proc(Nil)?
-      property on_save : Proc(Nil)?
-      property on_load : Proc(Nil)?
-      property on_options : Proc(Nil)?
-      property on_main_menu : Proc(Nil)?
-      property on_quit : Proc(Nil)?
-
-      def initialize(position : RL::Vector2, size : RL::Vector2)
-        super
-        @title = "Paused"
-        setup_menu_items
-      end
-
-      private def setup_menu_items
-        add_item("Resume") { on_escape }
-        add_item("Save Game") { @on_save.try &.call }
-        add_item("Load Game") { @on_load.try &.call }
-        add_item("Options") { @on_options.try &.call }
-        add_item("Main Menu") { @on_main_menu.try &.call }
-        add_item("Quit Game") { @on_quit.try &.call }
-      end
-
-      protected def on_escape
-        hide
-        @on_resume.try &.call
-      end
-    end
-
-    # Options menu
-    class OptionsMenu < BaseMenu
-      property on_back : Proc(Nil)?
-
-      @current_resolution_index : Int32 = 0
-
-      RESOLUTION_OPTIONS = [
-        {800, 600},
-        {1024, 768},
-        {1280, 720},
-        {1280, 960},
-        {1366, 768},
-        {1600, 900},
-        {1920, 1080},
-      ]
-
-      def initialize(position : RL::Vector2, size : RL::Vector2, engine : Core::Engine)
-        super(position, size)
-        @engine = engine
-        @title = "Options"
-        @current_resolution_index = find_current_resolution_index
-        setup_menu_items
-      end
-
-      private def setup_menu_items
-        # Volume controls
-        add_item("Master Volume: ") { } # This will be updated dynamically
-        add_item("Volume -") { decrease_volume }
-        add_item("Volume +") { increase_volume }
-
-        # Resolution controls
-        add_item("Resolution: ") { } # This will be updated dynamically
-        add_item("Resolution -") { previous_resolution }
-        add_item("Resolution +") { next_resolution }
-
-        # Display options
-        add_item("Fullscreen") { toggle_fullscreen }
-        add_item("Debug Mode") { toggle_debug }
-
-        # Back button
-        add_item("Back") { on_escape }
-
-        update_labels
-      end
-
-      def update(dt : Float32)
-        super
-        update_labels # Keep labels current
-      end
-
-      private def update_labels
-        if @engine.config
-          volume = @engine.config.not_nil!.get("audio.master_volume", "0.8").to_f32
-          @items[0].text = "Master Volume: #{(volume * 100).to_i}%"
-        end
-
-        # Update resolution label
-        if @current_resolution_index >= 0 && @current_resolution_index < RESOLUTION_OPTIONS.size
-          res = RESOLUTION_OPTIONS[@current_resolution_index]
-          @items[3].text = "Resolution: #{res[0]}x#{res[1]}"
-        else
-          @items[3].text = "Resolution: Custom"
-        end
-
-        @items[6].text = "Fullscreen: #{@engine.fullscreen ? "ON" : "OFF"}"
-        @items[7].text = "Debug Mode: #{Core::Engine.debug_mode ? "ON" : "OFF"}"
-      end
-
-      private def decrease_volume
-        if config = @engine.config
-          current = config.get("audio.master_volume", "0.8").to_f32
-          new_vol = Math.max(0.0f32, current - 0.1f32)
-          config.set("audio.master_volume", new_vol.to_s)
-          @engine.audio_manager.try &.set_master_volume(new_vol)
-        end
-      end
-
-      private def increase_volume
-        if config = @engine.config
-          current = config.get("audio.master_volume", "0.8").to_f32
-          new_vol = Math.min(1.0f32, current + 0.1f32)
-          config.set("audio.master_volume", new_vol.to_s)
-          @engine.audio_manager.try &.set_master_volume(new_vol)
-        end
-      end
-
-      private def toggle_fullscreen
-        @engine.toggle_fullscreen
-      end
-
-      private def toggle_debug
-        Core::Engine.debug_mode = !Core::Engine.debug_mode
-      end
-
-      private def find_current_resolution_index : Int32
-        current_width = RL.get_screen_width
-        current_height = RL.get_screen_height
-
-        RESOLUTION_OPTIONS.each_with_index do |res, index|
-          if res[0] == current_width && res[1] == current_height
-            return index
-          end
-        end
-
-        return -1 # Custom resolution
-      end
-
-      private def previous_resolution
-        if @current_resolution_index > 0
-          @current_resolution_index -= 1
-          apply_resolution
-        elsif @current_resolution_index == -1 && RESOLUTION_OPTIONS.size > 0
-          @current_resolution_index = RESOLUTION_OPTIONS.size - 1
-          apply_resolution
-        end
-      end
-
-      private def next_resolution
-        if @current_resolution_index >= 0 && @current_resolution_index < RESOLUTION_OPTIONS.size - 1
-          @current_resolution_index += 1
-          apply_resolution
-        end
-      end
-
-      private def apply_resolution
-        return if @engine.fullscreen # Don't change resolution in fullscreen
-
-        if @current_resolution_index >= 0 && @current_resolution_index < RESOLUTION_OPTIONS.size
-          res = RESOLUTION_OPTIONS[@current_resolution_index]
-          width = res[0]
-          height = res[1]
-
-          # Set window size
-          RL.set_window_size(width, height)
-
-          # Update engine window dimensions
-          @engine.window_width = width
-          @engine.window_height = height
-
-          # Update display manager
-          if dm = @engine.display_manager
-            dm.resize(width, height)
-          end
-
-          # Save to config
-          if config = @engine.config
-            config.set("graphics.resolution_width", width.to_s)
-            config.set("graphics.resolution_height", height.to_s)
-          end
-
-          # Center window on screen
-          monitor_width = RL.get_monitor_width(0)
-          monitor_height = RL.get_monitor_height(0)
-          RL.set_window_position((monitor_width - width) // 2, (monitor_height - height) // 2)
-        end
-      end
-
-      protected def on_escape
-        hide
-        @on_back.try &.call
-      end
-    end
-
-    # Save/Load menu
-    class SaveLoadMenu < BaseMenu
-      property is_save_mode : Bool
-      property on_back : Proc(Nil)?
-      property on_save_slot : Proc(String, Nil)?
-      property on_load_slot : Proc(String, Nil)?
-
-      def initialize(position : RL::Vector2, size : RL::Vector2, @is_save_mode : Bool)
-        super(position, size)
-        @title = @is_save_mode ? "Save Game" : "Load Game"
-      end
-
-      def refresh_slots
-        @items.clear
-
-        # Add save slots
-        if @is_save_mode
-          # For saving, always show slots
-          (1..5).each do |i|
-            slot_name = "save_slot_#{i}"
-            if save_info = Core::SaveSystem.get_save_info(slot_name)
-              # Format save info
-              time_str = save_info[:timestamp].to_s("%Y-%m-%d %H:%M")
-              scene_str = save_info[:scene_name].empty? ? "Unknown" : save_info[:scene_name]
-              play_time_str = if play_time = save_info[:play_time]
-                                hours = (play_time / 3600).to_i
-                                minutes = ((play_time % 3600) / 60).to_i
-                                "#{hours}h#{minutes}m"
-                              else
-                                "--"
-                              end
-              add_item("Slot #{i} - #{time_str} - #{scene_str} (#{play_time_str})") { @on_save_slot.try &.call(slot_name) }
-            else
-              add_item("Slot #{i} - [Empty]") { @on_save_slot.try &.call(slot_name) }
-            end
-          end
-        else
-          # For loading, only show used slots
-          saves_found = false
-          (1..5).each do |i|
-            slot_name = "save_slot_#{i}"
-            if save_info = Core::SaveSystem.get_save_info(slot_name)
-              saves_found = true
-              # Format save info
-              time_str = save_info[:timestamp].to_s("%Y-%m-%d %H:%M")
-              scene_str = save_info[:scene_name].empty? ? "Unknown" : save_info[:scene_name]
-              play_time_str = if play_time = save_info[:play_time]
-                                hours = (play_time / 3600).to_i
-                                minutes = ((play_time % 3600) / 60).to_i
-                                "#{hours}h#{minutes}m"
-                              else
-                                "--"
-                              end
-              add_item("Slot #{i} - #{time_str} - #{scene_str} (#{play_time_str})") { @on_load_slot.try &.call(slot_name) }
-            end
-          end
-
-          if !saves_found
-            add_item("No saved games found") { }
-            @items.last.enabled = false
-          end
-        end
-
-        # Add quick save/load slot
-        if @is_save_mode
-          if save_info = Core::SaveSystem.get_save_info("quicksave")
-            time_str = save_info[:timestamp].to_s("%H:%M")
-            add_item("Quick Save (#{time_str})") { @on_save_slot.try &.call("quicksave") }
-          else
-            add_item("Quick Save") { @on_save_slot.try &.call("quicksave") }
-          end
-        elsif save_info = Core::SaveSystem.get_save_info("quicksave")
-          time_str = save_info[:timestamp].to_s("%H:%M")
-          add_item("Quick Load (#{time_str})") { @on_load_slot.try &.call("quicksave") }
-        end
-
-        # Back button
-        add_item("Back") { on_escape }
-
-        @selected_index = 0
-        update_highlights
-      end
-
-      def show
-        super
-        refresh_slots
-      end
-
-      protected def on_escape
-        hide
-        @on_back.try &.call
-      end
-    end
-
-    # Menu system manager
-    class MenuSystem
-      property main_menu : MainMenu
-      property pause_menu : PauseMenu
-      property options_menu : OptionsMenu
-      property save_menu : SaveLoadMenu
-      property load_menu : SaveLoadMenu
-      property current_menu : BaseMenu?
-      property game_paused : Bool = false
-
-      @engine : Core::Engine
-      @in_game : Bool = false
-
-      def initialize(@engine : Core::Engine)
-        # Calculate centered menu position
-        window_width = @engine.window_width
-        window_height = @engine.window_height
-        menu_width = 400f32
-        menu_height = 500f32
-        menu_pos = RL::Vector2.new(
-          x: (window_width - menu_width) / 2,
-          y: (window_height - menu_height) / 2
-        )
-        menu_size = RL::Vector2.new(x: menu_width, y: menu_height)
-
-        # Create menus
-        @main_menu = MainMenu.new(menu_pos, menu_size)
-        @pause_menu = PauseMenu.new(menu_pos, menu_size)
-        @options_menu = OptionsMenu.new(menu_pos, menu_size, @engine)
-        @save_menu = SaveLoadMenu.new(menu_pos, menu_size, true)
-        @load_menu = SaveLoadMenu.new(menu_pos, menu_size, false)
-
-        setup_menu_callbacks
-      end
-
-      def update(dt : Float32)
-        @current_menu.try &.update(dt)
-      end
-
-      def draw
-        @current_menu.try &.draw
-      end
-
-      def show_main_menu
-        @in_game = false
-        @current_menu = @main_menu
-        @main_menu.show
-      end
-
-      def show_pause_menu
-        return unless @in_game
-        @game_paused = true
-        @current_menu = @pause_menu
-        @pause_menu.show
-      end
-
-      def hide_current_menu
-        @current_menu.try &.hide
-        @current_menu = nil
-        @game_paused = false
-      end
-
-      def toggle_pause_menu
-        if @in_game
-          if @current_menu == @pause_menu
-            hide_current_menu
-          else
-            show_pause_menu
-          end
-        end
-      end
-
+      # Enters game mode (hides menu and sets in_game flag)
       def enter_game
-        puts "MenuSystem: Entering game"
         @in_game = true
-        hide_current_menu
+        hide
       end
 
-      def exit_to_main_menu
+      # Exits game mode (shows main menu and clears in_game flag)
+      def exit_game
         @in_game = false
-        show_main_menu
+        show("main")
       end
 
-      private def setup_menu_callbacks
-        # Main menu callbacks
-        @main_menu.on_new_game = -> {
-          puts "MainMenu: New Game selected"
-          enter_game
-          puts "MainMenu: Triggering game:new event"
-          @engine.event_system.trigger("game:new")
-        }
+      # Shows the main menu
+      def show_main_menu
+        show("main")
+      end
 
-        @main_menu.on_load_game = -> {
-          @current_menu = @load_menu
-          @load_menu.show
-        }
+      # Updates the menu system (input and animations)
+      def update(dt : Float64)
+        return unless @visible
 
-        @main_menu.on_options = -> {
-          @current_menu = @options_menu
-          @options_menu.show
-        }
+        # Process input
+        action = @input_handler.process_input(dt)
 
-        @main_menu.on_quit = -> {
-          @engine.stop
-        }
+        # Handle navigation based on input
+        case action
+        when MenuInputHandler::InputAction::NavigateUp
+          @navigator.navigate_previous
+        when MenuInputHandler::InputAction::NavigateDown
+          @navigator.navigate_next
+        when MenuInputHandler::InputAction::NavigateLeft
+          @navigator.navigate_previous
+        when MenuInputHandler::InputAction::NavigateRight
+          @navigator.navigate_next
+        when MenuInputHandler::InputAction::Select
+          execute_current_action
+        when MenuInputHandler::InputAction::Cancel
+          handle_cancel_action
+        when MenuInputHandler::InputAction::MouseHover
+          handle_mouse_hover
+        when MenuInputHandler::InputAction::MouseClick
+          handle_mouse_click
+        end
 
-        # Pause menu callbacks
-        @pause_menu.on_resume = -> {
-          hide_current_menu
-        }
+        # Update renderer animations
+        @renderer.update_animations
+      end
 
-        @pause_menu.on_save = -> {
-          @current_menu = @save_menu
-          @save_menu.show
-        }
+      # Renders the menu system
+      def render
+        return unless @visible
 
-        @pause_menu.on_load = -> {
-          @current_menu = @load_menu
-          @load_menu.show
-        }
+        items = @menu_items[@current_menu]? || [] of String
+        title = @menu_titles[@current_menu]? || ""
+        enabled_items = @menu_enabled_items[@current_menu]?
+        selected_index = @navigator.get_selected_index
 
-        @pause_menu.on_options = -> {
-          @current_menu = @options_menu
-          @options_menu.show
-        }
+        @renderer.draw_menu(@menu_bounds, title, items, selected_index, enabled_items)
+      end
 
-        @pause_menu.on_main_menu = -> {
-          exit_to_main_menu
-          @engine.event_system.trigger("game:main_menu")
-        }
+      # Adds a menu to the system
+      def add_menu(name : String, title : String, items : Array(String), enabled_items : Array(Bool)? = nil)
+        @menu_items[name] = items
+        @menu_titles[name] = title
+        @menu_enabled_items[name] = enabled_items || Array.new(items.size, true)
+      end
 
-        @pause_menu.on_quit = -> {
-          @engine.stop
-        }
+      # Sets menu item enabled state
+      def set_menu_item_enabled(menu_name : String, item_index : Int32, enabled : Bool)
+        if enabled_items = @menu_enabled_items[menu_name]?
+          return unless item_index >= 0 && item_index < enabled_items.size
+          enabled_items[item_index] = enabled
 
-        # Options menu callbacks
-        @options_menu.on_back = -> {
-          @current_menu = @in_game ? @pause_menu : @main_menu
-          @current_menu.not_nil!.show
-        }
-
-        # Save menu callbacks
-        @save_menu.on_save_slot = ->(slot : String) {
-          if Core::SaveSystem.save_game(@engine, slot)
-            @engine.dialog_manager.try &.show_message("Game saved!")
-          else
-            @engine.dialog_manager.try &.show_message("Failed to save game.")
+          # Update navigator if this is the current menu
+          if @current_menu == menu_name
+            @navigator.set_item_enabled(item_index, enabled)
           end
-          @current_menu = @pause_menu
-          @pause_menu.show
-        }
+        end
+      end
 
-        @save_menu.on_back = -> {
-          @current_menu = @pause_menu
-          @pause_menu.show
-        }
+      # Gets current menu item text
+      def get_current_item : String?
+        items = @menu_items[@current_menu]?
+        return nil unless items
 
-        # Load menu callbacks
-        @load_menu.on_load_slot = ->(slot : String) {
-          if Core::SaveSystem.load_game(@engine, slot)
-            enter_game
-            @engine.dialog_manager.try &.show_message("Game loaded!")
-            @engine.event_system.trigger("game:loaded")
-          else
-            @engine.dialog_manager.try &.show_message("Failed to load game.")
+        index = @navigator.get_selected_index
+        return nil unless index >= 0 && index < items.size
+
+        items[index]
+      end
+
+      # Executes the action for the currently selected menu item
+      def execute_current_action
+        item = get_current_item
+        return unless item
+
+        case @current_menu
+        when "main"
+          handle_main_menu_action(item)
+        when "pause"
+          handle_pause_menu_action(item)
+        when "options"
+          handle_options_menu_action(item)
+        when "save"
+          handle_save_menu_action(item)
+        when "load"
+          handle_load_menu_action(item)
+        end
+      end
+
+      # Switches to a different menu
+      def switch_to_menu(menu_name : String)
+        return unless @menu_items.has_key?(menu_name)
+
+        @current_menu = menu_name
+
+        # Setup navigator for new menu
+        if items = @menu_items[menu_name]?
+          @navigator.set_total_items(items.size)
+          if enabled = @menu_enabled_items[menu_name]?
+            @navigator.set_enabled_items(enabled)
           end
+          @navigator.navigate_to_first
+        end
+
+        update_layout if @auto_layout
+      end
+
+      # Updates layout based on current menu content
+      def update_layout
+        items = @menu_items[@current_menu]? || [] of String
+        title = @menu_titles[@current_menu]? || ""
+
+        # Calculate required size
+        size = @renderer.calculate_menu_size(title, items)
+
+        # Center on screen (assuming 1024x768 default)
+        screen_width = 1024
+        screen_height = 768
+
+        @menu_bounds = RL::Rectangle.new(
+          x: (screen_width - size.x) / 2,
+          y: (screen_height - size.y) / 2,
+          width: size.x,
+          height: size.y
+        )
+      end
+
+      # Handles mouse hover interactions
+      private def handle_mouse_hover
+        items = @menu_items[@current_menu]? || [] of String
+        title = @menu_titles[@current_menu]? || ""
+
+        items.each_with_index do |item, index|
+          item_bounds = @renderer.get_item_bounds(@menu_bounds, title, index)
+          if @input_handler.mouse_over_item?(item_bounds)
+            enabled = @menu_enabled_items[@current_menu]?.try(&.[index]?) || true
+            if enabled && @navigator.get_selected_index != index
+              @navigator.navigate_to(index)
+            end
+            break
+          end
+        end
+      end
+
+      # Handles mouse click interactions
+      private def handle_mouse_click
+        items = @menu_items[@current_menu]? || [] of String
+        title = @menu_titles[@current_menu]? || ""
+
+        items.each_with_index do |item, index|
+          item_bounds = @renderer.get_item_bounds(@menu_bounds, title, index)
+          enabled = @menu_enabled_items[@current_menu]?.try(&.[index]?) || true
+
+          if @input_handler.process_item_interaction(index, item_bounds, enabled)
+            @navigator.navigate_to(index)
+            execute_current_action
+            break
+          end
+        end
+      end
+
+      # Handles cancel action (ESC key or back button)
+      private def handle_cancel_action
+        case @current_menu
+        when "main"
+          # Can't cancel from main menu
+        when "pause"
+          @on_resume.try(&.call)
+        when "options", "save", "load"
+          switch_to_menu(@in_game ? "pause" : "main")
+        end
+      end
+
+      # Sets up default menu configurations
+      private def setup_default_menus
+        # Main menu
+        add_menu("main", "Main Menu", [
+          "New Game",
+          "Load Game",
+          "Options",
+          "Quit",
+        ])
+
+        # Pause menu
+        add_menu("pause", "Game Paused", [
+          "Resume",
+          "Save Game",
+          "Load Game",
+          "Options",
+          "Main Menu",
+          "Quit",
+        ])
+
+        # Options menu
+        add_menu("options", "Options", [
+          "Display Settings",
+          "Audio Settings",
+          "Controls",
+          "Back",
+        ])
+
+        # Save menu (will be populated dynamically)
+        add_menu("save", "Save Game", [
+          "Save Slot 1",
+          "Save Slot 2",
+          "Save Slot 3",
+          "Back",
+        ])
+
+        # Load menu (will be populated dynamically)
+        add_menu("load", "Load Game", [
+          "Load Slot 1",
+          "Load Slot 2",
+          "Load Slot 3",
+          "Back",
+        ])
+      end
+
+      # Sets up input handler callbacks
+      private def setup_input_callbacks
+        @input_handler.on_navigation do |action|
+          # Navigation is handled in update method
+        end
+
+        @input_handler.on_selection do |index|
+          @navigator.navigate_to(index)
+          execute_current_action
+        end
+
+        @input_handler.on_cancellation do
+          handle_cancel_action
+        end
+
+        @input_handler.on_hover do |index|
+          @navigator.navigate_to(index)
+        end
+      end
+
+      # Sets up navigation callbacks
+      private def setup_navigation_callbacks
+        @navigator.on_selection_changed = ->(old_index : Int32, new_index : Int32) {
+          # Could add sound effects here
         }
 
-        @load_menu.on_back = -> {
-          @current_menu = @in_game ? @pause_menu : @main_menu
-          @current_menu.not_nil!.show
+        @navigator.on_wrap_around = ->(index : Int32) {
+          # Could add visual feedback for wrap around
         }
+
+        @navigator.on_invalid_navigation = -> {
+          # Could add error feedback
+        }
+      end
+
+      # Handles main menu actions
+      private def handle_main_menu_action(item : String)
+        case item
+        when "New Game"
+          @on_new_game.try(&.call)
+        when "Load Game"
+          switch_to_menu("load")
+        when "Options"
+          switch_to_menu("options")
+        when "Quit"
+          @on_quit.try(&.call)
+        end
+      end
+
+      # Handles pause menu actions
+      private def handle_pause_menu_action(item : String)
+        case item
+        when "Resume"
+          @on_resume.try(&.call)
+        when "Save Game"
+          switch_to_menu("save")
+        when "Load Game"
+          switch_to_menu("load")
+        when "Options"
+          switch_to_menu("options")
+        when "Main Menu"
+          switch_to_menu("main")
+          @in_game = false
+        when "Quit"
+          @on_quit.try(&.call)
+        end
+      end
+
+      # Handles options menu actions
+      private def handle_options_menu_action(item : String)
+        case item
+        when "Display Settings"
+          # Could open display settings submenu
+        when "Audio Settings"
+          # Could open audio settings submenu
+        when "Controls"
+          # Could open controls configuration
+        when "Back"
+          switch_to_menu(@in_game ? "pause" : "main")
+        end
+      end
+
+      # Handles save menu actions
+      private def handle_save_menu_action(item : String)
+        if item.starts_with?("Save Slot")
+          slot_number = item.split.last
+          @on_save_game.try(&.call)
+          switch_to_menu("pause")
+        elsif item == "Back"
+          switch_to_menu("pause")
+        end
+      end
+
+      # Handles load menu actions
+      private def handle_load_menu_action(item : String)
+        if item.starts_with?("Load Slot")
+          slot_number = item.split.last
+          @on_load_game.try(&.call)
+          @in_game = true
+        elsif item == "Back"
+          switch_to_menu(@in_game ? "pause" : "main")
+        end
+      end
+
+      # Gets current configuration manager
+      def get_configuration_manager : ConfigurationManager
+        @config_manager
+      end
+
+      # Applies configuration changes to components
+      def apply_configuration
+        # Update input handler from configuration
+        @input_handler.set_keyboard_navigation(@config_manager.config.keyboard_navigation)
+
+        # Update renderer theme from configuration
+        if @config_manager.config.language != "en"
+          # Could update text based on language
+        end
+      end
+
+      # Validates all components
+      def validate_system : Array(String)
+        issues = [] of String
+
+        issues.concat(@input_handler.validate_configuration)
+        issues.concat(@renderer.validate_theme)
+        issues.concat(@navigator.validate_configuration)
+        issues.concat(@config_manager.validate_configuration)
+
+        issues
       end
     end
   end

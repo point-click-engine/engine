@@ -142,6 +142,7 @@ module PointClickEngine
 
       # Convenience method alias
       def trigger(type : String, data = {} of String => String)
+        puts "[EventSystem] Triggering event: #{type}, handlers: #{@handlers.size}"
         trigger_event(type, data)
       end
 

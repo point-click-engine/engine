@@ -21,6 +21,9 @@ module PointClickEngine
       # Item state tracking
       private property enabled_items : Array(Bool) = [] of Bool
 
+      # Track if negative items were attempted (for validation)
+      private property negative_items_attempted : Bool = false
+
       # Callbacks for navigation events
       property on_selection_changed : Proc(Int32, Int32, Nil)?
       property on_wrap_around : Proc(Int32, Nil)?
@@ -33,6 +36,13 @@ module PointClickEngine
 
       # Sets the total number of menu items
       def set_total_items(count : Int32)
+        # Track if negative was attempted
+        if count < 0
+          @negative_items_attempted = true
+        end
+
+        # Ensure count is non-negative
+        count = Math.max(0, count)
         @total_items = count
         @enabled_items = Array.new(count, true)
         validate_current_index
@@ -162,7 +172,18 @@ module PointClickEngine
         attempts = 0
 
         loop do
-          next_index = (next_index + 1) % @total_items
+          # Calculate next index based on wrap setting
+          if @wrap_navigation
+            next_index = (next_index + 1) % @total_items
+          else
+            # If wrapping is disabled and we're at the last item
+            if next_index >= @total_items - 1
+              @on_invalid_navigation.try(&.call)
+              return start_index
+            end
+            next_index = next_index + 1
+          end
+
           attempts += 1
 
           # Found enabled item
@@ -172,12 +193,8 @@ module PointClickEngine
           end
 
           # Prevent infinite loop
-          break if attempts >= @total_items
-
-          # If wrapping is disabled and we've reached the end
-          if !@wrap_navigation && next_index == 0
-            @on_invalid_navigation.try(&.call)
-            return start_index
+          if attempts >= @total_items
+            break
           end
         end
 
@@ -195,7 +212,18 @@ module PointClickEngine
         attempts = 0
 
         loop do
-          prev_index = (prev_index - 1 + @total_items) % @total_items
+          # Calculate previous index based on wrap setting
+          if @wrap_navigation
+            prev_index = (prev_index - 1 + @total_items) % @total_items
+          else
+            # If wrapping is disabled and we're at the first item
+            if prev_index <= 0
+              @on_invalid_navigation.try(&.call)
+              return start_index
+            end
+            prev_index = prev_index - 1
+          end
+
           attempts += 1
 
           # Found enabled item
@@ -205,12 +233,8 @@ module PointClickEngine
           end
 
           # Prevent infinite loop
-          break if attempts >= @total_items
-
-          # If wrapping is disabled and we've reached the beginning
-          if !@wrap_navigation && prev_index == @total_items - 1
-            @on_invalid_navigation.try(&.call)
-            return start_index
+          if attempts >= @total_items
+            break
           end
         end
 
@@ -350,7 +374,7 @@ module PointClickEngine
       def validate_configuration : Array(String)
         issues = [] of String
 
-        if @total_items < 0
+        if @negative_items_attempted
           issues << "Total items cannot be negative"
         end
 

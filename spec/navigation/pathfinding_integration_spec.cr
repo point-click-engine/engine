@@ -4,7 +4,7 @@ require "../spec_helper"
 describe "Pathfinding Integration Tests" do
   describe "coordinate system consistency" do
     it "maintains consistency between world and grid coordinates" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # Test multiple coordinate pairs for round-trip consistency
       test_coordinates = [
@@ -35,7 +35,7 @@ describe "Pathfinding Integration Tests" do
     end
 
     it "handles boundary coordinates correctly" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # Test coordinates at grid boundaries
       boundary_tests = [
@@ -70,7 +70,7 @@ describe "Pathfinding Integration Tests" do
     end
 
     it "correctly places waypoints at cell centers" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 16)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
       # Find a simple path
@@ -98,7 +98,7 @@ describe "Pathfinding Integration Tests" do
 
   describe "waypoint advancement behavior" do
     it "advances through waypoints correctly with proper thresholds" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
       # Create a longer path to test multiple waypoint advances
@@ -172,7 +172,7 @@ describe "Pathfinding Integration Tests" do
 
   describe "pathfinding with obstacles" do
     it "finds valid paths around obstacles" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # Create an obstacle in the middle
       obstacle_cells = [
@@ -207,7 +207,7 @@ describe "Pathfinding Integration Tests" do
     end
 
     it "validates path integrity after grid changes" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(8, 8, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(8, 8, 32)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
       # Find initial path
@@ -234,7 +234,7 @@ describe "Pathfinding Integration Tests" do
 
   describe "same-cell movement handling" do
     it "handles movement within same grid cell" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
       # Two points in same 32x32 cell but different positions
@@ -253,7 +253,7 @@ describe "Pathfinding Integration Tests" do
     end
 
     it "handles very small distance movements" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
       # Movement less than 1 pixel
@@ -272,12 +272,12 @@ describe "Pathfinding Integration Tests" do
 
   describe "pathfinding performance and limits" do
     it "respects search node limits" do
-      large_grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(100, 100, 16)
+      large_grid = PointClickEngine::Navigation::NavigationGrid.new(100, 100, 16)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(large_grid)
 
       # Set a low search limit
-      original_limit = pathfinder.max_search_nodes
-      pathfinder.max_search_nodes = 100
+      original_limit = pathfinder.algorithm.max_search_nodes
+      pathfinder.algorithm.max_search_nodes = 100
 
       # Try to find a very long path
       start_time = Time.monotonic
@@ -288,18 +288,20 @@ describe "Pathfinding Integration Tests" do
       search_time.total_milliseconds.should be < 100.0
 
       # Restore original limit
-      pathfinder.max_search_nodes = original_limit
+      pathfinder.algorithm.max_search_nodes = original_limit
     end
 
     it "handles diagonal movement consistently" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(5, 5, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(5, 5, 32)
 
       # Test with diagonals enabled
-      pathfinder_diag = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: true)
+      movement_validator_diag = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: true)
+      pathfinder_diag = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator_diag)
       path_diag = pathfinder_diag.find_path(48.0_f32, 48.0_f32, 144.0_f32, 144.0_f32)
 
       # Test with diagonals disabled
-      pathfinder_straight = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: false)
+      movement_validator_straight = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: false)
+      pathfinder_straight = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator_straight)
       path_straight = pathfinder_straight.find_path(48.0_f32, 48.0_f32, 144.0_f32, 144.0_f32)
 
       path_diag.should_not be_nil
@@ -327,7 +329,7 @@ describe "Pathfinding Integration Tests" do
       radii = [16.0_f32, 32.0_f32, 48.0_f32]
 
       radii.each do |radius|
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+        grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
           scene, 320, 240, cell_size: 16, character_radius: radius
         )
 

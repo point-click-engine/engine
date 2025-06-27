@@ -2,16 +2,16 @@ require "../spec_helper"
 require "../../src/characters/character_state_manager"
 
 describe PointClickEngine::Characters::CharacterStateManager do
-  let(manager) { PointClickEngine::Characters::CharacterStateManager.new }
-
   describe "initialization" do
     it "starts with default state" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.state.should eq(PointClickEngine::Characters::CharacterState::Idle)
       manager.direction.should eq(PointClickEngine::Characters::Direction::Right)
       manager.mood.should eq(PointClickEngine::Characters::CharacterMood::Neutral)
     end
 
     it "sets up valid transition rules" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       # Should be able to transition from Idle to Walking
       manager.can_transition_to?(PointClickEngine::Characters::CharacterState::Walking).should be_true
 
@@ -22,6 +22,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
 
   describe "state transitions" do
     it "allows valid state transitions" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       # Idle -> Walking should be valid
       result = manager.set_state(PointClickEngine::Characters::CharacterState::Walking)
       result.should be_true
@@ -29,6 +30,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "prevents invalid state transitions" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       # Set to Talking first
       manager.set_state(PointClickEngine::Characters::CharacterState::Talking)
 
@@ -39,6 +41,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "allows forced state transitions" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.set_state(PointClickEngine::Characters::CharacterState::Talking)
 
       # Force transition to Walking even if invalid
@@ -48,11 +51,13 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "returns true for same state transition" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       result = manager.set_state(PointClickEngine::Characters::CharacterState::Idle)
       result.should be_true # Should succeed even though already in Idle
     end
 
     it "calls state change callback" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       old_state = nil.as(PointClickEngine::Characters::CharacterState?)
       new_state = nil.as(PointClickEngine::Characters::CharacterState?)
 
@@ -70,6 +75,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
 
   describe "direction changes" do
     it "changes direction and calls callback" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       old_direction = nil.as(PointClickEngine::Characters::Direction?)
       new_direction = nil.as(PointClickEngine::Characters::Direction?)
 
@@ -86,6 +92,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "ignores setting same direction" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       callback_called = false
       manager.on_direction_changed = ->(old : PointClickEngine::Characters::Direction, new : PointClickEngine::Characters::Direction) {
         callback_called = true
@@ -98,6 +105,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
 
   describe "mood changes" do
     it "changes mood and calls callback" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       old_mood = nil.as(PointClickEngine::Characters::CharacterMood?)
       new_mood = nil.as(PointClickEngine::Characters::CharacterMood?)
 
@@ -114,6 +122,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "ignores setting same mood" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       callback_called = false
       manager.on_mood_changed = ->(old : PointClickEngine::Characters::CharacterMood, new : PointClickEngine::Characters::CharacterMood) {
         callback_called = true
@@ -126,6 +135,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
 
   describe "state queries" do
     it "reports movement capability" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.can_move?.should be_true # Idle allows movement
 
       manager.set_state(PointClickEngine::Characters::CharacterState::Walking)
@@ -136,6 +146,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "reports talk capability" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.can_talk?.should be_true # Can transition from Idle to Talking
 
       manager.set_state(PointClickEngine::Characters::CharacterState::Walking)
@@ -146,6 +157,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "reports interaction capability" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.can_interact?.should be_true # Can transition from Idle to Interacting
 
       manager.set_state(PointClickEngine::Characters::CharacterState::Talking)
@@ -153,6 +165,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "reports busy status" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.busy?.should be_false # Idle is not busy
 
       manager.set_state(PointClickEngine::Characters::CharacterState::Interacting)
@@ -163,6 +176,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "reports availability" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.available?.should be_true # Idle is available
 
       manager.set_state(PointClickEngine::Characters::CharacterState::Walking)
@@ -170,6 +184,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "reports specific states" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.moving?.should be_false
       manager.talking?.should be_false
 
@@ -183,6 +198,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
 
   describe "convenience methods" do
     it "forces specific states" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.set_state(PointClickEngine::Characters::CharacterState::Talking)
 
       manager.force_idle
@@ -196,6 +212,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "returns to idle when possible" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.set_state(PointClickEngine::Characters::CharacterState::Walking)
       result = manager.try_return_to_idle
       result.should be_true
@@ -216,12 +233,14 @@ describe PointClickEngine::Characters::CharacterStateManager do
 
   describe "transition rule management" do
     it "gets valid transitions from current state" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       transitions = manager.valid_transitions_from_current
       transitions.should contain(PointClickEngine::Characters::CharacterState::Walking)
       transitions.should contain(PointClickEngine::Characters::CharacterState::Talking)
     end
 
     it "adds custom transition rules" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       # Add invalid transition for testing
       manager.add_transition_rule(
         PointClickEngine::Characters::CharacterState::Talking,
@@ -234,6 +253,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "removes transition rules" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       # Remove valid transition
       manager.remove_transition_rule(
         PointClickEngine::Characters::CharacterState::Idle,
@@ -245,6 +265,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "resets to default transition rules" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       # Modify rules
       manager.add_transition_rule(
         PointClickEngine::Characters::CharacterState::Talking,
@@ -262,6 +283,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
 
   describe "descriptions" do
     it "provides state descriptions" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.state_description.should contain("idle")
 
       manager.set_state(PointClickEngine::Characters::CharacterState::Walking)
@@ -272,6 +294,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "provides direction descriptions" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.direction_description.should contain("right")
 
       manager.set_direction(PointClickEngine::Characters::Direction::Left)
@@ -282,6 +305,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "provides mood descriptions" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.mood_description.should contain("neutral")
 
       manager.set_mood(PointClickEngine::Characters::CharacterMood::Happy)
@@ -294,6 +318,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
 
   describe "state persistence" do
     it "creates and restores snapshots" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.set_state(PointClickEngine::Characters::CharacterState::Walking)
       manager.set_direction(PointClickEngine::Characters::Direction::Left)
       manager.set_mood(PointClickEngine::Characters::CharacterMood::Happy)
@@ -314,6 +339,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
     end
 
     it "handles invalid snapshot data gracefully" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       invalid_snapshot = {
         "state"     => "InvalidState",
         "direction" => "InvalidDirection",
@@ -335,6 +361,7 @@ describe PointClickEngine::Characters::CharacterStateManager do
 
   describe "validation" do
     it "validates current state consistency" do
+      manager = PointClickEngine::Characters::CharacterStateManager.new
       manager.validate_state.should be_true
 
       # Simulate corrupted state (would require breaking encapsulation in real scenario)

@@ -1,6 +1,4 @@
-character: scientist
-root_node: greeting
-
+name: scientist
 nodes:
   greeting:
     id: greeting
@@ -8,11 +6,11 @@ nodes:
     speaker: scientist
     choices:
       - text: "What happened exactly?"
-        target: explain_theft
+        target_node_id: explain_theft
       - text: "When did you notice it was missing?"
-        target: timing
+        target_node_id: timing
       - text: "Who else had access to the laboratory?"
-        target: access_question
+        target_node_id: access_question
 
   explain_theft:
     id: explain_theft
@@ -20,11 +18,11 @@ nodes:
     speaker: scientist
     choices:
       - text: "Tell me more about this crystal."
-        target: crystal_details
+        target_node_id: crystal_details
       - text: "Who knew about its value?"
-        target: who_knew
+        target_node_id: who_knew
       - text: "I'll help you find it."
-        target: accept_case
+        target_node_id: accept_case
 
   timing:
     id: timing
@@ -32,11 +30,11 @@ nodes:
     speaker: scientist
     choices:
       - text: "So it was an inside job?"
-        target: inside_job
+        target_node_id: inside_job
       - text: "What about security cameras?"
-        target: no_cameras
+        target_node_id: no_cameras
       - text: "Who was here yesterday?"
-        target: yesterday_visitors
+        target_node_id: yesterday_visitors
 
   access_question:
     id: access_question
@@ -46,11 +44,11 @@ nodes:
       set: ["scientist_mentioned_butler"]
     choices:
       - text: "The butler? Tell me more about him."
-        target: butler_suspicion
+        target_node_id: butler_suspicion
       - text: "Why are you concerned about them?"
-        target: concern_explanation
+        target_node_id: concern_explanation
       - text: "I need to investigate everyone."
-        target: accept_case
+        target_node_id: accept_case
 
   crystal_details:
     id: crystal_details
@@ -58,11 +56,11 @@ nodes:
     speaker: scientist
     choices:
       - text: "Hidden? But it was stolen..."
-        target: hiding_failed
+        target_node_id: hiding_failed
       - text: "Who else knew about its power?"
-        target: who_knew
+        target_node_id: who_knew
       - text: "I'll find it and bring it back."
-        target: accept_case
+        target_node_id: accept_case
 
   who_knew:
     id: who_knew
@@ -72,11 +70,11 @@ nodes:
       set: ["scientist_suspects_butler", "library_clue_given"]
     choices:
       - text: "What kind of strange behavior?"
-        target: butler_behavior
+        target_node_id: butler_behavior
       - text: "I should check the library then."
-        target: library_suggestion
+        target_node_id: library_suggestion
       - text: "I'll investigate both leads."
-        target: accept_case
+        target_node_id: accept_case
 
   butler_suspicion:
     id: butler_suspicion
@@ -86,11 +84,11 @@ nodes:
       set: ["scientist_suspects_butler"]
     choices:
       - text: "Did you confront him about it?"
-        target: confrontation_question
+        target_node_id: confrontation_question
       - text: "What was his excuse?"
-        target: butler_excuse
+        target_node_id: butler_excuse
       - text: "I'll need to question him."
-        target: question_butler
+        target_node_id: question_butler
 
   accept_case:
     id: accept_case
@@ -103,9 +101,9 @@ nodes:
       complete: true
     choices:
       - text: "I'll start investigating immediately."
-        target: end_conversation
+        target_node_id: end_conversation
       - text: "Any other clues you can give me?"
-        target: final_clues
+        target_node_id: final_clues
 
   final_clues:
     id: final_clues
@@ -115,7 +113,7 @@ nodes:
       set: ["butler_has_key", "library_contains_crystal_lore"]
     choices:
       - text: "I'll investigate both leads."
-        target: end_conversation
+        target_node_id: end_conversation
 
   end_conversation:
     id: end_conversation
@@ -128,15 +126,14 @@ nodes:
     id: return_visit
     text: "Have you found any leads on my missing crystal?"
     speaker: scientist
-    conditions:
-      flags: ["case_accepted"]
+    conditions: ["case_accepted"]
     choices:
       - text: "Still investigating."
-        target: still_working
+        target_node_id: still_working
       - text: "Tell me about the butler again."
-        target: butler_info_repeat
+        target_node_id: butler_info_repeat
       - text: "What about the library?"
-        target: library_info_repeat
+        target_node_id: library_info_repeat
 
   still_working:
     id: still_working
@@ -144,15 +141,30 @@ nodes:
     speaker: scientist
     choices:
       - text: "I'll find it soon."
-        target: end_conversation
+        target_node_id: end_conversation
+
+  butler_info_repeat:
+    id: butler_info_repeat
+    text: "As I mentioned, he's been acting strangely - asking about my research, staying late. Very suspicious behavior for a butler."
+    speaker: scientist
+    choices:
+      - text: "I'll investigate him further."
+        target_node_id: end_conversation
+
+  library_info_repeat:
+    id: library_info_repeat
+    text: "The library contains ancient texts about crystal magic. Someone might have learned too much from those dusty tomes."
+    speaker: scientist
+    choices:
+      - text: "I'll check the library."
+        target_node_id: end_conversation
 
   # Victory condition
   crystal_returned:
     id: crystal_returned
     text: "My crystal! You found it! How can I ever thank you? The world is safe once again."
     speaker: scientist
-    conditions:
-      has_item: ["crystal"]
+    conditions: ["has_crystal"]
     quest_progress:
       quest: "find_crystal"
       complete: true

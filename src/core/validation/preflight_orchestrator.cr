@@ -2,6 +2,8 @@ require "./validation_result"
 require "./asset_validation_checker"
 require "./rendering_validation_checker"
 require "./performance_validation_checker"
+require "./security_validation_checker"
+require "./platform_info_validator"
 require "../validators/config_validator"
 require "../validators/asset_validator"
 require "../validators/scene_validator"
@@ -145,7 +147,9 @@ module PointClickEngine
 
         private def setup_default_validators
           # Add built-in validators in priority order
+          @validators << PlatformInfoValidator.new
           @validators << AssetValidationChecker.new
+          @validators << SecurityValidationChecker.new
           @validators << RenderingValidationChecker.new
           @validators << PerformanceValidationChecker.new
         end
@@ -170,7 +174,7 @@ module PointClickEngine
 
             result.add_info("✓ Configuration loaded successfully")
 
-            # Run legacy config validation for compatibility
+            # Run config validation
             validation_errors = Validators::ConfigValidator.validate(config, config_path)
             unless validation_errors.empty?
               validation_errors.each do |error|
@@ -182,7 +186,7 @@ module PointClickEngine
               end
             end
 
-            # Validate all assets using legacy validator
+            # Validate all assets
             asset_errors = Validators::AssetValidator.validate_all_assets(config, config_path)
             if asset_errors.empty?
               result.add_info("✓ All assets validated")
@@ -190,8 +194,8 @@ module PointClickEngine
               result.add_errors(asset_errors)
             end
 
-            # Validate scenes using legacy validator
-            validate_scenes_legacy(config, config_path, result)
+            # Validate scenes
+            validate_scenes(config, config_path, result)
 
             # Validate scene coordinates
             validate_scene_coordinates(config, result)
@@ -204,7 +208,7 @@ module PointClickEngine
           result
         end
 
-        private def validate_scenes_legacy(config : GameConfig, config_path : String, result : ValidationResult)
+        private def validate_scenes(config : GameConfig, config_path : String, result : ValidationResult)
           puts "\n3. Checking scene files..."
           scene_count = 0
           scene_errors = [] of String
@@ -269,7 +273,9 @@ module PointClickEngine
               if estimates.any?
                 result.add_info("Performance estimates:")
                 estimates.each do |key, value|
-                  result.add_info("  #{key.humanize}: #{value}")
+                  # Convert underscore_case to human readable format
+                  humanized_key = key.gsub('_', ' ').split.map(&.capitalize).join(' ')
+                  result.add_info("  #{humanized_key}: #{value}")
                 end
               end
             end

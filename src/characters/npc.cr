@@ -1,6 +1,7 @@
 # Non-Player Character (NPC) implementation
 
 require "yaml"
+require "./ai/behavior"
 
 module PointClickEngine
   module Characters
@@ -44,7 +45,7 @@ module PointClickEngine
       end
 
       def on_interact(interactor : Character)
-        return if @state == CharacterState::Talking
+        return if state == CharacterState::Talking
         face_character(interactor)
         start_conversation(interactor)
       end
@@ -54,10 +55,10 @@ module PointClickEngine
       end
 
       def on_talk
-        return if @state == CharacterState::Talking
+        return if state == CharacterState::Talking
 
         # Try to start dialog tree conversation first
-        if dm = Core::Engine.instance.dialog_manager
+        if dm = Core::Engine.instance.system_manager.dialog_manager
           if dialog_tree = dm.get_dialog_tree(@name)
             dm.start_dialog_tree(@name, "greeting")
             return
@@ -82,10 +83,10 @@ module PointClickEngine
       private def face_character(character : Character)
         if character.position.x < @position.x
           @direction = Direction::Left
-          play_animation("idle_left", force_restart: false) if @animations.has_key?("idle_left")
+          play_animation("idle_left", force_restart: false) if @animation_controller.try(&.has_animation?("idle_left"))
         else
           @direction = Direction::Right
-          play_animation("idle_right", force_restart: false) if @animations.has_key?("idle_right")
+          play_animation("idle_right", force_restart: false) if @animation_controller.try(&.has_animation?("idle_right"))
         end
       end
 
@@ -111,22 +112,22 @@ module PointClickEngine
       # The base implementation provides more mood states and better fallback behavior
 
       private def setup_default_animations
-        unless @animations.has_key?("idle_right")
+        unless @animation_controller.try(&.has_animation?("idle_right"))
           add_animation("idle_right", 0, 1, 1.0, true)
         end
-        unless @animations.has_key?("idle_left")
+        unless @animation_controller.try(&.has_animation?("idle_left"))
           add_animation("idle_left", 1, 1, 1.0, true)
         end
-        unless @animations.has_key?("walk_right")
+        unless @animation_controller.try(&.has_animation?("walk_right"))
           add_animation("walk_right", 2, 2, 0.25, true)
         end
-        unless @animations.has_key?("walk_left")
+        unless @animation_controller.try(&.has_animation?("walk_left"))
           add_animation("walk_left", 4, 2, 0.25, true)
         end
-        unless @animations.has_key?("talk")
+        unless @animation_controller.try(&.has_animation?("talk"))
           add_animation("talk", 6, 2, 0.3, true)
         end
-        unless @animations.has_key?("happy")
+        unless @animation_controller.try(&.has_animation?("happy"))
           add_animation("happy", 8, 2, 0.5, true)
         end
         play_animation("idle_right")

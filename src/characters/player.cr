@@ -1,7 +1,7 @@
-# Enhanced player character with 8-directional animations and adventure game features
+# Player character with 8-directional animations and adventure game features
 
 require "yaml"
-require "./animation"
+require "./animation_controller"
 
 module PointClickEngine
   # # Character system for adventure game protagonists and NPCs.
@@ -22,7 +22,7 @@ module PointClickEngine
   # # ├── NPC (non-player characters)
   # # │   ├── SimpleNPC (basic NPCs)
   # # │   └── ScriptableCharacter (Lua-driven)
-  # # └── EnhancedCharacter (8-dir animations)
+  # # └── Character (8-dir animations)
   # # ```
   ##
   # # ## Animation System
@@ -34,7 +34,7 @@ module PointClickEngine
   ##
   # # # 8-directional movement for modern games
   # # direction = Direction8.from_velocity(velocity)
-  # # character.play_enhanced_animation(state, direction)
+  # # character.play_animation(state, direction)
   # # ```
   ##
   # # ## AI Behaviors
@@ -92,7 +92,7 @@ module PointClickEngine
     # # The main player character with inventory and interaction capabilities.
     ##
     # # `Player` represents the protagonist that the user controls. It extends
-    # # `EnhancedCharacter` with player-specific features like inventory access,
+    # # `Character` with player-specific features like inventory access,
     # # item usage, and special interaction callbacks. The player character
     # # serves as the primary interface between the user and the game world.
     ##
@@ -231,11 +231,11 @@ module PointClickEngine
     ##
     # # ## See Also
     ##
-    # # - `EnhancedCharacter` - Base class with 8-dir animations
+    # # - `Character` - Base class with 8-dir animations
     # # - `Inventory::InventorySystem` - Player inventory
     # # - `Scene#player` - Scene player management
     # # - `Engine#player` - Global player access
-    class Player < EnhancedCharacter
+    class Player < Character
       include Talkable
 
       # # Whether the player can open their inventory.
@@ -279,19 +279,19 @@ module PointClickEngine
 
       # Handle interactions with other characters
       def on_interact(interactor : Character)
-        perform_action(AnimationState::Talking)
+        play_animation(AnimationState::Talking.to_s)
         say("Someone's trying to interact with me, #{@name}.") { }
       end
 
       # Handle look action
       def on_look
-        perform_action(AnimationState::Talking)
+        play_animation(AnimationState::Talking.to_s)
         say("That's me, #{@name}.") { }
       end
 
       # Handle talk action
       def on_talk
-        perform_action(AnimationState::Talking)
+        play_animation(AnimationState::Talking.to_s)
         say("I can't talk to myself!") { }
       end
 
@@ -312,51 +312,26 @@ module PointClickEngine
       ##
       # # NOTE: Respects `movement_enabled` flag
       def handle_click(mouse_pos : RL::Vector2, scene : Scenes::Scene)
-        if Core::DebugConfig.should_log?(:player_input)
-          puts "[PLAYER] Mouse clicked at #{mouse_pos}, player at #{@position}"
-        end
-
         return unless @movement_enabled
 
         # Don't move if clicking very close to current position
         distance_to_target = Math.sqrt((mouse_pos.x - @position.x)**2 + (mouse_pos.y - @position.y)**2)
 
-        if Core::DebugConfig.should_log?(:player_input)
-          puts "[PLAYER] Distance to target: #{distance_to_target}"
-        end
-
         if distance_to_target < Core::GameConstants::MINIMUM_CLICK_DISTANCE # Minimum movement threshold
-          if Core::DebugConfig.should_log?(:player_input)
-            puts "[PLAYER] Click too close to current position, ignoring"
-          end
           return
         end
 
         # If the target is walkable, move directly there
         if scene.is_walkable?(mouse_pos)
-          if Core::DebugConfig.should_log?(:player_input)
-            puts "[PLAYER] Target #{mouse_pos} is walkable, moving directly"
-          end
           walk_to(mouse_pos, use_pathfinding: @use_pathfinding)
         else
-          if Core::DebugConfig.should_log?(:player_input)
-            puts "[PLAYER] Target #{mouse_pos} is not walkable, finding nearest walkable point"
-          end
-
           # Find the nearest walkable point to the target
           if walkable_area = scene.walkable_area
             nearest_point = walkable_area.find_nearest_walkable_point(mouse_pos)
 
-            if Core::DebugConfig.should_log?(:player_input)
-              puts "[PLAYER] Nearest walkable point: #{nearest_point}"
-            end
-
             # Only move if we found a walkable point that's different from target
             if scene.is_walkable?(nearest_point) &&
                ((nearest_point.x - mouse_pos.x).abs > Core::GameConstants::WALKABLE_POINT_TOLERANCE || (nearest_point.y - mouse_pos.y).abs > Core::GameConstants::WALKABLE_POINT_TOLERANCE)
-              if Core::DebugConfig.should_log?(:player_input)
-                puts "[PLAYER] Moving to nearest walkable point #{nearest_point}"
-              end
               walk_to(nearest_point, use_pathfinding: @use_pathfinding)
             else
               if Core::DebugConfig.should_log?(:player_input)
@@ -381,7 +356,7 @@ module PointClickEngine
       # # end
       # # ```
       def use_item_on_target(target_position : RL::Vector2)
-        perform_action(AnimationState::Using, target_position)
+        play_animation(AnimationState::Using.to_s)
       end
 
       # # Plays item pickup animation facing the item.
@@ -397,7 +372,7 @@ module PointClickEngine
       # # scene.remove_object(coin)
       # # ```
       def pick_up_item(item_position : RL::Vector2)
-        perform_action(AnimationState::PickingUp, item_position)
+        play_animation(AnimationState::PickingUp.to_s)
       end
 
       # # Turns character to look at an object without moving.
@@ -418,18 +393,18 @@ module PointClickEngine
           y: object_position.y - @position.y
         )
         direction = Direction8.from_velocity(direction_vec)
-        play_enhanced_animation(AnimationState::Idle, direction)
+        play_animation(AnimationState::Idle.to_s)
       end
 
       def push_object(object_position : RL::Vector2)
-        perform_action(AnimationState::Pushing, object_position)
+        play_animation(AnimationState::Pushing.to_s)
       end
 
       def pull_object(object_position : RL::Vector2)
-        perform_action(AnimationState::Pulling, object_position)
+        play_animation(AnimationState::Pulling.to_s)
       end
 
-      # Enhanced walking with pathfinding
+      # Walking with pathfinding
       def walk_to_with_path(path : Array(RL::Vector2))
         return if path.empty?
 
@@ -442,7 +417,7 @@ module PointClickEngine
             x: path[1].x - path[0].x,
             y: path[1].y - path[0].y
           )
-          @enhanced_direction = Direction8.from_velocity(velocity)
+          @direction_8 = Direction8.from_velocity(velocity)
         end
 
         walk_to(path.first)
@@ -452,7 +427,7 @@ module PointClickEngine
       def stop_walking
         super
         @movement_state = AnimationState::Idle
-        @animation_controller.play_animation("idle")
+        @animation_controller.try(&.play_animation("idle"))
       end
 
       private def update_movement(dt : Float32)
@@ -480,33 +455,33 @@ module PointClickEngine
       # Setup player-specific animations
       private def setup_player_animations
         # Set up basic animations for compatibility
-        @animations["idle"] = AnimationData.new(0, 1, 0.1f32, true)
-        @animations["idle_right"] = AnimationData.new(0, 1, 0.1f32, true)
-        @animations["idle_left"] = AnimationData.new(0, 1, 0.1f32, true)
-        @animations["walk_right"] = AnimationData.new(4, 4, 0.1f32, true)
-        @animations["walk_left"] = AnimationData.new(8, 4, 0.1f32, true)
-        @animations["talk"] = AnimationData.new(32, 2, 0.3f32, true)
-        @current_animation = "idle_right"
+        @animation_controller.try(&.add_animation("idle", 0, 1, 0.1f32, true))
+        @animation_controller.try(&.add_animation("idle_right", 0, 1, 0.1f32, true))
+        @animation_controller.try(&.add_animation("idle_left", 0, 1, 0.1f32, true))
+        @animation_controller.try(&.add_animation("walk_right", 4, 4, 0.1f32, true))
+        @animation_controller.try(&.add_animation("walk_left", 8, 4, 0.1f32, true))
+        @animation_controller.try(&.add_animation("talk", 32, 2, 0.3f32, true))
+        @animation_controller.try(&.play_animation("idle_right"))
 
         # Add player-specific idle variations
-        @animation_controller.add_idle_variation("check_inventory", 100, 8, 0.15)
-        @animation_controller.add_idle_variation("look_around", 108, 6, 0.2)
-        @animation_controller.add_idle_variation("tap_foot", 114, 4, 0.25)
+        @animation_controller.try(&.add_idle_variation("check_inventory", 100, 8, 0.15))
+        @animation_controller.try(&.add_idle_variation("look_around", 108, 6, 0.2))
+        @animation_controller.try(&.add_idle_variation("tap_foot", 114, 4, 0.25))
 
         # Add action animations (assuming they start after walking animations)
         # Walking: frames 0-31 (8 directions × 4 frames)
         # Talking: frames 32-47 (8 directions × 2 frames)
-        @animation_controller.add_directional_animation("talk", 32, 2, 0.3)
+        @animation_controller.try(&.add_directional_animation("talk", 32, 2, 0.3))
 
         # Action animations (single direction, will be mirrored/rotated as needed)
-        @animation_controller.add_animation("pickup", 48, 6, 0.15, false, 5, true, true)
-        @animation_controller.add_animation("use", 54, 4, 0.2, false, 5, true, true)
-        @animation_controller.add_animation("push", 58, 6, 0.12, false, 5, true, true)
-        @animation_controller.add_animation("pull", 64, 6, 0.12, false, 5, true, true)
-        @animation_controller.add_animation("climb", 70, 8, 0.15, false, 10, false, true)
-        @animation_controller.add_animation("sit", 78, 1, 1.0, true, 3, true, false)
-        @animation_controller.add_animation("stand", 79, 3, 0.2, false, 3, true, true)
-        @animation_controller.add_animation("die", 82, 8, 0.3, false, 100, false, false)
+        @animation_controller.try(&.add_animation("pickup", 48, 6, 0.15, false))
+        @animation_controller.try(&.add_animation("use", 54, 4, 0.2, false))
+        @animation_controller.try(&.add_animation("push", 58, 6, 0.12, false))
+        @animation_controller.try(&.add_animation("pull", 64, 6, 0.12, false))
+        @animation_controller.try(&.add_animation("climb", 70, 8, 0.15, false))
+        @animation_controller.try(&.add_animation("sit", 78, 1, 1.0, true))
+        @animation_controller.try(&.add_animation("stand", 79, 3, 0.2, false))
+        @animation_controller.try(&.add_animation("die", 82, 8, 0.3, false))
       end
     end
   end

@@ -1,6 +1,6 @@
 require "../spec_helper"
 
-describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
+describe PointClickEngine::Navigation::NavigationGrid do
   describe ".from_scene with character radius" do
     it "marks cells as unwalkable if character won't fit" do
       scene = PointClickEngine::Scenes::Scene.new("test")
@@ -23,7 +23,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
 
       # Create grid with large character radius
       character_radius = 60.0_f32
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 400, 200, 20, character_radius
       )
 
@@ -63,7 +63,7 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
 
       # Grid with character radius
       character_radius = 30.0_f32
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 600, 600, 20, character_radius
       )
 
@@ -96,13 +96,13 @@ describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
 
       # Small character radius
       small_radius = 20.0_f32
-      small_grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      small_grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 600, 400, 20, small_radius
       )
 
       # Large character radius
       large_radius = 60.0_f32
-      large_grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      large_grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 600, 400, 20, large_radius
       )
 
@@ -149,7 +149,7 @@ describe PointClickEngine::Navigation::Pathfinding do
 
       # Create grid accounting for character size
       character_radius = 40.0_f32
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 800, 600, 20, character_radius
       )
 
@@ -216,7 +216,7 @@ describe PointClickEngine::Navigation::Pathfinding do
 
       # Character too large for passage
       character_radius = 30.0_f32 # 60 pixel diameter won't fit through 40 pixel passage
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.from_scene(
+      grid = PointClickEngine::Navigation::NavigationGrid.from_scene(
         scene, 640, 400, 10, character_radius
       )
 

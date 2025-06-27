@@ -58,6 +58,7 @@ require "./core/validators/asset_validator"
 require "./core/validators/scene_validator"
 require "./core/preflight_check"
 require "./core/error_reporter"
+require "./core/camera_manager"
 require "./core/engine"
 require "./core/game_config"
 
@@ -73,7 +74,7 @@ require "./graphics/shaders/shader_helpers"
 require "./characters/character"
 require "./characters/player"
 require "./characters/npc"
-require "./characters/animation"
+require "./characters/animation_controller"
 require "./characters/ai/behavior"
 require "./characters/dialogue/character_dialogue"
 require "./characters/dialogue/dialog_tree"
@@ -108,7 +109,7 @@ require "./characters/scriptable_character"
 require "./core/save_system"
 
 # Audio modules (optional - only if audio is enabled)
-require "./audio/sound_system"
+require "./audio/audio_manager"
 require "./audio/ambient_sound_manager"
 require "./audio/footstep_system"
 
@@ -132,7 +133,7 @@ require "./localization/localization_manager"
 module PointClickEngine
   VERSION = "0.3.0"
 
-  # Convenience aliases for backward compatibility
+  # Convenience aliases
   alias Game = Core::Engine
   alias GameObject = Core::GameObject
   alias Drawable = Core::Drawable
@@ -170,7 +171,7 @@ module PointClickEngine
   alias Direction8 = Characters::Direction8
   alias AnimationState = Characters::AnimationState
   alias AnimationController = Characters::AnimationController
-  alias NPCMood = Characters::CharacterMood # Legacy alias for backward compatibility
+  alias NPCMood = Characters::CharacterMood
   alias CharacterMood = Characters::CharacterMood
   alias AnimationData = Characters::AnimationData
   alias CharacterDialogue = Characters::Dialogue::CharacterDialogue
@@ -218,7 +219,7 @@ module PointClickEngine
 
   # Navigation aliases
   alias Pathfinding = Navigation::Pathfinding
-  alias NavigationGrid = Navigation::Pathfinding::NavigationGrid
+  alias NavigationGrid = Navigation::NavigationGrid
 
   # Cutscene aliases
   alias Cutscene = Cutscenes::Cutscene
@@ -239,4 +240,11 @@ module PointClickEngine
   alias Locale = Localization::Locale
   alias Translation = Localization::Translation
   alias LocalizationManager = Localization::LocalizationManager
+
+  # Camera aliases
+  alias CameraManager = Core::CameraManager
+  alias CameraEffect = Core::CameraEffect
+  alias CameraEffectType = Core::CameraEffectType
+  alias CameraEasing = Core::CameraEasing
+  alias CameraState = Core::CameraState
 end

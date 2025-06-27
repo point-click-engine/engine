@@ -32,6 +32,7 @@ module PointClickEngine
 
               # Use transition manager if available and active
               if transition_manager && transition_manager.transitioning?
+                puts "[RenderCoordinator] Rendering with transition"
                 transition_manager.render_with_transition do
                   render_scene_content(scene, dialogs, cutscene_manager, camera)
                 end
@@ -236,7 +237,7 @@ module PointClickEngine
             end
 
             # Dialog state
-            if engine.dialog_manager && engine.dialog_manager.not_nil!.current_dialog
+            if engine.system_manager.dialog_manager && engine.system_manager.dialog_manager.not_nil!.current_dialog
               RL.draw_text("Dialog: ACTIVE", 10, y_offset, 20, RL::GREEN)
               y_offset += 25
             end

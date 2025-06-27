@@ -11,14 +11,14 @@ describe "Minimal Game Example" do
     File.write("minimal_game.yaml", minimal_config)
 
     # The minimal game code
-    config = PointClickEngine::Core::GameConfig.from_file("minimal_game.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("minimal_game.yaml", skip_preflight: true)
 
     RL.init_window(1024, 768, "Minimal Adventure")
     engine = config.create_engine
 
     # Engine should be created with defaults
     engine.should_not be_nil
-    engine.title.should eq("Minimal Adventure")
+    engine.window_title.should eq("Minimal Adventure")
     engine.window_width.should eq(1024)
     engine.window_height.should eq(768)
 
@@ -68,13 +68,13 @@ describe "Minimal Game Example" do
     File.write("scenes/intro.yaml", scene_yaml)
 
     File.write("template_game.yaml", template_config)
-    config = PointClickEngine::Core::GameConfig.from_file("template_game.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("template_game.yaml", skip_preflight: true)
 
     RL.init_window(1280, 720, "My First Adventure")
     engine = config.create_engine
 
     # Verify template configuration
-    engine.title.should eq("My First Adventure")
+    engine.window_title.should eq("My First Adventure")
     engine.window_width.should eq(1280)
     engine.window_height.should eq(720)
     engine.target_fps.should eq(60)
@@ -139,7 +139,7 @@ describe "Minimal Game Example" do
     # Main game file (Crystal)
     main_cr = <<-CRYSTAL
     require "point_click_engine"
-    config = PointClickEngine::Core::GameConfig.from_file("mini_game.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("mini_game.yaml", skip_preflight: true)
     engine = config.create_engine
     engine.run
     CRYSTAL
@@ -169,7 +169,7 @@ describe "Minimal Game Example" do
     total_lines.should be < 50 # Complete game in under 50 lines!
 
     # Test it works
-    config = PointClickEngine::Core::GameConfig.from_file("mini_game.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("mini_game.yaml", skip_preflight: true)
     RL.init_window(1024, 768, "Mini Adventure")
     engine = config.create_engine
 
@@ -199,11 +199,11 @@ describe "Minimal Game Example" do
       height: 600
     
     settings:
-      master_volume: 0.5
+      debug_mode: false
     YAML
 
     File.write("game_v1.yaml", config_v1)
-    config = PointClickEngine::Core::GameConfig.from_file("game_v1.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("game_v1.yaml", skip_preflight: true)
 
     RL.init_window(800, 600, "Adventure v1")
     engine1 = config.create_engine
@@ -211,7 +211,8 @@ describe "Minimal Game Example" do
     engine1.window_width.should eq(800)
     # Audio manager would be initialized when the engine starts running
     # For this test, just verify the config was loaded correctly
-    config.settings.not_nil!.master_volume.should eq(0.5_f32)
+    # Audio volumes are now in UserSettings, not in the main config
+    config.settings.not_nil!.debug_mode.should eq(false)
 
     RL.close_window
 
@@ -229,19 +230,20 @@ describe "Minimal Game Example" do
       - portraits
     
     settings:
-      master_volume: 0.8
+      debug_mode: false
       show_fps: true
     YAML
 
     File.write("game_v2.yaml", config_v2)
-    config2 = PointClickEngine::Core::GameConfig.from_file("game_v2.yaml")
+    config2 = PointClickEngine::Core::GameConfig.from_file("game_v2.yaml", skip_preflight: true)
 
     RL.init_window(1920, 1080, "Adventure v2 Enhanced")
     engine2 = config2.create_engine
 
     # Everything changed without touching code!
     engine2.window_width.should eq(1920)
-    config2.settings.not_nil!.master_volume.should eq(0.8_f32)
+    # Audio volumes are now in UserSettings, not in the main config
+    config2.settings.not_nil!.debug_mode.should eq(false)
     config2.settings.not_nil!.show_fps.should be_true
     config2.features.includes?("shaders").should be_true
 

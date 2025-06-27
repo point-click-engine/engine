@@ -5,6 +5,7 @@ require "./polygon_hotspot"
 require "./dynamic_hotspot"
 require "./walkable_area"
 require "../characters/character"
+require "../characters/npc"
 require "../assets/asset_loader"
 require "../ui/cursor_manager"
 require "../core/exceptions"
@@ -309,6 +310,11 @@ module PointClickEngine
 
           walkable_area.update_bounds
           scene.walkable_area = walkable_area
+        end
+
+        # Setup navigation after loading walkable areas
+        if scene.enable_pathfinding && scene.walkable_area
+          scene.setup_navigation
         end
 
         scene

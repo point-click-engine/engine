@@ -24,16 +24,12 @@ describe "Dialog input blocking" do
     original_position = player.position
 
     # Show a dialog with choices
-    dialog = PointClickEngine::UI::Dialog.new(
-      "Test dialog",
-      RL::Vector2.new(x: 100, y: 100),
-      RL::Vector2.new(x: 600, y: 200)
-    )
-    dialog.add_choice("Choice 1") { }
-    dialog.add_choice("Choice 2") { }
-    dialog.show
+    choices = [
+      PointClickEngine::UI::DialogChoice.new("Choice 1", -> { }),
+      PointClickEngine::UI::DialogChoice.new("Choice 2", -> { }),
+    ]
 
-    engine.show_dialog(dialog)
+    engine.dialog_manager.try(&.show_dialog("Test Character", "Test dialog", choices))
 
     # Update engine - dialog should be active
     engine.update(0.016_f32)
@@ -42,7 +38,7 @@ describe "Dialog input blocking" do
     player.position.should eq(original_position)
 
     # Dialog should still be visible
-    dialog.visible.should be_true
+    engine.dialog_manager.try(&.current_dialog).should_not be_nil
   end
 
   it "resumes game input after dialog closes" do
@@ -64,21 +60,15 @@ describe "Dialog input blocking" do
     scene.set_player(player)
 
     # Show and immediately hide dialog
-    dialog = PointClickEngine::UI::Dialog.new(
-      "Test dialog",
-      RL::Vector2.new(x: 100, y: 100),
-      RL::Vector2.new(x: 600, y: 200)
-    )
-    dialog.show
-    engine.show_dialog(dialog)
+    engine.dialog_manager.try(&.show_dialog("Test Character", "Test dialog"))
 
     # Close the dialog
-    dialog.hide
+    engine.dialog_manager.try(&.close_current_dialog)
 
     # Update engine
     engine.update(0.016_f32)
 
     # Dialog should be hidden
-    dialog.visible.should be_false
+    engine.dialog_manager.try(&.current_dialog).should be_nil
   end
 end

@@ -227,7 +227,7 @@ module PointClickEngine
 
       # Sets master volume
       def set_master_volume(volume : Float32)
-        volume = volume.clamp(0.0, 1.0)
+        volume = volume.clamp(0.0f32, 1.0f32)
         return if @config.master_volume == volume
 
         @config.master_volume = volume
@@ -238,7 +238,7 @@ module PointClickEngine
 
       # Sets music volume
       def set_music_volume(volume : Float32)
-        volume = volume.clamp(0.0, 1.0)
+        volume = volume.clamp(0.0f32, 1.0f32)
         return if @config.music_volume == volume
 
         @config.music_volume = volume
@@ -249,7 +249,7 @@ module PointClickEngine
 
       # Sets SFX volume
       def set_sfx_volume(volume : Float32)
-        volume = volume.clamp(0.0, 1.0)
+        volume = volume.clamp(0.0f32, 1.0f32)
         return if @config.sfx_volume == volume
 
         @config.sfx_volume = volume
@@ -260,7 +260,7 @@ module PointClickEngine
 
       # Sets voice volume
       def set_voice_volume(volume : Float32)
-        volume = volume.clamp(0.0, 1.0)
+        volume = volume.clamp(0.0f32, 1.0f32)
         return if @config.voice_volume == volume
 
         @config.voice_volume = volume
@@ -271,7 +271,7 @@ module PointClickEngine
 
       # Sets text speed
       def set_text_speed(speed : Float32)
-        speed = speed.clamp(0.1, 3.0)
+        speed = speed.clamp(0.1f32, 3.0f32)
         return if @config.text_speed == speed
 
         @config.text_speed = speed

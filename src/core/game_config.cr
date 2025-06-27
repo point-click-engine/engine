@@ -1,6 +1,7 @@
 # Game configuration from YAML
 require "yaml"
 require "./engine"
+require "./user_settings"
 require "./game_state_manager"
 require "./quest_system"
 require "../characters/player"
@@ -11,6 +12,7 @@ require "../characters/dialogue/dialog_tree"
 require "./exceptions"
 require "./validators/config_validator"
 require "./error_reporter"
+require "./preflight_check"
 
 module PointClickEngine
   module Core
@@ -38,6 +40,7 @@ module PointClickEngine
         property scaling_mode : String = "FitWithBars"
         property target_width : Int32 = 1024
         property target_height : Int32 = 768
+        property vsync : Bool = true
       end
 
       class SpriteInfo
@@ -46,6 +49,15 @@ module PointClickEngine
         property frame_height : Int32
         property columns : Int32
         property rows : Int32
+        property fps : Float32 = 12.0
+        property animations : Hash(String, AnimationConfig) = {} of String => AnimationConfig
+      end
+
+      class AnimationConfig
+        include YAML::Serializable
+        property start_frame : Int32?
+        property end_frame : Int32?
+        property loop : Bool = true
       end
 
       class Position
@@ -68,6 +80,7 @@ module PointClickEngine
         property scenes : Array(String) = [] of String
         property dialogs : Array(String) = [] of String
         property quests : Array(String) = [] of String
+        property sprites : Array(String) = [] of String
         property audio : AudioConfig?
       end
 
@@ -81,9 +94,11 @@ module PointClickEngine
         include YAML::Serializable
         property debug_mode : Bool = false
         property show_fps : Bool = false
-        property master_volume : Float32 = 0.8
+        property log_player_input : Bool = false
+        property master_volume : Float32 = 1.0
         property music_volume : Float32 = 0.7
-        property sfx_volume : Float32 = 0.9
+        property sfx_volume : Float32 = 1.0
+        # Note: Audio volumes can also be in UserSettings for per-user preferences
       end
 
       class InitialState
@@ -121,9 +136,19 @@ module PointClickEngine
       property config_base_dir : String = ""
 
       # Load configuration from YAML file
-      def self.from_file(path : String) : GameConfig
+      def self.from_file(path : String, skip_preflight : Bool = false) : GameConfig
         unless File.exists?(path)
           raise ConfigError.new("Configuration file not found", path)
+        end
+
+        # Run preflight checks unless explicitly skipped
+        unless skip_preflight
+          begin
+            PreflightCheck.run!(path)
+          rescue ex : ValidationError
+            puts "\n❌ Game failed pre-flight checks. Please fix these issues before running."
+            raise ex
+          end
         end
 
         begin
@@ -184,9 +209,9 @@ module PointClickEngine
           when "verbs"
             engine.enable_verb_input
           when "floating_dialogs"
-            engine.dialog_manager.try { |dm| dm.enable_floating = true }
+            engine.system_manager.dialog_manager.try { |dm| dm.enable_floating = true }
           when "portraits"
-            engine.dialog_manager.try { |dm| dm.enable_portraits = true }
+            engine.system_manager.dialog_manager.try { |dm| dm.enable_portraits = true }
           when "shaders"
             setup_shaders(engine)
           when "auto_save"
@@ -217,6 +242,7 @@ module PointClickEngine
 
         # Configure player
         if player_config = player
+          puts "[DEBUG] Creating player object..." if Engine.debug_mode
           player_obj = Characters::Player.new(
             player_config.name,
             Raylib::Vector2.new(
@@ -233,13 +259,17 @@ module PointClickEngine
           if sprite_path = player_config.sprite_path
             full_player_sprite_path = File.join(config_base_dir, sprite_path)
             if sprite_info = player_config.sprite
-              player_obj.load_enhanced_spritesheet(
-                full_player_sprite_path,
-                sprite_info.frame_width,
-                sprite_info.frame_height,
-                sprite_info.columns,
-                sprite_info.rows
-              )
+              begin
+                player_obj.load_spritesheet(
+                  full_player_sprite_path,
+                  sprite_info.frame_width,
+                  sprite_info.frame_height
+                )
+                puts "[DEBUG] Player sprite loaded successfully" if Engine.debug_mode
+              rescue ex
+                puts "[DEBUG] Failed to load player sprite: #{ex.message}" if Engine.debug_mode
+                # Continue without sprite - player will still be created
+              end
             end
           end
 
@@ -251,6 +281,9 @@ module PointClickEngine
           player_obj.walking_speed = GameConstants::SCALED_WALKING_SPEED
 
           engine.player = player_obj
+          puts "[DEBUG] Player assigned to engine" if Engine.debug_mode
+        else
+          puts "[DEBUG] No player config found" if Engine.debug_mode
         end
 
         # Apply settings
@@ -259,17 +292,26 @@ module PointClickEngine
           engine.show_fps = s.show_fps
         end
 
-        # Configure audio volumes
-        if audio = engine.audio_manager
-          if s = settings
-            audio.master_volume = s.master_volume
-            audio.music_volume = s.music_volume
-            audio.sfx_volume = s.sfx_volume
-          end
+        # Load and apply user settings (creates default file if none exists)
+        user_settings_path = File.join(config_base_dir, "user_settings.yaml")
+        user_settings = UserSettings.load(user_settings_path)
+
+        # Validate user settings and warn about issues
+        validation_errors = user_settings.validate
+        unless validation_errors.empty?
+          puts "Warning: User settings validation issues:"
+          validation_errors.each { |error| puts "  - #{error}" }
+          puts "Using corrected values..."
         end
+
+        # Apply user settings to engine
+        user_settings.apply_to_engine(engine)
 
         # Set target FPS
         engine.target_fps = window.try(&.target_fps) || 60
+
+        # Set start scene
+        engine.scene_manager.start_scene = self.start_scene
 
         # Set up update callback for managers
         engine.on_update = ->(dt : Float32) do
@@ -313,7 +355,7 @@ module PointClickEngine
               dialog_tree = Characters::Dialogue::DialogTree.load_from_file(path)
               puts "Loaded dialog tree '#{dialog_tree.name}' with #{dialog_tree.nodes.size} nodes"
               # Store dialog tree in engine for character access
-              if dm = engine.dialog_manager
+              if dm = engine.system_manager.dialog_manager
                 dm.add_dialog_tree(dialog_tree)
               end
               ErrorReporter.report_progress_done(true)
@@ -341,21 +383,34 @@ module PointClickEngine
         end
 
         # Load audio
-        if audio = engine.audio_manager
+        if audio = engine.system_manager.audio_manager
           assets.try(&.audio).try do |audio_config|
             # Load music
             audio_config.music.each do |name, path|
-              if File.exists?(path)
-                audio.load_music(name, path)
+              full_path = File.join(config_base_dir, path)
+              if File.exists?(full_path)
+                audio.load_music(name, full_path)
+              else
+                puts "WARNING: Music file not found: #{full_path}"
               end
             end
 
             # Load sounds
             audio_config.sounds.each do |name, path|
-              if File.exists?(path)
-                audio.load_sound_effect(name, path)
+              full_path = File.join(config_base_dir, path)
+              if File.exists?(full_path)
+                audio.load_sound_effect(name, full_path)
+              else
+                puts "WARNING: Sound file not found: #{full_path}"
               end
             end
+          end
+
+          # Apply volume settings
+          if settings = self.settings
+            audio.set_master_volume(settings.master_volume)
+            audio.set_music_volume(settings.music_volume)
+            audio.set_sfx_volume(settings.sfx_volume)
           end
         end
       end
@@ -397,7 +452,9 @@ module PointClickEngine
         start_scene_name = self.start_scene
         start_music_name = self.start_music
 
-        engine.event_system.on("game:new") do
+        puts "[DEBUG] Setting up game:new event handler"
+        engine.system_manager.event_system.on("game:new") do
+          puts "[DEBUG] game:new event triggered!"
           # Change to start scene
           if scene_name = start_scene_name
             engine.change_scene(scene_name)
@@ -405,13 +462,17 @@ module PointClickEngine
 
           # Play start music
           if music_name = start_music_name
-            engine.audio_manager.try &.play_music(music_name, true)
+            puts "[Engine] Playing start music: #{music_name}"
+            engine.system_manager.audio_manager.try do |audio|
+              audio.play_music(music_name, true)
+              puts "[Engine] Music play command sent"
+            end
           end
 
           # Show opening message
           if u = ui_config
             if msg = u.opening_message
-              engine.dialog_manager.try &.show_message(msg)
+              engine.system_manager.dialog_manager.try &.show_message(msg)
             end
 
             # Show hints

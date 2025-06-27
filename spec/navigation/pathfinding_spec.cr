@@ -1,16 +1,16 @@
 require "../spec_helper"
 
 describe PointClickEngine::Navigation::Pathfinding do
-  describe PointClickEngine::Navigation::Pathfinding::NavigationGrid do
+  describe PointClickEngine::Navigation::NavigationGrid do
     it "initializes with correct dimensions" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
       grid.width.should eq(10)
       grid.height.should eq(10)
       grid.cell_size.should eq(32)
     end
 
     it "marks cells as walkable/non-walkable" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10)
 
       grid.is_walkable?(5, 5).should be_true
       grid.set_walkable(5, 5, false)
@@ -18,7 +18,7 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "handles out-of-bounds checks" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10)
 
       grid.is_walkable?(-1, 5).should be_false
       grid.is_walkable?(5, -1).should be_false
@@ -27,7 +27,7 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "converts between world and grid coordinates" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # World to grid
       grid_pos = grid.world_to_grid(64.0f32, 96.0f32)
@@ -39,7 +39,7 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "marks rectangles as walkable/non-walkable" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       grid.set_rect_walkable(64, 64, 64, 64, false)
 
@@ -54,16 +54,16 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
   end
 
-  describe PointClickEngine::Navigation::Pathfinding::Node do
+  describe PointClickEngine::Navigation::Node do
     it "calculates f_cost correctly" do
-      node = PointClickEngine::Navigation::Pathfinding::Node.new(5, 5, 10.0f32, 5.0f32)
+      node = PointClickEngine::Navigation::Node.new(5, 5, 10.0f32, 5.0f32)
       node.f_cost.should eq(15.0f32)
     end
 
     it "compares nodes by position" do
-      node1 = PointClickEngine::Navigation::Pathfinding::Node.new(5, 5)
-      node2 = PointClickEngine::Navigation::Pathfinding::Node.new(5, 5)
-      node3 = PointClickEngine::Navigation::Pathfinding::Node.new(6, 5)
+      node1 = PointClickEngine::Navigation::Node.new(5, 5)
+      node2 = PointClickEngine::Navigation::Node.new(5, 5)
+      node3 = PointClickEngine::Navigation::Node.new(6, 5)
 
       (node1 == node2).should be_true
       (node1 == node3).should be_false
@@ -72,7 +72,7 @@ describe PointClickEngine::Navigation::Pathfinding do
 
   describe "pathfinding" do
     it "finds a simple path in empty grid" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
       pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
       path = pathfinder.find_path(16.0f32, 16.0f32, 144.0f32, 144.0f32)
@@ -91,7 +91,7 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "returns nil when no path exists" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # Create a wall
       (0...10).each do |x|
@@ -104,7 +104,7 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "finds path around obstacles" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # Create an obstacle
       grid.set_rect_walkable(64, 64, 64, 64, false)
@@ -122,14 +122,16 @@ describe PointClickEngine::Navigation::Pathfinding do
     end
 
     it "respects diagonal movement setting" do
-      grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+      grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
       # Test with diagonal movement
-      pathfinder_diag = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: true)
+      movement_validator_diag = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: true)
+      pathfinder_diag = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator_diag)
       path_diag = pathfinder_diag.find_path(16.0f32, 16.0f32, 144.0f32, 144.0f32)
 
       # Test without diagonal movement
-      pathfinder_no_diag = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: false)
+      movement_validator_no_diag = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: false)
+      pathfinder_no_diag = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator_no_diag)
       path_no_diag = pathfinder_no_diag.find_path(16.0f32, 16.0f32, 144.0f32, 144.0f32)
 
       path_diag.should_not be_nil

@@ -4,11 +4,7 @@ describe "Engine Save/Load System" do
   describe "save game functionality" do
     it "creates save game data" do
       RL.init_window(800, 600, "Save Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Save Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Save Test Game")
       engine.init
 
       # Test basic save functionality exists
@@ -30,11 +26,7 @@ describe "Engine Save/Load System" do
 
     it "handles save file creation" do
       RL.init_window(800, 600, "Save File Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Save Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Save Test Game")
       engine.init
 
       # Test save file path generation
@@ -57,11 +49,7 @@ describe "Engine Save/Load System" do
 
     it "validates save data integrity" do
       RL.init_window(800, 600, "Save Validation Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Save Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Save Test Game")
       engine.init
 
       # Test save data validation
@@ -84,11 +72,7 @@ describe "Engine Save/Load System" do
   describe "load game functionality" do
     it "loads save game data" do
       RL.init_window(800, 600, "Load Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Load Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Load Test Game")
       engine.init
 
       # Simulate loading save data
@@ -108,11 +92,7 @@ describe "Engine Save/Load System" do
 
     it "handles missing save files gracefully" do
       RL.init_window(800, 600, "Missing Save Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Load Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Load Test Game")
       engine.init
 
       # Test missing save file handling
@@ -131,11 +111,7 @@ describe "Engine Save/Load System" do
 
     it "validates loaded save data" do
       RL.init_window(800, 600, "Load Validation Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Load Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Load Test Game")
       engine.init
 
       # Test corrupted save data handling
@@ -157,11 +133,7 @@ describe "Engine Save/Load System" do
   describe "save slot management" do
     it "manages multiple save slots" do
       RL.init_window(800, 600, "Save Slots Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Save Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Save Test Game")
       engine.init
 
       # Test save slot system
@@ -177,11 +149,7 @@ describe "Engine Save/Load System" do
 
     it "handles save slot conflicts" do
       RL.init_window(800, 600, "Save Conflict Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Save Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Save Test Game")
       engine.init
 
       # Test overwrite confirmation
@@ -198,11 +166,7 @@ describe "Engine Save/Load System" do
   describe "game state persistence" do
     it "persists game variables and flags" do
       RL.init_window(800, 600, "State Persistence Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "State Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "State Test Game")
       engine.init
 
       # Test state variables
@@ -220,11 +184,7 @@ describe "Engine Save/Load System" do
 
     it "persists inventory and items" do
       RL.init_window(800, 600, "Inventory Persistence Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Inventory Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Inventory Test Game")
       engine.init
 
       # Test inventory persistence
@@ -243,11 +203,7 @@ describe "Engine Save/Load System" do
 
     it "persists scene and character states" do
       RL.init_window(800, 600, "Scene State Persistence Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Scene Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
       # Test scene state persistence
@@ -278,11 +234,7 @@ describe "Engine Save/Load System" do
   describe "autosave functionality" do
     it "manages automatic save triggers" do
       RL.init_window(800, 600, "Autosave Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Autosave Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Autosave Test Game")
       engine.init
 
       # Test autosave triggers
@@ -297,11 +249,7 @@ describe "Engine Save/Load System" do
 
     it "handles autosave intervals" do
       RL.init_window(800, 600, "Autosave Interval Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Autosave Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Autosave Test Game")
       engine.init
 
       # Test timed autosave

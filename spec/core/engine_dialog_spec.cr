@@ -19,11 +19,7 @@ end
 describe "Engine Dialog System Integration" do
   it "handles basic dialog system integration" do
     RL.init_window(800, 600, "Dialog System Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Dialog Test Game",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
     # Create dialog-enabled character
@@ -39,11 +35,7 @@ describe "Engine Dialog System Integration" do
 
   it "manages dialog choice selections" do
     RL.init_window(800, 600, "Dialog Choice Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Dialog Test Game",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
     # Simulate dialog choice system
@@ -57,11 +49,7 @@ describe "Engine Dialog System Integration" do
 
   it "tracks conversation state" do
     RL.init_window(800, 600, "Conversation State Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Dialog Test Game",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
     # Test conversation partner tracking
@@ -77,11 +65,7 @@ describe "Engine Dialog System Integration" do
 
   it "manages dialog history and variables" do
     RL.init_window(800, 600, "Dialog Variables Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Dialog Test Game",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
     # Simulate game state variable tracking
@@ -98,11 +82,7 @@ describe "Engine Dialog System Integration" do
 
   it "handles multiple character conversations" do
     RL.init_window(800, 600, "Multi Character Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Dialog Test Game",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
     # Create multiple characters
@@ -117,7 +97,7 @@ describe "Engine Dialog System Integration" do
     # Add scene to engine and set it as current directly
     engine.scenes["multi_char_scene"] = scene
     engine.current_scene = scene
-    engine.current_scene_name = "multi_char_scene"
+    # engine.current_scene_name = "multi_char_scene" # Property doesn't exist
 
     # Verify all characters are present
     current_scene = engine.current_scene.not_nil!
@@ -128,11 +108,7 @@ describe "Engine Dialog System Integration" do
 
   it "handles conditional dialog branches" do
     RL.init_window(800, 600, "Conditional Dialog Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Dialog Test Game",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
     # Simulate game state conditions
@@ -154,11 +130,7 @@ describe "Engine Dialog System Integration" do
 
   it "manages dialog UI state" do
     RL.init_window(800, 600, "Dialog UI Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Dialog Test Game",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
     # Test dialog UI state
@@ -177,11 +149,7 @@ describe "Engine Dialog System Integration" do
 
   it "handles dialog progression and cancellation" do
     RL.init_window(800, 600, "Dialog Control Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Dialog Test Game",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
     # Test dialog progression

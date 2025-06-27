@@ -1,1558 +1,531 @@
-# Core Game Engine - Main coordination and game loop
+# Core Game Engine - Minimal coordination and game loop
 #
-# The Engine class is the heart of the Point & Click Engine framework.
-# It coordinates all game systems, manages the main game loop, and provides
-# the primary interface for game development.
-#
-# This class follows the singleton pattern for global access and handles:
-# - Window initialization and main game loop
-# - Scene management and transitions
-# - System coordination (audio, graphics, input, etc.)
-# - Save/load functionality
-# - Debug mode and development tools
+# The Engine class coordinates all game systems and manages the main game loop.
+# It provides direct access to all subsystems through component managers.
 
 require "yaml"
-require "./state_value"
 require "./engine/system_manager"
 require "./engine/input_handler"
-require "./engine/verb_input_system"
 require "./engine/render_coordinator"
+require "./engine/verb_input_system"
 require "../graphics/camera"
-require "./input_state"
-require "./error_handling"
 require "./scene_manager"
 require "./input_manager"
 require "./render_manager"
 require "./resource_manager"
-require "./dependency_container_simple"
-require "./config_manager"
-require "./performance_monitor"
-require "./render_validation"
-require "../graphics/transitions/transition_effect"
+require "./save_system"
+require "../inventory/inventory_system"
+require "./game_state_manager"
+require "./quest_system"
 
 module PointClickEngine
-  # Core engine functionality, game loop, and state management
   module Core
     # Main game engine class that coordinates all game systems.
-    #
-    # The `Engine` class is the central hub of the Point & Click Engine framework.
-    # It manages the game window, coordinates all subsystems (graphics, audio, input),
-    # runs the main game loop, and provides the primary API for game development.
-    #
-    # ## Architecture
-    #
-    # The engine uses a singleton pattern for global access and coordinates:
-    # - Window creation and management via Raylib
-    # - Scene management with transitions
-    # - Input handling (mouse, keyboard, gamepad)
-    # - Audio system (music, sound effects, ambient sounds)
-    # - Save/load system
-    # - Debug tools and visualization
-    #
-    # ## Basic Usage
-    #
-    # ```
-    # # Create engine (automatically becomes singleton)
-    # engine = PointClickEngine::Core::Engine.new(1024, 768, "My Adventure")
-    # engine.init
-    #
-    # # Create and add a scene
-    # scene = PointClickEngine::Scenes::Scene.new("intro")
-    # scene.load_background("assets/intro.png")
-    # engine.add_scene(scene)
-    #
-    # # Start the game
-    # engine.change_scene("intro")
-    # engine.run
-    # ```
-    #
-    # ## Advanced Usage with Systems
-    #
-    # ```
-    # # Enable debug mode for development
-    # PointClickEngine::Core::Engine.debug_mode = true
-    #
-    # # Configure systems before init
-    # engine = Engine.new(1920, 1080, "HD Adventure")
-    # engine.target_fps = 144 # For high refresh monitors
-    # engine.handle_clicks = true
-    # engine.edge_scroll_enabled = true
-    #
-    # # Initialize with custom configuration
-    # config = GameConfig.from_file("game_config.yaml")
-    # engine.configure_from(config)
-    # engine.init
-    #
-    # # Access singleton from anywhere
-    # Engine.instance.change_scene("menu")
-    # ```
-    #
-    # ## Input Handling
-    #
-    # ```
-    # # Enable/disable input systems
-    # engine.handle_clicks = true       # Mouse clicks for movement
-    # engine.enable_verb_coin = true    # Right-click verb interface
-    # engine.edge_scroll_enabled = true # Camera scrolling at edges
-    #
-    # # Block input temporarily (e.g., during cutscenes)
-    # engine.block_input_frames = 60 # Block for 1 second at 60 FPS
-    # ```
-    #
-    # ## Save/Load System
-    #
-    # ```
-    # # Quick save/load
-    # engine.save_game("slot1")
-    # engine.load_game("slot1")
-    #
-    # # Autosave on scene changes
-    # engine.autosave = true
-    # engine.autosave_slot = "autosave"
-    # ```
-    #
-    # ## Common Gotchas
-    #
-    # 1. **Singleton Pattern**: Only one Engine instance can exist at a time.
-    #    ```
-    # engine1 = Engine.new(800, 600, "Game 1")
-    # engine2 = Engine.new(800, 600, "Game 2") # Overwrites engine1 as singleton!
-    # Engine.instance == engine2               # true
-    #    ```
-    #
-    # 2. **Initialization Order**: Always call `init` before using engine features.
-    #    ```
-    # engine = Engine.new(800, 600, "Game")
-    # # engine.run  # ERROR: Window not created!
-    # engine.init # Must init first
-    # engine.run  # Now it works
-    #    ```
-    #
-    # 3. **Scene Management**: Add scenes before changing to them.
-    #    ```
-    # engine.change_scene("intro") # ERROR: Scene not found!
-    # engine.add_scene(intro_scene)
-    # engine.change_scene("intro") # Works now
-    #    ```
-    #
-    # 4. **Input Blocking**: Remember to unblock input after cutscenes.
-    #    ```
-    # engine.block_input_frames = 300 # 5 seconds
-    # # Input automatically unblocks after 300 frames
-    # # But you can manually unblock early:
-    # engine.block_input_frames = 0
-    #    ```
-    #
-    # ## Performance Tips
-    #
-    # - Use `target_fps` to limit frame rate and save CPU/battery
-    # - Enable `edge_scroll_enabled` only for scenes larger than viewport
-    # - Call `unload_scene` on scenes no longer needed to free memory
-    # - Use `debug_mode = false` in production for better performance
-    #
-    # ## See Also
-    #
-    # - `Scene` - For scene management
-    # - `InputHandler` - For custom input handling
-    # - `SaveSystem` - For save/load functionality
-    # - `GameConfig` - For configuration-based initialization
     class Engine
-      include YAML::Serializable
-
-      # Global debug mode flag - enables debug visualization and logging
-      class_property debug_mode : Bool = false
-
+      # Singleton instance
       @@instance : Engine?
-      @@dependency_container : SimpleDependencyContainer?
 
-      # Returns the singleton Engine instance
-      #
-      # Raises an exception if the engine hasn't been initialized yet.
-      # The engine instance is automatically set when creating a new Engine.
-      #
-      # ```
-      # engine = Engine.new(800, 600, "Game")
-      # same_engine = Engine.instance # Returns the same instance
-      # ```
-      def self.instance : Engine
-        raise "Engine not initialized" unless @@instance
-        @@instance.not_nil!
-      end
-
-      # Core engine properties
-
-      # Whether the engine has been initialized (window created, systems loaded)
-      @[YAML::Field(ignore: true)]
-      property initialized : Bool = false
-
-      # Window width in pixels
+      # Core properties
       property window_width : Int32
-
-      # Window height in pixels
       property window_height : Int32
-
-      # Window title displayed in the title bar
-      property title : String
-
-      # Target frames per second (default: 60)
+      property window_title : String
       property target_fps : Int32 = 60
-
-      # Whether the game loop is currently running
-      @[YAML::Field(ignore: true)]
       property running : Bool = false
 
-      # Input blocking after dialog
-      @[YAML::Field(ignore: true)]
-      property block_input_frames : Int32 = 0
-
-      # Whether to show FPS counter
-      property show_fps : Bool = false
-
-      # Auto-save interval in seconds (0 = disabled)
-      property auto_save_interval : Float32 = 0.0f32
-
-      # Time since last auto-save
-      @[YAML::Field(ignore: true)]
-      property auto_save_timer : Float32 = 0.0f32
-
-      # Scene management
-
-      # Name of the currently active scene
-      property current_scene_name : String?
-
-      # Currently active scene object (not serialized)
-      @[YAML::Field(ignore: true)]
-      property current_scene : Scenes::Scene?
-
-      # Hash of all registered scenes, indexed by name
-      property scenes : Hash(String, Scenes::Scene) = {} of String => Scenes::Scene
-
-      # Game systems
-
-      # Main inventory system for item management
-      property inventory : Inventory::InventorySystem
-
-      # Currently active dialogs being displayed
-      property dialogs : Array(UI::Dialog) = [] of UI::Dialog
-
-      # Global game state variables (flags, counters, etc.)
-      property state_variables : Hash(String, StateValue) = {} of String => StateValue
-
-      # Game state manager for complex state handling
-      @[YAML::Field(ignore: true)]
+      # Component managers - direct access for users
+      property system_manager : EngineComponents::SystemManager = EngineComponents::SystemManager.new
+      property scene_manager : SceneManager = SceneManager.new
+      property input_manager : InputManager = InputManager.new
+      property render_manager : RenderManager = RenderManager.new
+      property resource_manager : ResourceManager = ResourceManager.new
+      property inventory : Inventory::InventorySystem = Inventory::InventorySystem.new
       property game_state_manager : GameStateManager?
-
-      # Quest manager for quest tracking
-      @[YAML::Field(ignore: true)]
       property quest_manager : QuestManager?
 
-      # System managers (not serialized)
+      # Core components
+      @input_handler : EngineComponents::InputHandler?
+      @render_coordinator : EngineComponents::RenderCoordinator = EngineComponents::RenderCoordinator.new
+      @verb_input_system : EngineComponents::VerbInputSystem?
+      @update_callback : Proc(Float32, Nil)?
 
-      # Manages all engine subsystems (audio, graphics, GUI, etc.)
-      @[YAML::Field(ignore: true)]
-      property system_manager : EngineComponents::SystemManager = EngineComponents::SystemManager.new
+      # Auto-save functionality
+      property auto_save_interval : Float32 = 0.0_f32
+      property auto_save_timer : Float32 = 0.0_f32
 
-      # Handles input processing and click coordination
-      @[YAML::Field(ignore: true)]
-      property input_handler : EngineComponents::InputHandler = EngineComponents::InputHandler.new
+      # Fullscreen state
+      @fullscreen : Bool = false
 
-      # Handles verb-based input for point-and-click interactions
-      @[YAML::Field(ignore: true)]
-      property verb_input_system : EngineComponents::VerbInputSystem?
+      # Initialization state
+      @engine_initialized : Bool = false
 
-      # Coordinates rendering and debug visualization
-      @[YAML::Field(ignore: true)]
-      property render_coordinator : EngineComponents::RenderCoordinator = EngineComponents::RenderCoordinator.new
+      # Current scene reference
+      property current_scene : Scenes::Scene?
 
-      # New refactored managers
+      # Camera manager reference
+      def camera_manager : CameraManager
+        @system_manager.camera_manager.not_nil!
+      end
 
-      # Manages scene loading, transitions, and caching
-      @[YAML::Field(ignore: true)]
-      property scene_manager : SceneManager = SceneManager.new
+      # Temporary player storage until a scene is available
+      @pending_player : Characters::Character?
 
-      # Manages input processing and event coordination
-      @[YAML::Field(ignore: true)]
-      property input_manager : InputManager = InputManager.new
+      # Singleton accessor
+      def self.instance : Engine
+        @@instance || raise "Engine not initialized. Call Engine.new first."
+      end
 
-      # Manages rendering layers and visual effects
-      @[YAML::Field(ignore: true)]
-      property render_manager : RenderManager = RenderManager.new
+      def self.instance? : Engine?
+        @@instance
+      end
 
-      # Manages asset loading, caching, and cleanup
-      @[YAML::Field(ignore: true)]
-      property resource_manager : ResourceManager = ResourceManager.new
+      # Reset instance for testing purposes
+      def self.reset_instance
+        @@instance = nil
+      end
 
-      # Whether the window is in fullscreen mode
-      property fullscreen : Bool = false
+      # Class-level debug mode setter/getter
+      @@debug_mode : Bool = false
 
-      # Main player character (not serialized)
-      @[YAML::Field(ignore: true)]
-      property player : Characters::Character?
+      def self.debug_mode=(value : Bool)
+        @@debug_mode = value
+      end
 
-      # Cutscene management system (not serialized)
-      @[YAML::Field(ignore: true)]
-      property cutscene_manager : Cutscenes::CutsceneManager = Cutscenes::CutsceneManager.new
+      def self.debug_mode
+        @@debug_mode
+      end
 
-      # Main game camera for scene scrolling (not serialized)
-      @[YAML::Field(ignore: true)]
-      property camera : Graphics::Camera?
-
-      # Game-specific update callback
-      @[YAML::Field(ignore: true)]
-      property on_update : Proc(Float32, Nil)?
-
-      # Cursor texture path (serialized for save/load)
-      property cursor_texture_path : String?
-
-      # Creates a new Engine instance with specified window dimensions
-      #
-      # This constructor initializes all core systems and sets up the singleton instance.
-      # The engine must be initialized with `#init` before use.
-      #
-      # *window_width* - Width of the game window in pixels
-      # *window_height* - Height of the game window in pixels
-      # *title* - Window title to display
-      #
-      # ```
-      # engine = Engine.new(1024, 768, "My Adventure Game")
-      # engine.init
-      # ```
-      def initialize(@window_width : Int32, @window_height : Int32, @title : String)
-        @inventory = Inventory::InventorySystem.new(RL::Vector2.new(x: 10, y: @window_height - 80))
-        @scenes = {} of String => Scenes::Scene
-        @dialogs = [] of UI::Dialog
-        @cutscene_manager = Cutscenes::CutsceneManager.new
-        @system_manager = EngineComponents::SystemManager.new
-        @input_handler = EngineComponents::InputHandler.new
-        @render_coordinator = EngineComponents::RenderCoordinator.new
-
-        # Initialize dependency injection
-        setup_dependencies
-
-        # Initialize new refactored managers via DI
-        container = @@dependency_container.not_nil!
-
-        # Resolve managers - these must be initialized
-        @scene_manager = container.resolve_scene_manager.as(SceneManager)
-        @input_manager = container.resolve_input_manager.as(InputManager)
-        @render_manager = container.resolve_render_manager.as(RenderManager)
-        @resource_manager = container.resolve_resource_loader.as(ResourceManager)
-
+      # Creates a new game engine instance
+      def initialize(@window_width : Int32, @window_height : Int32, @window_title : String)
+        raise "Engine already initialized" if @@instance
         @@instance = self
       end
 
-      # Creates a new Engine instance with default settings
-      #
-      # Uses default window size (800x600) and title ("Game").
-      # The engine must be initialized with `#init` before use.
-      #
-      # ```
-      # engine = Engine.new
-      # engine.init
-      # ```
-      def initialize
-        @window_width = 800
-        @window_height = 600
-        @title = "Game"
-        @inventory = Inventory::InventorySystem.new(RL::Vector2.new(x: 10, y: 520))
-        @scenes = {} of String => Scenes::Scene
-        @dialogs = [] of UI::Dialog
-        @cutscene_manager = Cutscenes::CutsceneManager.new
-        @system_manager = EngineComponents::SystemManager.new
-        @input_handler = EngineComponents::InputHandler.new
-        @render_coordinator = EngineComponents::RenderCoordinator.new
-
-        # Initialize dependency injection
-        setup_dependencies
-
-        # Initialize new refactored managers via DI
-        container = @@dependency_container.not_nil!
-
-        # Resolve managers - these must be initialized
-        @scene_manager = container.resolve_scene_manager.as(SceneManager)
-        @input_manager = container.resolve_input_manager.as(InputManager)
-        @render_manager = container.resolve_render_manager.as(RenderManager)
-        @resource_manager = container.resolve_resource_loader.as(ResourceManager)
-
-        @@instance = self
-      end
-
-      # Initialize the engine and all its systems
-      #
-      # Creates the game window, initializes Raylib, and sets up all engine subsystems
-      # including audio, graphics, input, and scripting. This must be called before
-      # using any other engine functionality.
-      #
-      # Returns immediately if already initialized.
-      #
-      # ```
-      # engine = Engine.new(800, 600, "My Game")
-      # engine.init # Creates window and initializes systems
-      # ```
+      # Initializes the engine and all subsystems
       def init
-        return if @initialized
-
-        RL.init_window(@window_width, @window_height, @title)
+        # Initialize Raylib window
+        RL.init_window(@window_width, @window_height, @window_title)
         RL.set_target_fps(@target_fps)
 
-        # Disable ESC key from closing window (we use it for pause menu)
-        RL.set_exit_key(RL::KeyboardKey::Null)
-
+        # Initialize subsystems
         @system_manager.initialize_systems(@window_width, @window_height)
 
-        # Initialize menu system after other systems
-        @system_manager.menu_system = UI::MenuSystem.new(self)
+        # Setup menu callbacks via SystemManager
+        @system_manager.setup_menu_callbacks(self)
 
-        # Initialize camera for scene scrolling
-        @camera = Graphics::Camera.new(@window_width, @window_height)
+        # Initialize input handler
+        @input_handler = EngineComponents::InputHandler.new
 
-        # Set up input handlers for the new InputManager
-        setup_input_handlers
-
-        # Set up input handlers
-        setup_input_handlers
-
-        # Set up render layers
-        setup_render_layers
-
-        @initialized = true
-        puts "Engine initialized with #{@system_manager.initialized_systems_count} systems"
-
-        # Run architectural validation in debug mode
-        if Engine.debug_mode
-          RenderValidation.quick_validate(self)
-        end
+        # Mark as initialized
+        @engine_initialized = true
       end
 
-      # Initialize the engine with specific window dimensions and title
-      #
-      # Creates the game window with the specified dimensions and title, then
-      # initializes all engine subsystems. This is a convenience method that
-      # updates the engine configuration before calling the main init method.
-      #
-      # *width* - Window width in pixels
-      # *height* - Window height in pixels
-      # *title* - Window title to display in the title bar
-      #
-      # ```
-      # engine = Engine.new
-      # engine.init(1024, 768, "My Adventure Game")
-      # ```
-      #
-      # NOTE: This method can be called to reinitialize the engine with new
-      # window settings, but it will only take effect if the engine hasn't
-      # been initialized yet.
-      def init(width : Int32, height : Int32, title : String)
-        @window_width = width
-        @window_height = height
-        @title = title
-        init
+      def engine_ready? : Bool
+        @engine_initialized
       end
 
-      # Set up input handlers for the InputManager
-      private def setup_input_handlers
-        # Register menu input handler with highest priority
-        @input_manager.register_handler("menu_input", 100) do |dt|
-          if menu = @system_manager.menu_system
-            if menu.current_menu && menu.current_menu.not_nil!.visible
-              menu.update(dt)
-              true # Consume input when menu is active
-            else
-              false
-            end
-          else
-            false
-          end
-        end
-
-        # Register dialog input handler with high priority
-        @input_manager.register_handler("dialog_input", 90) do |dt|
-          if @dialogs.any?(&.visible)
-            true # Consume input when dialog is visible
-          elsif dm = @system_manager.dialog_manager
-            dm.is_dialog_active?
-          else
-            false
-          end
-        end
-
-        # Register keyboard shortcut handler
-        @input_manager.register_handler("keyboard_shortcuts", 80) do |dt|
-          consumed = false
-
-          # Handle common keyboard shortcuts
-          if @input_manager.key_pressed?(Raylib::KeyboardKey::Escape)
-            if menu = @system_manager.menu_system
-              menu.toggle_pause_menu
-            end
-            consumed = true
-          end
-
-          if @input_manager.key_pressed?(Raylib::KeyboardKey::F11)
-            toggle_fullscreen
-            consumed = true
-          end
-
-          # Use input manager instead of direct Raylib for consistency
-          if @input_manager.key_pressed?(Raylib::KeyboardKey::F1)
-            Core::Engine.debug_mode = !Core::Engine.debug_mode
-            # Debug mode toggled
-            consumed = true
-          end
-
-          if @input_manager.key_pressed?(Raylib::KeyboardKey::Tab)
-            # Hotspot highlight toggled
-            toggle_hotspot_highlight
-            consumed = true
-          end
-
-          if @input_manager.key_pressed?(Raylib::KeyboardKey::F5)
-            if cam = @camera
-              cam.edge_scroll_enabled = !cam.edge_scroll_enabled
-              puts "Camera edge scrolling: #{cam.edge_scroll_enabled ? "enabled" : "disabled"}"
-            end
-            consumed = true
-          end
-
-          # Consume keyboard input if we handled any shortcuts
-          if consumed
-            @input_manager.consume_keyboard_input
-          end
-
-          consumed # Return true if we consumed input to stop other handlers
-        end
-
-        # Register verb input handler if enabled
-        @input_manager.register_handler("verb_input", 50) do |dt|
-          if verb_system = @verb_input_system
-            # Check if input was already consumed by higher priority handlers
-            mouse_was_consumed = @input_manager.mouse_consumed?
-            keyboard_was_consumed = @input_manager.keyboard_consumed?
-
-            camera_for_input = if scene = @current_scene
-                                 scene.enable_camera_scrolling ? @camera : nil
-                               else
-                                 nil
-                               end
-            display_manager = @system_manager.display_manager
-            verb_system.process_input(@current_scene, @player, display_manager, camera_for_input)
-
-            # Return true if verb system consumed any input that wasn't already consumed
-            new_mouse_consumed = @input_manager.mouse_consumed?
-            new_keyboard_consumed = @input_manager.keyboard_consumed?
-
-            (new_mouse_consumed && !mouse_was_consumed) || (new_keyboard_consumed && !keyboard_was_consumed)
-          else
-            false
-          end
-        end
-
-        # Register default game input handler with lowest priority
-        @input_manager.register_handler("game_input", 10) do |dt|
-          camera_for_input = if scene = @current_scene
-                               scene.enable_camera_scrolling ? @camera : nil
-                             else
-                               nil
-                             end
-
-          # Handle mouse clicks
-          if @input_manager.mouse_button_pressed?(Raylib::MouseButton::Left)
-            @input_handler.handle_click(@current_scene, @player, camera_for_input)
-            @input_manager.consume_mouse_input
-            true
-          elsif @input_manager.mouse_button_pressed?(Raylib::MouseButton::Right)
-            @input_handler.handle_right_click(@current_scene, camera_for_input)
-            @input_manager.consume_mouse_input
-            true
-          else
-            false
-          end
-        end
-      end
-
-      # Scene management
-
-      # Registers a scene with the engine for later use
-      #
-      # Adds a scene to the engine's scene registry, making it available
-      # for activation via `#change_scene`. The scene is indexed by its
-      # name property for quick lookup.
-      #
-      # *scene* - The scene object to register with the engine
-      #
-      # ```
-      # main_room = Scenes::Scene.new("main_room")
-      # engine.add_scene(main_room)
-      # engine.change_scene("main_room") # Now available
-      # ```
-      #
-      # NOTE: If a scene with the same name already exists, it will be
-      # replaced with the new scene.
-      def add_scene(scene : Scenes::Scene)
-        # Validate scene before adding
-        result = @scene_manager.add_scene(scene)
-
-        # Only add to engine's scene registry if successful
-        if result.success?
-          @scenes[scene.name] = scene
-        end
-
-        result
-      end
-
-      # Activates a registered scene as the current scene
-      #
-      # Changes the active scene to the specified scene by name. The scene
-      # must have been previously registered with `#add_scene`. If the scene
-      # has an `on_enter` callback, it will be executed during the transition.
-      #
-      # *name* - Name of the scene to activate
-      #
-      # ```
-      # engine.add_scene(living_room_scene)
-      # engine.change_scene("living_room") # Activates the scene
-      # ```
-      #
-      # NOTE: If the specified scene doesn't exist, a warning is printed
-      # and the current scene remains unchanged.
-      def change_scene(name : String)
-        change_scene_with_transition(name, nil, 0.0f32)
-      end
-
-      # Change scene with a specific transition effect
-      def change_scene_with_transition(name : String, transition_effect : Graphics::TransitionEffect?, duration : Float32 = 1.0f32, target_position : RL::Vector2? = nil)
-        # If we have a transition manager and effect, start the transition
-        if tm = @system_manager.transition_manager
-          if effect = transition_effect
-            tm.start_transition(effect, duration) do
-              # This callback runs at the halfway point of the transition
-              perform_scene_change(name)
-
-              # Set player position if provided
-              if pos = target_position
-                if p = @player
-                  p.position = pos
-                  if p.responds_to?(:stop_walking)
-                    p.stop_walking
-                  end
-                end
-              end
-            end
-            return
-          end
-        end
-
-        # No transition, just change scene immediately
-        perform_scene_change(name)
-      end
-
-      private def perform_scene_change(name : String)
-        # Try to change scene via SceneManager first
-        result = @scene_manager.change_scene(name)
-        case result
-        when .success?
-          scene = result.value
-          @current_scene = scene
-          @current_scene_name = name
-
-          # Add player to the new scene if player exists
-          if player = @player
-            scene.set_player(player)
-          end
-
-          # Setup navigation with correct character size
-          if scene.enable_pathfinding && scene.background
-            # Debug: Check if walkable area exists BEFORE setup_navigation
-            if walkable = scene.walkable_area
-              puts "[NAVIGATION] Scene has walkable area with #{walkable.regions.size} regions"
-            else
-              puts "[NAVIGATION] WARNING: Scene has no walkable area defined!"
-            end
-
-            if p = @player
-              # Use the larger dimension to ensure character fits in all orientations
-              char_width = p.size.x * p.scale
-              char_height = p.size.y * p.scale
-              # Use half the smaller dimension as radius for better navigation
-              navigation_radius = Math.min(char_width, char_height) / 2.0_f32
-              puts "[NAVIGATION] Setting up navigation for scene '#{name}' with navigation radius: #{navigation_radius} (actual size: #{char_width}x#{char_height})"
-
-              # Debug: Check if player spawn position is walkable
-              if walkable = scene.walkable_area
-                spawn_walkable = walkable.is_point_walkable?(p.position)
-                puts "[NAVIGATION] Player spawn position #{p.position} is #{spawn_walkable ? "WALKABLE" : "NOT WALKABLE"}"
-
-                # List all walkable regions
-                puts "[NAVIGATION] Scene has #{walkable.regions.size} regions:"
-                walkable.regions.each do |region|
-                  puts "[NAVIGATION]   - '#{region.name}' (walkable: #{region.walkable}) vertices: #{region.vertices.size}"
-                  if region.vertices.size >= 4
-                    min_y = region.vertices.min_by(&.y).y
-                    max_y = region.vertices.max_by(&.y).y
-                    min_x = region.vertices.min_by(&.x).x
-                    max_x = region.vertices.max_by(&.x).x
-                    puts "[NAVIGATION]     Bounds: X(#{min_x}-#{max_x}) Y(#{min_y}-#{max_y})"
-                  end
-                end
-              end
-
-              scene.setup_navigation(navigation_radius)
-            else
-              # Use default if no player
-              puts "[NAVIGATION] Setting up navigation for scene '#{name}' with default radius"
-              scene.setup_navigation
-            end
-          end
-
-          # Update camera for new scene
-          if camera = @camera
-            if scene.enable_camera_scrolling
-              # Use logical dimensions for camera bounds, not texture size!
-              camera.set_scene_size(scene.logical_width, scene.logical_height)
-              # Center camera on player if present
-              if player = @player
-                camera.center_on(player.position.x, player.position.y)
-              else
-                # Center on logical scene center
-                camera.center_on((scene.logical_width / 2).to_f32, (scene.logical_height / 2).to_f32)
-              end
-            else
-              # Disable scrolling for this scene by setting scene size to viewport size
-              camera.set_scene_size(camera.viewport_width, camera.viewport_height)
-              camera.center_on((camera.viewport_width / 2).to_f32, (camera.viewport_height / 2).to_f32)
-            end
-          end
-
-          scene.enter
-        when .failure?
-          ErrorLogger.error("Failed to change scene: #{result.error.message}")
-        end
-      end
-
-      # Additional scene management delegation
-      def preload_scene(name : String)
-        @scene_manager.preload_scene(name)
-      end
-
-      def unload_scene(name : String)
-        result = @scene_manager.remove_scene(name)
-        # Also remove from engine's local registry
-        @scenes.delete(name)
-        result
-      end
-
-      def get_scene(name : String)
-        @scene_manager.get_scene(name)
-      end
-
-      def get_scene_names
-        @scene_manager.scene_names
-      end
-
-      # Dialog management
-
-      # Displays a dialog to the player
-      #
-      # Adds a dialog to the active dialog queue. The dialog will be
-      # rendered on top of the current scene and will capture input
-      # until it's completed or dismissed.
-      #
-      # *dialog* - The dialog object to display
-      #
-      # ```
-      # dialog = UI::Dialog.new("Hello, world!")
-      # engine.show_dialog(dialog)
-      # ```
-      #
-      # NOTE: Multiple dialogs can be shown simultaneously and will
-      # be rendered in the order they were added.
-      def show_dialog(dialog : UI::Dialog)
-        @dialogs << dialog
-      end
-
-      # UI visibility
-
-      # Makes the game UI visible
-      #
-      # Shows all UI elements including inventory, dialog boxes, and other
-      # interface components. This is useful for toggling UI visibility
-      # during cutscenes or special game states.
-      #
-      # ```
-      # engine.hide_ui # Hide UI for cutscene
-      # # ... cutscene plays ...
-      # engine.show_ui # Restore UI after cutscene
-      # ```
-      def show_ui
-        @render_coordinator.ui_visible = true
-      end
-
-      # Hides the game UI
-      #
-      # Conceals all UI elements including inventory, dialog boxes, and other
-      # interface components. This is useful for creating immersive cutscenes
-      # or special game states where the UI should not be visible.
-      #
-      # ```
-      # engine.hide_ui # Hide UI for cutscene
-      # play_intro_cutscene()
-      # engine.show_ui # Restore UI when done
-      # ```
-      def hide_ui
-        @render_coordinator.ui_visible = false
+      def input_handler
+        @input_handler
       end
 
       # Main game loop
-
-      # Starts the main game loop and runs until stopped
-      #
-      # Begins the core game loop that handles input, updates game state,
-      # and renders graphics. The loop continues until either `#stop` is
-      # called or the user closes the window. The engine must be initialized
-      # before calling this method.
-      #
-      # Returns immediately if the engine is not initialized.
-      #
-      # ```
-      # engine = Engine.new(800, 600, "My Game")
-      # engine.init
-      # engine.add_scene(main_scene)
-      # engine.change_scene("main_scene")
-      # engine.run # Starts the game loop
-      # ```
-      #
-      # NOTE: This method blocks until the game loop ends. All cleanup
-      # is performed automatically when the loop exits.
       def run
-        return unless @initialized
-
         @running = true
-        puts "Starting game loop..."
 
         while @running && !RL.close_window?
-          update
+          dt = RL.get_frame_time
+
+          # Update phase
+          update(dt)
+
+          # Render phase
+          RL.begin_drawing
+          RL.clear_background(RL::BLACK)
+
           render
+
+          RL.end_drawing
         end
 
         cleanup
       end
 
-      # Stops the main game loop
-      #
-      # Signals the game loop to exit on the next iteration. This will
-      # cause the `#run` method to return and trigger engine cleanup.
-      # The game window will be closed and all resources freed.
-      #
-      # ```
-      # # In a menu or quit handler:
-      # engine.stop # Gracefully exits the game
-      # ```
-      #
-      # NOTE: The loop will not stop immediately but will exit after
-      # completing the current frame.
+      # Stops the game loop
       def stop
         @running = false
       end
 
-      # Public update method for external use
+      # Updates all game systems
       def update(dt : Float32)
-        # Process events first
-        event_system.process_events
+        # Update input manager first
+        @input_manager.process_input(dt)
+
+        # Handle input - use verb input if enabled, otherwise standard input
+        if @verb_input_system && @verb_input_system.not_nil!.enabled
+          @verb_input_system.not_nil!.process_input(@current_scene, player, display_manager, camera_manager.current_camera)
+        else
+          @input_handler.try do |handler|
+            handler.handle_click(@current_scene, player, camera_manager.current_camera)
+            handler.handle_keyboard_input
+          end
+        end
 
         # Update systems
         @system_manager.update_systems(dt)
 
-        # Update new refactored managers
-        # @resource_manager.update(dt)  # ResourceManager doesn't need regular updates
-        # @scene_manager.update(dt)     # SceneManager doesn't need regular updates
-        @input_manager.update(dt) # InputManager has update method
-        # @render_manager.update(dt)    # RenderManager doesn't need regular updates
-
-        # Update menu system
-        @system_manager.menu_system.try(&.update(dt))
-
-        # Skip game updates if menu is pausing the game
-        if menu = @system_manager.menu_system
-          return if menu.game_paused
-        end
-
-        # Update current scene
+        # Update scene
         @current_scene.try(&.update(dt))
 
-        # Update camera if it exists
-        if camera = @camera
-          if scene = @current_scene
-            if scene.enable_camera_scrolling
-              # Update camera with mouse position for edge scrolling
-              mouse_pos = RL.get_mouse_position
-              camera.update(dt, mouse_pos.x.to_i, mouse_pos.y.to_i)
+        # Update inventory
+        @inventory.update(dt)
 
-              # Follow player if one exists
-              if player = @player
-                camera.follow(player)
-              end
-            end
-          end
-        end
-
-        # Update cutscenes
-        @cutscene_manager.update(dt)
-
-        # Update dialogs
-        @dialogs.each(&.update(dt))
-        # @dialogs.reject!(&.completed?) # Dialog doesn't have completed? method
-
-        # Check if any dialog is visible or dialog manager has active dialog
-        dialog_active = @dialogs.any? { |d| d.visible }
-        if dm = @system_manager.dialog_manager
-          dialog_active ||= dm.is_dialog_active?
-        end
-
-        # Block mouse input if dialog is active, but allow keyboard shortcuts
-        if dialog_active
-          @input_manager.block_input(1, "dialog_active")
-          # Note: Keyboard shortcuts are handled by individual input handlers
-          # with higher priority than dialog blocking
-        else
-          @input_manager.unblock_input
-        end
-
-        # Update cursor
-        # Note: GUI system doesn't have cursor manager built-in
-        # We'll need to create a separate cursor system or use UIManager
-
-        # Call game-specific update if provided
-        @on_update.try &.call(dt)
+        # Update camera manager
+        mouse_pos = RL.get_mouse_position
+        camera_manager.update(dt, mouse_pos.x.to_i, mouse_pos.y.to_i)
 
         # Handle auto-save
-        if @auto_save_interval > 0
-          @auto_save_timer += dt
-          if @auto_save_timer >= @auto_save_interval
-            @auto_save_timer = 0.0f32
-            # Create saves directory if it doesn't exist
-            Dir.mkdir_p("saves") unless Dir.exists?("saves")
-            save_game("saves/autosave.yml")
-          end
-        end
+        handle_auto_save(dt)
+
+        # Call update callback if set
+        @update_callback.try(&.call(dt))
       end
 
-      # Update game state
-      private def update
-        dt = RL.get_frame_time
-
-        # Reset input state for new frame
-        InputState.reset
-
-        # Process events first
-        event_system.process_events
-
-        # Update systems
-        @system_manager.update_systems(dt)
-
-        # Update new refactored managers
-        # @resource_manager.update(dt)  # ResourceManager doesn't need regular updates
-        # @scene_manager.update(dt)     # SceneManager doesn't need regular updates
-        @input_manager.update(dt) # InputManager has update method
-        # @render_manager.update(dt)    # RenderManager doesn't need regular updates
-
-        # Update menu system
-        @system_manager.menu_system.try(&.update(dt))
-
-        # Skip game updates if menu is pausing the game
-        if menu = @system_manager.menu_system
-          return if menu.game_paused
-        end
-
-        # Update current scene
-        @current_scene.try(&.update(dt))
-
-        # Update camera if it exists
-        if camera = @camera
-          if scene = @current_scene
-            if scene.enable_camera_scrolling
-              # Update camera with mouse position for edge scrolling
-              mouse_pos = RL.get_mouse_position
-              camera.update(dt, mouse_pos.x.to_i, mouse_pos.y.to_i)
-
-              # Follow player if one exists
-              if player = @player
-                camera.follow(player)
-              end
-            end
-          end
-        end
-
-        # Update cutscenes
-        @cutscene_manager.update(dt)
-
-        # Update dialogs
-        @dialogs.each(&.update(dt))
-        # @dialogs.reject!(&.completed?) # Dialog doesn't have completed? method
-
-        # Check if any dialog is visible or dialog manager has active dialog
-        dialog_active = @dialogs.any? { |d| d.visible }
-        if dm = @system_manager.dialog_manager
-          dialog_active ||= dm.is_dialog_active?
-        end
-
-        # Process input only if no dialog is active
-        if !dialog_active
-          camera_for_input = if scene = @current_scene
-                               scene.enable_camera_scrolling ? @camera : nil
-                             else
-                               nil
-                             end
-
-          # Input processing is now handled by InputManager in the update method
-        end
-
-        # Update cursor via RenderManager
-        # TODO: Update this to use new RenderManager API
-        # @render_manager.update_cursor(@current_scene)
-      end
-
-      # Render game
+      # Renders the game
       private def render
-        dt = RL.get_frame_time
-
-        # Check if we should use transition wrapping
-        if tm = @system_manager.transition_manager
-          if tm.transitioning?
-            # Wrap entire render process with transition
-            RL.begin_drawing
-            RL.clear_background(RL::BLACK)
-
-            tm.render_with_transition do
-              # Render all layers except the transition layer itself
-              @render_manager.render_internal(dt)
-            end
-
-            RL.end_drawing
-            return
+        # Check if we're transitioning
+        if (tm = @system_manager.transition_manager) && tm.transitioning?
+          puts "[Engine] Rendering with transition"
+          tm.render_with_transition do
+            render_scene_content
           end
+        else
+          render_scene_content
         end
 
-        # Normal rendering without transition
-        @render_manager.render(dt)
+        # Draw verb cursor (on top of everything)
+        @verb_input_system.try(&.draw(self.display_manager))
       end
 
-      # Display settings
+      # Renders the scene content (separated for use with transitions)
+      private def render_scene_content
+        # Render scene with camera
+        @current_scene.try(&.draw(camera_manager.current_camera))
 
-      # Toggles between fullscreen and windowed mode
-      #
-      # Switches the game window between fullscreen and windowed display
-      # modes. The engine tracks the current fullscreen state and updates
-      # it when toggled.
-      #
-      # ```
-      # # Toggle fullscreen on F11 key press
-      # if RL.key_pressed?(RL::KeyboardKey::F11)
-      #   engine.toggle_fullscreen
-      # end
-      # ```
-      #
-      # NOTE: The actual fullscreen implementation is handled by Raylib
-      # and may behave differently on different operating systems.
-      def toggle_fullscreen
-        @fullscreen = !@fullscreen
-        RL.toggle_fullscreen
+        # Render highlighted hotspots if enabled
+        if @render_coordinator.hotspot_highlight_enabled && @current_scene
+          render_hotspot_highlights(@current_scene.not_nil!)
+        end
+
+        # Render UI and overlays
+        @system_manager.dialog_manager.try(&.draw)
+        @inventory.draw
+        @system_manager.menu_system.try(&.render)
+
+        # Debug rendering
+        if @@debug_mode
+          render_debug_info
+        end
       end
 
-      def set_scaling_mode(mode : Graphics::DisplayManager::ScalingMode)
-        @system_manager.display_manager.try(&.set_scaling_mode(mode))
+      # Render hotspot highlights
+      private def render_hotspot_highlights(scene : Scenes::Scene)
+        # Get camera offset from camera manager
+        camera = camera_manager.current_camera
+        camera_offset = RL::Vector2.new(x: -camera.position.x, y: -camera.position.y)
+
+        # Calculate pulsing effect
+        time = RL.get_time
+        pulse = ((Math.sin(time * 3.0) + 1.0) / 2.0).to_f32
+        pulse_alpha = (80 + pulse * 40).to_u8
+
+        # Draw each hotspot with golden highlight
+        scene.hotspot_manager.try(&.hotspots.each do |hotspot|
+          next unless hotspot.visible
+
+          bounds = hotspot.bounds
+          highlight_rect = RL::Rectangle.new(
+            x: bounds.x + camera_offset.x,
+            y: bounds.y + camera_offset.y,
+            width: bounds.width,
+            height: bounds.height
+          )
+
+          # Draw filled rectangle with pulsing transparency
+          RL.draw_rectangle_rec(highlight_rect, RL::Color.new(r: 255, g: 215, b: 0, a: pulse_alpha))
+
+          # Draw outline
+          RL.draw_rectangle_lines_ex(highlight_rect, 3, RL::Color.new(r: 255, g: 215, b: 0, a: 255))
+        end)
       end
 
-      # Enable verb-based input system
-      #
-      # Activates the verb-based input system for point-and-click interactions.
-      # This replaces the default input handler with a more sophisticated system
-      # that supports verbs like Walk, Look, Talk, Use, Take, Open, etc.
-      #
-      # ```
-      # engine.enable_verb_input
-      # # Now left-click executes the current verb
-      # # Right-click always performs "Look"
-      # ```
+      # Renders debug information
+      private def render_debug_info
+        y_offset = 10
+        RL.draw_text("DEBUG MODE", 10, y_offset, 20, RL::RED)
+        y_offset += 25
+
+        RL.draw_fps(10, y_offset)
+        y_offset += 25
+
+        if scene = @current_scene
+          RL.draw_text("Scene: #{scene.name}", 10, y_offset, 20, RL::WHITE)
+          y_offset += 25
+        end
+
+        mouse_pos = RL.get_mouse_position
+        RL.draw_text("Mouse: #{mouse_pos.x.to_i}, #{mouse_pos.y.to_i}", 10, y_offset, 20, RL::WHITE)
+      end
+
+      # Cleans up all resources
+      private def cleanup
+        @system_manager.cleanup_systems
+
+        RL.close_window
+        @@instance = nil
+      end
+
+      # Save/Load functionality
+      def save_game(slot_name : String = "autosave") : Bool
+        SaveSystem.save_game(self, slot_name)
+      end
+
+      def load_game(slot_name : String = "autosave") : Bool
+        SaveSystem.load_game(self, slot_name)
+      end
+
+      # Convenience accessors
+      def player : Characters::Character?
+        @current_scene.try(&.player) || @pending_player
+      end
+
+      def scenes : Hash(String, Scenes::Scene)
+        @scene_manager.scenes
+      end
+
+      # Enable verb input system
       def enable_verb_input
-        @verb_input_system = EngineComponents::VerbInputSystem.new(self)
-        @input_handler.handle_clicks = false # Disable default click handling
+        @verb_input_system ||= EngineComponents::VerbInputSystem.new(self)
+        @verb_input_system.not_nil!.enabled = true
       end
 
-      # Show the main menu
-      #
-      # Displays the main menu and pauses the game. This is typically
-      # called at game startup or when returning to the main menu.
-      #
-      # ```
-      # engine.show_main_menu
-      # ```
+      def verb_input_system
+        @verb_input_system
+      end
+
+      def shader_system
+        @system_manager.shader_system
+      end
+
+      def display_manager
+        @system_manager.display_manager
+      end
+
+      def gui
+        @system_manager.gui
+      end
+
+      def show_fps=(value : Bool)
+        @@debug_mode = value
+      end
+
+      def show_fps
+        @@debug_mode
+      end
+
+      def event_system
+        @system_manager.event_system
+      end
+
+      def player=(value : Characters::Character?)
+        if scene = @current_scene
+          scene.player = value
+          @pending_player = nil
+        else
+          # Store player until a scene is available
+          @pending_player = value
+        end
+      end
+
+      def on_update=(callback : Proc(Float32, Nil)?)
+        @update_callback = callback
+      end
+
+      def on_update
+        @update_callback
+      end
+
+      def enable_auto_save(interval : Float32)
+        @auto_save_interval = interval
+        @auto_save_timer = 0.0_f32
+        puts "Auto-save enabled with interval: #{interval} seconds" if interval > 0
+      end
+
+      def start_game
+        # Start the game
+        puts "Game started"
+      end
+
+      def dialog_manager
+        @system_manager.dialog_manager
+      end
+
+      def script_engine
+        @system_manager.script_engine
+      end
+
       def show_main_menu
         @system_manager.menu_system.try(&.show_main_menu)
       end
 
-      # Start a new game
-      #
-      # Hides the menu and enters game mode. This should be called
-      # after initializing the game scene.
-      #
-      # ```
-      # # After setting up initial scene
-      # engine.start_game
-      # ```
-      def start_game
-        @system_manager.menu_system.try(&.enter_game)
+      def menu_system
+        @system_manager.menu_system
       end
 
-      # Get the verb input system if enabled
-      def verb_input_system : EngineComponents::VerbInputSystem?
-        @verb_input_system
-      end
-
-      # Toggle hotspot highlighting
-      #
-      # Enables or disables visual highlighting of interactive hotspots.
-      # When enabled, hotspots will be outlined with a pulsing golden glow
-      # and character names will be displayed above them.
-      #
-      # ```
-      # # Toggle hotspot highlighting on Tab key
-      # if RL.key_pressed?(RL::KeyboardKey::Tab)
-      #   engine.toggle_hotspot_highlight
-      # end
-      # ```
       def toggle_hotspot_highlight
-        if @render_manager.hotspot_highlighting_enabled?
-          @render_manager.disable_hotspot_highlighting
-        else
-          @render_manager.enable_hotspot_highlighting
-        end
+        # Toggle hotspot highlighting in render coordinator
+        @render_coordinator.hotspot_highlight_enabled = !@render_coordinator.hotspot_highlight_enabled
+        puts "[Engine] Hotspot highlighting: #{@render_coordinator.hotspot_highlight_enabled ? "ON" : "OFF"}"
       end
 
-      # Set hotspot highlight settings
-      #
-      # Configures the appearance of hotspot highlighting.
-      #
-      # *enabled* - Whether highlighting is enabled
-      # *color* - The color to use for highlighting (default: golden)
-      # *pulse* - Whether the highlight should pulse (default: true)
-      #
-      # ```
-      # engine.set_hotspot_highlight(true, RL::BLUE, false)
-      # ```
-      def set_hotspot_highlight(enabled : Bool, color : RL::Color? = nil, pulse : Bool? = nil)
-        if enabled
-          @render_manager.enable_hotspot_highlighting(color, pulse || true)
-        else
-          @render_manager.disable_hotspot_highlighting
-        end
-      end
+      # Scene management
+      def change_scene(scene_name : String)
+        puts "[Engine] Changing scene to: #{scene_name}"
 
-      # Archive support
-      def mount_archive(path : String, mount_point : String = "/")
-        # Implementation would go here
-        puts "Mounting archive: #{path} at #{mount_point}"
-      end
+        # Save current player before changing scene
+        current_player = player
 
-      def unmount_archive(mount_point : String = "/")
-        puts "Unmounting archive at #{mount_point}"
-      end
-
-      # Cursor management
-      def load_cursor(path : String)
-        result = @resource_manager.load_texture(path)
+        result = @scene_manager.change_scene(scene_name)
         case result
         when .success?
-          @cursor_texture_path = path
-          ErrorLogger.info("Cursor texture loaded: #{path}")
-        when .failure?
-          ErrorLogger.error("Failed to load cursor texture: #{result.error.message}")
-        end
-      end
+          @current_scene = result.value
+          puts "[Engine] Scene changed successfully"
 
-      # Get the loaded cursor texture
-      def get_cursor_texture
-        if path = @cursor_texture_path
-          @resource_manager.get_texture(path)
-        else
-          nil
-        end
-      end
-
-      # Resource management delegation
-      def load_texture(path : String)
-        @resource_manager.load_texture(path)
-      end
-
-      def load_sound(path : String)
-        @resource_manager.load_sound(path)
-      end
-
-      def load_music(path : String)
-        @resource_manager.load_music(path)
-      end
-
-      def load_font(path : String, size : Int32 = 16)
-        @resource_manager.load_font(path, size)
-      end
-
-      def preload_assets(asset_list : Array(String))
-        @resource_manager.preload_assets(asset_list)
-      end
-
-      def get_memory_usage
-        @resource_manager.get_memory_usage
-      end
-
-      def set_memory_limit(limit_bytes : Int64)
-        @resource_manager.set_memory_limit(limit_bytes)
-      end
-
-      def enable_hot_reload
-        @resource_manager.enable_hot_reload
-      end
-
-      def disable_hot_reload
-        @resource_manager.disable_hot_reload
-      end
-
-      # Input management delegation
-      def register_input_handler(handler_name : String, priority : Int32 = 0)
-        @input_manager.register_handler(handler_name, priority)
-      end
-
-      def unregister_input_handler(handler_name : String)
-        @input_manager.unregister_handler(handler_name)
-      end
-
-      def is_input_consumed(input_type : String) : Bool
-        @input_manager.is_consumed(input_type)
-      end
-
-      def consume_input(input_type : String, handler_name : String)
-        @input_manager.consume_input(input_type, handler_name)
-      end
-
-      # Rendering management delegation
-      def add_render_layer(name : String, z_order : Int32 = 0)
-        @render_manager.add_render_layer(name, z_order)
-      end
-
-      def remove_render_layer(name : String)
-        # RenderManager doesn't have remove_layer method, so we'll skip this
-        Result(Nil, RenderError).success(nil)
-      end
-
-      def set_render_layer_z_order(name : String, z_order : Int32)
-        # RenderManager doesn't have set_layer_z_order method, so we'll skip this
-        Result(Nil, RenderError).success(nil)
-      end
-
-      def set_render_layer_visible(name : String, visible : Bool)
-        @render_manager.set_layer_enabled(name, visible)
-      end
-
-      def enable_performance_tracking
-        # RenderManager doesn't have this method, performance tracking is always on
-      end
-
-      def disable_performance_tracking
-        # RenderManager doesn't have this method, performance tracking is always on
-      end
-
-      def get_render_stats
-        @render_manager.get_render_stats
-      end
-
-      # Save/Load system
-
-      # Saves the current game state to a file
-      #
-      # Serializes the engine state including scenes, inventory, dialogs,
-      # and state variables to a YAML file. This creates a complete save
-      # file that can be loaded later to restore the game state.
-      #
-      # *filepath* - Path where the save file should be written
-      #
-      # ```
-      # # Save the game to a file
-      # engine.save_game("saves/quicksave.yml")
-      #
-      # # Save with timestamp
-      # timestamp = Time.local.to_s("%Y%m%d_%H%M%S")
-      # engine.save_game("saves/game_#{timestamp}.yml")
-      # ```
-      #
-      # NOTE: The directory must exist before saving. Non-serializable
-      # components like textures and audio will be reloaded when the
-      # save is loaded.
-      def save_game(filepath : String)
-        File.write(filepath, to_yaml)
-        puts "Game saved to #{filepath}"
-      end
-
-      # Enable automatic saving at regular intervals
-      #
-      # Configures the engine to automatically save the game state at
-      # specified intervals. The save file will be written to
-      # "saves/autosave.yml" by default.
-      #
-      # *interval* - Time between saves in seconds (0 to disable)
-      #
-      # ```
-      # # Auto-save every 5 minutes
-      # engine.enable_auto_save(300)
-      # ```
-      def enable_auto_save(interval : Float32)
-        @auto_save_interval = interval
-        @auto_save_timer = 0.0f32
-      end
-
-      # Loads a saved game state from a file
-      #
-      # Deserializes an engine state from a YAML save file and initializes
-      # it. This creates a new Engine instance with the saved state,
-      # including scenes, inventory, dialogs, and state variables.
-      #
-      # *filepath* - Path to the save file to load
-      #
-      # Returns the loaded Engine instance, or `nil` if loading failed
-      #
-      # ```
-      # # Load a saved game
-      # if engine = Engine.load_game("saves/quicksave.yml")
-      #   engine.run
-      # else
-      #   puts "Failed to load save file"
-      # end
-      # ```
-      #
-      # NOTE: This is a class method that returns a new Engine instance.
-      # The loaded engine is automatically initialized and ready to use.
-      # Returns `nil` if the file doesn't exist or contains invalid data.
-      def self.load_game(filepath : String) : Engine?
-        return nil unless File.exists?(filepath)
-
-        yaml_content = File.read(filepath)
-        engine = Engine.from_yaml(yaml_content)
-        engine.after_load
-        engine.init
-        puts "Game loaded from #{filepath}"
-        engine
-      rescue ex
-        puts "Failed to load game: #{ex.message}"
-        nil
-      end
-
-      # Called after deserializing from YAML
-      def after_load
-        @system_manager = EngineComponents::SystemManager.new
-        @input_handler = EngineComponents::InputHandler.new
-        @render_coordinator = EngineComponents::RenderCoordinator.new
-        @scene_manager = SceneManager.new
-        @input_manager = InputManager.new
-        @render_manager = RenderManager.new
-        @resource_manager = ResourceManager.new
-        @camera = Graphics::Camera.new(@window_width, @window_height)
-
-        # Set up input handlers for the new InputManager
-        setup_input_handlers
-
-        # Restore singleton reference
-        @@instance = self
-      end
-
-      # Delegated properties for system access
-      {% for prop in %w[display_manager achievement_manager audio_manager shader_system gui script_engine event_system dialog_manager config transition_manager menu_system] %}
-        def {{prop.id}}
-          @system_manager.{{prop.id}}
-        end
-
-        def {{prop.id}}=(value)
-          @system_manager.{{prop.id}} = value
-        end
-      {% end %}
-
-      def handle_clicks
-        @input_handler.handle_clicks
-      end
-
-      def handle_clicks=(value : Bool)
-        @input_handler.handle_clicks = value
-      end
-
-      # Setup dependency injection container
-      private def setup_dependencies
-        # Create a global dependency container instance
-        container = SimpleDependencyContainer.new
-        @@dependency_container = container
-
-        # Register concrete implementations
-        container.register_resource_loader(ResourceManager.new)
-        container.register_scene_manager(SceneManager.new)
-        container.register_input_manager(InputManager.new)
-        container.register_render_manager(RenderManager.new)
-
-        # Register singletons
-        container.register_config_manager(ConfigManager.new("config/game.yml"))
-        container.register_performance_monitor(PerformanceMonitor.new)
-
-        ErrorLogger.info("Dependencies registered")
-      end
-
-      # Set up render layers for the RenderManager
-      private def setup_render_layers
-        # Background layer for scene backgrounds
-        background_renderer = ->(dt : Float32) {
+          # Update camera bounds for the new scene
           if scene = @current_scene
-            if bg = scene.background
-              RL.draw_texture_ex(
-                bg,
-                RL::Vector2.new(x: 0, y: 0),
-                0.0f32,
-                scene.scale,
-                RL::WHITE
-              )
-            end
+            scene_width = scene.background.try(&.width) || @window_width
+            scene_height = scene.background.try(&.height) || @window_height
+            camera_manager.set_scene_bounds(scene_width, scene_height)
+            puts "[Engine] Updated camera bounds to #{scene_width}x#{scene_height}"
           end
-        }
-        @render_manager.add_renderer("background", background_renderer)
 
-        # Scene objects layer (with camera support)
-        scene_renderer = ->(dt : Float32) {
-          camera_to_use = if scene = @current_scene
-                            scene.enable_camera_scrolling ? @camera : nil
-                          else
-                            nil
-                          end
-
-          # Render scene objects with camera
-          @current_scene.try(&.draw(camera_to_use))
-        }
-        @render_manager.add_renderer("scene_objects", scene_renderer)
-
-        # Dialogs layer - add to UI layer since there's no separate dialogs layer
-        dialogs_renderer = ->(dt : Float32) {
-          @dialogs.each(&.draw)
-          # Also render floating dialogs from dialog manager
-          @system_manager.dialog_manager.try(&.draw)
-        }
-        @render_manager.add_renderer("ui", dialogs_renderer)
-
-        # Cutscene layer
-        cutscene_renderer = ->(dt : Float32) {
-          @cutscene_manager.draw
-        }
-        @render_manager.add_renderer("cutscenes", cutscene_renderer)
-
-        # Transition effects layer
-        transitions_renderer = ->(dt : Float32) {
-          @system_manager.transition_manager.try(&.draw)
-        }
-        @render_manager.add_renderer("transitions", transitions_renderer)
-
-        # UI layer (menus, inventory, etc.)
-        ui_renderer = ->(dt : Float32) {
-          # Render inventory
-          @inventory.draw
-
-          # Render menu system
-          @system_manager.menu_system.try(&.draw)
-
-          # Render achievement notifications
-          @system_manager.achievement_manager.try(&.draw)
-
-          # Render verb input system cursor
-          if verb_system = @verb_input_system
-            display_manager = @system_manager.display_manager
-            verb_system.draw(display_manager)
-          end
-        }
-        @render_manager.add_renderer("ui", ui_renderer)
-
-        # Debug overlay layer
-        debug_renderer = ->(dt : Float32) {
-          if Engine.debug_mode
-            # Debug rendering handled by RenderManager internally
-          end
-        }
-        @render_manager.add_renderer("debug", debug_renderer)
-      end
-
-      # Set up input handlers for the InputManager
-      private def setup_input_handlers
-        # Menu system has highest priority (100)
-        @input_manager.register_handler("menu_system", 100) do |dt|
-          if menu = @system_manager.menu_system
-            if menu.current_menu
-              menu.update(dt)
-              true # Consume input when menu is active
-            else
-              false
-            end
+          # Always assign player to new scene (either pending or current)
+          if pending = @pending_player
+            puts "[Engine] Assigning pending player to scene"
+            @current_scene.try { |scene| scene.player = pending }
+            @pending_player = nil
+          elsif current_player
+            puts "[Engine] Transferring current player to new scene"
+            @current_scene.try { |scene| scene.player = current_player }
           else
-            false
+            puts "[Engine] No player to assign"
           end
-        end
 
-        # Dialog system has high priority (90)
-        @input_manager.register_handler("dialog_system", 90) do |dt|
-          if dm = @system_manager.dialog_manager
-            if dm.is_dialog_active?
-              dm.update(dt)
-              true # Consume input when dialog is active
-            else
-              false
-            end
-          else
-            false
-          end
-        end
-
-        # Verb input system has medium-high priority (70)
-        @input_manager.register_handler("verb_input", 70) do |dt|
-          if verb_system = @verb_input_system
-            camera_for_input = if scene = @current_scene
-                                 scene.enable_camera_scrolling ? @camera : nil
-                               else
-                                 nil
-                               end
-            display_manager = @system_manager.display_manager
-            verb_system.process_input(@current_scene, @player, display_manager, camera_for_input)
-            # Verb system decides whether to consume input
-            false
-          else
-            false
-          end
-        end
-
-        # Default game input has medium priority (50)
-        @input_manager.register_handler("game_input", 50) do |dt|
-          camera_for_input = if scene = @current_scene
-                               scene.enable_camera_scrolling ? @camera : nil
-                             else
-                               nil
-                             end
-
-          # Process game input (clicks, movement, etc.)
-          @input_handler.process_input(@current_scene, @player, camera_for_input)
-          false # Don't consume by default, let other handlers also process
-        end
-
-        # Global keyboard shortcuts have low priority (10)
-        @input_manager.register_handler("global_keys", 10) do |dt|
-          @input_handler.handle_keyboard_input
-          false # Don't consume, these are global shortcuts
+          puts "[Engine] Current scene player: #{@current_scene.try(&.player) ? "exists" : "nil"}"
+          @current_scene.try(&.on_enter)
+        when .failure?
+          raise "Failed to change scene: #{result.error.message}"
         end
       end
 
-      # Cleanup
-      private def cleanup
-        # Cleanup new refactored managers
-        @resource_manager.cleanup_all_resources
+      def change_scene_with_transition(scene_name : String, effect : Graphics::Transitions::TransitionEffect?, duration : Float32, position : RL::Vector2? = nil)
+        puts "[Engine] change_scene_with_transition: scene=#{scene_name}, effect=#{effect}, duration=#{duration}"
+        # Start transition if effect specified
+        if effect && (tm = @system_manager.transition_manager)
+          puts "[Engine] Starting transition with effect"
+          tm.start_transition(effect, duration) do
+            puts "[Engine] Transition callback - changing scene"
+            # Change scene at halfway point
+            change_scene(scene_name)
 
-        @system_manager.cleanup_systems
-        RL.close_window
-        puts "Engine cleanup complete"
+            # If position provided, move player
+            if pos = position
+              if player = self.player
+                player.position = pos
+                puts "[Engine] Moved player to #{pos}"
+              end
+            end
+          end
+        else
+          puts "[Engine] No transition effect or manager - direct scene change"
+          # No transition, just change scene
+          change_scene(scene_name)
+
+          # If position provided, move player
+          if pos = position
+            if player = self.player
+              player.position = pos
+            end
+          end
+        end
+      end
+
+      def add_scene(scene : Scenes::Scene)
+        @scene_manager.add_scene(scene)
+      end
+
+      # Window management
+      def toggle_fullscreen
+        @fullscreen = !@fullscreen
+        # TODO: Actually implement fullscreen toggle with Raylib
+        # RL.toggle_fullscreen
+      end
+
+      def fullscreen : Bool
+        @fullscreen
+      end
+
+      def fullscreen=(value : Bool)
+        @fullscreen = value
+        # TODO: Actually implement fullscreen setting with Raylib
+        # if value
+        #   RL.set_window_flag(RL::FLAG_FULLSCREEN_MODE)
+        # else
+        #   RL.clear_window_flag(RL::FLAG_FULLSCREEN_MODE)
+        # end
+      end
+
+      def set_window_size(width : Int32, height : Int32)
+        @window_width = width
+        @window_height = height
+        RL.set_window_size(width, height)
+        @camera.try(&.set_bounds(0, 0, width, height))
+      end
+
+      # Start a new game
+      def start_new_game
+        puts "[Engine] Starting new game"
+        # Hide the menu
+        @system_manager.menu_system.try(&.hide)
+        @system_manager.menu_system.try(&.enter_game)
+
+        # Trigger the game:new event
+        puts "[Engine] Triggering game:new event"
+        @system_manager.event_system.trigger("game:new")
+        puts "[Engine] Event triggered"
+
+        # Load the starting scene from scene manager
+        if scene_name = @scene_manager.start_scene
+          puts "[Engine] Changing to start scene: #{scene_name}"
+          change_scene(scene_name)
+        else
+          puts "Warning: No start scene defined in game config"
+        end
+      end
+
+      # Auto-save handling
+      private def handle_auto_save(dt : Float32)
+        return if @auto_save_interval <= 0.0_f32
+
+        @auto_save_timer += dt
+        if @auto_save_timer >= @auto_save_interval
+          # Create saves directory if it doesn't exist
+          Dir.mkdir_p("saves") unless Dir.exists?("saves")
+
+          # Save the game
+          save_game("autosave")
+
+          # Reset timer
+          @auto_save_timer = 0.0_f32
+        end
       end
     end
   end

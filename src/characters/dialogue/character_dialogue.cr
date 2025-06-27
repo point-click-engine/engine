@@ -36,7 +36,9 @@ module PointClickEngine
           @current_dialog_data = UI::Dialog.new(text, dialog_pos, dialog_size)
           @current_dialog_data.not_nil!.character_name = @character.name
           @current_dialog_data.not_nil!.on_complete = on_complete
-          Core::Engine.instance.show_dialog(@current_dialog_data.not_nil!)
+          if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
+            dialog_manager.show_dialog(@character.name, text)
+          end
         end
 
         def ask(question : String, choices : Array(Tuple(String, Proc(Nil))), &on_overall_complete : -> Nil)
@@ -52,7 +54,9 @@ module PointClickEngine
           end
           @current_dialog_data.not_nil!.on_complete = on_overall_complete
 
-          Core::Engine.instance.show_dialog(@current_dialog_data.not_nil!)
+          if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
+            dialog_manager.show_dialog(@character.name, text)
+          end
         end
 
         def update(dt : Float32)

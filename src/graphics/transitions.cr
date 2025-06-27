@@ -7,7 +7,7 @@ require "./transitions/transition_manager"
 
 module PointClickEngine
   module Graphics
-    # Re-export the transition types and manager for backwards compatibility
+    # Re-export the transition types and manager for convenience
     alias TransitionEffect = Transitions::TransitionEffect
     alias TransitionManager = Transitions::TransitionManager
   end

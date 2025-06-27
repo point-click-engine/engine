@@ -59,7 +59,7 @@ describe "YAML Scene Loading" do
       YAML
 
       File.write("scene_load_config.yaml", config_yaml)
-      config = PointClickEngine::Core::GameConfig.from_file("scene_load_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("scene_load_config.yaml", skip_preflight: true)
 
       RL.init_window(800, 600, "Scene Loading Test")
       engine = config.create_engine
@@ -88,12 +88,12 @@ describe "YAML Scene Loading" do
       Dir.mkdir_p("test_scenes/bonus")
 
       main_scene = <<-YAML
-      name: main_room
+      name: main
       background_path: main_bg.png
       YAML
 
       bonus_scene = <<-YAML
-      name: bonus_room
+      name: bonus
       background_path: bonus_bg.png
       YAML
 
@@ -111,14 +111,14 @@ describe "YAML Scene Loading" do
       YAML
 
       File.write("multi_pattern_config.yaml", config_yaml)
-      config = PointClickEngine::Core::GameConfig.from_file("multi_pattern_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("multi_pattern_config.yaml", skip_preflight: true)
 
       RL.init_window(800, 600, "Multi Pattern Test")
       engine = config.create_engine
 
       engine.scenes.size.should eq(2)
-      engine.scenes.has_key?("main_room").should be_true
-      engine.scenes.has_key?("bonus_room").should be_true
+      engine.scenes.has_key?("main").should be_true
+      engine.scenes.has_key?("bonus").should be_true
 
       # Cleanup
       RL.close_window
@@ -187,7 +187,7 @@ describe "YAML Scene Loading" do
       YAML
 
       File.write("script_config.yaml", config_yaml)
-      config = PointClickEngine::Core::GameConfig.from_file("script_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("script_config.yaml", skip_preflight: true)
 
       RL.init_window(800, 600, "Script Test")
       engine = config.create_engine
@@ -223,7 +223,7 @@ describe "YAML Scene Loading" do
       YAML
 
       File.write("invalid_config.yaml", config_yaml)
-      config = PointClickEngine::Core::GameConfig.from_file("invalid_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("invalid_config.yaml", skip_preflight: true)
 
       RL.init_window(800, 600, "Invalid Scene Test")
 

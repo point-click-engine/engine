@@ -1,30 +1,57 @@
-# Lua scripting engine for runtime game scripting
+# Lua scripting engine for runtime game scripting - Refactored with components
 
 require "luajit"
+require "./lua_environment"
+require "./script_api_registry"
+require "./scene_script_api"
+require "./character_script_api"
+require "./game_state_manager"
 
 module PointClickEngine
   module Scripting
-    # Main script engine that manages Lua state and script execution
+    # Main script engine using component-based architecture
+    #
+    # This refactored ScriptEngine delegates responsibilities to specialized components:
+    # - LuaEnvironment: Lua setup and utility functions
+    # - ScriptAPIRegistry: Crystal function registration
+    # - SceneScriptAPI: Scene-related Lua API
+    # - CharacterScriptAPI: Character-related Lua API
+    # - GameStateManager: Script-accessible game state
     class ScriptEngine
       getter lua : Luajit::LuaState
-      getter game_state : Hash(String, Luajit::LuaAny) = {} of String => Luajit::LuaAny
+
+      # Component managers
+      @environment : LuaEnvironment
+      @registry : ScriptAPIRegistry
+      @scene_api : SceneScriptAPI
+      @character_api : CharacterScriptAPI
+      @state_manager : GameStateManager
+
+      # Legacy property for compatibility
+      def game_state : Hash(String, Luajit::LuaAny)
+        @state_manager.to_hash
+      end
 
       def initialize
         @lua = Luajit.new_with_defaults
-        setup_lua_environment
-        register_engine_api
+
+        # Initialize components
+        @environment = LuaEnvironment.new(@lua)
+        @registry = ScriptAPIRegistry.new(@lua)
+        @scene_api = SceneScriptAPI.new(@lua, @registry)
+        @character_api = CharacterScriptAPI.new(@lua, @registry)
+        @state_manager = GameStateManager.new
+
+        # Setup environment and register APIs
+        setup_engine
       end
 
+      # Execute a script string
       def execute_script(script_content : String) : Bool
-        begin
-          @lua.execute!(script_content)
-          true
-        rescue ex
-          puts "Script error: #{ex.message}"
-          false
-        end
+        @environment.execute(script_content)
       end
 
+      # Execute a script file
       def execute_script_file(file_path : String) : Bool
         begin
           content = AssetLoader.read_script(file_path)
@@ -35,217 +62,40 @@ module PointClickEngine
         end
       end
 
+      # Call a Lua function
       def call_function(function_name : String, *args) : Luajit::LuaAny?
-        begin
-          @lua.get_global(function_name)
-          args.each { |arg| @lua.push(arg) }
-          @lua.pcall(args.size, 1, 0)
-          @lua.to_any?(-1).tap { @lua.pop(1) }
-        rescue ex
-          puts "Script function error: #{ex.message}"
-          nil
-        end
+        @environment.call_function(function_name, *args)
       end
 
+      # Set a global variable
       def set_global(name : String, value)
-        @lua.push(value)
-        @lua.set_global(name)
+        @environment.set_global(name, value)
       end
 
+      # Get a global variable
       def get_global(name : String) : Luajit::LuaAny?
-        @lua.get_global(name)
-        @lua.to_any?(-1).tap { @lua.pop(1) }
+        @environment.get_global(name)
       end
 
+      # Clean up Lua state
       def cleanup
         Luajit.close(@lua)
       end
 
-      private def setup_lua_environment
-        # Set up basic Lua environment
-        @lua.execute! <<-LUA
-          -- Utility functions for scripts
-          function log(message)
-            print("[Script] " .. tostring(message))
-          end
+      private def setup_engine
+        # Setup Lua environment
+        @environment.setup
 
-          function table_contains(table, element)
-            for _, value in pairs(table) do
-              if value == element then
-                return true
-              end
-            end
-            return false
-          end
-
-          -- Game event system
-          _event_handlers = {}
-          
-          function register_event_handler(event_type, handler)
-            if not _event_handlers[event_type] then
-              _event_handlers[event_type] = {}
-            end
-            table.insert(_event_handlers[event_type], handler)
-          end
-
-          function trigger_event(event_type, data)
-            if _event_handlers[event_type] then
-              for _, handler in ipairs(_event_handlers[event_type]) do
-                handler(data)
-              end
-            end
-          end
-        LUA
-      end
-
-      private def register_engine_api
-        # Register Crystal engine functions to be callable from Lua
-        register_scene_api
-        register_character_api
+        # Register all API modules
+        @scene_api.register
+        @character_api.register
         register_inventory_api
         register_dialog_api
         register_utility_api
-        # Enhanced API features are now integrated into main API
+        register_camera_api
       end
 
-      private def register_scene_api
-        @lua.execute! <<-LUA
-          -- Scene management API
-          scene = {}
-          
-          function scene.change(scene_name)
-            _engine_change_scene(scene_name)
-          end
-          
-          function scene.get_current()
-            return _engine_get_current_scene()
-          end
-          
-          function scene.add_hotspot(name, x, y, width, height)
-            return _engine_add_hotspot(name, x, y, width, height)
-          end
-        LUA
-
-        # Register Crystal callbacks
-        @lua.register_fn_global("_engine_change_scene") do |state|
-          if state.size >= 1
-            scene_name = state.to_string(1)
-            Core::Engine.instance.change_scene(scene_name)
-          end
-          0
-        end
-
-        @lua.register_fn_global("_engine_get_current_scene") do |state|
-          scene_name = Core::Engine.instance.current_scene.try(&.name) || ""
-          state.push(scene_name)
-          1
-        end
-
-        @lua.register_fn_global("_engine_add_hotspot") do |state|
-          if state.size >= 5
-            name = state.to_string(1)
-            x = state.to_f32(2)
-            y = state.to_f32(3)
-            width = state.to_f32(4)
-            height = state.to_f32(5)
-
-            hotspot = Scenes::Hotspot.new(name, RL::Vector2.new(x: x, y: y), RL::Vector2.new(x: width, y: height))
-            Core::Engine.instance.current_scene.try(&.add_hotspot(hotspot))
-            state.push(name)
-            1
-          else
-            0
-          end
-        end
-      end
-
-      private def register_character_api
-        @lua.execute! <<-LUA
-          -- Character management API
-          character = {}
-          
-          function character.say(character_name, text)
-            _engine_character_say(character_name, text)
-          end
-          
-          function character.move_to(character_name, x, y)
-            _engine_character_move_to(character_name, x, y)
-          end
-          
-          function character.get_position(character_name)
-            return _engine_character_get_position(character_name)
-          end
-          
-          function character.set_animation(character_name, animation_name)
-            _engine_character_set_animation(character_name, animation_name)
-          end
-        LUA
-
-        @lua.register_fn_global("_engine_character_say") do |state|
-          if state.size >= 2
-            char_name = state.to_string(1)
-            text = state.to_string(2)
-
-            if scene = Core::Engine.instance.current_scene
-              if char = scene.get_character(char_name)
-                char.say(text) { }
-              end
-            end
-          end
-          0
-        end
-
-        @lua.register_fn_global("_engine_character_move_to") do |state|
-          if state.size >= 3
-            char_name = state.to_string(1)
-            x = state.to_f32(2)
-            y = state.to_f32(3)
-
-            if scene = Core::Engine.instance.current_scene
-              if char = scene.get_character(char_name)
-                char.walk_to(RL::Vector2.new(x: x, y: y))
-              end
-            end
-          end
-          0
-        end
-
-        @lua.register_fn_global("_engine_character_get_position") do |state|
-          if state.size >= 1
-            char_name = state.to_string(1)
-
-            if scene = Core::Engine.instance.current_scene
-              if char = scene.get_character(char_name)
-                pos = char.position
-                state.new_table
-                state.push("x")
-                state.push(pos.x)
-                state.set_table(-3)
-                state.push("y")
-                state.push(pos.y)
-                state.set_table(-3)
-                next 1
-              end
-            end
-          end
-          0
-        end
-
-        @lua.register_fn_global("_engine_character_set_animation") do |state|
-          if state.size >= 2
-            char_name = state.to_string(1)
-            anim_name = state.to_string(2)
-
-            if scene = Core::Engine.instance.current_scene
-              if char = scene.get_character(char_name)
-                char.play_animation(anim_name)
-              end
-            end
-          end
-          0
-        end
-      end
-
+      # Inventory API (keeping in main class for now as it's smaller)
       private def register_inventory_api
         @lua.execute! <<-LUA
           -- Inventory management API
@@ -266,9 +116,25 @@ module PointClickEngine
           function inventory.get_selected()
             return _engine_inventory_get_selected()
           end
+
+          function inventory.select_item(item_name)
+            _engine_inventory_select_item(item_name)
+          end
+
+          function inventory.clear_selection()
+            _engine_inventory_clear_selection()
+          end
+
+          function inventory.get_all_items()
+            return _engine_inventory_get_all_items()
+          end
         LUA
 
-        @lua.register_fn_global("_engine_inventory_add_item") do |state|
+        register_inventory_callbacks
+      end
+
+      private def register_inventory_callbacks
+        @registry.register_void_function("_engine_inventory_add_item") do |state|
           if state.size >= 2
             name = state.to_string(1)
             desc = state.to_string(2)
@@ -276,36 +142,63 @@ module PointClickEngine
             item = Inventory::InventoryItem.new(name, desc)
             Core::Engine.instance.inventory.add_item(item)
           end
-          0
         end
 
-        @lua.register_fn_global("_engine_inventory_remove_item") do |state|
+        @registry.register_void_function("_engine_inventory_remove_item") do |state|
           if state.size >= 1
             name = state.to_string(1)
             Core::Engine.instance.inventory.remove_item(name)
           end
-          0
         end
 
-        @lua.register_fn_global("_engine_inventory_has_item") do |state|
+        @registry.register_value_function("_engine_inventory_has_item", 1) do |state|
           if state.size >= 1
             name = state.to_string(1)
             has_item = Core::Engine.instance.inventory.has_item?(name)
             state.push(has_item)
-            1
           else
             state.push(false)
-            1
           end
         end
 
-        @lua.register_fn_global("_engine_inventory_get_selected") do |state|
+        @registry.register_value_function("_engine_inventory_get_selected", 1) do |state|
           selected_name = Core::Engine.instance.inventory.selected_item.try(&.name) || ""
           state.push(selected_name)
-          1
+        end
+
+        @registry.register_void_function("_engine_inventory_select_item") do |state|
+          if state.size >= 1
+            name = state.to_string(1)
+            Core::Engine.instance.inventory.select_item(name)
+          end
+        end
+
+        @registry.register_void_function("_engine_inventory_clear_selection") do |state|
+          Core::Engine.instance.inventory.deselect_item
+        end
+
+        @registry.register_value_function("_engine_inventory_get_all_items", 1) do |state|
+          items = Core::Engine.instance.inventory.items
+
+          state.new_table
+          items.each_with_index do |item, i|
+            state.push(i + 1) # Lua arrays are 1-indexed
+
+            state.new_table
+            state.push("name")
+            state.push(item.name)
+            state.set_table(-3)
+
+            state.push("description")
+            state.push(item.description)
+            state.set_table(-3)
+
+            state.set_table(-3)
+          end
         end
       end
 
+      # Dialog API (keeping in main class due to complexity)
       private def register_dialog_api
         @lua.execute! <<-LUA
           -- Dialog system API
@@ -318,24 +211,37 @@ module PointClickEngine
           function dialog.show_choices(question, choices, character_name)
             _engine_dialog_show_choices(question, choices, character_name or "")
           end
+
+          function dialog.hide()
+            _engine_dialog_hide()
+          end
+
+          function dialog.is_showing()
+            return _engine_dialog_is_showing()
+          end
+          
+          -- Start a dialog tree conversation
+          function start_dialog(tree_name, starting_node)
+            _engine_start_dialog_tree(tree_name, starting_node or "greeting")
+          end
         LUA
 
-        @lua.register_fn_global("_engine_dialog_show") do |state|
+        register_dialog_callbacks
+      end
+
+      private def register_dialog_callbacks
+        @registry.register_void_function("_engine_dialog_show") do |state|
           if state.size >= 1
             text = state.to_string(1)
             char_name = state.size >= 2 ? state.to_string(2) : ""
 
-            # Create and show dialog
-            pos = RL::Vector2.new(x: 100, y: 100)
-            size = RL::Vector2.new(x: 400, y: 150)
-            dialog = UI::Dialog.new(text, pos, size)
-            dialog.character_name = char_name unless char_name.empty?
-            Core::Engine.instance.show_dialog(dialog)
+            if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
+              dialog_manager.show_dialog(char_name.empty? ? "Character" : char_name, text)
+            end
           end
-          0
         end
 
-        @lua.register_fn_global("_engine_dialog_show_choices") do |state|
+        @registry.register_void_function("_engine_dialog_show_choices") do |state|
           if state.size >= 2
             question = state.to_string(1)
             char_name = state.size >= 3 ? state.to_string(3) : ""
@@ -344,26 +250,20 @@ module PointClickEngine
             choices = [] of {text: String, action: String?}
 
             if state.is_table?(2)
-              # Push the table onto the stack
               state.push_value(2)
-
-              # Iterate through table entries
               state.push(nil)
+
               while state.next(-2)
-                # Stack: ... table key value
                 if state.is_table?(-1)
-                  # Each choice is a table with text and optional action
                   choice_text = ""
                   choice_action = nil
 
-                  # Get "text" field
                   state.get_field(-1, "text")
                   if state.is_string?(-1)
                     choice_text = state.to_string(-1)
                   end
                   state.pop(1)
 
-                  # Get optional "action" field
                   state.get_field(-1, "action")
                   if state.is_string?(-1)
                     choice_action = state.to_string(-1)
@@ -372,28 +272,23 @@ module PointClickEngine
 
                   choices << {text: choice_text, action: choice_action}
                 elsif state.is_string?(-1)
-                  # Simple string choice
                   choices << {text: state.to_string(-1), action: nil}
                 end
 
-                state.pop(1) # Remove value, keep key for next iteration
+                state.pop(1)
               end
-              state.pop(1) # Remove table
+              state.pop(1)
             end
 
-            # Create dialog with choices
             if engine = Core::Engine.instance
-              if dialog_manager = engine.dialog_manager
-                # Convert choices to the format expected by dialog manager
+              if dialog_manager = engine.system_manager.dialog_manager
                 choice_texts = choices.map { |c| c[:text] }
 
-                # Create callback to handle choice selection
                 callback = ->(choice_index : Int32) {
-                  # Dialog manager uses 1-based indexing
                   actual_index = choice_index - 1
                   if actual_index >= 0 && actual_index < choices.size
                     if action = choices[actual_index][:action]
-                      engine.script_engine.try(&.execute_script(action))
+                      engine.system_manager.script_engine.try(&.execute_script(action))
                     end
                   end
                 }
@@ -402,10 +297,35 @@ module PointClickEngine
               end
             end
           end
-          0
+        end
+
+        @registry.register_void_function("_engine_dialog_hide") do |state|
+          if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
+            dialog_manager.close_current_dialog
+          end
+        end
+
+        @registry.register_value_function("_engine_dialog_is_showing", 1) do |state|
+          if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
+            state.push(!!dialog_manager.current_dialog)
+          else
+            state.push(false)
+          end
+        end
+
+        @registry.register_void_function("_engine_start_dialog_tree") do |state|
+          if state.size >= 1
+            tree_name = state.to_string(1)
+            starting_node = state.size >= 2 ? state.to_string(2) : "greeting"
+
+            if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
+              dialog_manager.start_dialog_tree(tree_name, starting_node)
+            end
+          end
         end
       end
 
+      # Utility API
       private def register_utility_api
         @lua.execute! <<-LUA
           -- Utility functions API
@@ -426,6 +346,14 @@ module PointClickEngine
           function game.get_time()
             return _engine_get_time()
           end
+
+          function game.wait(seconds)
+            _engine_wait(seconds)
+          end
+
+          function game.random(min, max)
+            return _engine_random(min, max)
+          end
           
           -- Game state management
           function set_game_state(key, value)
@@ -435,77 +363,207 @@ module PointClickEngine
           function get_game_state(key)
             return _engine_get_game_state(key)
           end
+
+          function has_game_state(key)
+            return _engine_has_game_state(key)
+          end
+
+          function remove_game_state(key)
+            _engine_remove_game_state(key)
+          end
         LUA
 
-        @lua.register_fn_global("_engine_save_game") do |state|
+        register_utility_callbacks
+      end
+
+      private def register_utility_callbacks
+        @registry.register_void_function("_engine_save_game") do |state|
           if state.size >= 1
             filename = state.to_string(1)
             Core::Engine.instance.save_game(filename)
           end
-          0
         end
 
-        @lua.register_fn_global("_engine_load_game") do |state|
+        @registry.register_void_function("_engine_load_game") do |state|
           if state.size >= 1
             filename = state.to_string(1)
-            # Note: Loading would require special handling since it replaces the engine state
             puts "Load game requested: #{filename}"
           end
-          0
         end
 
-        @lua.register_fn_global("_engine_debug_log") do |state|
+        @registry.register_void_function("_engine_debug_log") do |state|
           if state.size >= 1
             message = state.to_string(1)
             puts "[Script Debug] #{message}"
           end
-          0
         end
 
-        @lua.register_fn_global("_engine_get_time") do |state|
+        @registry.register_value_function("_engine_get_time", 1) do |state|
           current_time = Time.utc.to_unix_f
           state.push(current_time)
-          1
         end
 
-        @lua.register_fn_global("_engine_set_game_state") do |state|
+        @registry.register_void_function("_engine_wait") do |state|
+          if state.size >= 1
+            seconds = state.to_f64(1)
+            # Note: This would need to be handled differently in a real game loop
+            sleep seconds.seconds
+          end
+        end
+
+        @registry.register_value_function("_engine_random", 1) do |state|
+          if state.size >= 2
+            min = state.to_f64(1)
+            max = state.to_f64(2)
+            value = min + (max - min) * rand
+            state.push(value)
+          else
+            state.push(rand)
+          end
+        end
+
+        # Game state callbacks
+        @registry.register_void_function("_engine_set_game_state") do |state|
           if state.size >= 2
             key = state.to_string(1)
             value = state.to_any?(2)
-            @game_state[key] = value if value
+            @state_manager.set_state(key, value)
           end
-          0
         end
 
-        @lua.register_fn_global("_engine_get_game_state") do |state|
+        @registry.register_value_function("_engine_get_game_state", 1) do |state|
           if state.size >= 1
             key = state.to_string(1)
-            if value = @game_state[key]?
-              # Convert LuaAny back to appropriate type for pushing
-              case value
-              when String
-                state.push(value.as(String))
-              when Float64
-                state.push(value.as(Float64))
-              when Bool
-                state.push(value.as(Bool))
-              when Int32
-                state.push(value.as(Int32))
-              when Int64
-                state.push(value.as(Int64))
-              when Nil
-                state.push(nil)
-              else
-                state.push(nil)
-              end
-              1
+            if value = @state_manager.get_state(key)
+              push_lua_value(state, value)
             else
               state.push(nil)
-              1
             end
           else
-            0
+            state.push(nil)
           end
+        end
+
+        @registry.register_value_function("_engine_has_game_state", 1) do |state|
+          if state.size >= 1
+            key = state.to_string(1)
+            state.push(@state_manager.has_state?(key))
+          else
+            state.push(false)
+          end
+        end
+
+        @registry.register_void_function("_engine_remove_game_state") do |state|
+          if state.size >= 1
+            key = state.to_string(1)
+            @state_manager.remove_state(key)
+          end
+        end
+      end
+
+      # Camera API
+      private def register_camera_api
+        @lua.execute! <<-LUA
+          -- Camera system API
+          camera = {}
+          
+          function camera.shake(intensity, duration)
+            _engine_camera_shake(intensity or 1.0, duration or 1.0)
+          end
+          
+          function camera.zoom(factor, duration)
+            _engine_camera_zoom(factor or 1.0, duration or 1.0)
+          end
+          
+          function camera.pan(x, y, duration)
+            _engine_camera_pan(x, y, duration or 1.0)
+          end
+          
+          function camera.sway(amplitude, frequency, duration)
+            _engine_camera_sway(amplitude or 10.0, frequency or 1.0, duration or 0.0)
+          end
+          
+          function camera.reset(duration)
+            _engine_camera_reset(duration or 1.0)
+          end
+        LUA
+
+        register_camera_callbacks
+      end
+
+      private def register_camera_callbacks
+        @registry.register_void_function("_engine_camera_shake") do |state|
+          if state.size >= 2
+            intensity = state.to_f64(1).to_f32
+            duration = state.to_f64(2).to_f32
+
+            if engine = Core::Engine.instance
+              engine.camera_manager.apply_effect(:shake, intensity: intensity, duration: duration)
+            end
+          end
+        end
+
+        @registry.register_void_function("_engine_camera_zoom") do |state|
+          if state.size >= 2
+            factor = state.to_f64(1).to_f32
+            duration = state.to_f64(2).to_f32
+
+            if engine = Core::Engine.instance
+              engine.camera_manager.apply_effect(:zoom, factor: factor, duration: duration)
+            end
+          end
+        end
+
+        @registry.register_void_function("_engine_camera_pan") do |state|
+          if state.size >= 3
+            x = state.to_f64(1).to_f32
+            y = state.to_f64(2).to_f32
+            duration = state.to_f64(3).to_f32
+
+            if engine = Core::Engine.instance
+              engine.camera_manager.apply_effect(:pan, target_x: x, target_y: y, duration: duration)
+            end
+          end
+        end
+
+        @registry.register_void_function("_engine_camera_sway") do |state|
+          if state.size >= 3
+            amplitude = state.to_f64(1).to_f32
+            frequency = state.to_f64(2).to_f32
+            duration = state.to_f64(3).to_f32
+
+            if engine = Core::Engine.instance
+              engine.camera_manager.apply_effect(:sway, amplitude: amplitude, frequency: frequency, duration: duration)
+            end
+          end
+        end
+
+        @registry.register_void_function("_engine_camera_reset") do |state|
+          duration = state.size >= 1 ? state.to_f64(1).to_f32 : 1.0f32
+
+          if engine = Core::Engine.instance
+            engine.camera_manager.reset_effects(duration)
+          end
+        end
+      end
+
+      # Helper to push LuaAny values back to Lua
+      private def push_lua_value(state : Luajit::LuaState, value : Luajit::LuaAny)
+        case value
+        when String
+          state.push(value.as(String))
+        when Float64
+          state.push(value.as(Float64))
+        when Bool
+          state.push(value.as(Bool))
+        when Int32
+          state.push(value.as(Int32))
+        when Int64
+          state.push(value.as(Int64))
+        when Nil
+          state.push(nil)
+        else
+          state.push(nil)
         end
       end
     end

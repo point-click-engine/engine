@@ -3,11 +3,7 @@ require "../spec_helper"
 describe "UI Fixes Integration Tests" do
   it "renders floating dialogs correctly in the UI pipeline" do
     RL.init_window(800, 600, "Floating Dialog Integration Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Dialog Render Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Render Test")
     engine.init
 
     # Test that dialog manager is accessible through correct path
@@ -32,11 +28,7 @@ describe "UI Fixes Integration Tests" do
 
   it "renders cursor with verb visual feedback in the UI layer" do
     RL.init_window(800, 600, "Cursor Visual Feedback Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Cursor Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Cursor Test")
     engine.init
 
     # Enable verb input system
@@ -68,11 +60,7 @@ describe "UI Fixes Integration Tests" do
 
   it "properly integrates keyboard shortcuts with dialog input blocking" do
     RL.init_window(800, 600, "Keyboard Integration Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Keyboard Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Keyboard Test")
     engine.init
 
     # Create a scene with verb input system
@@ -81,13 +69,7 @@ describe "UI Fixes Integration Tests" do
     engine.change_scene("test_scene")
 
     # Simulate dialog being active
-    dialog = PointClickEngine::UI::Dialog.new(
-      "Test dialog",
-      RL::Vector2.new(x: 100_f32, y: 100_f32),
-      RL::Vector2.new(x: 200_f32, y: 100_f32)
-    )
-    dialog.show
-    engine.show_dialog(dialog)
+    engine.dialog_manager.try(&.show_dialog("Test Character", "Test dialog"))
 
     # Update engine to trigger input blocking
     engine.update(0.016_f32)
@@ -108,11 +90,7 @@ describe "UI Fixes Integration Tests" do
 
   it "maintains hotspot highlighting state correctly" do
     RL.init_window(800, 600, "Hotspot Highlight Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Hotspot Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Hotspot Test")
     engine.init
 
     # Test initial hotspot highlighting state
@@ -133,11 +111,7 @@ describe "UI Fixes Integration Tests" do
 
   it "handles door interactions with proper verb system integration" do
     RL.init_window(800, 600, "Door Interaction Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Door Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Door Test")
     engine.init
 
     # Create a scene with a door hotspot
@@ -186,11 +160,7 @@ describe "UI Fixes Integration Tests" do
 
   it "maintains consistent state across UI system integrations" do
     RL.init_window(800, 600, "UI System Integration Test")
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Integration Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Integration Test")
     engine.init
 
     # Enable verb input system

@@ -112,9 +112,9 @@ module PointClickEngine
             when :verbs
               @engine.enable_verb_input
             when :floating_dialogs
-              @engine.dialog_manager.try { |dm| dm.enable_floating = true }
+              @engine.system_manager.dialog_manager.try { |dm| dm.enable_floating = true }
             when :portraits
-              @engine.dialog_manager.try { |dm| dm.enable_portraits = true }
+              @engine.system_manager.dialog_manager.try { |dm| dm.enable_portraits = true }
             when :shaders
               setup_default_shaders
             when :debug
@@ -206,7 +206,7 @@ module PointClickEngine
         end
 
         private def load_audio
-          return unless audio = @engine.audio_manager
+          return unless audio = @engine.system_manager.audio_manager
 
           @audio_config.each do |key, path|
             if File.exists?(path)

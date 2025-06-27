@@ -139,9 +139,9 @@ describe "Renderer Registration Fixes Documentation" do
   it "validates the final renderer registration state" do
     RL.init_window(800, 600, "Final State Validation")
     engine = PointClickEngine::Core::Engine.new(
-      title: "Final State Test",
-      window_width: 800,
-      window_height: 600
+      800,
+      600,
+      "Final State Test"
     )
     engine.init
     engine.enable_verb_input
@@ -154,7 +154,7 @@ describe "Renderer Registration Fixes Documentation" do
       registered_components << "inventory"
     end
 
-    if engine.system_manager.menu_system.try(&.responds_to?(:draw))
+    if engine.system_manager.menu_system.try(&.responds_to?(:render))
       registered_components << "menu_system"
     end
 

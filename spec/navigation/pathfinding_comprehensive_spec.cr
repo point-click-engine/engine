@@ -4,7 +4,7 @@ describe "Comprehensive Pathfinding Tests" do
   describe PointClickEngine::Navigation::Pathfinding do
     describe "edge cases and complex scenarios" do
       it "handles path to same position" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
         pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
         path = pathfinder.find_path(100f32, 100f32, 100f32, 100f32)
@@ -17,7 +17,7 @@ describe "Comprehensive Pathfinding Tests" do
       end
 
       it "handles very long paths efficiently" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(100, 100, 16)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(100, 100, 16)
         pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
         # Path from one corner to opposite corner
@@ -36,7 +36,7 @@ describe "Comprehensive Pathfinding Tests" do
       end
 
       it "finds path around complex obstacles" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
 
         # Create a vertical wall that blocks direct path
         (0..19).each do |y|
@@ -62,7 +62,7 @@ describe "Comprehensive Pathfinding Tests" do
       end
 
       it "handles grid boundaries correctly" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
         pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
         # Path along edge
@@ -80,7 +80,7 @@ describe "Comprehensive Pathfinding Tests" do
       end
 
       it "returns nil for completely blocked paths" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
         # Create an island
         (0...10).each do |x|
@@ -100,15 +100,17 @@ describe "Comprehensive Pathfinding Tests" do
       end
 
       it "finds optimal path with diagonal movement" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
         # Add some obstacles to make the path more interesting
         grid.set_walkable(2, 2, false)
         grid.set_walkable(3, 3, false)
         grid.set_walkable(4, 4, false)
 
-        pathfinder_diag = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: true)
-        pathfinder_no_diag = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: false)
+        movement_validator_diag = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: true)
+        pathfinder_diag = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator_diag)
+        movement_validator_no_diag = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: false)
+        pathfinder_no_diag = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator_no_diag)
 
         # Path that would benefit from diagonal movement
         path_diag = pathfinder_diag.find_path(32f32, 32f32, 288f32, 288f32)
@@ -123,14 +125,15 @@ describe "Comprehensive Pathfinding Tests" do
       end
 
       it "avoids diagonal movement through corners" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
         # Create corner obstacle
         grid.set_walkable(5, 5, false)
         grid.set_walkable(6, 5, false)
         grid.set_walkable(5, 6, false)
 
-        pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: true)
+        movement_validator = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: true)
+        pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator)
 
         # Try to path through the corner
         path = pathfinder.find_path(144f32, 144f32, 208f32, 208f32) # (4,4) to (6,6)
@@ -150,7 +153,7 @@ describe "Comprehensive Pathfinding Tests" do
 
     describe "performance and optimization" do
       it "caches grid lookups efficiently" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(50, 50, 16)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(50, 50, 16)
 
         # Create complex obstacle pattern
         (10..40).each do |i|
@@ -174,7 +177,7 @@ describe "Comprehensive Pathfinding Tests" do
       end
 
       it "handles dynamic obstacle updates" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
         pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
         # Initial path - straight line
@@ -212,7 +215,7 @@ describe "Comprehensive Pathfinding Tests" do
 
     describe "path smoothing and optimization" do
       it "produces smooth paths for character movement" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
         pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
         # Create path that could be smoothed
@@ -241,7 +244,7 @@ describe "Comprehensive Pathfinding Tests" do
       end
 
       it "handles partial paths when goal is unreachable" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
 
         # Create unreachable goal area
         (15..19).each do |x|
@@ -275,7 +278,7 @@ describe "Comprehensive Pathfinding Tests" do
 
     describe "integration with scene data" do
       it "creates navigation grid from walkable area" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(50, 40, 16)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(50, 40, 16)
 
         # Simulate scene walkable area setup
         # Main floor
@@ -307,11 +310,11 @@ describe "Comprehensive Pathfinding Tests" do
 
       it "respects different cell sizes for precision vs performance" do
         # Fine grid
-        fine_grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(100, 100, 8)
+        fine_grid = PointClickEngine::Navigation::NavigationGrid.new(100, 100, 8)
         fine_pathfinder = PointClickEngine::Navigation::Pathfinding.new(fine_grid)
 
         # Coarse grid
-        coarse_grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(25, 25, 32)
+        coarse_grid = PointClickEngine::Navigation::NavigationGrid.new(25, 25, 32)
         coarse_pathfinder = PointClickEngine::Navigation::Pathfinding.new(coarse_grid)
 
         # Add same obstacle pattern (scaled appropriately)
@@ -332,10 +335,11 @@ describe "Comprehensive Pathfinding Tests" do
 
     describe "special movement patterns" do
       it "supports restricted movement directions" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(10, 10, 32)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(10, 10, 32)
 
         # No diagonal movement
-        pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid, allow_diagonal: false)
+        movement_validator = PointClickEngine::Navigation::MovementValidator.new(allow_diagonal: false)
+        pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid, movement_validator: movement_validator)
 
         path = pathfinder.find_path(32f32, 32f32, 160f32, 160f32)
         path.should_not be_nil
@@ -364,7 +368,7 @@ describe "Comprehensive Pathfinding Tests" do
       end
 
       it "handles narrow passages correctly" do
-        grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+        grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
 
         # Create narrow passage
         (0...20).each do |x|

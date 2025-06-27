@@ -10,11 +10,7 @@ describe "Door transition effects" do
   end
 
   it "triggers cheesy transitions through action commands" do
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Door Transition Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Door Transition Test")
     engine.init
     engine.enable_verb_input
 
@@ -41,7 +37,7 @@ describe "Door transition effects" do
 
     # Get the verb system and transition manager
     verb_system = engine.verb_input_system.not_nil!
-    transition_manager = engine.transition_manager.not_nil!
+    transition_manager = engine.system_manager.transition_manager.not_nil!
 
     # Transition should not be active initially
     transition_manager.transitioning?.should be_false
@@ -148,14 +144,10 @@ describe "Transition rendering integration" do
   end
 
   it "render pipeline wraps scene rendering during transitions" do
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
     engine.init
 
-    transition_manager = engine.transition_manager.not_nil!
+    transition_manager = engine.system_manager.transition_manager.not_nil!
 
     # Start a transition
     transition_manager.start_transition(
@@ -172,11 +164,7 @@ describe "Transition rendering integration" do
   end
 
   it "executes transitions via TransitionHelper" do
-    engine = PointClickEngine::Core::Engine.new(
-      title: "Test",
-      window_width: 800,
-      window_height: 600
-    )
+    engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
     engine.init
 
     # Add scenes

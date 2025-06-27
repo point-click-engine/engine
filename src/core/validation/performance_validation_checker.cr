@@ -22,6 +22,8 @@ module PointClickEngine
           analyze_rendering_performance(config, result)
           analyze_memory_usage(config, context, result)
           analyze_audio_performance(config, context, result)
+          validate_audio_volume_settings(config, result)
+          validate_feature_compatibility(config, result)
           provide_optimization_hints(config, result)
 
           result
@@ -40,15 +42,14 @@ module PointClickEngine
             analyze_audio_asset_performance(audio, context, result, large_assets, pointerof(total_asset_size))
           end
 
-          # Analyze sprite asset performance
-          analyze_sprite_asset_performance(assets, context, result, large_assets, pointerof(total_asset_size), pointerof(texture_memory_usage))
+          # Skip sprite analysis - sprites are defined in scenes, not in assets config
 
           # Report overall findings
           report_asset_performance_summary(large_assets, total_asset_size, texture_memory_usage, result)
         end
 
         # Analyzes audio asset performance
-        private def analyze_audio_asset_performance(audio : AudioConfig, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*)
+        private def analyze_audio_asset_performance(audio : GameConfig::AudioConfig, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*)
           # Check music files
           audio.music.each do |name, path|
             full_path = File.expand_path(path, context.base_dir)
@@ -92,7 +93,7 @@ module PointClickEngine
         end
 
         # Analyzes sprite asset performance
-        private def analyze_sprite_asset_performance(assets : AssetsConfig, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*, texture_memory : Int64*)
+        private def analyze_sprite_asset_performance(assets : GameConfig::AssetsConfig, context : ValidationContext, result : ValidationResult, large_assets : Array(String), total_size : Int64*, texture_memory : Int64*)
           sprite_count = 0
           large_texture_count = 0
 
@@ -229,7 +230,7 @@ module PointClickEngine
         end
 
         # Estimates audio memory usage
-        private def estimate_audio_memory_usage(audio : AudioConfig, context : ValidationContext) : Int64
+        private def estimate_audio_memory_usage(audio : GameConfig::AudioConfig, context : ValidationContext) : Int64
           total_audio_memory = 0_i64
 
           # Music typically streams, so estimate buffer size
@@ -250,13 +251,34 @@ module PointClickEngine
         end
 
         # Estimates total texture memory usage
-        private def estimate_total_texture_memory(assets : AssetsConfig, context : ValidationContext) : Int64
+        private def estimate_total_texture_memory(assets : GameConfig::AssetsConfig, context : ValidationContext) : Int64
           total_texture_memory = 0_i64
 
+          # Process sprites
           assets.sprites.each do |pattern|
             Dir.glob(File.join(context.base_dir, pattern)).each do |sprite_path|
               if File.exists?(sprite_path)
                 total_texture_memory += estimate_texture_memory_usage(sprite_path)
+              end
+            end
+          end
+
+          # Process scene backgrounds
+          assets.scenes.each do |pattern|
+            Dir.glob(File.join(context.base_dir, pattern)).each do |scene_path|
+              if File.exists?(scene_path) && scene_path.ends_with?(".yaml")
+                begin
+                  scene_content = File.read(scene_path)
+                  if match = scene_content.match(/background_path:\s*(.+)/)
+                    background_path = match[1].strip
+                    full_path = File.join(context.base_dir, background_path)
+                    if File.exists?(full_path)
+                      total_texture_memory += estimate_texture_memory_usage(full_path)
+                    end
+                  end
+                rescue
+                  # Ignore errors reading scene files
+                end
               end
             end
           end
@@ -268,9 +290,9 @@ module PointClickEngine
         private def estimate_scene_memory_usage(config : GameConfig, context : ValidationContext) : Int64
           return 0_i64 unless assets = config.assets
 
-          scene_count = 0
+          scene_count = 0_i64
           assets.scenes.each do |pattern|
-            scene_count += Dir.glob(File.join(context.base_dir, pattern)).size
+            scene_count += Dir.glob(File.join(context.base_dir, pattern)).size.to_i64
           end
 
           # Rough estimate: 1MB per scene for data structures, scripts, etc.
@@ -296,6 +318,45 @@ module PointClickEngine
           # Check sound effect count
           if audio.sounds.size > 50
             result.add_performance_hint("Many sound effects (#{audio.sounds.size}) - consider sound pooling and limits")
+          end
+        end
+
+        # Audio volume validation is now handled by UserSettings validation
+        # This method is kept for compatibility but does nothing
+        private def validate_audio_volume_settings(config : GameConfig, result : ValidationResult)
+          # Audio volume settings have been moved to UserSettings
+          # Validation is handled separately when UserSettings.validate is called
+        end
+
+        # Validates feature compatibility and conflicts
+        private def validate_feature_compatibility(config : GameConfig, result : ValidationResult)
+          features = config.features
+
+          # Check for conflicting features
+          conflicting_pairs = {
+            {"shaders", "low_end_mode"}            => "Shaders and low-end mode conflict - shaders require GPU capabilities",
+            {"high_quality_audio", "low_end_mode"} => "High quality audio and low-end mode conflict - consider audio quality settings",
+            {"networking", "offline_mode"}         => "Networking and offline mode conflict - clarify intended behavior",
+            {"physics", "simple_mode"}             => "Advanced physics and simple mode conflict - choose appropriate complexity level",
+          }
+
+          conflicting_pairs.each do |pair, message|
+            feature1, feature2 = pair
+            if features.includes?(feature1) && features.includes?(feature2)
+              result.add_warning("Feature conflict detected: #{message}")
+            end
+          end
+
+          # Check for performance-heavy feature combinations
+          heavy_features = features.select { |f| ["shaders", "physics", "networking", "high_quality_audio"].includes?(f) }
+          if heavy_features.size >= 3
+            result.add_performance_hint("Multiple performance-heavy features enabled (#{heavy_features.join(", ")}) - ensure adequate system requirements")
+          end
+
+          # Check mobile compatibility
+          mobile_incompatible = features.select { |f| ["shaders", "high_quality_audio", "physics"].includes?(f) }
+          if mobile_incompatible.size >= 2
+            result.add_performance_hint("Features may impact mobile performance: #{mobile_incompatible.join(", ")}")
           end
         end
 

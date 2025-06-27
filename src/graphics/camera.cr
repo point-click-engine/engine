@@ -18,6 +18,10 @@ module PointClickEngine
       property edge_scroll_speed : Float32 = 300.0f32
       property edge_scroll_enabled : Bool = true
 
+      # Camera transform properties
+      property zoom : Float32 = 1.0f32
+      property rotation : Float32 = 0.0f32
+
       # Camera bounds (calculated from scene and viewport)
       property min_x : Float32 = 0.0f32
       property max_x : Float32 = 0.0f32
@@ -61,8 +65,8 @@ module PointClickEngine
           update_edge_scroll(mouse_x, mouse_y, dt)
         end
 
-        # Constrain camera to scene bounds
-        constrain_position
+        # Don't constrain position - let CameraManager handle constraints with effects
+        # constrain_position
       end
 
       # Convert screen coordinates to world coordinates
@@ -117,6 +121,9 @@ module PointClickEngine
           x: @position.x + (target_x - @position.x) * @follow_speed * dt,
           y: @position.y + (target_y - @position.y) * @follow_speed * dt
         )
+
+        # Apply constraints here since we're actively following
+        constrain_position
       end
 
       private def update_edge_scroll(mouse_x : Int32, mouse_y : Int32, dt : Float32)
@@ -142,6 +149,9 @@ module PointClickEngine
           x: @position.x + scroll_x,
           y: @position.y + scroll_y
         )
+
+        # Apply constraints here since we're actively scrolling
+        constrain_position
       end
 
       private def update_bounds

@@ -20,21 +20,18 @@ describe "Engine Input Handling" do
   describe "mouse input handling" do
     it "processes click events through input manager" do
       RL.init_window(800, 600, "Input Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
       clicked = false
 
       # Test basic click processing through engine's input handler
-      engine.input_handler.handle_clicks = true
+      input_handler = engine.input_handler
+      input_handler.should_not be_nil
+      input_handler.not_nil!.handle_clicks = true
 
       # Test that input handler exists and can be configured
-      engine.input_handler.should_not be_nil
-      engine.input_handler.handle_clicks.should be_true
+      input_handler.not_nil!.handle_clicks.should be_true
 
       # For test purposes, simulate successful click handling
       clicked = true
@@ -45,11 +42,7 @@ describe "Engine Input Handling" do
 
     it "handles hotspot interactions" do
       RL.init_window(800, 600, "Input Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
       # Create scene with hotspot
@@ -70,11 +63,7 @@ describe "Engine Input Handling" do
 
     it "handles character interactions" do
       RL.init_window(800, 600, "Input Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
       # Create scene with character
@@ -96,18 +85,14 @@ describe "Engine Input Handling" do
   describe "keyboard input handling" do
     it "handles debug mode toggle" do
       RL.init_window(800, 600, "Input Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
       initial_debug = PointClickEngine::Core::Engine.debug_mode
 
       # Test debug mode toggle through engine's input handler
       # Simulate F1 keypress handling
-      engine.input_handler.handle_keyboard_input
+      engine.input_handler.not_nil!.handle_keyboard_input
 
       # For testing, manually toggle debug mode
       PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
@@ -118,17 +103,13 @@ describe "Engine Input Handling" do
 
     it "handles inventory toggle" do
       RL.init_window(800, 600, "Input Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
       inventory_toggled = false
 
       # Test inventory toggle functionality
-      engine.input_handler.handle_keyboard_input
+      engine.input_handler.not_nil!.handle_keyboard_input
 
       # For testing, simulate inventory toggle
       inventory_toggled = true
@@ -141,11 +122,7 @@ describe "Engine Input Handling" do
   describe "input state management" do
     it "tracks mouse position accurately" do
       RL.init_window(800, 600, "Input Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
       # Test mouse position tracking
@@ -161,23 +138,19 @@ describe "Engine Input Handling" do
 
     it "manages input handler lifecycle" do
       RL.init_window(800, 600, "Input Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
       # Test input handler lifecycle via engine
       engine.input_handler.should_not be_nil
-      engine.input_handler.handle_clicks.should be_a(Bool)
+      engine.input_handler.not_nil!.handle_clicks.should be_a(Bool)
 
       # Test handler configuration
-      engine.input_handler.handle_clicks = false
-      engine.input_handler.handle_clicks.should be_false
+      engine.input_handler.not_nil!.handle_clicks = false
+      engine.input_handler.not_nil!.handle_clicks.should be_false
 
-      engine.input_handler.handle_clicks = true
-      engine.input_handler.handle_clicks.should be_true
+      engine.input_handler.not_nil!.handle_clicks = true
+      engine.input_handler.not_nil!.handle_clicks.should be_true
 
       RL.close_window
     end
@@ -186,11 +159,7 @@ describe "Engine Input Handling" do
   describe "input validation and filtering" do
     it "filters inactive scene elements" do
       RL.init_window(800, 600, "Input Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
       scene = PointClickEngine::Scenes::Scene.new("test_scene")
@@ -212,11 +181,7 @@ describe "Engine Input Handling" do
 
     it "respects input blocking elements" do
       RL.init_window(800, 600, "Input Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Input Test Game",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
       scene = PointClickEngine::Scenes::Scene.new("test_scene")

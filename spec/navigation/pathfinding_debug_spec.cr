@@ -2,7 +2,7 @@ require "../spec_helper"
 
 describe "Pathfinding Debug Tests" do
   it "debugs complex obstacle navigation" do
-    grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+    grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
 
     # Create a vertical wall that blocks direct path
     (0..19).each do |y|
@@ -39,7 +39,7 @@ describe "Pathfinding Debug Tests" do
   end
 
   it "debugs narrow passage navigation" do
-    grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+    grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
 
     # Create narrow passage - only x=10 is passable at y=10
     (0...20).each do |x|

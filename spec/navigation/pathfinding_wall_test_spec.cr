@@ -2,7 +2,7 @@ require "../spec_helper"
 
 describe "Wall Detection Test" do
   it "verifies wall blocks path" do
-    grid = PointClickEngine::Navigation::Pathfinding::NavigationGrid.new(20, 20, 16)
+    grid = PointClickEngine::Navigation::NavigationGrid.new(20, 20, 16)
 
     # Create a vertical wall
     (0..19).each do |y|

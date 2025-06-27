@@ -90,6 +90,7 @@ module PointClickEngine
       def start
         @character.say(@text) do
           @dialog_completed = true
+          nil
         end
       end
 
@@ -186,7 +187,8 @@ module PointClickEngine
       def update_action(progress : Float32)
         if @wait_for_completion && @character.sprite
           sprite = @character.sprite.not_nil!
-          if !sprite.playing && @character.current_animation == @animation_name
+          current_anim = @character.animation_controller.try(&.current_animation) || ""
+          if !sprite.playing && current_anim == @animation_name
             @completed = true
           end
         end
@@ -252,9 +254,9 @@ module PointClickEngine
       def start
         # This would need UI visibility control in Engine
         if @show_ui
-          Core::Engine.instance.show_ui
+          Core::Engine.instance.render_manager.show_ui
         else
-          Core::Engine.instance.hide_ui
+          Core::Engine.instance.render_manager.hide_ui
         end
       end
 

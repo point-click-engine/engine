@@ -1,16 +1,18 @@
 # Engine system initialization and management
 
 require "../achievement_manager"
-require "../../audio/sound_system"
+require "../../audio/audio_manager"
 require "../../graphics/shaders/shader_system"
 require "../../ui/gui_manager"
 require "../../scripting/script_engine"
 require "../../scripting/event_system"
 require "../../ui/dialog_manager"
 require "../config_manager"
+require "../camera_manager"
 require "../../graphics/display_manager"
 require "../../graphics/transitions"
 require "../../ui/menu_system"
+require "./verb_input_system"
 
 module PointClickEngine
   module Core
@@ -25,6 +27,7 @@ module PointClickEngine
         property event_system : Scripting::EventSystem
         property dialog_manager : UI::DialogManager?
         property config : ConfigManager?
+        property camera_manager : CameraManager?
         property display_manager : Graphics::DisplayManager?
         property transition_manager : Graphics::TransitionManager?
         property menu_system : UI::MenuSystem?
@@ -37,6 +40,9 @@ module PointClickEngine
         def initialize_systems(width : Int32, height : Int32)
           # Initialize display manager first
           @display_manager = Graphics::DisplayManager.new(width, height)
+
+          # Initialize camera manager
+          @camera_manager = CameraManager.new(width, height)
 
           # Initialize audio system
           if Audio::AudioManager.available?
@@ -61,6 +67,9 @@ module PointClickEngine
           # Initialize transition manager
           @transition_manager = Graphics::TransitionManager.new(width, height)
 
+          # Initialize menu system
+          @menu_system = UI::MenuSystem.new
+
           # Initialize scripting engine
           begin
             @script_engine = Scripting::ScriptEngine.new
@@ -71,6 +80,41 @@ module PointClickEngine
           end
         end
 
+        # Setup menu callbacks with engine reference
+        def setup_menu_callbacks(engine)
+          return unless @menu_system
+
+          # New Game callback
+          @menu_system.not_nil!.on_new_game = -> {
+            engine.start_new_game
+          }
+
+          # Load Game callback
+          @menu_system.not_nil!.on_load_game = -> {
+            @menu_system.not_nil!.switch_to_menu("load")
+          }
+
+          # Save Game callback
+          @menu_system.not_nil!.on_save_game = -> {
+            engine.save_game("quicksave")
+          }
+
+          # Options callback
+          @menu_system.not_nil!.on_options = -> {
+            @menu_system.not_nil!.switch_to_menu("options")
+          }
+
+          # Resume callback
+          @menu_system.not_nil!.on_resume = -> {
+            @menu_system.not_nil!.hide
+          }
+
+          # Quit callback
+          @menu_system.not_nil!.on_quit = -> {
+            engine.stop
+          }
+        end
+
         # Update all systems
         def update_systems(dt : Float32)
           @achievement_manager.try(&.update(dt))
@@ -79,7 +123,8 @@ module PointClickEngine
           @gui.try(&.update(dt))
           @dialog_manager.try(&.update(dt))
           @transition_manager.try(&.update(dt))
-          # @event_system.update # No update method
+          @menu_system.try(&.update(dt))
+          @event_system.process_events
         end
 
         # Cleanup all systems

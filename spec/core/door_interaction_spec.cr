@@ -4,11 +4,7 @@ describe "Door Interaction System" do
   describe "Action-based transitions for doors" do
     it "triggers scene transitions through hotspot actions" do
       RL.init_window(800, 600, "Door Interaction Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Door Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Door Test")
       engine.init
       engine.enable_verb_input
 
@@ -79,11 +75,7 @@ describe "Door Interaction System" do
 
     it "supports different verbs triggering transitions" do
       RL.init_window(800, 600, "Multi-verb Transition Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Multi-verb Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Multi-verb Test")
       engine.init
 
       scene = PointClickEngine::Scenes::Scene.new("test_scene")
@@ -127,11 +119,7 @@ describe "Door Interaction System" do
   describe "Verb System Integration" do
     it "correctly handles door hotspots with open verb" do
       RL.init_window(800, 600, "Verb Integration Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Verb Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Verb Test")
       engine.init
 
       scene = PointClickEngine::Scenes::Scene.new("test_scene")
@@ -180,11 +168,7 @@ describe "Door Interaction System" do
 
     it "preserves backward compatibility for non-door hotspots" do
       RL.init_window(800, 600, "Compatibility Test")
-      engine = PointClickEngine::Core::Engine.new(
-        title: "Compatibility Test",
-        window_width: 800,
-        window_height: 600
-      )
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Compatibility Test")
       engine.init
 
       scene = PointClickEngine::Scenes::Scene.new("test_scene")

@@ -2,10 +2,9 @@ require "../../spec_helper"
 require "../../../src/core/validation/validation_result"
 
 describe PointClickEngine::Core::Validation::ValidationResult do
-  let(result) { PointClickEngine::Core::Validation::ValidationResult.new }
-
   describe "initialization" do
     it "initializes with passed status by default" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.passed.should be_true
       result.errors.should be_empty
       result.warnings.should be_empty
@@ -22,6 +21,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
 
   describe "adding messages" do
     it "adds errors and marks as failed" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_error("Test error")
 
       result.passed.should be_false
@@ -29,6 +29,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "adds multiple errors" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       errors = ["Error 1", "Error 2"]
       result.add_errors(errors)
 
@@ -37,6 +38,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "adds warnings without affecting passed status" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_warning("Test warning")
 
       result.passed.should be_true
@@ -44,6 +46,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "adds multiple warnings" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       warnings = ["Warning 1", "Warning 2"]
       result.add_warnings(warnings)
 
@@ -52,6 +55,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "adds info messages" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_info("Test info")
 
       result.info.should contain("Test info")
@@ -59,12 +63,14 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "adds performance hints" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_performance_hint("Optimize this")
 
       result.performance_hints.should contain("Optimize this")
     end
 
     it "adds security issues" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_security_issue("Security problem")
 
       result.security_issues.should contain("Security problem")
@@ -73,6 +79,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
 
   describe "merging results" do
     it "merges another validation result" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       other = PointClickEngine::Core::Validation::ValidationResult.new
       other.add_error("Other error")
       other.add_warning("Other warning")
@@ -89,6 +96,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "maintains failed status when merging" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.passed = false
       other = PointClickEngine::Core::Validation::ValidationResult.new(true)
 
@@ -100,6 +108,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
 
   describe "status checking" do
     it "detects when there are issues" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.has_issues?.should be_false
 
       result.add_warning("Warning")
@@ -107,6 +116,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "detects critical issues" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.has_critical_issues?.should be_false
 
       result.add_warning("Warning")
@@ -117,6 +127,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "considers security issues as critical" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_security_issue("Security issue")
       result.has_critical_issues?.should be_true
     end
@@ -124,6 +135,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
 
   describe "counting" do
     it "counts total messages" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_error("Error")
       result.add_warning("Warning")
       result.add_info("Info")
@@ -134,6 +146,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "counts only issues" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_error("Error")
       result.add_warning("Warning")
       result.add_info("Info")             # Not counted as issue
@@ -146,6 +159,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
 
   describe "summary" do
     it "creates summary for passed result" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_info("Some info")
 
       summary = result.summary
@@ -153,6 +167,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "creates summary for failed result" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_error("Error")
       result.add_warning("Warning")
 
@@ -163,6 +178,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
     end
 
     it "includes all issue types in summary" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_error("Error")
       result.add_warning("Warning")
       result.add_security_issue("Security")
@@ -178,6 +194,7 @@ describe PointClickEngine::Core::Validation::ValidationResult do
 
   describe "string representation" do
     it "provides readable string representation" do
+      result = PointClickEngine::Core::Validation::ValidationResult.new
       result.add_error("Error")
 
       str = result.to_s
@@ -188,16 +205,16 @@ describe PointClickEngine::Core::Validation::ValidationResult do
 end
 
 describe PointClickEngine::Core::Validation::ValidationContext do
-  let(config_path) { "/test/config.yaml" }
-  let(context) { PointClickEngine::Core::Validation::ValidationContext.new(config_path) }
-
   describe "initialization" do
     it "initializes with config path" do
+      config_path = "/test/config.yaml"
+      context = PointClickEngine::Core::Validation::ValidationContext.new(config_path)
       context.config_path.should eq(config_path)
       context.base_dir.should eq("/test")
     end
 
     it "sets default values" do
+      context = PointClickEngine::Core::Validation::ValidationContext.new("/test/config.yaml")
       context.strict_mode.should be_false
       context.development_mode.should be_false
       context.skip_optional_checks.should be_false
@@ -208,11 +225,13 @@ describe PointClickEngine::Core::Validation::ValidationContext do
 
   describe "path resolution" do
     it "resolves relative paths" do
+      context = PointClickEngine::Core::Validation::ValidationContext.new("/test/config.yaml")
       resolved = context.resolve_path("assets/sprites")
       resolved.should eq("/test/assets/sprites")
     end
 
     it "keeps absolute paths unchanged" do
+      context = PointClickEngine::Core::Validation::ValidationContext.new("/test/config.yaml")
       absolute_path = "/absolute/path/to/file"
       resolved = context.resolve_path(absolute_path)
       resolved.should eq(absolute_path)
@@ -221,6 +240,7 @@ describe PointClickEngine::Core::Validation::ValidationContext do
 
   describe "file operations" do
     it "checks file existence" do
+      context = PointClickEngine::Core::Validation::ValidationContext.new("/test/config.yaml")
       # This would need actual file system setup for proper testing
       context.file_exists?("nonexistent").should be_false
     end
@@ -228,6 +248,7 @@ describe PointClickEngine::Core::Validation::ValidationContext do
 
   describe "caching" do
     it "caches and retrieves values" do
+      context = PointClickEngine::Core::Validation::ValidationContext.new("/test/config.yaml")
       context.cache_set("test_key", "test_value")
 
       context.cache_get("test_key").should eq("test_value")
@@ -235,10 +256,12 @@ describe PointClickEngine::Core::Validation::ValidationContext do
     end
 
     it "returns default for missing keys" do
+      context = PointClickEngine::Core::Validation::ValidationContext.new("/test/config.yaml")
       context.cache_get("missing_key", "default").should eq("default")
     end
 
     it "handles different value types" do
+      context = PointClickEngine::Core::Validation::ValidationContext.new("/test/config.yaml")
       context.cache_set("string", "value")
       context.cache_set("int", 42)
       context.cache_set("bool", true)
@@ -253,6 +276,7 @@ describe PointClickEngine::Core::Validation::ValidationContext do
 
   describe "string representation" do
     it "provides readable string representation" do
+      context = PointClickEngine::Core::Validation::ValidationContext.new("/test/config.yaml")
       str = context.to_s
       str.should contain("ValidationContext")
       str.should contain("config.yaml")
@@ -262,10 +286,9 @@ describe PointClickEngine::Core::Validation::ValidationContext do
 end
 
 describe PointClickEngine::Core::Validation::ValidationContextFactory do
-  let(config_path) { "/test/config.yaml" }
-
   describe "context creation" do
     it "creates basic context" do
+      config_path = "/test/config.yaml"
       context = PointClickEngine::Core::Validation::ValidationContextFactory.create(config_path)
 
       context.config_path.should eq(config_path)
@@ -274,12 +297,14 @@ describe PointClickEngine::Core::Validation::ValidationContextFactory do
     end
 
     it "creates strict context" do
+      config_path = "/test/config.yaml"
       context = PointClickEngine::Core::Validation::ValidationContextFactory.create(config_path, strict_mode: true)
 
       context.strict_mode.should be_true
     end
 
     it "creates development context" do
+      config_path = "/test/config.yaml"
       context = PointClickEngine::Core::Validation::ValidationContextFactory.create_development(config_path)
 
       context.development_mode.should be_true
@@ -287,6 +312,7 @@ describe PointClickEngine::Core::Validation::ValidationContextFactory do
     end
 
     it "creates production context" do
+      config_path = "/test/config.yaml"
       context = PointClickEngine::Core::Validation::ValidationContextFactory.create_production(config_path)
 
       context.strict_mode.should be_true
@@ -310,23 +336,25 @@ class TestValidator < PointClickEngine::Core::Validation::BaseValidator
 end
 
 describe PointClickEngine::Core::Validation::BaseValidator do
-  let(validator) { TestValidator.new }
-
   describe "interface" do
     it "has default name based on class" do
+      validator = TestValidator.new
       validator.name.should eq("TestValidator")
     end
 
     it "has description" do
+      validator = TestValidator.new
       validator.description.should eq("Test validator for specifications")
     end
 
     it "should run by default" do
       context = PointClickEngine::Core::Validation::ValidationContext.new("/test/config.yaml")
+      validator = TestValidator.new
       validator.should_run?(context).should be_true
     end
 
     it "has default priority" do
+      validator = TestValidator.new
       validator.priority.should eq(100)
     end
   end

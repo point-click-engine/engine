@@ -11,15 +11,15 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${PWD}/lib/raylib-cr/rsrc/miniaudiohelp
 case "$1" in
   "spec")
     shift
-    crystal spec "$@" -Dwith_audio
+    crystal spec "$@"
     ;;
   "build")
     shift
-    crystal build "$@" -Dwith_audio
+    crystal build "$@"
     ;;
   "run")
     shift
-    crystal run "$@" -Dwith_audio
+    crystal run "$@"
     ;;
   "test-comprehensive")
     # Run comprehensive testing suite
@@ -28,15 +28,15 @@ case "$1" in
   "test-stress")
     # Run stress tests only
     shift
-    crystal spec spec/integration "$@" -Dwith_audio
+    crystal spec spec/integration "$@"
     ;;
   "test-memory")
     # Run memory-focused tests
     shift
-    crystal spec spec/core/performance* spec/integration "$@" -Dwith_audio
+    crystal spec spec/core/performance* spec/integration "$@"
     ;;
   *)
     # Default to run if no command specified
-    crystal run "$@" -Dwith_audio
+    crystal run "$@"
     ;;
 esac

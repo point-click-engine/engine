@@ -314,6 +314,16 @@ crystal build main.cr --debug
 - Mouse to screen edges - Scroll camera
 - Camera automatically follows player character
 
+### Camera Effects (via CameraManager)
+The engine provides advanced camera effects:
+- **Shake** - Screen shake for earthquakes/impacts
+- **Zoom** - Smooth zoom in/out
+- **Pan** - Smooth camera movement
+- **Follow** - Follow characters with deadzone
+- **Sway** - Sea-like motion for boat scenes
+
+See `docs/features/camera_system.md` for detailed camera documentation.
+
 ## Resources
 
 - Full API: `GAME_FORMAT_SPECIFICATION.md` (in this directory)

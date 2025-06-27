@@ -50,7 +50,7 @@ module PointClickEngine
                 # Default character interaction - show dialog or description
                 if engine = Engine.instance
                   # Check if character has a dialog tree
-                  if dialog_manager = engine.dialog_manager
+                  if dialog_manager = engine.system_manager.dialog_manager
                     if dialog_manager.has_dialog?(clicked_character.name)
                       # Start character's dialog tree
                       dialog_manager.start_dialog(clicked_character.name)
@@ -162,7 +162,7 @@ module PointClickEngine
 
         private def handle_edge_scroll_toggle
           if engine = Engine.instance
-            if camera = engine.camera
+            if camera = engine.camera_manager.current_camera
               camera.edge_scroll_enabled = !camera.edge_scroll_enabled
               puts "Camera edge scrolling: #{camera.edge_scroll_enabled ? "enabled" : "disabled"}"
             end

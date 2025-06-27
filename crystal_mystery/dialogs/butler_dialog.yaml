@@ -4,6 +4,7 @@ nodes:
     id: greeting
     text: "Good evening, Detective. I trust you are finding the mansion... accommodating?"
     character_name: butler
+    actions: ["camera.sway(15.0, 14.0)"]
     choices:
       - text: "I'm here about the missing crystal."
         target_node_id: crystal_inquiry

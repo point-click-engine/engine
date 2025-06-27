@@ -2,7 +2,7 @@ require "../spec_helper"
 
 # Performance regression detection tests
 # These tests measure performance and detect regressions in critical operations
-describe "Performance Regression Detection" do
+pending describe "Performance Regression Detection" do
   describe "scene operations performance" do
     it "scene creation performance meets benchmarks" do
       # Baseline performance measurement

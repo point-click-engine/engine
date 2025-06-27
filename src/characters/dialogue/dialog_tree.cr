@@ -55,7 +55,7 @@ module PointClickEngine
           # Check conditions with script engine if available
           if !@conditions.empty?
             if engine = Core::Engine.instance
-              if script = engine.script_engine
+              if script = engine.system_manager.script_engine
                 # Check all conditions (AND logic)
                 @conditions.each do |condition|
                   begin
@@ -164,7 +164,7 @@ module PointClickEngine
           end
 
           # Show dialog choices (without the spoken text, just choices)
-          if dm = Core::Engine.instance.dialog_manager
+          if dm = Core::Engine.instance.system_manager.dialog_manager
             dm.show_dialog_choices("", available_choices.map(&.text)) do |choice_index|
               make_choice(choice_index)
             end
@@ -172,7 +172,7 @@ module PointClickEngine
         end
 
         private def show_character_speech(node : DialogNode)
-          return unless dm = Core::Engine.instance.dialog_manager
+          return unless dm = Core::Engine.instance.system_manager.dialog_manager
           return if node.text.empty?
 
           # Clear any previous floating dialogs
@@ -217,7 +217,7 @@ module PointClickEngine
           actions.each do |action|
             # Integrate with script engine to execute actions
             if engine = Core::Engine.instance
-              if script = engine.script_engine
+              if script = engine.system_manager.script_engine
                 begin
                   script.execute_script(action)
                 rescue ex
@@ -246,7 +246,7 @@ module PointClickEngine
           @current_node_id = nil
 
           # Clear dialog manager's current dialog to ensure input processing resumes
-          if dm = Core::Engine.instance.dialog_manager
+          if dm = Core::Engine.instance.system_manager.dialog_manager
             dm.close_current_dialog
           end
 
