@@ -199,6 +199,14 @@ module PointClickEngine
         when "slide_right"  then Graphics::Effects::SceneEffects::TransitionType::SlideRight
         when "slide_up"     then Graphics::Effects::SceneEffects::TransitionType::SlideUp
         when "slide_down"   then Graphics::Effects::SceneEffects::TransitionType::SlideDown
+        when "iris"         then Graphics::Effects::SceneEffects::TransitionType::Iris
+        when "swirl"        then Graphics::Effects::SceneEffects::TransitionType::Swirl
+        when "star_wipe"    then Graphics::Effects::SceneEffects::TransitionType::StarWipe
+        when "heart_wipe"   then Graphics::Effects::SceneEffects::TransitionType::HeartWipe
+        when "curtain"      then Graphics::Effects::SceneEffects::TransitionType::Curtain
+        when "checkerboard" then Graphics::Effects::SceneEffects::TransitionType::Checkerboard
+        when "clock_wipe"   then Graphics::Effects::SceneEffects::TransitionType::ClockWipe
+        when "barn_door"    then Graphics::Effects::SceneEffects::TransitionType::BarnDoor
         else Graphics::Effects::SceneEffects::TransitionType::Fade
         end
         

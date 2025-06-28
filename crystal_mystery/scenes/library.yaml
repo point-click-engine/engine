@@ -6,7 +6,7 @@ enable_pathfinding: true
 navigation_cell_size: 16
 enable_camera_scrolling: false  # Library fits in viewport
 script_path: scripts/library.lua
-default_transition_duration: 4.5  # Default duration for transitions from this scene
+default_transition_duration: 2.0  # Default duration for transitions from this scene
 walkable_areas:
   regions:
     - name: main_floor
@@ -67,8 +67,8 @@ hotspots:
     object_type: door
     actions:
       look: "A heavy wooden door leading to the laboratory"
-      open: "transition:laboratory:swirl::100,400"  # Uses scene's default duration (4.5s)
-      use: "transition:laboratory:swirl:default:100,400"  # Can also explicitly say "default"
+      open: "transition:laboratory:swirl::100,400"  # Uses scene's default duration (2.0s)
+      use: "transition:laboratory:swirl:2.0:100,400"  # Explicit 2 second duration
   - name: painting
     type: polygon
     points:

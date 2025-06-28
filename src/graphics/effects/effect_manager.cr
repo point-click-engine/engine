@@ -200,6 +200,16 @@ module PointClickEngine
             end
           end
         end
+        
+        # Get active transition effect if any
+        def active_transition : SceneEffects::TransitionEffect?
+          @scene_effects.active_effects.each do |effect|
+            if transition = effect.as?(SceneEffects::TransitionEffect)
+              return transition
+            end
+          end
+          nil
+        end
 
         # Clear camera effects
         def clear_camera_effects

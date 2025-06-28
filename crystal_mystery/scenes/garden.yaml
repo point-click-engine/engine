@@ -5,7 +5,7 @@ logical_height: 768
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/garden.lua
-default_transition_duration: 3.0  # Medium duration for outdoor transitions
+default_transition_duration: 2.0  # Medium duration for outdoor transitions
 walkable_areas:
   regions:
     - name: main_garden
@@ -73,5 +73,5 @@ hotspots:
     object_type: door
     actions:
       look: "Back to the laboratory"
-      open: "transition:laboratory:star_wipe:4.5:800,400"
-      use: "transition:laboratory:star_wipe:4.5:800,400"
+      open: "transition:laboratory:star_wipe:2.0:800,400"
+      use: "transition:laboratory:star_wipe:2.0:800,400"

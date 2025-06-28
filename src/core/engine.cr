@@ -201,14 +201,26 @@ module PointClickEngine
 
       # Renders the game
       private def render
-        render_scene_content
+        # Check if we have an active shader-based transition
+        if transition = @effect_manager.active_transition
+          if transition.responds_to?(:render_with_shader)
+            # Render scene with transition shader
+            transition.render_with_shader do
+              render_scene_content(skip_overlays: true)
+            end
+          else
+            render_scene_content
+          end
+        else
+          render_scene_content
+        end
 
         # Draw verb cursor (on top of everything)
         @verb_input_system.try(&.draw(self.display_manager))
       end
 
       # Renders the scene content (separated for use with transitions)
-      private def render_scene_content
+      private def render_scene_content(skip_overlays : Bool = false)
         # Create a temporary layer manager for scene effects
         # In a full implementation, this would be part of the renderer
         layers = Graphics::LayerManager.new
@@ -225,7 +237,10 @@ module PointClickEngine
         end
         
         # Draw scene effect overlays (like transition fade)
-        @effect_manager.draw_scene_overlays(renderer)
+        # Skip overlays when rendering to texture for shader transitions
+        unless skip_overlays
+          @effect_manager.draw_scene_overlays(renderer)
+        end
 
         # Render highlighted hotspots if enabled
         if @render_coordinator.hotspot_highlight_enabled && @current_scene

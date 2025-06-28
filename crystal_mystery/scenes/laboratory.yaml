@@ -58,8 +58,8 @@ hotspots:
     object_type: door
     actions:
       look: "The door leading back to the library"
-      open: "transition:library:heart_wipe:4.5:800,400"
-      use: "transition:library:heart_wipe:4.5:800,400"
+      open: "transition:library:heart_wipe:2.0:800,400"
+      use: "transition:library:heart_wipe:2.0:800,400"
   - name: door_to_garden
     x: 850
     y: 300
@@ -70,7 +70,7 @@ hotspots:
     object_type: door
     actions:
       look: "A glass door leading to the garden"
-      open: "transition:garden:curtain::100,400"  # Uses scene's default (2.0s)
+      open: "transition:garden:curtain:1.5:100,400"  # 1.5 second duration
       use: "transition:garden:curtain"  # Position is also optional
 characters:
   - name: scientist
