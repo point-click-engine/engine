@@ -211,6 +211,46 @@ module PointClickEngine
           else
             render_scene_content
           end
+        # Check if we have an active rain effect
+        elsif rain_effect = @effect_manager.active_rain_effect
+          if rain_effect.responds_to?(:render_scene_with_rain)
+            # Render scene with rain shader
+            rain_effect.render_scene_with_rain do
+              render_scene_content(skip_overlays: true)
+            end
+          else
+            render_scene_content
+          end
+        # Check if we have an active fog effect
+        elsif fog_effect = @effect_manager.active_fog_effect
+          if fog_effect.responds_to?(:render_scene_with_fog)
+            # Render scene with fog shader
+            fog_effect.render_scene_with_fog do
+              render_scene_content(skip_overlays: true)
+            end
+          else
+            render_scene_content
+          end
+        # Check if we have an active darkness effect
+        elsif darkness_effect = @effect_manager.active_darkness_effect
+          if darkness_effect.responds_to?(:render_scene_with_darkness)
+            # Render scene with darkness shader
+            darkness_effect.render_scene_with_darkness do
+              render_scene_content(skip_overlays: true)
+            end
+          else
+            render_scene_content
+          end
+        # Check if we have an active underwater effect
+        elsif underwater_effect = @effect_manager.active_underwater_effect
+          if underwater_effect.responds_to?(:render_scene_with_underwater)
+            # Render scene with underwater shader
+            underwater_effect.render_scene_with_underwater do
+              render_scene_content(skip_overlays: true)
+            end
+          else
+            render_scene_content
+          end
         else
           render_scene_content
         end
@@ -430,6 +470,19 @@ module PointClickEngine
         when .success?
           @current_scene = result.value
           puts "[Engine] Scene changed successfully"
+
+          # Transfer scene effects to the effect manager
+          if scene = @current_scene
+            # Clear existing scene effects
+            @effect_manager.clear_scene_effects
+            
+            # Add scene effects to the effect manager
+            scene.scene_effects.each do |effect|
+              @effect_manager.add_scene_effect(effect)
+            end
+            
+            puts "[Engine] Transferred #{scene.scene_effects.size} scene effects to effect manager"
+          end
 
           # Update camera bounds for the new scene
           if scene = @current_scene

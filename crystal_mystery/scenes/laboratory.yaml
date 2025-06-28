@@ -6,6 +6,12 @@ enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/laboratory.lua
 default_transition_duration: 2.0  # Shorter transitions for this busy scene
+effects:
+  - type: darkness
+    intensity: 1.0
+    inner_radius: 0.1
+    outer_radius: 0.7
+    color: [0, 0, 0, 255]
 walkable_areas:
   regions:
     - name: main_floor

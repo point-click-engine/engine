@@ -7,6 +7,12 @@ navigation_cell_size: 16
 enable_camera_scrolling: false  # Library fits in viewport
 script_path: scripts/library.lua
 default_transition_duration: 2.0  # Default duration for transitions from this scene
+effects:
+  - type: rain
+    intensity: medium
+    wind: 0.15
+    color: [180, 190, 220, 200]
+    splashes: true
 walkable_areas:
   regions:
     - name: main_floor

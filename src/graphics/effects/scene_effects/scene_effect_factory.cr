@@ -14,8 +14,8 @@ module PointClickEngine
   module Graphics
     module Effects
       module SceneEffects
-        # Factory for creating scene effects
-        module SceneEffectFactory
+        # Factory for creating shader-based scene effects
+        module ShaderSceneEffectFactory
           # Create a scene effect by name
           def self.create(effect_name : String, **params) : BaseSceneEffect?
             case effect_name.downcase

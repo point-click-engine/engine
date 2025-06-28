@@ -417,6 +417,29 @@ module PointClickEngine
               RL::Color.new(r: 200, g: 200, b: 255, a: 100))
           end
         end
+
+        # Simple test overlay effect that draws a colored rectangle over the entire screen
+        class TestOverlayEffect < BaseSceneEffect
+          property color : RL::Color
+
+          def initialize(@color : RL::Color)
+            super(0.0f32)  # No duration limit
+          end
+
+          def apply(context : EffectContext)
+            # This effect is purely overlay-based
+          end
+
+          def apply_to_layer(context : EffectContext, layer : Layers::Layer)
+            # No layer modifications needed
+          end
+
+          # Draw the overlay
+          def draw_overlay(renderer : PointClickEngine::Graphics::Renderer, viewport_width : Int32, viewport_height : Int32)
+            # Draw a colored rectangle over the entire screen
+            RL.draw_rectangle(0, 0, viewport_width, viewport_height, @color)
+          end
+        end
       end
     end
   end

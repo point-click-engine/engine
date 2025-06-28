@@ -13,6 +13,8 @@ require "./walkable_area"
 require "../characters/character"
 require "../core/game_object"
 require "../graphics/graphics"
+require "../graphics/effects/scene_effects/base_scene_effect"
+require "../graphics/effects/shader_effect"
 
 module PointClickEngine
   module Scenes
@@ -47,6 +49,9 @@ module PointClickEngine
 
       @[YAML::Field(ignore: true)]
       property player : Characters::Character?
+      
+      @[YAML::Field(ignore: true)]
+      property scene_effects : Array(Graphics::Effects::SceneEffects::BaseSceneEffect | Graphics::Effects::ShaderEffect) = [] of (Graphics::Effects::SceneEffects::BaseSceneEffect | Graphics::Effects::ShaderEffect)
 
       @[YAML::Field(ignore: true)]
       property walkable_area : WalkableArea?
@@ -348,6 +353,10 @@ module PointClickEngine
 
         # Update all objects
         @objects.each(&.update(dt))
+        
+        # Update scene effects
+        @scene_effects.each(&.update(dt))
+        @scene_effects.reject!(&.finished?)
 
         # Update character scales based on walkable area
         if walkable = @walkable_area
@@ -450,6 +459,64 @@ module PointClickEngine
           else
             @walkable_area.try(&.draw_debug)
           end
+        end
+
+      end
+
+      # Enhanced rain effect drawn directly on screen
+      private def draw_simple_rain
+        time = Time.utc.to_unix_f
+        
+        # Draw rain drops with multiple layers for depth
+        200.times do |i|
+          # Create layers with different speeds and sizes
+          layer = i % 3
+          layer_speed = 300 + (layer * 100)  # Background layers move slower
+          layer_alpha = 120 + (layer * 40)   # Foreground layers more opaque
+          layer_width = 1.0f32 + (layer * 0.5f32)
+          
+          # Add wind effect
+          wind_offset = Math.sin(time * 0.5 + i * 0.1) * 30
+          
+          # Calculate animated position with wrapping
+          base_x = (i * 8 + wind_offset).to_f32
+          base_y = (time * layer_speed + i * 13) % (768 + 50)
+          
+          x = (base_x % 1024).to_f32
+          y = (base_y - 50).to_f32  # Start above screen
+          
+          # Skip if above screen
+          next if y < -30
+          
+          # Draw rain drop with angle and varying length
+          drop_length = 15 + (layer * 5)
+          wind_angle = 0.2f32  # Slight diagonal
+          
+          start_pos = RL::Vector2.new(x: x, y: y)
+          end_pos = RL::Vector2.new(
+            x: x + (wind_angle * drop_length), 
+            y: y + drop_length
+          )
+          
+          # More realistic rain color (greyish blue)
+          color = RL::Color.new(
+            r: 180, 
+            g: 200, 
+            b: 220, 
+            a: layer_alpha.to_u8
+          )
+          
+          RL.draw_line_ex(start_pos, end_pos, layer_width, color)
+        end
+        
+        # Add some splash effects at the bottom
+        if Random.rand < 0.3  # 30% chance per frame
+          splash_x = Random.rand(1024).to_f32
+          splash_y = 750.0f32
+          
+          # Small splash circle
+          RL.draw_circle(splash_x.to_i, splash_y.to_i, 2.0f32, 
+            RL::Color.new(r: 180, g: 200, b: 220, a: 100))
         end
       end
 

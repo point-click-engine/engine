@@ -20,13 +20,13 @@ module PointClickEngine
         
         # Shader-based rain effect
         class RainShader < ShaderEffect
-          property intensity : RainIntensity = RainIntensity::Medium
+          property rain_intensity : RainIntensity = RainIntensity::Medium
           property wind_strength : Float32 = 0.2f32
           property rain_color : RL::Color = RL::Color.new(r: 200, g: 200, b: 255, a: 100)
           property splash_enabled : Bool = true
           property depth_layers : Int32 = 3
           
-          def initialize(@intensity : RainIntensity = RainIntensity::Medium,
+          def initialize(@rain_intensity : RainIntensity = RainIntensity::Medium,
                          @wind_strength : Float32 = 0.2f32,
                          duration : Float32 = 0.0f32)
             super(duration)
@@ -47,11 +47,11 @@ module PointClickEngine
             
             uniform sampler2D texture0;
             uniform float time;
-            uniform int rainIntensity;
+            uniform float rainIntensity;
             uniform float windStrength;
             uniform vec4 rainColor;
-            uniform int splashEnabled;
-            uniform int depthLayers;
+            uniform float splashEnabled;
+            uniform float depthLayers;
             
             #{ShaderLibrary.noise_functions}
             
@@ -93,56 +93,100 @@ module PointClickEngine
             
             // Get rain density based on intensity
             float getRainDensity() {
-                switch(rainIntensity) {
-                    case 0: return 10.0;  // Light
-                    case 1: return 25.0;  // Medium  
-                    case 2: return 50.0;  // Heavy
-                    case 3: return 80.0;  // Storm
-                }
-                return 25.0;
+                if (rainIntensity < 0.5) return 10.0;  // Light
+                else if (rainIntensity < 1.5) return 25.0;  // Medium  
+                else if (rainIntensity < 2.5) return 50.0;  // Heavy
+                else return 80.0;  // Storm
             }
             
             void main()
             {
                 vec4 sceneColor = texture(texture0, fragTexCoord);
-                vec4 rainEffect = vec4(0.0);
                 
+                float rainEffect = 0.0;
                 float density = getRainDensity();
                 
-                // Multiple depth layers for parallax effect
-                for (int layer = 0; layer < depthLayers; layer++) {
-                    float layerDepth = float(layer) / float(depthLayers);
-                    float layerSpeed = 1.0 - layerDepth * 0.5;
-                    float layerAlpha = 1.0 - layerDepth * 0.6;
+                // Create rain drops as vertical streaks
+                for (float i = 0.0; i < density; i++) {
+                    float seed = i * 1.337;
+                    float x = rand(vec2(seed, 0.0));
+                    float speed = 3.0 + rand(vec2(seed, 1.0)) * 2.0;
                     
-                    // Scale UV for this layer
-                    vec2 layerUV = fragTexCoord * vec2(density, 20.0);
-                    layerUV.x += float(layer) * 7.3;
+                    // Add wind effect
+                    x += sin(time * 2.0 + seed) * windStrength * 0.05;
                     
-                    // Add rain drops
-                    float rain = 0.0;
-                    for (int i = 0; i < 3; i++) {
-                        float seed = float(i * 137 + layer * 31);
-                        rain += rainDrop(layerUV + vec2(float(i), 0.0), time * layerSpeed, seed);
-                    }
-                    
-                    // Add splashes if enabled
-                    if (splashEnabled != 0) {
-                        for (int i = 0; i < 5; i++) {
-                            float seed = float(i * 73 + layer * 17);
-                            rain += rainSplash(fragTexCoord, time * layerSpeed, seed) * 0.5;
+                    // Multiple drops per column for continuous effect
+                    for (float j = 0.0; j < 3.0; j++) {
+                        // Animate falling (subtract time for downward motion)
+                        float y = fract(-time * speed + j * 0.33 + rand(vec2(seed, 2.0)));
+                        
+                        // Make drops accelerate
+                        y = pow(y, 0.8);
+                        
+                        // Check if we're near this drop
+                        float xDist = abs(fragTexCoord.x - x);
+                        float yDist = abs(fragTexCoord.y - y);
+                        
+                        // Create streak shape
+                        if (xDist < 0.003) {
+                            // Vertical streak
+                            if (yDist < 0.08) {
+                                float streak = 1.0 - (yDist / 0.08);
+                                streak *= 1.0 - (xDist / 0.003);
+                                
+                                // Fade at screen edges
+                                streak *= smoothstep(0.0, 0.05, y);
+                                streak *= smoothstep(1.0, 0.95, y);
+                                
+                                // Layer effect
+                                float layerBrightness = (i < density * 0.5) ? 0.3 : 0.6;
+                                rainEffect += streak * layerBrightness;
+                            }
                         }
                     }
-                    
-                    rainEffect += vec4(rainColor.rgb, rain * rainColor.a * layerAlpha);
                 }
                 
-                // Composite rain over scene
-                vec3 finalRGB = mix(sceneColor.rgb, rainEffect.rgb, rainEffect.a);
+                // Layer 3: Splashes at the bottom
+                if (splashEnabled > 0.5) {
+                    for (float i = 0.0; i < density * 0.3; i++) {
+                        float seed = i * 3.579;
+                        float splashX = rand(vec2(seed, 7.0));
+                        float splashTime = fract(time * 2.5 + seed);
+                        
+                        // Check if we're at the bottom of screen
+                        if (fragTexCoord.y < 0.08) {
+                            float distX = abs(fragTexCoord.x - splashX);
+                            if (distX < 0.03) {
+                                // Create expanding ring splash
+                                float splashRadius = splashTime * 0.05;
+                                float ringDist = abs(length(vec2(distX * 2.0, fragTexCoord.y)) - splashRadius);
+                                float splash = smoothstep(0.01, 0.0, ringDist);
+                                splash *= (1.0 - splashTime); // Fade out over time
+                                rainEffect += splash * 0.3;
+                            }
+                        }
+                    }
+                }
                 
-                // Add slight darkening for storm intensity
-                if (rainIntensity == 3) {
-                    finalRGB *= 0.8;
+                // Atmospheric effects
+                vec3 darkening = vec3(0.7, 0.7, 0.75);
+                sceneColor.rgb *= darkening;
+                
+                // Add subtle blue tint to simulate wet atmosphere
+                sceneColor.rgb = mix(sceneColor.rgb, vec3(0.7, 0.8, 0.9), 0.1);
+                
+                // Apply rain with proper alpha blending
+                rainEffect = clamp(rainEffect, 0.0, 0.9);
+                vec3 finalRGB = mix(sceneColor.rgb, rainColor.rgb, rainEffect * rainColor.a);
+                
+                // Add very subtle screen distortion for rain on lens effect
+                if (rainEffect > 0.1) {
+                    vec2 distortion = vec2(
+                        sin(fragTexCoord.y * 100.0 + time * 20.0) * 0.0005,
+                        0.0
+                    );
+                    vec4 distortedScene = texture(texture0, fragTexCoord + distortion);
+                    finalRGB = mix(finalRGB, distortedScene.rgb, 0.2);
                 }
                 
                 finalColor = vec4(finalRGB, sceneColor.a);
@@ -170,7 +214,7 @@ module PointClickEngine
             
             # Update uniforms
             update_common_uniforms(shader)
-            set_shader_value("rainIntensity", @intensity.value.to_f32)
+            set_shader_value("rainIntensity", @rain_intensity.value.to_f32)
             set_shader_value("windStrength", @wind_strength)
             set_shader_value("rainColor", @rain_color)
             set_shader_value("splashEnabled", @splash_enabled ? 1.0f32 : 0.0f32)
@@ -188,7 +232,7 @@ module PointClickEngine
           end
           
           def clone : Effect
-            effect = RainShader.new(@intensity, @wind_strength, @duration)
+            effect = RainShader.new(@rain_intensity, @wind_strength, @duration)
             effect.rain_color = @rain_color
             effect.splash_enabled = @splash_enabled
             effect.depth_layers = @depth_layers

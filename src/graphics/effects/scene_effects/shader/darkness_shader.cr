@@ -19,7 +19,7 @@ module PointClickEngine
         end
         
         # Light source for multi-light mode
-        struct LightSource
+        class ShaderLightSource
           property position : RL::Vector2
           property radius : Float32
           property intensity : Float32
@@ -33,17 +33,17 @@ module PointClickEngine
         class DarknessShader < ShaderEffect
           property darkness_type : DarknessType = DarknessType::Vignette
           property darkness_color : RL::Color = RL::Color.new(r: 0, g: 0, b: 0, a: 200)
-          property intensity : Float32 = 0.8f32
+          property darkness_intensity : Float32 = 0.8f32
           property inner_radius : Float32 = 0.5f32  # For vignette
           property outer_radius : Float32 = 1.2f32  # For vignette
           property gradient_angle : Float32 = 0.0f32  # For gradient
-          property light_sources : Array(LightSource) = [] of LightSource
+          property light_sources : Array(ShaderLightSource) = [] of ShaderLightSource
           
           # Maximum lights the shader can handle
           MAX_LIGHTS = 8
           
           def initialize(@darkness_type : DarknessType = DarknessType::Vignette,
-                         @intensity : Float32 = 0.8f32,
+                         @darkness_intensity : Float32 = 0.8f32,
                          duration : Float32 = 0.0f32)
             super(duration)
             
@@ -63,7 +63,7 @@ module PointClickEngine
             
             uniform sampler2D texture0;
             uniform float time;
-            uniform int darknessType;
+            uniform float darknessType;
             uniform vec4 darknessColor;
             uniform float intensity;
             uniform float innerRadius;
@@ -72,13 +72,14 @@ module PointClickEngine
             uniform vec2 resolution;
             
             // Light sources
-            uniform int numLights;
+            uniform float numLights;
             uniform vec2 lightPositions[#{MAX_LIGHTS}];
             uniform float lightRadii[#{MAX_LIGHTS}];
             uniform float lightIntensities[#{MAX_LIGHTS}];
             uniform vec4 lightColors[#{MAX_LIGHTS}];
             
             #{ShaderLibrary.easing_functions}
+            #{ShaderLibrary.noise_functions}
             
             float getVignette(vec2 uv) {
                 vec2 center = vec2(0.5, 0.5);
@@ -108,7 +109,8 @@ module PointClickEngine
             vec4 getMultiLight(vec2 uv) {
                 vec4 lightAccum = vec4(0.0);
                 
-                for (int i = 0; i < numLights && i < #{MAX_LIGHTS}; i++) {
+                int lightCount = int(numLights);
+                for (int i = 0; i < lightCount && i < #{MAX_LIGHTS}; i++) {
                     vec2 lightUV = lightPositions[i] / resolution;
                     float dist = distance(uv, lightUV);
                     float radius = lightRadii[i] / resolution.x;
@@ -126,35 +128,18 @@ module PointClickEngine
             void main()
             {
                 vec4 sceneColor = texture(texture0, fragTexCoord);
-                float darkness = 0.0;
-                vec4 darkEffect = darknessColor;
                 
-                switch(darknessType) {
-                    case 0: // Vignette
-                        darkness = getVignette(fragTexCoord) * intensity;
-                        break;
-                        
-                    case 1: // Gradient
-                        darkness = getGradient(fragTexCoord) * intensity;
-                        break;
-                        
-                    case 2: // Spotlight
-                        darkness = getSpotlight(fragTexCoord) * intensity;
-                        break;
-                        
-                    case 3: // MultiLight
-                        vec4 lightMask = getMultiLight(fragTexCoord);
-                        darkness = lightMask.a * intensity;
-                        darkEffect = mix(darkEffect, lightMask, 0.5);
-                        break;
-                }
+                // Calculate distance from center
+                vec2 center = vec2(0.5, 0.5);
+                float dist = distance(fragTexCoord, center);
+                
+                // Create vignette - darken edges
+                // dist goes from 0 (center) to ~0.7 (corners)
+                float vignette = pow(dist * 1.5, 2.0);
+                vignette = clamp(vignette, 0.0, 1.0);
                 
                 // Apply darkness
-                vec3 finalRGB = mix(sceneColor.rgb, darkEffect.rgb, darkness * darkEffect.a / 255.0);
-                
-                // Optional: Add noise for film grain effect
-                float grain = (rand(fragTexCoord + time) - 0.5) * 0.05;
-                finalRGB += grain * darkness;
+                vec3 finalRGB = sceneColor.rgb * (1.0 - vignette * intensity);
                 
                 finalColor = vec4(finalRGB, sceneColor.a);
             }
@@ -169,7 +154,7 @@ module PointClickEngine
           def add_light(position : RL::Vector2, radius : Float32 = 100.0f32, 
                        intensity : Float32 = 1.0f32, color : RL::Color = RL::WHITE)
             if @light_sources.size < MAX_LIGHTS
-              @light_sources << LightSource.new(position, radius, intensity, color)
+              @light_sources << ShaderLightSource.new(position, radius, intensity, color)
             end
           end
           
@@ -194,10 +179,11 @@ module PointClickEngine
             update_common_uniforms(shader)
             set_shader_value("darknessType", @darkness_type.value.to_f32)
             set_shader_value("darknessColor", @darkness_color)
-            set_shader_value("intensity", @intensity)
+            set_shader_value("intensity", @darkness_intensity)
             set_shader_value("innerRadius", @inner_radius)
             set_shader_value("outerRadius", @outer_radius)
             set_shader_value("gradientAngle", @gradient_angle)
+            set_shader_value("resolution", RL::Vector2.new(x: Display::REFERENCE_WIDTH.to_f32, y: Display::REFERENCE_HEIGHT.to_f32))
             
             # Set light sources for multi-light mode
             if @darkness_type.multi_light?
@@ -208,13 +194,16 @@ module PointClickEngine
                 break if i >= MAX_LIGHTS
                 
                 loc = RL.get_shader_location(shader, "lightPositions[#{i}]")
-                RL.set_shader_value(shader, loc, pointerof(light.position), RL::ShaderUniformDataType::Vec2)
+                light_position = light.position
+                RL.set_shader_value(shader, loc, pointerof(light_position), RL::ShaderUniformDataType::Vec2)
                 
                 loc = RL.get_shader_location(shader, "lightRadii[#{i}]")
-                RL.set_shader_value(shader, loc, pointerof(light.radius), RL::ShaderUniformDataType::Float)
+                light_radius = light.radius
+                RL.set_shader_value(shader, loc, pointerof(light_radius), RL::ShaderUniformDataType::Float)
                 
                 loc = RL.get_shader_location(shader, "lightIntensities[#{i}]")
-                RL.set_shader_value(shader, loc, pointerof(light.intensity), RL::ShaderUniformDataType::Float)
+                light_intensity = light.intensity
+                RL.set_shader_value(shader, loc, pointerof(light_intensity), RL::ShaderUniformDataType::Float)
                 
                 loc = RL.get_shader_location(shader, "lightColors[#{i}]")
                 color_vec = RL::Vector4.new(
@@ -239,7 +228,7 @@ module PointClickEngine
           end
           
           def clone : Effect
-            effect = DarknessShader.new(@darkness_type, @intensity, @duration)
+            effect = DarknessShader.new(@darkness_type, @darkness_intensity, @duration)
             effect.darkness_color = @darkness_color
             effect.inner_radius = @inner_radius
             effect.outer_radius = @outer_radius

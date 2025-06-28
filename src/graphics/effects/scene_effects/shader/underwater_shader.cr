@@ -158,7 +158,7 @@ module PointClickEngine
             context.active_shader = shader
           end
           
-          def render_scene_underwater(&block : -> Nil)
+          def render_scene_with_underwater(&block : -> Nil)
             return yield unless shader = @shader
             return yield unless render_texture = @render_texture
             

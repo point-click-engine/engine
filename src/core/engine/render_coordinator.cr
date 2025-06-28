@@ -4,6 +4,7 @@ require "../../scenes/scene"
 require "../../ui/dialog"
 require "../../cutscenes/cutscene_manager"
 require "../../graphics/graphics"
+require "../../graphics/effects/scene_effects/shader/fog_shader"
 
 module PointClickEngine
   module Core
@@ -62,8 +63,29 @@ module PointClickEngine
           # Clear background
           RL.clear_background(RL::BLACK)
 
-          # Render current scene
-          scene.try(&.draw(camera))
+          # Check for shader effects in the scene
+          fog_effect = scene.try do |s|
+            s.scene_effects.find { |effect| effect.is_a?(Graphics::Effects::SceneEffects::FogShader) }
+          end
+          
+          rain_effect = scene.try do |s|
+            s.scene_effects.find { |effect| effect.is_a?(Graphics::Effects::SceneEffects::RainShader) }
+          end
+          
+          if fog_effect && fog_effect.is_a?(Graphics::Effects::SceneEffects::FogShader)
+            # Render scene with fog effect
+            fog_effect.render_scene_with_fog do
+              scene.try(&.draw(camera))
+            end
+          elsif rain_effect && rain_effect.is_a?(Graphics::Effects::SceneEffects::RainShader)
+            # Render scene with rain effect
+            rain_effect.render_scene_with_rain do
+              scene.try(&.draw(camera))
+            end
+          else
+            # Render current scene normally
+            scene.try(&.draw(camera))
+          end
 
           # Render highlighted hotspots if enabled
           render_highlighted_hotspots(scene) if @hotspot_highlight_enabled && scene

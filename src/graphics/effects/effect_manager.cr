@@ -210,6 +210,54 @@ module PointClickEngine
           end
           nil
         end
+        
+        # Get active rain effect if any
+        def active_rain_effect
+          @scene_effects.active_effects.each do |effect|
+            if rain = effect.as?(ShaderEffect)
+              if rain.class.name.includes?("RainShader")
+                return rain
+              end
+            end
+          end
+          nil
+        end
+        
+        # Get active fog effect if any
+        def active_fog_effect
+          @scene_effects.active_effects.each do |effect|
+            if fog = effect.as?(ShaderEffect)
+              if fog.class.name.includes?("FogShader")
+                return fog
+              end
+            end
+          end
+          nil
+        end
+        
+        # Get active darkness effect if any
+        def active_darkness_effect
+          @scene_effects.active_effects.each do |effect|
+            if darkness = effect.as?(ShaderEffect)
+              if darkness.class.name.includes?("DarknessShader")
+                return darkness
+              end
+            end
+          end
+          nil
+        end
+        
+        # Get active underwater effect if any
+        def active_underwater_effect
+          @scene_effects.active_effects.each do |effect|
+            if underwater = effect.as?(ShaderEffect)
+              if underwater.class.name.includes?("UnderwaterShader")
+                return underwater
+              end
+            end
+          end
+          nil
+        end
 
         # Clear camera effects
         def clear_camera_effects
@@ -217,6 +265,10 @@ module PointClickEngine
         end
         
         # Clear all effects
+        def clear_scene_effects
+          @scene_effects.clear_effects
+        end
+        
         def clear_all
           @scene_effects.clear_effects
           @camera_effects.clear_effects
