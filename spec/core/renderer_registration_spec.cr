@@ -301,10 +301,7 @@ describe "Renderer Registration System" do
       render_systems << "dialog_manager"
     end
 
-    # Transition rendering
-    if engine.system_manager.transition_manager.try(&.responds_to?(:draw))
-      render_systems << "transition_manager"
-    end
+    # Transitions are now handled by the effect system
 
     # Should have all major rendering components
     render_systems.includes?("render_manager").should be_true
@@ -314,7 +311,7 @@ describe "Renderer Registration System" do
     render_systems.includes?("achievement_manager").should be_true
     render_systems.includes?("verb_input_cursor").should be_true
     render_systems.includes?("dialog_manager").should be_true
-    render_systems.includes?("transition_manager").should be_true
+    # Transitions are now handled by the effect system
 
     # Should have at least 8 rendering systems
     render_systems.size.should be >= 8

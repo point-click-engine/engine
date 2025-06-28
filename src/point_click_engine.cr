@@ -155,7 +155,7 @@ module PointClickEngine
   alias DisplayManager = Graphics::Display
   # Particle system - use Graphics::Particles module directly
   # Example: Graphics::Particles::Emitter or Graphics::Particles.fire(position)
-  alias TransitionManager = Graphics::TransitionManager
+  # Transition system now uses scene effects
   alias TransitionEffect = Graphics::TransitionEffect
   alias ShaderSystem = Graphics::Shaders::ShaderSystem
   alias ShaderHelpers = Graphics::Shaders::ShaderHelpers

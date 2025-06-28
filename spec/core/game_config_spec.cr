@@ -160,7 +160,7 @@ describe PointClickEngine::Core::GameConfig do
       # Check display manager configuration
       dm = engine.display_manager
       dm.should_not be_nil
-      dm.try(&.scaling_mode).should eq(PointClickEngine::Graphics::DisplayManager::ScalingMode::PixelPerfect)
+      dm.try(&.scaling_mode).should eq(PointClickEngine::Graphics::Display::ScalingMode::PixelPerfect)
 
       # Check audio settings were applied
       if audio = engine.system_manager.audio_manager

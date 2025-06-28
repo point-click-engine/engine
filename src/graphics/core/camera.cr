@@ -55,6 +55,11 @@ module PointClickEngine
           constrain_position
         end
 
+        # Convenience method for setting scene size (calls set_bounds)
+        def set_scene_size(scene_width : Int32, scene_height : Int32)
+          set_bounds(scene_width, scene_height)
+        end
+
         # Set camera bounds explicitly
         def set_bounds(min_x : Float32, min_y : Float32, max_x : Float32, max_y : Float32)
           @min_x = min_x

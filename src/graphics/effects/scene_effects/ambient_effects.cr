@@ -1,7 +1,6 @@
 # Ambient scene effects like weather and atmosphere
 
 require "./base_scene_effect"
-require "./transition_adapter"
 require "../object_effects/float"
 require "../object_effects/color_shift"
 

@@ -1,5 +1,4 @@
-# Helper module for parsing and executing scene transitions
-require "../graphics/transitions/transition_effect"
+# Helper module for parsing and executing scene transitions using the new graphics system
 
 module PointClickEngine
   module Scenes
@@ -51,7 +50,7 @@ module PointClickEngine
         {scene: scene_name, effect: effect, duration: duration, position: position}
       end
 
-      # Execute a transition command
+      # Execute a transition command using the new graphics system
       def self.execute_transition(command : String, engine : Core::Engine) : Bool
         puts "[TransitionHelper] Executing command: #{command}"
         if data = parse_transition_command(command)

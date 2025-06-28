@@ -47,6 +47,7 @@ module PointClickEngine
       @render_coordinator : EngineComponents::RenderCoordinator = EngineComponents::RenderCoordinator.new
       @verb_input_system : EngineComponents::VerbInputSystem?
       @update_callback : Proc(Float32, Nil)?
+      @current_transition : Graphics::TransitionSceneEffect?
 
       # Auto-save functionality
       property auto_save_interval : Float32 = 0.0_f32
@@ -196,15 +197,15 @@ module PointClickEngine
 
       # Renders the game
       private def render
-        # Check if we're transitioning
-        if (tm = @system_manager.transition_manager) && tm.transitioning?
-          puts "[Engine] Rendering with transition"
-          tm.render_with_transition do
-            render_scene_content
+        # Update transition if active
+        if transition = @current_transition
+          transition.update(RL.get_frame_time)
+          if transition.finished?
+            @current_transition = nil
           end
-        else
-          render_scene_content
         end
+        
+        render_scene_content
 
         # Draw verb cursor (on top of everything)
         @verb_input_system.try(&.draw(self.display_manager))
@@ -437,16 +438,18 @@ module PointClickEngine
         end
       end
 
-      def change_scene_with_transition(scene_name : String, effect : Graphics::Transitions::TransitionEffect?, duration : Float32, position : RL::Vector2? = nil)
+      def change_scene_with_transition(scene_name : String, effect : Graphics::TransitionEffect?, duration : Float32, position : RL::Vector2? = nil)
         puts "[Engine] change_scene_with_transition: scene=#{scene_name}, effect=#{effect}, duration=#{duration}"
-        # Start transition if effect specified
-        if effect && (tm = @system_manager.transition_manager)
-          puts "[Engine] Starting transition with effect"
-          tm.start_transition(effect, duration) do
-            puts "[Engine] Transition callback - changing scene"
-            # Change scene at halfway point
+        
+        if effect
+          # Create transition effect
+          transition = Graphics::TransitionSceneEffect.new(effect, duration)
+          
+          # Set midpoint callback for scene change
+          transition.on_midpoint do
+            puts "[Engine] Transition midpoint - changing scene"
             change_scene(scene_name)
-
+            
             # If position provided, move player
             if pos = position
               if player = self.player
@@ -455,12 +458,15 @@ module PointClickEngine
               end
             end
           end
+          
+          # Store transition for rendering
+          @current_transition = transition
+          
+          puts "[Engine] Started transition effect"
         else
-          puts "[Engine] No transition effect or manager - direct scene change"
-          # No transition, just change scene
+          puts "[Engine] No transition effect - direct scene change"
           change_scene(scene_name)
-
-          # If position provided, move player
+          
           if pos = position
             if player = self.player
               player.position = pos

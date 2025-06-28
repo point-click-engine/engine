@@ -26,7 +26,6 @@ module PointClickEngine
         property config : ConfigManager?
         property renderer : Graphics::Renderer?
         property display_manager : Graphics::Display?
-        property transition_manager : Graphics::TransitionManager?
         property menu_system : UI::MenuSystem?
 
         def initialize
@@ -62,7 +61,7 @@ module PointClickEngine
           @dialog_manager = UI::DialogManager.new
 
           # Initialize transition manager
-          @transition_manager = Graphics::TransitionManager.new(width, height)
+          # Transition effects are now handled by the effect manager
 
           # Initialize menu system
           @menu_system = UI::MenuSystem.new
@@ -119,7 +118,7 @@ module PointClickEngine
           # @shader_system.try(&.update(dt)) # No update method
           @gui.try(&.update(dt))
           @dialog_manager.try(&.update(dt))
-          @transition_manager.try(&.update(dt))
+          # Transitions are now handled by the effect system
           @menu_system.try(&.update(dt))
           @event_system.process_events
         end
@@ -132,7 +131,7 @@ module PointClickEngine
           # @gui.try(&.cleanup)               # No cleanup method - GUI::GUIManager
           @script_engine.try(&.cleanup)      # Has cleanup method
           @dialog_manager.try(&.cleanup)     # Has cleanup method
-          @transition_manager.try(&.cleanup) # Has cleanup method
+          # Transitions are now handled by the effect system
           # Display doesn't need cleanup in new graphics system
 
           # Systems without cleanup methods:

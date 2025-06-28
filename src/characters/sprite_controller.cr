@@ -162,7 +162,8 @@ module PointClickEngine
 
       # Called after YAML deserialization to restore sprite state
       def after_yaml_deserialize(ctx : YAML::ParseContext)
-        @sprite.try(&.after_yaml_deserialize(ctx))
+        # New AnimatedSprite doesn't use after_yaml_deserialize
+        # @sprite.try(&.after_yaml_deserialize(ctx))
 
         # Restore sprite position
         @sprite.try(&.position = @position)
@@ -176,7 +177,7 @@ module PointClickEngine
           x: sprite.frame_width * effective_scale,
           y: sprite.frame_height * effective_scale
         )
-        sprite.size = @size
+        # AnimatedSprite doesn't have a size property in the new graphics system
       end
 
       # Gets sprite visibility

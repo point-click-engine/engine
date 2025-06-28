@@ -26,7 +26,7 @@ module PointClickEngine
             super(duration)
           end
 
-          def apply_to_camera(camera : Core::Camera, dt : Float32)
+          def apply_to_camera(camera : Graphics::Core::Camera, dt : Float32)
             # Get current target position
             target_pos = if pos = @target_position
                            pos
@@ -41,7 +41,7 @@ module PointClickEngine
             target_y = target_pos.y + @offset.y
 
             # Calculate distance from camera center
-            # TODO: Get viewport size from elsewhere since Core::Camera doesn't have viewport
+            # TODO: Get viewport size from elsewhere since Graphics::Core::Camera doesn't have viewport
             viewport_width = 1280
             viewport_height = 720
             cam_center_x = camera.position.x + viewport_width / 2
@@ -106,7 +106,7 @@ module PointClickEngine
             @start_position = nil
           end
 
-          def apply_to_camera(camera : Core::Camera, dt : Float32)
+          def apply_to_camera(camera : Graphics::Core::Camera, dt : Float32)
             # Initialize start position
             @start_position ||= camera.position.dup
 
@@ -168,9 +168,9 @@ module PointClickEngine
             @start_zoom = nil
           end
 
-          def apply_to_camera(camera : Core::Camera, dt : Float32)
-            # Core::Camera doesn't support zoom yet
-            # TODO: Implement zoom support in Core::Camera
+          def apply_to_camera(camera : Graphics::Core::Camera, dt : Float32)
+            # Graphics::Core::Camera doesn't support zoom yet
+            # TODO: Implement zoom support in Graphics::Core::Camera
             return
 
             start = @start_zoom.not_nil!
@@ -240,7 +240,7 @@ module PointClickEngine
             @base_position = nil
           end
 
-          def apply_to_camera(camera : Core::Camera, dt : Float32)
+          def apply_to_camera(camera : Graphics::Core::Camera, dt : Float32)
             # Store base position
             @base_position ||= camera.position.dup
 

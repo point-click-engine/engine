@@ -55,10 +55,10 @@ module PointClickEngine
             @original_zoom = nil
           end
 
-          def apply_to_camera(camera : Core::Camera, dt : Float32)
+          def apply_to_camera(camera : Graphics::Core::Camera, dt : Float32)
             # Store original state on first application
             @original_position ||= camera.position.dup
-            # @original_zoom ||= camera.zoom  # Core::Camera doesn't have zoom
+            # @original_zoom ||= camera.zoom  # Graphics::Core::Camera doesn't have zoom
 
             # For now, just apply position-based effects directly
             # without going through the object effect system
