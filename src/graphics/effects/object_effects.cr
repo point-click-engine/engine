@@ -7,6 +7,7 @@ require "./object_effects/pulse"
 require "./object_effects/color_shift"
 require "./object_effects/float"
 require "./particle_effect"
+require "./object_effects/shader_object_factory"
 
 module PointClickEngine
   module Graphics
@@ -15,6 +16,12 @@ module PointClickEngine
       module ObjectEffects
         # Factory method to create effects by name
         def self.create(effect_name : String, **params) : Effect?
+          # Try shader version first for better performance
+          if shader_effect = ShaderObjectFactory.create(effect_name, **params)
+            return shader_effect
+          end
+          
+          # Fall back to CPU-based effects
           case effect_name.downcase
           when "highlight", "glow"
             type = params[:type]?.try(&.to_s) || "glow"

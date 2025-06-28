@@ -55,7 +55,8 @@ module PointClickEngine
           
           # Update progress if used
           if @progress_loc >= 0
-            RL.set_shader_value(shader, @progress_loc, pointerof(@progress), RL::ShaderUniformDataType::Float)
+            progress_value = progress
+            RL.set_shader_value(shader, @progress_loc, pointerof(progress_value), RL::ShaderUniformDataType::Float)
           end
           
           # Update resolution if used

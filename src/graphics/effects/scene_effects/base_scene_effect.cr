@@ -20,6 +20,12 @@ module PointClickEngine
           def initialize(duration : Float32 = 0.0f32)
             super(duration)
           end
+          
+          # Optional method for shader-based scene effects to override
+          def render_scene_with_effect(&block : -> Nil)
+            # Default implementation just renders the scene normally
+            yield
+          end
 
           # Apply effect to entire scene
           def apply_to_scene(context : EffectContext, layers : Layers::LayerManager)

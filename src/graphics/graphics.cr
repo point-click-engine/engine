@@ -29,6 +29,7 @@ require "./effects/object_effects"
 require "./effects/scene_effects/base_scene_effect"
 require "./effects/scene_effects/ambient_effects"
 require "./effects/scene_effects/transition_effect"
+require "./effects/post_processing"
 
 # Layer system
 require "./layers/layer"
