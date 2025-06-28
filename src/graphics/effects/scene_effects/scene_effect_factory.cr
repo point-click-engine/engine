@@ -178,7 +178,8 @@ module PointClickEngine
           end
           
           private def self.create_heat_haze(**params) : BaseSceneEffect?
-            # TODO: Implement heat haze shader
+            # Heat haze is available as a post-processing effect
+            # Use: PostProcessing.create("heat_haze", strength: 0.02, frequency: 8.0)
             nil
           end
           

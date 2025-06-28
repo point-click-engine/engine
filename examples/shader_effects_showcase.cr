@@ -1,7 +1,7 @@
-# Test script for shader-based effects
+# Shader Effects Demo
 #
 # This example demonstrates all the shader-based effects
-# we've implemented in the new graphics system.
+# available in the Point & Click Engine graphics system.
 
 require "../src/point_click_engine"
 
