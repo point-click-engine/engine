@@ -12,7 +12,7 @@ require "./hotspot_manager"
 require "./walkable_area"
 require "../characters/character"
 require "../core/game_object"
-require "../graphics/camera"
+require "../graphics/graphics"
 
 module PointClickEngine
   module Scenes

@@ -1,4 +1,4 @@
-require "../graphics/sprites/animated"
+require "../graphics/graphics"
 require "../core/game_object"
 
 module PointClickEngine
@@ -12,7 +12,7 @@ module PointClickEngine
     # - Rendering coordination
     class SpriteController
       # The animated sprite data
-      property sprite : Graphics::Sprites::Animated?
+      property sprite : Graphics::AnimatedSprite?
 
       # Path to the sprite/spritesheet file
       property sprite_path : String?
@@ -38,10 +38,9 @@ module PointClickEngine
       # Loads a spritesheet for character animation
       def load_spritesheet(path : String, frame_width : Int32, frame_height : Int32)
         @sprite_path = path
-        @sprite = Graphics::Sprites::Animated.new(@position, frame_width, frame_height, 1)
+        @sprite = Graphics::AnimatedSprite.new(@position.x, @position.y, path, frame_width, frame_height, 1)
 
         if sprite = @sprite
-          sprite.load_texture(path)
           sprite.scale = calculate_scale(frame_width, frame_height)
           sprite.visible = @visible
 
@@ -50,7 +49,6 @@ module PointClickEngine
             x: frame_width * sprite.scale,
             y: frame_height * sprite.scale
           )
-          sprite.size = @size
         end
       end
 

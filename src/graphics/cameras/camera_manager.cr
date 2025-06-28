@@ -8,7 +8,7 @@ require "raylib-cr"
 require "../../core/error_handling"
 require "../../core/interfaces"
 require "../../core/game_constants"
-require "../camera"
+require "../core/camera"
 require "../../characters/character"
 require "./effects/enums"
 require "./state"
@@ -44,9 +44,9 @@ module PointClickEngine
       # manager.update(dt, mouse_x, mouse_y)
       # ```
       class CameraManager
-        include Core::ErrorHelpers
-        include Core::GameConstants
-        include Core::ICameraManager
+        include PointClickEngine::Core::ErrorHelpers
+        include PointClickEngine::Core::GameConstants
+        include PointClickEngine::Core::ICameraManager
 
         # Viewport dimensions
         getter viewport_width : Int32
@@ -86,21 +86,21 @@ module PointClickEngine
         end
 
         # Add a new camera
-        def add_camera(name : String, camera : Graphics::Camera) : Core::Result(Nil, CameraError)
+        def add_camera(name : String, camera : Graphics::Camera) : PointClickEngine::Core::Result(Nil, CameraError)
           if @cameras.has_key?(name)
-            return Core::Result(Nil, CameraError).failure(
+            return PointClickEngine::Core::Result(Nil, CameraError).failure(
               CameraError.new("Camera '#{name}' already exists")
             )
           end
 
           @cameras[name] = camera
-          Core::Result(Nil, CameraError).success(nil)
+          PointClickEngine::Core::Result(Nil, CameraError).success(nil)
         end
 
         # Switch to a different camera
-        def switch_camera(name : String, transition_duration : Float32 = 0.0f32, easing : Effects::Easing = Effects::Easing::EaseInOut) : Core::Result(Nil, CameraError)
+        def switch_camera(name : String, transition_duration : Float32 = 0.0f32, easing : Effects::Easing = Effects::Easing::EaseInOut) : PointClickEngine::Core::Result(Nil, CameraError)
           unless @cameras.has_key?(name)
-            return Core::Result(Nil, CameraError).failure(
+            return PointClickEngine::Core::Result(Nil, CameraError).failure(
               CameraError.new("Camera '#{name}' not found")
             )
           end
@@ -120,7 +120,7 @@ module PointClickEngine
             @active_camera_name = name
           end
 
-          Core::Result(Nil, CameraError).success(nil)
+          PointClickEngine::Core::Result(Nil, CameraError).success(nil)
         end
 
         # Get a camera by name
@@ -129,21 +129,21 @@ module PointClickEngine
         end
 
         # Remove a camera (cannot remove active camera)
-        def remove_camera(name : String) : Core::Result(Nil, CameraError)
+        def remove_camera(name : String) : PointClickEngine::Core::Result(Nil, CameraError)
           if name == @active_camera_name
-            return Core::Result(Nil, CameraError).failure(
+            return PointClickEngine::Core::Result(Nil, CameraError).failure(
               CameraError.new("Cannot remove active camera")
             )
           end
 
           if name == "main"
-            return Core::Result(Nil, CameraError).failure(
+            return PointClickEngine::Core::Result(Nil, CameraError).failure(
               CameraError.new("Cannot remove main camera")
             )
           end
 
           @cameras.delete(name)
-          Core::Result(Nil, CameraError).success(nil)
+          PointClickEngine::Core::Result(Nil, CameraError).success(nil)
         end
 
         # Apply a camera effect
@@ -695,7 +695,7 @@ module PointClickEngine
       end
 
       # Camera-related error
-      class CameraError < Core::LoadingError
+      class CameraError < PointClickEngine::Core::LoadingError
         def initialize(message : String, cause : Exception? = nil)
           super("Camera error: #{message}")
         end

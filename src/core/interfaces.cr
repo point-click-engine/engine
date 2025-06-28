@@ -6,13 +6,13 @@
 require "raylib-cr"
 require "raylib-cr/audio"
 require "./error_handling"
-require "../graphics/camera"
+require "../graphics/graphics"
 
 module PointClickEngine
   # Forward declaration for CameraError
   module Graphics
     module Cameras
-      class CameraError < Core::LoadingError; end
+      class CameraError < PointClickEngine::Core::LoadingError; end
     end
   end
 

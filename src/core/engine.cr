@@ -8,7 +8,7 @@ require "./engine/system_manager"
 require "./engine/input_handler"
 require "./engine/render_coordinator"
 require "./engine/verb_input_system"
-require "../graphics/camera"
+require "../graphics/graphics"
 require "./scene_manager"
 require "./input_manager"
 require "./render_manager"
@@ -61,9 +61,14 @@ module PointClickEngine
       # Current scene reference
       property current_scene : Scenes::Scene?
 
-      # Camera manager reference
-      def camera_manager : Graphics::Cameras::CameraManager
-        @system_manager.camera_manager.not_nil!
+      # Get renderer from system manager
+      def renderer : Graphics::Renderer
+        @system_manager.renderer.not_nil!
+      end
+
+      # Get camera from renderer for compatibility
+      def camera : Graphics::Camera
+        renderer.camera
       end
 
       # Temporary player storage until a scene is available
@@ -161,10 +166,10 @@ module PointClickEngine
 
         # Handle input - use verb input if enabled, otherwise standard input
         if @verb_input_system && @verb_input_system.not_nil!.enabled
-          @verb_input_system.not_nil!.process_input(@current_scene, player, display_manager, camera_manager.current_camera)
+          @verb_input_system.not_nil!.process_input(@current_scene, player, display_manager, camera)
         else
           @input_handler.try do |handler|
-            handler.handle_click(@current_scene, player, camera_manager.current_camera)
+            handler.handle_click(@current_scene, player, camera)
             handler.handle_keyboard_input
           end
         end
@@ -178,9 +183,9 @@ module PointClickEngine
         # Update inventory
         @inventory.update(dt)
 
-        # Update camera manager
+        # Update camera if needed
         mouse_pos = RL.get_mouse_position
-        camera_manager.update(dt, mouse_pos.x.to_i, mouse_pos.y.to_i)
+        # Camera updates can be handled here if needed
 
         # Handle auto-save
         handle_auto_save(dt)
@@ -208,7 +213,13 @@ module PointClickEngine
       # Renders the scene content (separated for use with transitions)
       private def render_scene_content
         # Render scene with camera
-        @current_scene.try(&.draw(camera_manager.current_camera))
+        # Render scene using the new renderer block syntax
+        renderer.render do |context|
+          @current_scene.try do |scene|
+            # Draw scene components
+            scene.draw(camera)
+          end
+        end
 
         # Render highlighted hotspots if enabled
         if @render_coordinator.hotspot_highlight_enabled && @current_scene
@@ -228,9 +239,9 @@ module PointClickEngine
 
       # Render hotspot highlights
       private def render_hotspot_highlights(scene : Scenes::Scene)
-        # Get camera offset from camera manager
-        camera = camera_manager.current_camera
-        camera_offset = RL::Vector2.new(x: -camera.position.x, y: -camera.position.y)
+        # Get camera offset from renderer's camera
+        cam = camera
+        camera_offset = RL::Vector2.new(x: -cam.position.x, y: -cam.position.y)
 
         # Calculate pulsing effect
         time = RL.get_time
@@ -403,8 +414,8 @@ module PointClickEngine
           if scene = @current_scene
             scene_width = scene.background.try(&.width) || @window_width
             scene_height = scene.background.try(&.height) || @window_height
-            camera_manager.set_scene_bounds(scene_width, scene_height)
-            puts "[Engine] Updated camera bounds to #{scene_width}x#{scene_height}"
+            # Scene bounds handling can be implemented in camera if needed
+            puts "[Engine] Scene dimensions: #{scene_width}x#{scene_height}"
           end
 
           # Always assign player to new scene (either pending or current)
@@ -487,7 +498,8 @@ module PointClickEngine
         @window_width = width
         @window_height = height
         RL.set_window_size(width, height)
-        @camera.try(&.set_bounds(0, 0, width, height))
+        # Update camera bounds if needed
+        camera.set_bounds(width, height)
       end
 
       # Start a new game

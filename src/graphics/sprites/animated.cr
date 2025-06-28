@@ -139,7 +139,7 @@ module PointClickEngine
       # # - `Character` - Uses Animated for character visuals
       # # - `AssetLoader` - Texture loading and caching
       # # - `Core::GameObject` - Base class functionality
-      class Animated < Core::GameObject
+      class Animated < PointClickEngine::Core::GameObject
         # # Path to the sprite sheet texture file.
         ##
         # # Used for serialization and lazy loading. The texture is loaded

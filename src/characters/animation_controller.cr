@@ -1,6 +1,6 @@
 require "yaml"
 require "../core/game_constants"
-require "../graphics/sprites/animated"
+require "../graphics/graphics"
 require "./character_enums"
 
 module PointClickEngine
@@ -154,7 +154,7 @@ module PointClickEngine
       property animations : Hash(String, AnimationData) = {} of String => AnimationData
 
       # Reference to the sprite being animated
-      property sprite : Graphics::Sprites::Animated?
+      property sprite : Graphics::AnimatedSprite?
 
       # Current character mood for mood-based animations
       property mood : CharacterMood = CharacterMood::Neutral
@@ -180,7 +180,7 @@ module PointClickEngine
       IDLE_TRIGGER_TIME    = 8.0f32
       TURN_ANIMATION_SPEED = 2.0f32
 
-      def initialize(@sprite : Graphics::Sprites::Animated? = nil)
+      def initialize(@sprite : Graphics::AnimatedSprite? = nil)
         @animations = {} of String => AnimationData
       end
 
@@ -259,7 +259,7 @@ module PointClickEngine
         if sprite = @sprite
           sprite.current_frame = anim_data.start_frame
           sprite.frame_count = anim_data.frame_count
-          sprite.frame_speed = anim_data.frame_speed
+          sprite.frame_duration = anim_data.frame_speed # frame_speed maps to frame_duration
           sprite.loop = anim_data.loop
           sprite.play
 
@@ -283,34 +283,24 @@ module PointClickEngine
 
         anim_data = @animations[@current_animation]
 
-        if sprite.playing
-          sprite.frame_timer += dt
-          if sprite.frame_timer >= sprite.frame_speed
-            sprite.frame_timer = 0.0
-            sprite.current_frame += 1
+        # The new AnimatedSprite handles its own timing and frame advancement
+        # We just need to update it
+        sprite.update(dt)
 
-            if sprite.current_frame >= anim_data.start_frame + anim_data.frame_count
-              if anim_data.loop
-                sprite.current_frame = anim_data.start_frame
-              else
-                sprite.current_frame = anim_data.start_frame + anim_data.frame_count - 1
-                sprite.stop
-
-                # Check if should return to idle
-                if anim_data.auto_return_to_idle && @current_animation != "idle"
-                  play_animation("idle", force_restart: true)
-                end
-
-                # Notify about animation completion
-                on_animation_complete.try &.call(@current_animation)
-              end
-            end
+        # For non-looping animations, check if stopped
+        if !anim_data.loop && !sprite.playing
+          # Check if should return to idle
+          if anim_data.auto_return_to_idle && @current_animation != "idle"
+            play_animation("idle", force_restart: true)
           end
+
+          # Notify about animation completion
+          on_animation_complete.try &.call(@current_animation)
         end
       end
 
       # Update with sprite reference (for compatibility)
-      def update(dt : Float32, sprite : Graphics::Sprites::Animated?)
+      def update(dt : Float32, sprite : Graphics::AnimatedSprite?)
         @sprite = sprite if sprite
         update(dt)
       end
@@ -483,7 +473,7 @@ module PointClickEngine
       end
 
       # Sets the sprite to animate
-      def sprite=(sprite : Graphics::Sprites::Animated)
+      def sprite=(sprite : Graphics::AnimatedSprite)
         @sprite = sprite
       end
     end

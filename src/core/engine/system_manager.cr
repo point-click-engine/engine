@@ -2,15 +2,12 @@
 
 require "../achievement_manager"
 require "../../audio/audio_manager"
-require "../../graphics/shaders/shader_system"
+require "../../graphics/graphics"
 require "../../ui/gui_manager"
 require "../../scripting/script_engine"
 require "../../scripting/event_system"
 require "../../ui/dialog_manager"
 require "../config_manager"
-require "../../graphics/cameras/camera_manager"
-require "../../graphics/display_manager"
-require "../../graphics/transitions"
 require "../../ui/menu_system"
 require "./verb_input_system"
 
@@ -21,14 +18,14 @@ module PointClickEngine
       class SystemManager
         property achievement_manager : AchievementManager?
         property audio_manager : Audio::AudioManager?
-        property shader_system : Graphics::Shaders::ShaderSystem?
+        property shader_system : Graphics::ShaderSystem?
         property gui : UI::GUIManager?
         property script_engine : Scripting::ScriptEngine?
         property event_system : Scripting::EventSystem
         property dialog_manager : UI::DialogManager?
         property config : ConfigManager?
-        property camera_manager : Graphics::Cameras::CameraManager?
-        property display_manager : Graphics::DisplayManager?
+        property renderer : Graphics::Renderer?
+        property display_manager : Graphics::Display?
         property transition_manager : Graphics::TransitionManager?
         property menu_system : UI::MenuSystem?
 
@@ -39,10 +36,10 @@ module PointClickEngine
         # Initialize all engine systems
         def initialize_systems(width : Int32, height : Int32)
           # Initialize display manager first
-          @display_manager = Graphics::DisplayManager.new(width, height)
+          @display_manager = Graphics::Display.new(width, height)
 
-          # Initialize camera manager
-          @camera_manager = Graphics::Cameras::CameraManager.new(width, height)
+          # Initialize renderer with display
+          @renderer = Graphics::Renderer.new(@display_manager.not_nil!)
 
           # Initialize audio system
           if Audio::AudioManager.available?
@@ -53,7 +50,7 @@ module PointClickEngine
           @achievement_manager = AchievementManager.new
 
           # Initialize shader system
-          @shader_system = Graphics::Shaders::ShaderSystem.new
+          @shader_system = Graphics::ShaderSystem.new
 
           # Initialize GUI manager
           @gui = UI::GUIManager.new
@@ -136,7 +133,7 @@ module PointClickEngine
           @script_engine.try(&.cleanup)      # Has cleanup method
           @dialog_manager.try(&.cleanup)     # Has cleanup method
           @transition_manager.try(&.cleanup) # Has cleanup method
-          @display_manager.try(&.cleanup)    # Has cleanup method
+          # Display doesn't need cleanup in new graphics system
 
           # Systems without cleanup methods:
           # - @achievement_manager (no cleanup method)

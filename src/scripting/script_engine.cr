@@ -498,7 +498,8 @@ module PointClickEngine
             duration = state.to_f64(2).to_f32
 
             if engine = Core::Engine.instance
-              engine.camera_manager.apply_effect(:shake, intensity: intensity, duration: duration)
+              # TODO: Implement camera shake effect with new graphics system
+              puts "[ScriptEngine] Camera shake effect not yet implemented in new graphics system"
             end
           end
         end
@@ -509,7 +510,8 @@ module PointClickEngine
             duration = state.to_f64(2).to_f32
 
             if engine = Core::Engine.instance
-              engine.camera_manager.apply_effect(:zoom, factor: factor, duration: duration)
+              # TODO: Implement camera zoom effect with new graphics system
+              puts "[ScriptEngine] Camera zoom effect not yet implemented in new graphics system"
             end
           end
         end
@@ -521,7 +523,9 @@ module PointClickEngine
             duration = state.to_f64(3).to_f32
 
             if engine = Core::Engine.instance
-              engine.camera_manager.apply_effect(:pan, target_x: x, target_y: y, duration: duration)
+              # TODO: Implement camera pan effect with new graphics system
+              # For now, we can directly move the camera
+              engine.camera.move_to(x, y)
             end
           end
         end
@@ -533,7 +537,8 @@ module PointClickEngine
             duration = state.to_f64(3).to_f32
 
             if engine = Core::Engine.instance
-              engine.camera_manager.apply_effect(:sway, amplitude: amplitude, frequency: frequency, duration: duration)
+              # TODO: Implement camera sway effect with new graphics system
+              puts "[ScriptEngine] Camera sway effect not yet implemented in new graphics system"
             end
           end
         end
@@ -542,7 +547,8 @@ module PointClickEngine
           duration = state.size >= 1 ? state.to_f64(1).to_f32 : 1.0f32
 
           if engine = Core::Engine.instance
-            engine.camera_manager.reset_effects(duration)
+            # TODO: Implement camera effect reset with new graphics system
+            puts "[ScriptEngine] Camera reset not yet implemented in new graphics system"
           end
         end
       end

@@ -3,7 +3,7 @@
 require "../../scenes/scene"
 require "../../ui/dialog"
 require "../../cutscenes/cutscene_manager"
-require "../../graphics/camera"
+require "../../graphics/graphics"
 
 module PointClickEngine
   module Core

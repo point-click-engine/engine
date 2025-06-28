@@ -7,7 +7,7 @@
 require "raylib-cr"
 require "./error_handling"
 require "./interfaces"
-require "../graphics/camera"
+require "../graphics/graphics"
 require "../characters/character"
 require "./camera_effects/camera_enums"
 require "./camera_effects/camera_state"

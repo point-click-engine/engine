@@ -8,7 +8,7 @@ require "../../characters/character"
 require "../../inventory/inventory_system"
 require "../../ui/dialog_manager"
 require "../../audio/audio_manager"
-require "../../graphics/camera"
+require "../../graphics/graphics"
 
 module PointClickEngine
   module Core
@@ -32,7 +32,7 @@ module PointClickEngine
         end
 
         # Process verb-based input
-        def process_input(scene : Scenes::Scene?, player : Characters::Character?, display_manager : Graphics::DisplayManager?, camera : Graphics::Camera? = nil)
+        def process_input(scene : Scenes::Scene?, player : Characters::Character?, display_manager : Graphics::Display?, camera : Graphics::Camera? = nil)
           return unless @enabled
           return unless scene
           return unless display_manager
@@ -46,7 +46,7 @@ module PointClickEngine
           end
 
           raw_mouse = RL.get_mouse_position
-          return unless display_manager.is_in_game_area(raw_mouse)
+          return unless display_manager.in_game_area?(raw_mouse)
 
           game_mouse = display_manager.screen_to_game(raw_mouse)
 
@@ -80,11 +80,11 @@ module PointClickEngine
         end
 
         # Draw cursor with verb indicator
-        def draw(display_manager : Graphics::DisplayManager?)
+        def draw(display_manager : Graphics::Display?)
           return unless display_manager
 
           raw_mouse = RL.get_mouse_position
-          if display_manager.is_in_game_area(raw_mouse)
+          if display_manager.in_game_area?(raw_mouse)
             game_mouse = display_manager.screen_to_game(raw_mouse)
             @cursor_manager.draw(game_mouse)
           end

@@ -2,7 +2,7 @@
 
 require "../../scenes/scene"
 require "../../characters/character"
-require "../../graphics/camera"
+require "../../graphics/graphics"
 
 module PointClickEngine
   module Core
@@ -161,12 +161,8 @@ module PointClickEngine
         end
 
         private def handle_edge_scroll_toggle
-          if engine = Engine.instance
-            if camera = engine.camera_manager.current_camera
-              camera.edge_scroll_enabled = !camera.edge_scroll_enabled
-              puts "Camera edge scrolling: #{camera.edge_scroll_enabled ? "enabled" : "disabled"}"
-            end
-          end
+          # Edge scrolling not implemented in new camera system yet
+          puts "Camera edge scrolling toggle not available in new graphics system"
         end
       end
     end

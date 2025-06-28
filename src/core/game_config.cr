@@ -6,8 +6,7 @@ require "./game_state_manager"
 require "./quest_system"
 require "../characters/player"
 require "../scenes/scene_loader"
-require "../graphics/display_manager"
-require "../graphics/shaders/shader_helpers"
+require "../graphics/graphics"
 require "../characters/dialogue/dialog_tree"
 require "./exceptions"
 require "./validators/config_validator"
@@ -227,16 +226,18 @@ module PointClickEngine
           if disp = display
             dm.scaling_mode = case disp.scaling_mode
                               when "FitWithBars"
-                                Graphics::DisplayManager::ScalingMode::FitWithBars
+                                Graphics::Display::ScalingMode::FitWithBars
                               when "Stretch"
-                                Graphics::DisplayManager::ScalingMode::Stretch
+                                Graphics::Display::ScalingMode::Stretch
                               when "PixelPerfect"
-                                Graphics::DisplayManager::ScalingMode::PixelPerfect
+                                Graphics::Display::ScalingMode::PixelPerfect
                               else
-                                Graphics::DisplayManager::ScalingMode::FitWithBars
+                                Graphics::Display::ScalingMode::FitWithBars
                               end
-            dm.target_width = disp.target_width
-            dm.target_height = disp.target_height
+            # Note: The new Display class uses fixed reference resolution of 1024x768
+            # If custom resolutions are needed, the Display class would need to be updated
+            # dm.target_width = disp.target_width
+            # dm.target_height = disp.target_height
           end
         end
 
@@ -501,8 +502,8 @@ module PointClickEngine
         return unless shader_system = engine.shader_system
 
         # Create common shaders
-        Graphics::Shaders::ShaderHelpers.create_vignette_shader(shader_system)
-        Graphics::Shaders::ShaderHelpers.create_bloom_shader(shader_system)
+        Graphics::ShaderHelpers.create_vignette_shader(shader_system)
+        Graphics::ShaderHelpers.create_bloom_shader(shader_system)
       end
     end
   end

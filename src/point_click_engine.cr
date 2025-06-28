@@ -58,17 +58,12 @@ require "./core/validators/asset_validator"
 require "./core/validators/scene_validator"
 require "./core/preflight_check"
 require "./core/error_reporter"
-require "./graphics/cameras/camera_manager"
+# Camera manager no longer needed - using new graphics system
 require "./core/engine"
 require "./core/game_config"
 
 # Graphics modules
-require "./graphics/display_manager"
-require "./graphics/sprites/animated"
-require "./graphics/particles"
-require "./graphics/transitions"
-require "./graphics/shaders/shader_system"
-require "./graphics/shaders/shader_helpers"
+require "./graphics/graphics"
 
 # Character system modules
 require "./characters/character"
@@ -156,10 +151,10 @@ module PointClickEngine
   alias DialogStyle = UI::DialogStyle
   alias InventoryItem = Inventory::InventoryItem
   alias InventoryUI = Inventory::InventorySystem
-  alias AnimatedSprite = Graphics::Sprites::Animated
-  alias DisplayManager = Graphics::DisplayManager
-  alias ParticleSystem = Graphics::ParticleSystem
-  alias Particle = Graphics::Particle
+  alias AnimatedSprite = Graphics::AnimatedSprite
+  alias DisplayManager = Graphics::Display
+  # Particle system - use Graphics::Particles module directly
+  # Example: Graphics::Particles::Emitter or Graphics::Particles.fire(position)
   alias TransitionManager = Graphics::TransitionManager
   alias TransitionEffect = Graphics::TransitionEffect
   alias ShaderSystem = Graphics::Shaders::ShaderSystem
@@ -241,18 +236,7 @@ module PointClickEngine
   alias Translation = Localization::Translation
   alias LocalizationManager = Localization::LocalizationManager
 
-  # Camera aliases
-  alias CameraManager = Graphics::Cameras::CameraManager
-  alias CameraEffect = Graphics::Cameras::Effects::Effect
-  alias CameraEffectType = Graphics::Cameras::Effects::Type
-  alias CameraEasing = Graphics::Cameras::Effects::Easing
-  alias CameraState = Graphics::Cameras::State
-
-  # Camera effect aliases
-  alias ShakeEffect = Graphics::Cameras::Effects::Shake
-  alias ZoomEffect = Graphics::Cameras::Effects::Zoom
-  alias SwayEffect = Graphics::Cameras::Effects::Sway
-  alias RotationEffect = Graphics::Cameras::Effects::Rotation
-  alias PanEffect = Graphics::Cameras::Effects::Pan
-  alias FollowEffect = Graphics::Cameras::Effects::Follow
+  # Camera aliases - using new graphics system
+  alias Camera = Graphics::Camera
+  alias Renderer = Graphics::Renderer
 end
