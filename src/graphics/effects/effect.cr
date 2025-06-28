@@ -122,6 +122,7 @@ module PointClickEngine
         property bounds : RL::Rectangle?
         property texture : RL::Texture2D?
         property sprite : Sprites::Sprite?
+        property active_shader : RL::Shader?  # For shader-based effects
 
         def initialize(@target_type : TargetType, @renderer : PointClickEngine::Graphics::Renderer?,
                        @delta_time : Float32)
