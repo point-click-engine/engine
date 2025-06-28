@@ -112,7 +112,7 @@ module PointClickEngine
         end
 
         property target_type : TargetType
-        property renderer : PointClickEngine::Graphics::Renderer
+        property renderer : PointClickEngine::Graphics::Renderer?
         property render_context : PointClickEngine::Graphics::RenderContext?
         property delta_time : Float32
 
@@ -123,7 +123,7 @@ module PointClickEngine
         property texture : RL::Texture2D?
         property sprite : Sprites::Sprite?
 
-        def initialize(@target_type : TargetType, @renderer : PointClickEngine::Graphics::Renderer,
+        def initialize(@target_type : TargetType, @renderer : PointClickEngine::Graphics::Renderer?,
                        @delta_time : Float32)
         end
       end

@@ -69,6 +69,11 @@ module PointClickEngine
           effect
         end
 
+        # Add scene-wide effect using Effect instance
+        def add_scene_effect(effect : Effect)
+          @scene_effects.add_effect(effect)
+        end
+
         # Add camera effect
         def add_camera_effect(effect_name : String, **params) : Effect?
           effect = create_camera_effect(effect_name, **params)
@@ -182,6 +187,8 @@ module PointClickEngine
         def draw_scene_overlays(renderer : PointClickEngine::Graphics::Renderer)
           @scene_effects.active_effects.each do |effect|
             case effect
+            when SceneEffects::TransitionEffect
+              effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
             when SceneEffects::FogEffect
               effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
             when SceneEffects::RainEffect

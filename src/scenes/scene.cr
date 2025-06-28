@@ -343,6 +343,9 @@ module PointClickEngine
         # Update player
         @player.try(&.update(dt))
 
+        # Update all characters
+        @characters.each(&.update(dt))
+
         # Update all objects
         @objects.each(&.update(dt))
 

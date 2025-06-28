@@ -34,7 +34,7 @@ module PointClickEngine
 
       # Component managers - direct access for users
       property system_manager : EngineComponents::SystemManager = EngineComponents::SystemManager.new
-      property scene_manager : SceneManager = SceneManager.new
+      getter scene_manager : SceneManager { SceneManager.new(self) }
       property input_manager : InputManager = InputManager.new
       property render_manager : RenderManager = RenderManager.new
       property resource_manager : ResourceManager = ResourceManager.new
@@ -47,7 +47,6 @@ module PointClickEngine
       @render_coordinator : EngineComponents::RenderCoordinator = EngineComponents::RenderCoordinator.new
       @verb_input_system : EngineComponents::VerbInputSystem?
       @update_callback : Proc(Float32, Nil)?
-      @current_transition : Graphics::TransitionSceneEffect?
       property effect_manager : Graphics::EffectManager = Graphics::EffectManager.new
 
       # Auto-save functionality
@@ -189,7 +188,8 @@ module PointClickEngine
         mouse_pos = RL.get_mouse_position
         camera.update(dt)
         
-        # Update effect manager with camera
+        # Update all effects (including scene transitions)
+        @effect_manager.update(dt)
         @effect_manager.update_camera_effects(camera, dt)
 
         # Handle auto-save
@@ -201,14 +201,6 @@ module PointClickEngine
 
       # Renders the game
       private def render
-        # Update transition if active
-        if transition = @current_transition
-          transition.update(RL.get_frame_time)
-          if transition.finished?
-            @current_transition = nil
-          end
-        end
-        
         render_scene_content
 
         # Draw verb cursor (on top of everything)
@@ -217,14 +209,23 @@ module PointClickEngine
 
       # Renders the scene content (separated for use with transitions)
       private def render_scene_content
-        # Render scene with camera
-        # Render scene using the new renderer block syntax
+        # Create a temporary layer manager for scene effects
+        # In a full implementation, this would be part of the renderer
+        layers = Graphics::LayerManager.new
+        layers.add_default_layers
+        
+        # Apply scene effects (including transitions) to the layers
+        @effect_manager.apply_scene_effects(renderer, layers, RL.get_frame_time)
+        
+        # Render scene with camera using the renderer
         renderer.render do |context|
           @current_scene.try do |scene|
-            # Draw scene components
             scene.draw(camera)
           end
         end
+        
+        # Draw scene effect overlays (like transition fade)
+        @effect_manager.draw_scene_overlays(renderer)
 
         # Render highlighted hotspots if enabled
         if @render_coordinator.hotspot_highlight_enabled && @current_scene
@@ -314,7 +315,7 @@ module PointClickEngine
       end
 
       def scenes : Hash(String, Scenes::Scene)
-        @scene_manager.scenes
+        scene_manager.scenes
       end
 
       # Enable verb input system
@@ -409,7 +410,7 @@ module PointClickEngine
         # Save current player before changing scene
         current_player = player
 
-        result = @scene_manager.change_scene(scene_name)
+        result = scene_manager.change_scene(scene_name)
         case result
         when .success?
           @current_scene = result.value
@@ -442,45 +443,16 @@ module PointClickEngine
         end
       end
 
-      def change_scene_with_transition(scene_name : String, effect : Graphics::TransitionEffect?, duration : Float32, position : RL::Vector2? = nil)
-        puts "[Engine] change_scene_with_transition: scene=#{scene_name}, effect=#{effect}, duration=#{duration}"
-        
-        if effect
-          # Create transition effect
-          transition = Graphics::TransitionSceneEffect.new(effect, duration)
-          
-          # Set midpoint callback for scene change
-          transition.on_midpoint do
-            puts "[Engine] Transition midpoint - changing scene"
-            change_scene(scene_name)
-            
-            # If position provided, move player
-            if pos = position
-              if player = self.player
-                player.position = pos
-                puts "[Engine] Moved player to #{pos}"
-              end
-            end
-          end
-          
-          # Store transition for rendering
-          @current_transition = transition
-          
-          puts "[Engine] Started transition effect"
-        else
-          puts "[Engine] No transition effect - direct scene change"
-          change_scene(scene_name)
-          
-          if pos = position
-            if player = self.player
-              player.position = pos
-            end
-          end
-        end
-      end
 
       def add_scene(scene : Scenes::Scene)
-        @scene_manager.add_scene(scene)
+        scene_manager.add_scene(scene)
+      end
+
+      # Convenience method for scene transitions
+      def change_scene_with_transition(scene_name : String, transition_type : String = "fade", 
+                                     duration : Float32 = 1.0f32, 
+                                     player_position : RL::Vector2? = nil)
+        scene_manager.change_scene_with_transition(scene_name, transition_type, duration, player_position)
       end
 
       # Window management
@@ -525,7 +497,7 @@ module PointClickEngine
         puts "[Engine] Event triggered"
 
         # Load the starting scene from scene manager
-        if scene_name = @scene_manager.start_scene
+        if scene_name = scene_manager.start_scene
           puts "[Engine] Changing to start scene: #{scene_name}"
           change_scene(scene_name)
         else

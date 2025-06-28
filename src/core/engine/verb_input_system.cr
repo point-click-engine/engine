@@ -3,7 +3,6 @@
 require "../../ui/cursor_manager"
 require "../../scenes/scene"
 require "../../scenes/hotspot"
-require "../../scenes/transition_helper"
 require "../../characters/character"
 require "../../inventory/inventory_system"
 require "../../ui/dialog_manager"
@@ -142,11 +141,35 @@ module PointClickEngine
           puts "[VerbInput] Checking action for verb: #{verb_name} on hotspot: #{hotspot.name}"
           if command = hotspot.action_commands[verb_name]?
             puts "[VerbInput] Found action command: #{command}"
-            if Scenes::TransitionHelper.execute_transition(command, @engine)
-              puts "[VerbInput] Transition executed successfully"
-              return
+            
+            # Parse transition command
+            if command.starts_with?("transition:")
+              parts = command.split(":")
+              if parts.size >= 2
+                scene_name = parts[1]
+                transition_type = parts.size > 2 ? parts[2] : "fade"
+                duration = parts.size > 3 ? (parts[3].to_f32? || 1.0f32) : 1.0f32
+                
+                # Parse position if provided
+                position = if parts.size > 4
+                  coords = parts[4].split(",")
+                  if coords.size == 2
+                    x = coords[0].to_f32?
+                    y = coords[1].to_f32?
+                    RL::Vector2.new(x: x || 0, y: y || 0) if x && y
+                  end
+                end
+                
+                # Use the scene manager's transition method
+                @engine.scene_manager.change_scene_with_transition(scene_name, transition_type, duration, position)
+                
+                puts "[VerbInput] Transition executed successfully"
+                return
+              end
             else
-              puts "[VerbInput] Not a transition command"
+              puts "[VerbInput] Not a transition command, executing as script"
+              # Execute as script command if not a transition
+              @engine.system_manager.script_engine.try(&.execute_script(command))
             end
           else
             puts "[VerbInput] No action command for verb #{verb_name}"

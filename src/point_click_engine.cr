@@ -93,7 +93,6 @@ require "./scenes/polygon_hotspot"
 require "./scenes/walkable_area"
 require "./scenes/scene"
 require "./scenes/scene_loader"
-require "./scenes/transition_helper"
 
 # Scripting modules
 require "./scripting/event_system"

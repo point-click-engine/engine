@@ -65,13 +65,14 @@ module PointClickEngine
             # Trigger midpoint callback at 50%
             if !@midpoint_triggered && progress >= 0.5
               @midpoint_triggered = true
+              puts "[TransitionEffect] Midpoint reached, triggering callback"
               @midpoint_callback.try(&.call)
             end
           end
 
           def apply_to_layer(context : Effects::EffectContext, layer : Layers::Layer)
             # Calculate phase (0-1 for first half, 1-0 for second half)
-            @phase = progress < 0.5 ? progress * 2.0 : 2.0 - (progress * 2.0)
+            @phase = (progress < 0.5 ? progress * 2.0 : 2.0 - (progress * 2.0)).to_f32
             
             case @transition_type
             when .fade?
@@ -88,12 +89,12 @@ module PointClickEngine
 
           private def apply_fade(layer : Layers::Layer)
             # Simple fade using layer opacity
-            layer.opacity = 1.0 - @phase
+            layer.opacity = (1.0 - @phase).to_f32
           end
 
           private def apply_dissolve(layer : Layers::Layer)
             # Use a more complex dissolve pattern
-            layer.opacity = 1.0 - @phase
+            layer.opacity = (1.0 - @phase).to_f32
             # Could add noise or dithering here
           end
 
@@ -119,6 +120,37 @@ module PointClickEngine
           def apply(context : Effects::EffectContext)
             # Transition effects are applied at the layer level
             # This is handled by the scene effect system
+          end
+
+          # Draw overlay for transition effects
+          def draw_overlay(renderer : PointClickEngine::Graphics::Renderer, width : Int32 = 1024, height : Int32 = 768)
+            case @transition_type
+            when .fade?
+              # Draw a black overlay with varying opacity based on phase
+              opacity = (@phase * 255).to_u8
+              RL.draw_rectangle(0, 0, width, height, RL::Color.new(r: 0, g: 0, b: 0, a: opacity))
+            when .dissolve?
+              # Similar to fade but could add noise/dithering
+              opacity = (@phase * 255).to_u8
+              RL.draw_rectangle(0, 0, width, height, RL::Color.new(r: 0, g: 0, b: 0, a: opacity))
+            when .swirl?
+              # For now, just do a fade effect
+              opacity = (@phase * 255).to_u8
+              RL.draw_rectangle(0, 0, width, height, RL::Color.new(r: 0, g: 0, b: 0, a: opacity))
+            when .curtain?
+              # Draw curtain effect
+              curtain_width = (width * @phase).to_i
+              RL.draw_rectangle(0, 0, curtain_width, height, RL::BLACK)
+              RL.draw_rectangle(width - curtain_width, 0, curtain_width, height, RL::BLACK)
+            when .heart_wipe?
+              # For now, just do a fade effect
+              opacity = (@phase * 255).to_u8
+              RL.draw_rectangle(0, 0, width, height, RL::Color.new(r: 0, g: 0, b: 0, a: opacity))
+            else
+              # Default to fade for unimplemented transitions
+              opacity = (@phase * 255).to_u8
+              RL.draw_rectangle(0, 0, width, height, RL::Color.new(r: 0, g: 0, b: 0, a: opacity))
+            end
           end
 
           def clone : Effect

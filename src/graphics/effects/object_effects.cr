@@ -121,7 +121,7 @@ module PointClickEngine
         end
 
         # Helper to parse color from various formats
-        private def self.parse_color(color_value) : RL::Color?
+        def self.parse_color(color_value) : RL::Color?
           case color_value
           when RL::Color
             color_value

@@ -7,6 +7,7 @@
 require "./error_handling"
 require "./interfaces"
 require "../scenes/scene"
+require "../graphics/effects/scene_effects/transition_effect"
 
 module PointClickEngine
   module Core
@@ -61,7 +62,10 @@ module PointClickEngine
       # Track scene load times for performance monitoring
       @scene_load_times : Hash(String, Time::Span) = {} of String => Time::Span
 
-      def initialize
+      # Reference to engine for effect manager access
+      @engine : Engine?
+
+      def initialize(@engine : Engine? = nil)
       end
 
       # Add a scene to the manager
@@ -158,6 +162,66 @@ module PointClickEngine
         @scene_load_times[name] = Time.monotonic - Time.monotonic
 
         Result(Scenes::Scene, SceneError).success(target_scene)
+      end
+
+      # Change scene with a transition effect
+      #
+      # Performs a scene change with a visual transition effect. The transition
+      # will play, changing the scene at the midpoint of the effect.
+      #
+      # - *name* : Name of the scene to transition to
+      # - *transition_type* : Type of transition effect (fade, dissolve, slide_left, etc.)
+      # - *duration* : Duration of the transition in seconds
+      # - *player_position* : Optional position to place the player in the new scene
+      #
+      # Returns a Result with success or error
+      def change_scene_with_transition(name : String, transition_type : String = "fade", 
+                                     duration : Float32 = 1.0f32, 
+                                     player_position : RL::Vector2? = nil) : Result(Nil, SceneError)
+        # Validate scene exists
+        unless @scenes.has_key?(name)
+          return Result(Nil, SceneError).failure(SceneError.new("Scene not found: #{name}", name))
+        end
+
+        # Get engine reference
+        engine = @engine
+        unless engine
+          # If no engine reference, fall back to regular scene change
+          change_scene(name)
+          return Result(Nil, SceneError).success(nil)
+        end
+
+        # Parse transition type
+        transition_type_enum = case transition_type.downcase
+        when "fade"         then Graphics::Effects::SceneEffects::TransitionType::Fade
+        when "dissolve"     then Graphics::Effects::SceneEffects::TransitionType::Dissolve
+        when "slide_left"   then Graphics::Effects::SceneEffects::TransitionType::SlideLeft
+        when "slide_right"  then Graphics::Effects::SceneEffects::TransitionType::SlideRight
+        when "slide_up"     then Graphics::Effects::SceneEffects::TransitionType::SlideUp
+        when "slide_down"   then Graphics::Effects::SceneEffects::TransitionType::SlideDown
+        else Graphics::Effects::SceneEffects::TransitionType::Fade
+        end
+        
+        # Create transition effect with midpoint callback for scene change
+        transition = Graphics::Effects::SceneEffects::TransitionEffect.new(transition_type_enum, duration)
+        
+        # Set up the midpoint callback to change the scene
+        transition.on_midpoint do
+          puts "[SceneManager] Transition midpoint callback triggered for scene: #{name}"
+          # Use the engine's change_scene method to ensure proper synchronization
+          engine.change_scene(name)
+          
+          # Set player position if provided
+          if player_position && (player = engine.player)
+            puts "[SceneManager] Setting player position to: #{player_position}"
+            player.position = player_position
+          end
+        end
+        
+        # Apply the transition effect through the engine's effect manager
+        engine.effect_manager.add_scene_effect(transition)
+        
+        Result(Nil, SceneError).success(nil)
       end
 
       # Preload a scene without activating it

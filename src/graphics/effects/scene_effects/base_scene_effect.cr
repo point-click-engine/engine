@@ -45,7 +45,9 @@ module PointClickEngine
           def initialize(@object_effect : Effect, duration : Float32 = 0.0f32)
             super(duration)
             # Sync duration if not specified
-            @duration = @object_effect.duration if @duration == 0
+            if @duration == 0
+              @duration = @object_effect.try(&.duration) || 0.0f32
+            end
           end
 
           def update(dt : Float32)
@@ -61,7 +63,10 @@ module PointClickEngine
           def apply_to_layer(context : EffectContext, layer : Layers::Layer)
             # Apply the object effect to the entire layer
             # This could mean different things depending on the effect
-            case effect = @object_effect
+            effect = @object_effect
+            return unless effect
+
+            case effect
             when ObjectEffects::ColorShiftEffect
               # Apply color shift to layer tint
               apply_color_to_layer(effect, layer)
@@ -85,7 +90,7 @@ module PointClickEngine
             # Let the effect modify it
             effect_context = EffectContext.new(
               EffectContext::TargetType::Scene,
-              @renderer,
+              nil,
               0.016f32
             )
             effect_context.sprite = temp_sprite
@@ -138,7 +143,10 @@ module PointClickEngine
 
           def apply(context : EffectContext)
             # Apply shake to camera instead of individual objects
-            if camera = context.renderer.camera
+            renderer = context.renderer
+            return unless renderer
+            
+            if camera = renderer.camera
               # Store original position
               original_pos = camera.position.dup
 
@@ -148,7 +156,7 @@ module PointClickEngine
 
               effect_context = EffectContext.new(
                 EffectContext::TargetType::Camera,
-                context.renderer,
+                renderer,
                 context.delta_time
               )
               effect_context.sprite = temp_sprite
@@ -238,9 +246,9 @@ module PointClickEngine
 
           # Create scene-specific effects
           def self.create(effect_name : String, **params) : BaseSceneEffect?
-            # First check if it's a transition effect
-            if transition = create_transition(effect_name, **params)
-              return transition
+            # Check if it's a transition effect
+            if effect_name.downcase == "transition"
+              return create_transition(**params)
             end
 
             case effect_name.downcase
@@ -268,6 +276,34 @@ module PointClickEngine
             end
           end
 
+          private def self.create_transition(**params) : TransitionEffect?
+            # Parse transition type
+            type_name = params[:type]?.try(&.to_s) || "fade"
+            transition_type = case type_name.downcase
+            when "fade"         then TransitionType::Fade
+            when "dissolve"     then TransitionType::Dissolve
+            when "slide_left"   then TransitionType::SlideLeft
+            when "slide_right"  then TransitionType::SlideRight
+            when "slide_up"     then TransitionType::SlideUp
+            when "slide_down"   then TransitionType::SlideDown
+            else TransitionType::Fade
+            end
+            
+            duration = params[:duration]?.try(&.as(Number).to_f32) || 1.0f32
+            
+            # Create the transition effect
+            transition = TransitionEffect.new(transition_type, duration)
+            
+            # Set midpoint callback if provided
+            if callback = params[:on_midpoint]?
+              if callback.responds_to?(:call)
+                transition.on_midpoint { callback.call }
+              end
+            end
+            
+            transition
+          end
+          
           private def self.parse_layer_names(layers) : Array(String)
             case layers
             when String

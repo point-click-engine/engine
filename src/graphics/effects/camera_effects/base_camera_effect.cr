@@ -24,7 +24,10 @@ module PointClickEngine
 
           # Default apply delegates to apply_to_camera
           def apply(context : EffectContext)
-            if context.target_type.camera? && (camera = context.renderer.camera)
+            renderer = context.renderer
+            return unless renderer
+            
+            if context.target_type.camera? && (camera = renderer.camera)
               apply_to_camera(camera, context.delta_time)
             end
           end
