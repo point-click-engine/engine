@@ -151,12 +151,12 @@ module PointClickEngine
   alias DialogStyle = UI::DialogStyle
   alias InventoryItem = Inventory::InventoryItem
   alias InventoryUI = Inventory::InventorySystem
-  alias AnimatedSprite = Graphics::AnimatedSprite
+  alias AnimatedSprite = Graphics::Sprites::AnimatedSprite
   alias DisplayManager = Graphics::Display
   # Particle system - use Graphics::Particles module directly
   # Example: Graphics::Particles::Emitter or Graphics::Particles.fire(position)
   # Transition system now uses scene effects
-  alias TransitionEffect = Graphics::TransitionEffect
+  alias TransitionEffect = Graphics::Effects::SceneEffects::TransitionEffect
   alias ShaderSystem = Graphics::Shaders::ShaderSystem
   alias ShaderHelpers = Graphics::Shaders::ShaderHelpers
 
@@ -237,6 +237,6 @@ module PointClickEngine
   alias LocalizationManager = Localization::LocalizationManager
 
   # Camera aliases - using new graphics system
-  alias Camera = Graphics::Camera
-  alias Renderer = Graphics::Renderer
+  alias Camera = Graphics::Core::Camera
+  alias Renderer = Graphics::Core::Renderer
 end

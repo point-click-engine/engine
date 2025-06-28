@@ -12,7 +12,7 @@ module PointClickEngine
     # - Rendering coordination
     class SpriteController
       # The animated sprite data
-      property sprite : Graphics::AnimatedSprite?
+      property sprite : Graphics::Sprites::AnimatedSprite?
 
       # Path to the sprite/spritesheet file
       property sprite_path : String?
@@ -38,7 +38,7 @@ module PointClickEngine
       # Loads a spritesheet for character animation
       def load_spritesheet(path : String, frame_width : Int32, frame_height : Int32)
         @sprite_path = path
-        @sprite = Graphics::AnimatedSprite.new(@position.x, @position.y, path, frame_width, frame_height, 1)
+        @sprite = Graphics::Sprites::AnimatedSprite.new(@position.x, @position.y, path, frame_width, frame_height, 1)
 
         if sprite = @sprite
           sprite.scale = calculate_scale(frame_width, frame_height)

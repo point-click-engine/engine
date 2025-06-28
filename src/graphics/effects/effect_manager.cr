@@ -107,6 +107,19 @@ module PointClickEngine
           # Return finished effects to pools
           collect_finished_effects
         end
+        
+        # Update camera effects and apply to camera
+        def update_camera_effects(camera : Graphics::Core::Camera, dt : Float32)
+          # Update camera effects
+          @camera_effects.update(dt)
+          
+          # Apply each camera effect directly
+          @camera_effects.active_effects.each do |effect|
+            if camera_effect = effect.as?(CameraEffects::BaseCameraEffect)
+              camera_effect.apply_to_camera(camera, dt)
+            end
+          end
+        end
 
         # Apply effects to renderer (including camera)
         def apply_to_renderer(renderer : PointClickEngine::Graphics::Renderer, dt : Float32 = 0.016f32)
@@ -181,6 +194,11 @@ module PointClickEngine
           end
         end
 
+        # Clear camera effects
+        def clear_camera_effects
+          @camera_effects.clear_effects
+        end
+        
         # Clear all effects
         def clear_all
           @scene_effects.clear_effects

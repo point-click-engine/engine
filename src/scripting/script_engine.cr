@@ -498,8 +498,10 @@ module PointClickEngine
             duration = state.to_f64(2).to_f32
 
             if engine = Core::Engine.instance
-              # TODO: Implement camera shake effect with new graphics system
-              puts "[ScriptEngine] Camera shake effect not yet implemented in new graphics system"
+              engine.effect_manager.add_camera_effect("shake", 
+                amplitude: intensity,
+                frequency: 10.0f32,
+                duration: duration)
             end
           end
         end
@@ -510,8 +512,9 @@ module PointClickEngine
             duration = state.to_f64(2).to_f32
 
             if engine = Core::Engine.instance
-              # TODO: Implement camera zoom effect with new graphics system
-              puts "[ScriptEngine] Camera zoom effect not yet implemented in new graphics system"
+              engine.effect_manager.add_camera_effect("zoom",
+                target: factor,
+                duration: duration)
             end
           end
         end
@@ -523,9 +526,9 @@ module PointClickEngine
             duration = state.to_f64(3).to_f32
 
             if engine = Core::Engine.instance
-              # TODO: Implement camera pan effect with new graphics system
-              # For now, we can directly move the camera
-              engine.camera.move_to(x, y)
+              engine.effect_manager.add_camera_effect("pan",
+                target: [x, y],
+                duration: duration)
             end
           end
         end
@@ -537,8 +540,12 @@ module PointClickEngine
             duration = state.to_f64(3).to_f32
 
             if engine = Core::Engine.instance
-              # TODO: Implement camera sway effect with new graphics system
-              puts "[ScriptEngine] Camera sway effect not yet implemented in new graphics system"
+              engine.effect_manager.add_camera_effect("sway",
+                amplitude_x: amplitude,
+                amplitude_y: amplitude * 0.5f32,
+                frequency_x: frequency,
+                frequency_y: frequency * 0.6f32,
+                duration: duration)
             end
           end
         end
@@ -547,8 +554,9 @@ module PointClickEngine
           duration = state.size >= 1 ? state.to_f64(1).to_f32 : 1.0f32
 
           if engine = Core::Engine.instance
-            # TODO: Implement camera effect reset with new graphics system
-            puts "[ScriptEngine] Camera reset not yet implemented in new graphics system"
+            # Clear camera effects and reset position
+            engine.effect_manager.clear_camera_effects
+            engine.camera.reset
           end
         end
       end

@@ -22,20 +22,18 @@ module PointClickEngine
         def render(scene : Scenes::Scene?,
                    dialogs : Array(UI::Dialog),
                    cutscene_manager : Cutscenes::CutsceneManager,
-                   transition_manager : Graphics::TransitionManager?,
-                   camera : Graphics::Camera? = nil)
+                   transition_effect : Graphics::TransitionSceneEffect?,
+                   camera : Graphics::Core::Camera? = nil)
           # Get display manager from engine
           if engine = Engine.instance
             if display_manager = engine.display_manager
               # Begin rendering to game render texture
               display_manager.begin_game_rendering
 
-              # Use transition manager if available and active
-              if transition_manager && transition_manager.transitioning?
-                puts "[RenderCoordinator] Rendering with transition"
-                transition_manager.render_with_transition do
-                  render_scene_content(scene, dialogs, cutscene_manager, camera)
-                end
+              # Apply transition effect if available and active
+              if transition_effect && !transition_effect.finished?
+                # For now, just render normally - transition effects are applied at layer level
+                render_scene_content(scene, dialogs, cutscene_manager, camera)
               else
                 render_scene_content(scene, dialogs, cutscene_manager, camera)
               end
@@ -60,7 +58,7 @@ module PointClickEngine
         private def render_scene_content(scene : Scenes::Scene?,
                                          dialogs : Array(UI::Dialog),
                                          cutscene_manager : Cutscenes::CutsceneManager,
-                                         camera : Graphics::Camera? = nil)
+                                         camera : Graphics::Core::Camera? = nil)
           # Clear background
           RL.clear_background(RL::BLACK)
 

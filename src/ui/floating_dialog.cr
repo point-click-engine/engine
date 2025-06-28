@@ -111,10 +111,8 @@ module PointClickEngine
         # Apply alpha to colors
         text_color = apply_alpha(@color, @fade_alpha)
 
-        # Debug log only when empty
-        if wrapped.lines.empty?
-          puts "WARNING: No lines in wrapped text for: #{@text}"
-        end
+        # Skip rendering if no text to display
+        return if wrapped.lines.empty?
 
         # Simple text rendering like Simon the Sorcerer - no backgrounds or bubbles
         draw_wrapped_text(position, wrapped, text_color)
@@ -156,6 +154,9 @@ module PointClickEngine
 
       # Wrap text to fit within max width
       private def wrap_text(text : String, max_width : Int32, font_size : Int32) : WrappedText
+        # Handle empty text
+        return WrappedText.new([] of String, 0, 0) if text.strip.empty?
+        
         words = text.split(' ')
         lines = [] of String
         current_line = ""

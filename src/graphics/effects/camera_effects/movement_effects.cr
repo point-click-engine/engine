@@ -294,7 +294,12 @@ module PointClickEngine
 
               pan
             when "zoom"
-              target_zoom = params[:target]?.try(&.as(Number).to_f32) || 1.0f32
+              target_zoom = params[:target]?.try do |t|
+                case t
+                when Number then t.to_f32
+                else 1.0f32
+                end
+              end || 1.0f32
               duration = params[:duration]?.try(&.as(Number).to_f32) || 1.0f32
 
               zoom = ZoomEffect.new(target_zoom, duration)

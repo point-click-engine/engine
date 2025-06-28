@@ -7,7 +7,7 @@ module PointClickEngine
       # Format: "transition:scene_name:effect:duration:x,y"
       # Example: "transition:garden:swirl:4.5:300,400"
       # If duration is omitted or "default", it will return -1.0 to signal use of scene's default
-      def self.parse_transition_command(command : String) : NamedTuple(scene: String, effect: Graphics::TransitionEffect?, duration: Float32, position: RL::Vector2?)?
+      def self.parse_transition_command(command : String) : NamedTuple(scene: String, effect: Graphics::Effects::SceneEffects::TransitionType?, duration: Float32, position: RL::Vector2?)?
         return nil unless command.starts_with?("transition:")
 
         parts = command.split(":")
@@ -19,7 +19,7 @@ module PointClickEngine
         effect = if parts.size > 2 && !parts[2].empty?
                    parse_effect(parts[2])
                  else
-                   Graphics::TransitionEffect::Fade
+                   Graphics::Effects::SceneEffects::TransitionType::Fade
                  end
 
         # Parse optional duration
@@ -75,35 +75,35 @@ module PointClickEngine
         end
       end
 
-      private def self.parse_effect(effect_name : String) : Graphics::TransitionEffect?
+      private def self.parse_effect(effect_name : String) : Graphics::Effects::SceneEffects::TransitionType?
         case effect_name.downcase
-        when "fade"         then Graphics::TransitionEffect::Fade
-        when "dissolve"     then Graphics::TransitionEffect::Dissolve
-        when "slide_left"   then Graphics::TransitionEffect::SlideLeft
-        when "slide_right"  then Graphics::TransitionEffect::SlideRight
-        when "slide_up"     then Graphics::TransitionEffect::SlideUp
-        when "slide_down"   then Graphics::TransitionEffect::SlideDown
-        when "iris"         then Graphics::TransitionEffect::Iris
-        when "swirl"        then Graphics::TransitionEffect::Swirl
-        when "star_wipe"    then Graphics::TransitionEffect::StarWipe
-        when "heart_wipe"   then Graphics::TransitionEffect::HeartWipe
-        when "curtain"      then Graphics::TransitionEffect::Curtain
-        when "ripple"       then Graphics::TransitionEffect::Ripple
-        when "checkerboard" then Graphics::TransitionEffect::Checkerboard
-        when "pixelate"     then Graphics::TransitionEffect::Pixelate
-        when "warp"         then Graphics::TransitionEffect::Warp
-        when "wave"         then Graphics::TransitionEffect::Wave
-        when "glitch"       then Graphics::TransitionEffect::Glitch
-        when "film_burn"    then Graphics::TransitionEffect::FilmBurn
-        when "static"       then Graphics::TransitionEffect::Static
-        when "matrix_rain"  then Graphics::TransitionEffect::MatrixRain
-        when "zoom_blur"    then Graphics::TransitionEffect::ZoomBlur
-        when "clock_wipe"   then Graphics::TransitionEffect::ClockWipe
-        when "barn_door"    then Graphics::TransitionEffect::BarnDoor
-        when "page_turn"    then Graphics::TransitionEffect::PageTurn
-        when "shatter"      then Graphics::TransitionEffect::Shatter
-        when "vortex"       then Graphics::TransitionEffect::Vortex
-        when "fire"         then Graphics::TransitionEffect::Fire
+        when "fade"         then Graphics::Effects::SceneEffects::TransitionType::Fade
+        when "dissolve"     then Graphics::Effects::SceneEffects::TransitionType::Dissolve
+        when "slide_left"   then Graphics::Effects::SceneEffects::TransitionType::SlideLeft
+        when "slide_right"  then Graphics::Effects::SceneEffects::TransitionType::SlideRight
+        when "slide_up"     then Graphics::Effects::SceneEffects::TransitionType::SlideUp
+        when "slide_down"   then Graphics::Effects::SceneEffects::TransitionType::SlideDown
+        when "iris"         then Graphics::Effects::SceneEffects::TransitionType::Iris
+        when "swirl"        then Graphics::Effects::SceneEffects::TransitionType::Swirl
+        when "star_wipe"    then Graphics::Effects::SceneEffects::TransitionType::StarWipe
+        when "heart_wipe"   then Graphics::Effects::SceneEffects::TransitionType::HeartWipe
+        when "curtain"      then Graphics::Effects::SceneEffects::TransitionType::Curtain
+        when "ripple"       then Graphics::Effects::SceneEffects::TransitionType::Ripple
+        when "checkerboard" then Graphics::Effects::SceneEffects::TransitionType::Checkerboard
+        when "pixelate"     then Graphics::Effects::SceneEffects::TransitionType::Pixelate
+        when "warp"         then Graphics::Effects::SceneEffects::TransitionType::Warp
+        when "wave"         then Graphics::Effects::SceneEffects::TransitionType::Wave
+        when "glitch"       then Graphics::Effects::SceneEffects::TransitionType::Glitch
+        when "film_burn"    then Graphics::Effects::SceneEffects::TransitionType::FilmBurn
+        when "static"       then Graphics::Effects::SceneEffects::TransitionType::Static
+        when "matrix_rain"  then Graphics::Effects::SceneEffects::TransitionType::MatrixRain
+        when "zoom_blur"    then Graphics::Effects::SceneEffects::TransitionType::ZoomBlur
+        when "clock_wipe"   then Graphics::Effects::SceneEffects::TransitionType::ClockWipe
+        when "barn_door"    then Graphics::Effects::SceneEffects::TransitionType::BarnDoor
+        when "page_turn"    then Graphics::Effects::SceneEffects::TransitionType::PageTurn
+        when "shatter"      then Graphics::Effects::SceneEffects::TransitionType::Shatter
+        when "vortex"       then Graphics::Effects::SceneEffects::TransitionType::Vortex
+        when "fire"         then Graphics::Effects::SceneEffects::TransitionType::Fire
         else
           nil
         end

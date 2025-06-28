@@ -48,6 +48,7 @@ module PointClickEngine
       @verb_input_system : EngineComponents::VerbInputSystem?
       @update_callback : Proc(Float32, Nil)?
       @current_transition : Graphics::TransitionSceneEffect?
+      property effect_manager : Graphics::EffectManager = Graphics::EffectManager.new
 
       # Auto-save functionality
       property auto_save_interval : Float32 = 0.0_f32
@@ -184,9 +185,12 @@ module PointClickEngine
         # Update inventory
         @inventory.update(dt)
 
-        # Update camera if needed
+        # Update camera and effects
         mouse_pos = RL.get_mouse_position
-        # Camera updates can be handled here if needed
+        camera.update(dt)
+        
+        # Update effect manager with camera
+        @effect_manager.update_camera_effects(camera, dt)
 
         # Handle auto-save
         handle_auto_save(dt)
