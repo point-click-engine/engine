@@ -16,7 +16,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Install Crystal
-      uses: crystal-lang/install-crystal@v1.8.2
+      uses: crystal-lang/install-crystal@v1.8.3
       with:
         crystal: latest
         
@@ -54,7 +54,7 @@ jobs:
   #         build-essential
   #         
   #   - name: Install Crystal
-  #     uses: crystal-lang/install-crystal@v1.8.2
+  #     uses: crystal-lang/install-crystal@v1.8.3
   #     with:
   #       crystal: latest
   #       
