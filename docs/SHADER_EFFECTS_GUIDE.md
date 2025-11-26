@@ -165,16 +165,34 @@ effect = SceneEffectFactory.create("rain",
 ```
 
 ### DarknessShader
+
+Supports four darkness modes:
+
 ```crystal
-# Vignette darkness
-effect = SceneEffectFactory.create("darkness", 
+# Vignette - darkens edges, light in center
+effect = SceneEffectFactory.create("darkness",
   type: "vignette",
   intensity: 0.8,
   inner_radius: 0.5,
   outer_radius: 1.2
 )
 
-# Multi-light system
+# Gradient - directional darkness
+effect = SceneEffectFactory.create("darkness",
+  type: "gradient",
+  intensity: 0.7,
+  gradient_angle: 45.0  # Angle in degrees
+)
+
+# Spotlight - circular light area
+effect = SceneEffectFactory.create("darkness",
+  type: "spotlight",
+  intensity: 0.9,
+  inner_radius: 0.3,
+  outer_radius: 0.6
+)
+
+# Multi-light system - up to 8 dynamic light sources
 darkness = SceneEffectFactory.create("darkness", type: "multilight")
 darkness.add_light(Vector2.new(100, 100), 150.0, 1.0, YELLOW)
 darkness.add_light(Vector2.new(500, 300), 200.0, 0.8, WHITE)
@@ -299,12 +317,81 @@ context = EffectContext.new(TargetType::Sprite, renderer, delta_time)
 effect_manager.apply_effects(sprite, context)
 ```
 
+## GPU Context and Graceful Fallbacks
+
+The shader effects system includes robust handling for environments without GPU access:
+
+### Context Checking
+
+```crystal
+# Check if GPU/OpenGL context is available
+if ShaderEffect.gl_context_available?
+  # Safe to create shader effects
+  effect = ObjectEffects.create("highlight", type: "glow")
+else
+  # Will automatically fall back to CPU effects
+end
+
+# Factory-level availability checks
+ShaderObjectFactory.available?        # Object shader effects
+PostProcessingFactory.available?      # Post-processing effects
+ShaderSceneEffectFactory.available?   # Scene shader effects
+```
+
+### Automatic Fallback Behavior
+
+When no GPU context is available:
+
+1. **Object Effects**: `ObjectEffects.create()` returns CPU-based effects instead of shader effects
+2. **Scene Effects**: Shader effects return `nil`, non-shader effects (shake, flash) still work
+3. **Post-Processing**: Returns `nil` (no CPU fallback for screen-space effects)
+
+```crystal
+# This works in both GPU and headless environments
+effect = ObjectEffects.create("highlight", type: "glow", color: "yellow")
+# With GPU: Returns HighlightShader (GPU-accelerated)
+# Without GPU: Returns HighlightEffect (CPU-based)
+
+# Check if shader acceleration is active
+if effect.is_a?(ShaderEffect) && effect.shader_available
+  puts "Using GPU-accelerated effect"
+else
+  puts "Using CPU fallback"
+end
+```
+
+### Shader Availability Property
+
+All shader effects expose a `shader_available` property:
+
+```crystal
+effect = PostProcessing.create("blur", radius: 5.0)
+if effect && effect.shader_available
+  # Shader compiled successfully
+else
+  # Shader failed to load or no GPU context
+end
+```
+
+### Testing Without GPU
+
+For headless testing environments (CI/CD):
+
+```crystal
+# Reset context check (useful in tests)
+ShaderEffect.reset_context_check
+
+# Run GPU-dependent tests with flag
+# crystal spec -D with_graphics_tests
+```
+
 ## Performance Considerations
 
-1. **Shader Compilation**: All shaders are compiled at initialization
+1. **Shader Compilation**: Shaders are compiled at initialization only if GPU context is available
 2. **Uniform Caching**: Uniform locations are cached to avoid lookups
-3. **Render Textures**: Effects requiring multiple passes use render textures
+3. **Render Textures**: Effects requiring multiple passes use render textures (created lazily)
 4. **Quality Settings**: Many effects support quality levels (low/medium/high)
+5. **Dynamic Texture Sizing**: HighlightShader creates render textures sized to sprite bounds
 
 ## Creating Custom Shaders
 

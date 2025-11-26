@@ -16,15 +16,20 @@ module PointClickEngine
       module SceneEffects
         # Factory for creating shader-based scene effects
         module ShaderSceneEffectFactory
+          # Check if OpenGL context is available for shader effects
+          def self.available? : Bool
+            ShaderEffect.gl_context_available?
+          end
+
           # Create effect from YAML parameters (consolidates all effect creation logic)
           def self.create_from_yaml(effect_type : String, params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : BaseSceneEffect?
             # Map fog_type to type for fog effects
             if effect_type == "fog" && params.has_key?("fog_type") && !params.has_key?("type")
               params["type"] = params["fog_type"]
             end
-            
+
             # Let each create method handle its own parameters
-            case effect_type.downcase
+            effect = case effect_type.downcase
             when "fog"
               create_fog_from_hash(params)
             when "rain"
@@ -40,14 +45,21 @@ module PointClickEngine
             else
               nil
             end
+
+            # Return nil if shader effect failed to load
+            if effect.is_a?(ShaderSceneEffect) && !effect.shader_available
+              return nil
+            end
+
+            effect
           end
-          
+
           # Create a scene effect by name
           def self.create(effect_name : String, **params) : BaseSceneEffect?
-            case effect_name.downcase
+            effect = case effect_name.downcase
             when "transition"
               create_transition(**params)
-              
+
             # Atmospheric effects (shader-based)
             when "fog"
               create_fog(**params)
@@ -59,22 +71,29 @@ module PointClickEngine
               create_darkness(**params)
             when "underwater"
               create_underwater(**params)
-              
+
             # Environmental effects
             when "heat_haze"
               create_heat_haze(**params)
             when "wind"
               create_wind(**params)
-              
+
             # Camera-style effects
             when "shake", "screen_shake"
               create_screen_shake(**params)
             when "flash"
               create_flash(**params)
-              
+
             else
               nil
             end
+
+            # Return nil if shader effect failed to load
+            if effect.is_a?(ShaderSceneEffect) && !effect.shader_available
+              return nil
+            end
+
+            effect
           end
           
           # Create transition effect (already implemented)

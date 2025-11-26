@@ -169,6 +169,30 @@ renderer.add_post_process(:crt_scanlines)
 - Parameter animation support
 - Fallback for unsupported hardware
 
+### GPU Context Handling
+
+The shader system includes robust handling for environments without GPU access:
+
+```crystal
+# Check GPU availability before shader operations
+if ShaderEffect.gl_context_available?
+  # GPU shaders available
+else
+  # Running in headless mode - CPU fallbacks used
+end
+
+# Factories automatically handle fallback
+ShaderObjectFactory.available?        # Check object shader availability
+PostProcessingFactory.available?      # Check post-processing availability
+ShaderSceneEffectFactory.available?   # Check scene shader availability
+```
+
+**Graceful Degradation:**
+- Object effects fall back to CPU implementations
+- Scene shader effects return `nil` when no GPU
+- All shaders expose `shader_available` property
+- Render textures created lazily only when needed
+
 ## UI Rendering
 
 ### Specialized UI Components

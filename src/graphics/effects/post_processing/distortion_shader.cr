@@ -57,8 +57,10 @@ module PointClickEngine
                          @strength : Float32 = 0.01f32,
                          duration : Float32 = 0.0f32)
             super(duration)
-            
-            @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+
+            if ShaderEffect.gl_context_available?
+              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+            end
           end
           
           def vertex_shader_source : String

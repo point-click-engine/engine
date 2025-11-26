@@ -15,16 +15,22 @@ module PointClickEngine
         abstract class ShaderSceneEffect < BaseSceneEffect
           @shader : RL::Shader?
           @render_texture : RL::RenderTexture2D?
-          
+
           # Common uniform locations
           @time_loc : Int32 = -1
           @progress_loc : Int32 = -1
           @resolution_loc : Int32 = -1
-          
+
+          # Track whether shader is available (GPU context exists)
+          getter shader_available : Bool = false
+
           def initialize(duration : Float32 = 0.0f32)
             super(duration)
-            load_shader
-            cache_uniform_locations if @shader
+            if ShaderEffect.gl_context_available?
+              load_shader
+              cache_uniform_locations if @shader
+              @shader_available = @shader != nil
+            end
           end
           
           # Abstract method to get vertex shader source

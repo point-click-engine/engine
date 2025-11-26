@@ -27,31 +27,41 @@ module PointClickEngine
             end
           end
 
+          # Check if OpenGL context is available for shader effects
+          def self.available? : Bool
+            ShaderEffect.gl_context_available?
+          end
+
           # Create a shader-based object effect by name
+          # Returns nil if GL context not available (allows fallback to CPU effects)
           def self.create(effect_name : String, **params) : Effect?
-            case effect_name.downcase
+            # Skip shader effects if no GL context
+            return nil unless available?
+
+            effect = case effect_name.downcase
             when "highlight", "glow"
               create_highlight(**params)
-              
             when "dissolve"
               create_dissolve(**params)
-              
             when "shake"
               create_shake(**params)
-              
             when "pulse", "breathe"
               create_pulse(**params)
-              
             when "tint", "flash", "color", "color_shift"
               create_color_shift(effect_name, **params)
-              
             when "float", "hover"
               create_float(**params)
-              
             else
               # Fall back to non-shader version if no shader implementation
               nil
             end
+
+            # Return nil if shader failed to load (allows CPU fallback)
+            if effect.is_a?(ShaderEffect) && !effect.shader_available
+              return nil
+            end
+
+            effect
           end
           
           # Create highlight effect

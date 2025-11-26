@@ -38,9 +38,11 @@ module PointClickEngine
                          @blur_radius : Float32 = 5.0f32,
                          duration : Float32 = 0.0f32)
             super(duration)
-            
-            @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
-            @horizontal_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+
+            if ShaderEffect.gl_context_available?
+              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              @horizontal_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+            end
           end
           
           def vertex_shader_source : String

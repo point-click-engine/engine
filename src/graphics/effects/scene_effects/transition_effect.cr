@@ -55,12 +55,14 @@ module PointClickEngine
                          @reverse : Bool = false)
             super(duration)
             @affect_all_layers = true
-            
-            # Initialize render texture for shader-based effects
-            @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
-            
-            # Load shader if this is a shader-based transition
-            load_shader_for_transition
+
+            # Initialize render texture for shader-based effects only if GL context available
+            if ShaderEffect.gl_context_available?
+              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+
+              # Load shader if this is a shader-based transition
+              load_shader_for_transition
+            end
           end
 
           # Set callback for midpoint (scene change)

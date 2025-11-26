@@ -13,9 +13,18 @@ module PointClickEngine
       module PostProcessing
         # Factory for creating post-processing effects
         module PostProcessingFactory
+          # Check if OpenGL context is available for post-processing effects
+          def self.available? : Bool
+            ShaderEffect.gl_context_available?
+          end
+
           # Create a post-processing effect by name
+          # Returns nil if GL context not available
           def self.create(effect_name : String, **params) : ShaderEffect?
-            case effect_name.downcase
+            # Skip if no GL context
+            return nil unless available?
+
+            effect = case effect_name.downcase
             # Blur effects
             when "blur", "gaussian_blur"
               create_blur(BlurType::Gaussian, **params)
@@ -25,7 +34,7 @@ module PointClickEngine
               create_blur(BlurType::Motion, **params)
             when "radial_blur", "zoom_blur"
               create_blur(BlurType::Radial, **params)
-              
+
             # Distortion effects
             when "heat_haze", "heat"
               create_distortion(DistortionType::HeatHaze, **params)
@@ -35,7 +44,7 @@ module PointClickEngine
               create_distortion(DistortionType::Lens, **params)
             when "ripple", "water_ripple"
               create_distortion(DistortionType::Ripple, **params)
-              
+
             # Glow effects
             when "glow", "bloom"
               create_glow(GlowMode::Simple, **params)
@@ -45,10 +54,17 @@ module PointClickEngine
               create_glow(GlowMode::Selective, **params)
             when "lens_glow", "lens_flare"
               create_glow(GlowMode::Lens, **params)
-              
+
             else
               nil
             end
+
+            # Return nil if shader failed to load
+            if effect && !effect.shader_available
+              return nil
+            end
+
+            effect
           end
           
           # Create blur effect

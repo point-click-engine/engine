@@ -33,9 +33,11 @@ module PointClickEngine
                          @fog_density : Float32 = 0.02f32,
                          duration : Float32 = 0.0f32)
             super(duration)
-            
+
             # Scene effects need a fullscreen render texture
-            @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+            if ShaderEffect.gl_context_available?
+              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+            end
           end
           
           def vertex_shader_source : String

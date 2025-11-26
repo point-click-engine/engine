@@ -13,16 +13,46 @@ module PointClickEngine
       abstract class ShaderEffect < Effect
         @shader : RL::Shader?
         @render_texture : RL::RenderTexture2D?
-        
+
         # Common uniform locations
         @time_loc : Int32 = -1
         @progress_loc : Int32 = -1
         @resolution_loc : Int32 = -1
-        
+
+        # Track whether shader is available (GPU context exists)
+        getter shader_available : Bool = false
+
+        # Class-level check for OpenGL context availability
+        @@gl_context_checked : Bool = false
+        @@gl_context_available : Bool = false
+
         def initialize(duration : Float32 = 0.0f32)
           super(duration)
-          load_shader
-          cache_uniform_locations if @shader
+          if self.class.gl_context_available?
+            load_shader
+            cache_uniform_locations if @shader
+            @shader_available = @shader != nil
+          end
+        end
+
+        # Check if OpenGL context is available (safe to call shader functions)
+        def self.gl_context_available? : Bool
+          return @@gl_context_available if @@gl_context_checked
+
+          @@gl_context_checked = true
+          begin
+            # Check if a window/context is ready
+            @@gl_context_available = RL.window_ready?
+          rescue
+            @@gl_context_available = false
+          end
+          @@gl_context_available
+        end
+
+        # Reset the context check (useful for tests)
+        def self.reset_context_check
+          @@gl_context_checked = false
+          @@gl_context_available = false
         end
         
         # Abstract method to get vertex shader source

@@ -31,8 +31,10 @@ module PointClickEngine
                          @wind_strength : Float32 = 0.2f32,
                          duration : Float32 = 0.0f32)
             super(duration)
-            
-            @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+
+            if ShaderEffect.gl_context_available?
+              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+            end
           end
           
           def vertex_shader_source : String
@@ -93,11 +95,13 @@ module PointClickEngine
             }
             
             // Get rain density based on intensity
+            // rainIntensity is passed as enum value: 0=Light, 1=Medium, 2=Heavy, 3=Storm
             float getRainDensity() {
-                if (rainIntensity < 0.5) return 10.0;  // Light
-                else if (rainIntensity < 1.5) return 25.0;  // Medium  
-                else if (rainIntensity < 2.5) return 50.0;  // Heavy
-                else return 80.0;  // Storm
+                int intensity = int(rainIntensity);
+                if (intensity == 0) return 10.0;       // Light
+                else if (intensity == 1) return 25.0;  // Medium
+                else if (intensity == 2) return 50.0;  // Heavy
+                else return 80.0;                      // Storm
             }
             
             void main()

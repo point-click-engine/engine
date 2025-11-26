@@ -26,15 +26,36 @@ module PointClickEngine
           property thickness : Float32 = 2.0f32
           property glow_intensity : Float32 = 2.0f32
           property pulse_speed : Float32 = 2.0f32
-          
+
+          # Dynamic texture size based on sprite
+          @texture_width : Int32 = 256
+          @texture_height : Int32 = 256
+
           def initialize(@style : HighlightStyle = HighlightStyle::Outline,
                          @color : RL::Color = RL::Color.new(r: 255, g: 255, b: 0, a: 255),
                          @thickness : Float32 = 2.0f32,
                          duration : Float32 = 0.0f32)
             super(duration)
-            
-            # Need render texture for outline detection
-            @render_texture = RL.load_render_texture(256, 256)  # Reasonable size for sprites
+
+            # Render texture created lazily when we know sprite dimensions
+          end
+
+          # Ensure render texture matches sprite size
+          def ensure_render_texture(width : Int32, height : Int32)
+            return unless ShaderEffect.gl_context_available?
+
+            # Add padding for glow/outline effects
+            padded_width = width + (@thickness.to_i * 4)
+            padded_height = height + (@thickness.to_i * 4)
+
+            if @render_texture.nil? || @texture_width != padded_width || @texture_height != padded_height
+              # Cleanup old texture if exists
+              @render_texture.try { |rt| RL.unload_render_texture(rt) }
+
+              @texture_width = padded_width
+              @texture_height = padded_height
+              @render_texture = RL.load_render_texture(padded_width, padded_height)
+            end
           end
           
           def vertex_shader_source : String
@@ -165,26 +186,35 @@ module PointClickEngine
           def apply(context : EffectContext)
             return unless shader = @shader
             return unless sprite = context.sprite
-            
+
+            # Ensure render texture is properly sized for this sprite
+            if bounds = sprite.bounds
+              ensure_render_texture(bounds.width.to_i, bounds.height.to_i)
+            end
+
             # Begin shader mode
             RL.begin_shader_mode(shader)
-            
+
             # Update shader uniforms
             update_common_uniforms(shader)
-            
+
             # Set specific uniforms
             set_shader_value("highlightStyle", @style.value.to_f32)
             set_shader_value("highlightColor", @color)
             set_shader_value("thickness", @thickness)
             set_shader_value("glowIntensity", @glow_intensity)
             set_shader_value("pulseSpeed", @pulse_speed)
-            
-            # Set texture size (assuming sprite has bounds)
+
+            # Set texture size from sprite bounds
             if bounds = sprite.bounds
               texture_size = RL::Vector2.new(x: bounds.width, y: bounds.height)
               set_shader_value("textureSize", texture_size)
+            else
+              # Fallback to render texture size
+              texture_size = RL::Vector2.new(x: @texture_width.to_f32, y: @texture_height.to_f32)
+              set_shader_value("textureSize", texture_size)
             end
-            
+
             # Store shader in context
             context.active_shader = shader
           end

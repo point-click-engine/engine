@@ -47,8 +47,10 @@ module PointClickEngine
                          @darkness_intensity : Float32 = 0.8f32,
                          duration : Float32 = 0.0f32)
             super(duration)
-            
-            @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+
+            if ShaderEffect.gl_context_available?
+              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+            end
           end
           
           def vertex_shader_source : String
@@ -129,19 +131,36 @@ module PointClickEngine
             void main()
             {
                 vec4 sceneColor = texture(texture0, fragTexCoord);
-                
-                // Calculate distance from center
-                vec2 center = vec2(0.5, 0.5);
-                float dist = distance(fragTexCoord, center);
-                
-                // Create vignette - darken edges
-                // dist goes from 0 (center) to ~0.7 (corners)
-                float vignette = pow(dist * 1.5, 2.0);
-                vignette = clamp(vignette, 0.0, 1.0);
-                
-                // Apply darkness
-                vec3 finalRGB = sceneColor.rgb * (1.0 - vignette * intensity);
-                
+                float darknessFactor = 0.0;
+                vec3 lightContribution = vec3(0.0);
+
+                int dType = int(darknessType);
+
+                if (dType == 0) {
+                    // Vignette - darken edges
+                    darknessFactor = getVignette(fragTexCoord);
+                } else if (dType == 1) {
+                    // Gradient - directional darkness
+                    darknessFactor = getGradient(fragTexCoord);
+                } else if (dType == 2) {
+                    // Spotlight - circular light area
+                    darknessFactor = getSpotlight(fragTexCoord);
+                } else if (dType == 3) {
+                    // MultiLight - multiple light sources
+                    vec4 multiLightDarkness = getMultiLight(fragTexCoord);
+                    darknessFactor = multiLightDarkness.r;
+                    lightContribution = (vec4(1.0) - multiLightDarkness).rgb * 0.3;
+                }
+
+                // Apply darkness with intensity control
+                darknessFactor = clamp(darknessFactor * intensity, 0.0, 1.0);
+
+                // Blend scene with darkness color
+                vec3 finalRGB = mix(sceneColor.rgb, darknessColor.rgb, darknessFactor);
+
+                // Add light contribution for multi-light mode
+                finalRGB += lightContribution;
+
                 finalColor = vec4(finalRGB, sceneColor.a);
             }
             SHADER
