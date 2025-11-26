@@ -276,6 +276,9 @@ module PointClickEngine
               duration = Effects.to_float(params[:duration]?, 0.0f32)
 
               SceneColorEffect.new(mode, color, duration)
+            when "fog", "rain", "darkness", "vignette", "underwater", "flash"
+              # Delegate to shader scene effect factory for shader-based effects
+              ShaderSceneEffectFactory.create(effect_name, **params)
             else
               # Try to adapt an object effect
               from_object_effect(effect_name, **params)

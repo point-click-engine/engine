@@ -1,62 +1,36 @@
 require "../../spec_helper"
 
+# Mock shader effect for testing (must be outside describe block)
+# This mock skips actual shader loading since we don't have a GPU context in tests
+class TestShaderEffect < PointClickEngine::Graphics::Effects::ShaderEffect
+  property test_value : Float32 = 0.0f32
+
+  # Override to skip actual shader loading (no GPU context in tests)
+  protected def load_shader : RL::Shader?
+    nil
+  end
+
+  def vertex_shader_source : String
+    ""
+  end
+
+  def fragment_shader_source : String
+    ""
+  end
+
+  def apply(context : PointClickEngine::Graphics::Effects::EffectContext)
+    # No-op for tests without GPU context
+  end
+
+  def clone : PointClickEngine::Graphics::Effects::Effect
+    effect = TestShaderEffect.new(@duration)
+    effect.test_value = @test_value
+    effect
+  end
+end
+
 # Tests for the shader-based effects system
 describe PointClickEngine::Graphics::Effects::ShaderEffect do
-  # Mock shader effect for testing
-  class TestShaderEffect < PointClickEngine::Graphics::Effects::ShaderEffect
-    property test_value : Float32 = 0.0f32
-    
-    def vertex_shader_source : String
-      <<-SHADER
-      #version 330 core
-      in vec3 vertexPosition;
-      in vec2 vertexTexCoord;
-      in vec4 vertexColor;
-      out vec2 fragTexCoord;
-      out vec4 fragColor;
-      uniform mat4 mvp;
-      void main() {
-          fragTexCoord = vertexTexCoord;
-          fragColor = vertexColor;
-          gl_Position = mvp * vec4(vertexPosition, 1.0);
-      }
-      SHADER
-    end
-    
-    def fragment_shader_source : String
-      <<-SHADER
-      #version 330 core
-      in vec2 fragTexCoord;
-      in vec4 fragColor;
-      out vec4 finalColor;
-      uniform sampler2D texture0;
-      uniform float time;
-      uniform float progress;
-      uniform vec2 resolution;
-      uniform float testValue;
-      void main() {
-          vec4 color = texture(texture0, fragTexCoord) * fragColor;
-          color.rgb *= testValue;
-          finalColor = color;
-      }
-      SHADER
-    end
-    
-    def apply(context : PointClickEngine::Graphics::Effects::EffectContext)
-      return unless shader = @shader
-      
-      context.active_shader = shader
-      update_common_uniforms(shader)
-      set_shader_value("testValue", @test_value)
-    end
-    
-    def clone : PointClickEngine::Graphics::Effects::Effect
-      effect = TestShaderEffect.new(@duration)
-      effect.test_value = @test_value
-      effect
-    end
-  end
-  
   describe "initialization" do
     it "creates shader effect with proper defaults" do
       effect = TestShaderEffect.new

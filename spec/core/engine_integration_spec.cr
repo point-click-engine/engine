@@ -218,7 +218,7 @@ describe "Engine Integration with YAML Configuration" do
       result.should_not be_nil
       if result
         result[:scene].should eq("room2")
-        result[:effect].should eq(PointClickEngine::Graphics::TransitionEffect::Fade)
+        result[:effect].should eq(PointClickEngine::Graphics::Effects::SceneEffects::TransitionType::Fade)
         result[:duration].should eq(1.0f32)
         if pos = result[:position]
           pos.x.should eq(100f32)

@@ -88,7 +88,7 @@ describe PointClickEngine::Core::Engine do
         engine.add_scene(target_scene)
         engine.change_scene("start")
 
-        engine.change_scene_with_transition("target", nil, 1.0f32)
+        engine.change_scene_with_transition("target", "fade", 1.0f32)
 
         # Transition should be in progress
         # engine.scene_manager.transitioning?.should be_true # Method doesn't exist
@@ -125,7 +125,7 @@ describe PointClickEngine::Core::Engine do
         start_x, start_y = 100, 200
         target_pos = RL::Vector2.new(x: start_x.to_f32, y: start_y.to_f32)
 
-        engine.change_scene_with_transition("target", nil, 1.0f32, target_pos)
+        engine.change_scene_with_transition("target", "fade", 1.0f32, target_pos)
 
         # Player should be positioned correctly
         if player = engine.player
@@ -291,7 +291,7 @@ describe PointClickEngine::Core::Engine do
 
         new_x, new_y = 150, 250
 
-        engine.change_scene_with_transition("target", nil, 1.0f32, RL::Vector2.new(x: new_x.to_f32, y: new_y.to_f32))
+        engine.change_scene_with_transition("target", "fade", 1.0f32, RL::Vector2.new(x: new_x.to_f32, y: new_y.to_f32))
 
         if player = engine.player
           player.position.x.should eq(new_x.to_f32)
@@ -400,7 +400,7 @@ describe PointClickEngine::Core::Engine do
 
         start_time = Time.monotonic
 
-        engine.change_scene_with_transition("target", nil, 0.1f32)
+        engine.change_scene_with_transition("target", "fade", 0.1f32)
 
         # Skip transition completion check - transitioning? method doesn't exist
         # Just update a few times to simulate transition
