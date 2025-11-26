@@ -219,20 +219,21 @@ describe PointClickEngine::Scenes::Scene do
   end
 
   describe "navigation setup with character size" do
-    it "requires background texture for navigation setup" do
+    it "creates navigation grid using logical dimensions" do
       scene = PointClickEngine::Scenes::Scene.new("test_scene")
       scene.logical_width = 1024
       scene.logical_height = 768
+      scene.enable_pathfinding = true
 
-      # Without background, navigation won't be set up
+      # Navigation works without a background texture using logical dimensions
       character_radius = 42.0_f32
       scene.setup_navigation(character_radius)
 
-      # Should not create grid without background
-      scene.navigation_grid.should be_nil
+      # Should create grid using logical dimensions, not background texture
+      scene.navigation_grid.should_not be_nil
 
-      # Navigation requires background texture in the actual implementation
-      # This test documents that requirement
+      # Navigation no longer requires background texture - uses logical dimensions
+      # This allows navigation to work in scenes with dynamic/no backgrounds
     end
   end
 end

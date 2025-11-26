@@ -1,0 +1,502 @@
+name: "test"
+background_path: "test_assets/complex_bg.png"
+hotspots:  - name: "hotspot_0"
+    x: 0
+    y: 0
+    width: 50
+    height: 50
+  - name: "hotspot_1"
+    x: 10
+    y: 10
+    width: 50
+    height: 50
+  - name: "hotspot_2"
+    x: 20
+    y: 20
+    width: 50
+    height: 50
+  - name: "hotspot_3"
+    x: 30
+    y: 30
+    width: 50
+    height: 50
+  - name: "hotspot_4"
+    x: 40
+    y: 40
+    width: 50
+    height: 50
+  - name: "hotspot_5"
+    x: 50
+    y: 50
+    width: 50
+    height: 50
+  - name: "hotspot_6"
+    x: 60
+    y: 60
+    width: 50
+    height: 50
+  - name: "hotspot_7"
+    x: 70
+    y: 70
+    width: 50
+    height: 50
+  - name: "hotspot_8"
+    x: 80
+    y: 80
+    width: 50
+    height: 50
+  - name: "hotspot_9"
+    x: 90
+    y: 90
+    width: 50
+    height: 50
+  - name: "hotspot_10"
+    x: 100
+    y: 100
+    width: 50
+    height: 50
+  - name: "hotspot_11"
+    x: 110
+    y: 110
+    width: 50
+    height: 50
+  - name: "hotspot_12"
+    x: 120
+    y: 120
+    width: 50
+    height: 50
+  - name: "hotspot_13"
+    x: 130
+    y: 130
+    width: 50
+    height: 50
+  - name: "hotspot_14"
+    x: 140
+    y: 140
+    width: 50
+    height: 50
+  - name: "hotspot_15"
+    x: 150
+    y: 150
+    width: 50
+    height: 50
+  - name: "hotspot_16"
+    x: 160
+    y: 160
+    width: 50
+    height: 50
+  - name: "hotspot_17"
+    x: 170
+    y: 170
+    width: 50
+    height: 50
+  - name: "hotspot_18"
+    x: 180
+    y: 180
+    width: 50
+    height: 50
+  - name: "hotspot_19"
+    x: 190
+    y: 190
+    width: 50
+    height: 50
+  - name: "hotspot_20"
+    x: 200
+    y: 200
+    width: 50
+    height: 50
+  - name: "hotspot_21"
+    x: 210
+    y: 210
+    width: 50
+    height: 50
+  - name: "hotspot_22"
+    x: 220
+    y: 220
+    width: 50
+    height: 50
+  - name: "hotspot_23"
+    x: 230
+    y: 230
+    width: 50
+    height: 50
+  - name: "hotspot_24"
+    x: 240
+    y: 240
+    width: 50
+    height: 50
+  - name: "hotspot_25"
+    x: 250
+    y: 250
+    width: 50
+    height: 50
+  - name: "hotspot_26"
+    x: 260
+    y: 260
+    width: 50
+    height: 50
+  - name: "hotspot_27"
+    x: 270
+    y: 270
+    width: 50
+    height: 50
+  - name: "hotspot_28"
+    x: 280
+    y: 280
+    width: 50
+    height: 50
+  - name: "hotspot_29"
+    x: 290
+    y: 290
+    width: 50
+    height: 50
+  - name: "hotspot_30"
+    x: 300
+    y: 300
+    width: 50
+    height: 50
+  - name: "hotspot_31"
+    x: 310
+    y: 310
+    width: 50
+    height: 50
+  - name: "hotspot_32"
+    x: 320
+    y: 320
+    width: 50
+    height: 50
+  - name: "hotspot_33"
+    x: 330
+    y: 330
+    width: 50
+    height: 50
+  - name: "hotspot_34"
+    x: 340
+    y: 340
+    width: 50
+    height: 50
+  - name: "hotspot_35"
+    x: 350
+    y: 350
+    width: 50
+    height: 50
+  - name: "hotspot_36"
+    x: 360
+    y: 360
+    width: 50
+    height: 50
+  - name: "hotspot_37"
+    x: 370
+    y: 370
+    width: 50
+    height: 50
+  - name: "hotspot_38"
+    x: 380
+    y: 380
+    width: 50
+    height: 50
+  - name: "hotspot_39"
+    x: 390
+    y: 390
+    width: 50
+    height: 50
+  - name: "hotspot_40"
+    x: 400
+    y: 400
+    width: 50
+    height: 50
+  - name: "hotspot_41"
+    x: 410
+    y: 410
+    width: 50
+    height: 50
+  - name: "hotspot_42"
+    x: 420
+    y: 420
+    width: 50
+    height: 50
+  - name: "hotspot_43"
+    x: 430
+    y: 430
+    width: 50
+    height: 50
+  - name: "hotspot_44"
+    x: 440
+    y: 440
+    width: 50
+    height: 50
+  - name: "hotspot_45"
+    x: 450
+    y: 450
+    width: 50
+    height: 50
+  - name: "hotspot_46"
+    x: 460
+    y: 460
+    width: 50
+    height: 50
+  - name: "hotspot_47"
+    x: 470
+    y: 470
+    width: 50
+    height: 50
+  - name: "hotspot_48"
+    x: 480
+    y: 480
+    width: 50
+    height: 50
+  - name: "hotspot_49"
+    x: 490
+    y: 490
+    width: 50
+    height: 50
+  - name: "hotspot_50"
+    x: 500
+    y: 500
+    width: 50
+    height: 50
+  - name: "hotspot_51"
+    x: 510
+    y: 510
+    width: 50
+    height: 50
+  - name: "hotspot_52"
+    x: 520
+    y: 520
+    width: 50
+    height: 50
+  - name: "hotspot_53"
+    x: 530
+    y: 530
+    width: 50
+    height: 50
+  - name: "hotspot_54"
+    x: 540
+    y: 540
+    width: 50
+    height: 50
+  - name: "hotspot_55"
+    x: 550
+    y: 550
+    width: 50
+    height: 50
+  - name: "hotspot_56"
+    x: 560
+    y: 560
+    width: 50
+    height: 50
+  - name: "hotspot_57"
+    x: 570
+    y: 570
+    width: 50
+    height: 50
+  - name: "hotspot_58"
+    x: 580
+    y: 580
+    width: 50
+    height: 50
+  - name: "hotspot_59"
+    x: 590
+    y: 590
+    width: 50
+    height: 50
+  - name: "hotspot_60"
+    x: 600
+    y: 600
+    width: 50
+    height: 50
+  - name: "hotspot_61"
+    x: 610
+    y: 610
+    width: 50
+    height: 50
+  - name: "hotspot_62"
+    x: 620
+    y: 620
+    width: 50
+    height: 50
+  - name: "hotspot_63"
+    x: 630
+    y: 630
+    width: 50
+    height: 50
+  - name: "hotspot_64"
+    x: 640
+    y: 640
+    width: 50
+    height: 50
+  - name: "hotspot_65"
+    x: 650
+    y: 650
+    width: 50
+    height: 50
+  - name: "hotspot_66"
+    x: 660
+    y: 660
+    width: 50
+    height: 50
+  - name: "hotspot_67"
+    x: 670
+    y: 670
+    width: 50
+    height: 50
+  - name: "hotspot_68"
+    x: 680
+    y: 680
+    width: 50
+    height: 50
+  - name: "hotspot_69"
+    x: 690
+    y: 690
+    width: 50
+    height: 50
+  - name: "hotspot_70"
+    x: 700
+    y: 700
+    width: 50
+    height: 50
+  - name: "hotspot_71"
+    x: 710
+    y: 710
+    width: 50
+    height: 50
+  - name: "hotspot_72"
+    x: 720
+    y: 720
+    width: 50
+    height: 50
+  - name: "hotspot_73"
+    x: 730
+    y: 730
+    width: 50
+    height: 50
+  - name: "hotspot_74"
+    x: 740
+    y: 740
+    width: 50
+    height: 50
+  - name: "hotspot_75"
+    x: 750
+    y: 750
+    width: 50
+    height: 50
+  - name: "hotspot_76"
+    x: 760
+    y: 760
+    width: 50
+    height: 50
+  - name: "hotspot_77"
+    x: 770
+    y: 770
+    width: 50
+    height: 50
+  - name: "hotspot_78"
+    x: 780
+    y: 780
+    width: 50
+    height: 50
+  - name: "hotspot_79"
+    x: 790
+    y: 790
+    width: 50
+    height: 50
+  - name: "hotspot_80"
+    x: 800
+    y: 800
+    width: 50
+    height: 50
+  - name: "hotspot_81"
+    x: 810
+    y: 810
+    width: 50
+    height: 50
+  - name: "hotspot_82"
+    x: 820
+    y: 820
+    width: 50
+    height: 50
+  - name: "hotspot_83"
+    x: 830
+    y: 830
+    width: 50
+    height: 50
+  - name: "hotspot_84"
+    x: 840
+    y: 840
+    width: 50
+    height: 50
+  - name: "hotspot_85"
+    x: 850
+    y: 850
+    width: 50
+    height: 50
+  - name: "hotspot_86"
+    x: 860
+    y: 860
+    width: 50
+    height: 50
+  - name: "hotspot_87"
+    x: 870
+    y: 870
+    width: 50
+    height: 50
+  - name: "hotspot_88"
+    x: 880
+    y: 880
+    width: 50
+    height: 50
+  - name: "hotspot_89"
+    x: 890
+    y: 890
+    width: 50
+    height: 50
+  - name: "hotspot_90"
+    x: 900
+    y: 900
+    width: 50
+    height: 50
+  - name: "hotspot_91"
+    x: 910
+    y: 910
+    width: 50
+    height: 50
+  - name: "hotspot_92"
+    x: 920
+    y: 920
+    width: 50
+    height: 50
+  - name: "hotspot_93"
+    x: 930
+    y: 930
+    width: 50
+    height: 50
+  - name: "hotspot_94"
+    x: 940
+    y: 940
+    width: 50
+    height: 50
+  - name: "hotspot_95"
+    x: 950
+    y: 950
+    width: 50
+    height: 50
+  - name: "hotspot_96"
+    x: 960
+    y: 960
+    width: 50
+    height: 50
+  - name: "hotspot_97"
+    x: 970
+    y: 970
+    width: 50
+    height: 50
+  - name: "hotspot_98"
+    x: 980
+    y: 980
+    width: 50
+    height: 50
+  - name: "hotspot_99"
+    x: 990
+    y: 990
+    width: 50
+    height: 50

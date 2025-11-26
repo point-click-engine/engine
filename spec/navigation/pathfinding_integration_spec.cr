@@ -131,7 +131,8 @@ describe "Pathfinding Integration Tests" do
       character = TestCharacter.new("threshold_edge", RL::Vector2.new(100.0_f32, 100.0_f32), RL::Vector2.new(16.0_f32, 16.0_f32))
       controller = PointClickEngine::Characters::MovementController.new(character)
 
-      threshold = PointClickEngine::Core::GameConstants::PATHFINDING_WAYPOINT_THRESHOLD
+      # Use MOVEMENT_ARRIVAL_THRESHOLD which is what the controller uses to advance waypoints
+      threshold = PointClickEngine::Core::GameConstants::MOVEMENT_ARRIVAL_THRESHOLD
 
       # Test exact threshold distance
       exact_threshold_point = RL::Vector2.new(100.0_f32 + threshold, 100.0_f32)
@@ -144,7 +145,8 @@ describe "Pathfinding Integration Tests" do
 
       controller.move_along_path(path)
 
-      # Position character exactly at threshold distance
+      # Position character exactly at threshold distance from waypoint 0 (100,100)
+      # At this position, distance to waypoint 0 equals threshold, so it should advance
       character.position = exact_threshold_point
       controller.update(0.016_f32)
 

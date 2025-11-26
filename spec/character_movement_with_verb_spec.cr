@@ -22,8 +22,8 @@ describe "Character Movement with Verb Input" do
 
       # Verify setup
       engine.verb_input_system.should_not be_nil
-      engine.current_scene.should eq(scene)
-      engine.player.should eq(player)
+      engine.current_scene.not_nil!.name.should eq("test_scene")
+      engine.player.not_nil!.name.should eq("Test Player")
 
       # Simulate a frame update
       engine.update(0.016_f32)

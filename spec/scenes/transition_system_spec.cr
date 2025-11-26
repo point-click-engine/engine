@@ -1,6 +1,11 @@
 require "../spec_helper"
 
 describe "New Transition System" do
+  # Window is required for RenderTexture
+  before_each do
+    RaylibContext.ensure_window(800, 600, "Test")
+  end
+
   it "creates transition effects" do
     # Test that we can create a transition effect
     transition = PointClickEngine::Graphics::TransitionSceneEffect.new(

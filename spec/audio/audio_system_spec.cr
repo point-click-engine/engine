@@ -9,13 +9,9 @@ describe "Audio System Comprehensive Testing" do
       available = PointClickEngine::Audio.available?
       available.should be_a(Bool)
 
-      {% if flag?(:with_audio) %}
-        available.should be_true
-        puts "Audio system: ENABLED"
-      {% else %}
-        available.should be_false
-        puts "Audio system: DISABLED (stub mode)"
-      {% end %}
+      # Audio is always available since we have raylib audio
+      available.should be_true
+      puts "Audio system: ENABLED (raylib audio always available)"
     end
   end
 

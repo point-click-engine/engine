@@ -214,6 +214,7 @@ describe "Minimal Game Example" do
     # Audio volumes are now in UserSettings, not in the main config
     config.settings.not_nil!.debug_mode.should eq(false)
 
+    PointClickEngine::Core::Engine.reset_instance
     RL.close_window
 
     # Now "modify" the game without changing code
@@ -248,6 +249,7 @@ describe "Minimal Game Example" do
     config2.features.includes?("shaders").should be_true
 
     # Cleanup
+    PointClickEngine::Core::Engine.reset_instance
     RL.close_window
     File.delete("game_v1.yaml")
     File.delete("game_v2.yaml")

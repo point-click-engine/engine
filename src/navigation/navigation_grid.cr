@@ -170,22 +170,18 @@ module PointClickEngine
               world_pos = RL::Vector2.new(x: world_x, y: world_y)
 
               # Check if a character-sized area can fit here
-              # We use a more lenient approach: check center and a smaller radius
-              # This prevents overly restrictive navigation grids
-              reduced_radius = character_radius * PointClickEngine::Core::GameConstants::NAVIGATION_RADIUS_REDUCTION # Use reduced radius for more flexibility
-
+              # We check the center and cardinal directions at full character radius
+              # All points must be walkable to prevent character clipping into walls
               check_points = [
                 world_pos, # Center must always be walkable
-                RL::Vector2.new(x: world_x - reduced_radius, y: world_y - reduced_radius),
-                RL::Vector2.new(x: world_x + reduced_radius, y: world_y - reduced_radius),
-                RL::Vector2.new(x: world_x - reduced_radius, y: world_y + reduced_radius),
-                RL::Vector2.new(x: world_x + reduced_radius, y: world_y + reduced_radius),
+                RL::Vector2.new(x: world_x - character_radius, y: world_y), # Left
+                RL::Vector2.new(x: world_x + character_radius, y: world_y), # Right
+                RL::Vector2.new(x: world_x, y: world_y - character_radius), # Top
+                RL::Vector2.new(x: world_x, y: world_y + character_radius), # Bottom
               ]
 
-              # Center must be walkable, and at least 3 out of 5 points should be walkable
-              center_walkable = walkable_area.is_point_walkable?(world_pos)
-              points_walkable_count = check_points.count { |point| walkable_area.is_point_walkable?(point) }
-              is_walkable = center_walkable && points_walkable_count >= 3
+              # All points must be walkable to prevent character clipping
+              is_walkable = check_points.all? { |point| walkable_area.is_point_walkable?(point) }
 
               # Count walkable cells
               total_walkable_cells += 1 if is_walkable

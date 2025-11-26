@@ -10,6 +10,7 @@ require "./audio_resource_cache"
 module PointClickEngine
   module Audio
     # Check if audio is available
+    # Always returns true since raylib audio is always available
     def self.available?
       true
     end

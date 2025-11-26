@@ -147,10 +147,10 @@ describe "Lua Scripting Integration Tests" do
       # May return an error message rather than nil
       result.should_not be_nil if result # Allow either nil or error message
 
-      # Call function with wrong arguments
+      # Call function with wrong arguments - arithmetic on nil will error
       engine.execute_script("function needs_two_args(a, b) return a + b end")
-      result = engine.call_function("needs_two_args", 1) # Missing second argument
-      result.should_not be_nil                           # Lua allows this, second arg is nil
+      result = engine.call_function("needs_two_args", 1) # Missing second argument causes nil + 1 error
+      result.should be_nil                               # Returns nil due to runtime error
 
       engine.cleanup
     end

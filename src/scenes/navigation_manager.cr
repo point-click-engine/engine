@@ -77,15 +77,18 @@ module PointClickEngine
         end_grid_x = (end_x / @grid_cell_size).to_i
         end_grid_y = (end_y / @grid_cell_size).to_i
 
-        # Ensure coordinates are within grid bounds
+        # Clamp grid coordinates to bounds
         start_grid_x = start_grid_x.clamp(0, nav_grid.width - 1)
         start_grid_y = start_grid_y.clamp(0, nav_grid.height - 1)
         end_grid_x = end_grid_x.clamp(0, nav_grid.width - 1)
         end_grid_y = end_grid_y.clamp(0, nav_grid.height - 1)
 
-        # Find path using AStarAlgorithm
-        # Note: AStarAlgorithm expects world coordinates and returns world coordinates!
-        pathfinder.find_path(start_x.to_f32, start_y.to_f32, end_x.to_f32, end_y.to_f32)
+        # Convert clamped grid coordinates back to world coordinates
+        clamped_start_x, clamped_start_y = nav_grid.grid_to_world(start_grid_x, start_grid_y)
+        clamped_end_x, clamped_end_y = nav_grid.grid_to_world(end_grid_x, end_grid_y)
+
+        # Find path using AStarAlgorithm with clamped coordinates
+        pathfinder.find_path(clamped_start_x, clamped_start_y, clamped_end_x, clamped_end_y)
       end
 
       # Checks if a specific position is navigable

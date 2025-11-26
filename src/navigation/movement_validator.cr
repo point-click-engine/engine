@@ -141,11 +141,11 @@ module PointClickEngine
         return false unless grid.in_bounds?(end_x, end_y)
 
         # Convert to grid coordinates
-        start_grid_x, start_grid_y = grid.world_to_grid(start_x, start_y)
         end_grid_x, end_grid_y = grid.world_to_grid(end_x, end_y)
 
-        # Check if start and end positions are walkable
-        return false unless grid.is_walkable?(start_grid_x, start_grid_y)
+        # Only check if end position is walkable
+        # Start position doesn't need to be walkable since the character is already there
+        # (e.g., character might be standing on an obstacle it walked onto before it was placed)
         return false unless grid.is_walkable?(end_grid_x, end_grid_y)
 
         # Same-cell movements are valid - the algorithm handles them

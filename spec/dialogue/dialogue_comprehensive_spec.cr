@@ -355,6 +355,15 @@ describe "Dialogue System Comprehensive Tests" do
   end
 
   describe "dialogue performance and memory tests" do
+    before_each do
+      RaylibContext.ensure_window
+      PointClickEngine::Core::Engine.new(640, 480, "Test")
+    end
+
+    after_each do
+      PointClickEngine::Core::Engine.reset_instance
+    end
+
     it "handles many dialog nodes efficiently" do
       tree = PointClickEngine::Characters::Dialogue::DialogTree.new("Performance Test")
 
