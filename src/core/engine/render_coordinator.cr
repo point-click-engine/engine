@@ -5,6 +5,9 @@ require "../../ui/dialog"
 require "../../cutscenes/cutscene_manager"
 require "../../graphics/graphics"
 require "../../graphics/effects/scene_effects/shader/fog_shader"
+require "../../graphics/effects/scene_effects/shader/rain_shader"
+require "../../graphics/effects/scene_effects/shader/darkness_shader"
+require "../../graphics/effects/scene_effects/shader/underwater_shader"
 
 module PointClickEngine
   module Core
@@ -63,23 +66,30 @@ module PointClickEngine
           # Clear background
           RL.clear_background(RL::BLACK)
 
-          # Check for shader effects in the scene
-          fog_effect = scene.try do |s|
-            s.scene_effects.find { |effect| effect.is_a?(Graphics::Effects::SceneEffects::FogShader) }
+          # Get effect manager from engine
+          effect_manager = if engine = Engine.instance?
+            engine.effect_manager
           end
           
-          rain_effect = scene.try do |s|
-            s.scene_effects.find { |effect| effect.is_a?(Graphics::Effects::SceneEffects::RainShader) }
-          end
-          
-          if fog_effect && fog_effect.is_a?(Graphics::Effects::SceneEffects::FogShader)
-            # Render scene with fog effect
-            fog_effect.render_scene_with_fog do
-              scene.try(&.draw(camera))
+          # Check for active shader effects in effect manager
+          shader_effect = effect_manager.try do |em|
+            # Debug: print all scene effects
+            if Core::Engine.debug_mode && !em.scene_effects.empty?
+              puts "[RenderCoordinator] Scene effects in effect manager: #{em.scene_effects.map(&.class.name).join(", ")}"
             end
-          elsif rain_effect && rain_effect.is_a?(Graphics::Effects::SceneEffects::RainShader)
-            # Render scene with rain effect
-            rain_effect.render_scene_with_rain do
+
+            # Find first shader effect that can render
+            em.scene_effects.find { |effect| effect.responds_to?(:render_scene_with_effect) }
+          end
+          
+          if shader_effect && shader_effect.responds_to?(:render_scene_with_effect)
+            # Debug output
+            if Core::Engine.debug_mode
+              puts "[RenderCoordinator] Rendering with shader effect: #{shader_effect.class.name}"
+            end
+            
+            # Render scene with shader effect
+            shader_effect.render_scene_with_effect do
               scene.try(&.draw(camera))
             end
           else

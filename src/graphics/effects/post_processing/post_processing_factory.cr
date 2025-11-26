@@ -53,8 +53,8 @@ module PointClickEngine
           
           # Create blur effect
           private def self.create_blur(blur_type : BlurType, **params) : BlurShader
-            radius = params[:radius]?.try(&.as(Number).to_f32) || 5.0f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            radius = Effects.to_float(params[:radius]?, 5.0f32)
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
             
             effect = BlurShader.new(blur_type, radius, duration)
             
@@ -63,8 +63,8 @@ module PointClickEngine
             
             # Motion blur specific
             if blur_type.motion?
-              effect.motion_angle = params[:angle]?.try(&.as(Number).to_f32) || 0.0f32
-              effect.motion_strength = params[:strength]?.try(&.as(Number).to_f32) || 0.02f32
+              effect.motion_angle = Effects.to_float(params[:angle]?, 0.0f32)
+              effect.motion_strength = Effects.to_float(params[:strength]?, 0.02f32)
             end
             
             # Radial blur specific
@@ -80,19 +80,19 @@ module PointClickEngine
           
           # Create distortion effect
           private def self.create_distortion(distortion_type : DistortionType, **params) : DistortionShader
-            strength = params[:strength]?.try(&.as(Number).to_f32) || 0.01f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            strength = Effects.to_float(params[:strength]?, 0.01f32)
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
             
             effect = DistortionShader.new(distortion_type, strength, duration)
             
             # Common distortion parameters
-            effect.frequency = params[:frequency]?.try(&.as(Number).to_f32) || 10.0f32
-            effect.speed = params[:speed]?.try(&.as(Number).to_f32) || 1.0f32
+            effect.frequency = Effects.to_float(params[:frequency]?, 10.0f32)
+            effect.speed = Effects.to_float(params[:speed]?, 1.0f32)
             
             # Heat haze specific
             if distortion_type.heat_haze?
               effect.heat_layers = params[:layers]?.try(&.as(Number).to_i32) || 3
-              effect.heat_vertical_speed = params[:vertical_speed]?.try(&.as(Number).to_f32) || 2.0f32
+              effect.heat_vertical_speed = Effects.to_float(params[:vertical_speed]?, 2.0f32)
             end
             
             # Shock wave specific
@@ -100,9 +100,9 @@ module PointClickEngine
               if center = parse_vector2(params[:center]?)
                 effect.shock_center = normalize_vector2(center)
               end
-              effect.shock_radius = params[:radius]?.try(&.as(Number).to_f32) || 0.0f32
-              effect.shock_thickness = params[:thickness]?.try(&.as(Number).to_f32) || 0.1f32
-              effect.shock_force = params[:force]?.try(&.as(Number).to_f32) || 0.05f32
+              effect.shock_radius = Effects.to_float(params[:radius]?, 0.0f32)
+              effect.shock_thickness = Effects.to_float(params[:thickness]?, 0.1f32)
+              effect.shock_force = Effects.to_float(params[:force]?, 0.05f32)
             end
             
             # Lens distortion specific
@@ -119,9 +119,9 @@ module PointClickEngine
               if center = parse_vector2(params[:center]?)
                 effect.ripple_center = normalize_vector2(center)
               end
-              effect.ripple_wavelength = params[:wavelength]?.try(&.as(Number).to_f32) || 0.05f32
-              effect.ripple_amplitude = params[:amplitude]?.try(&.as(Number).to_f32) || 0.01f32
-              effect.ripple_decay = params[:decay]?.try(&.as(Number).to_f32) || 0.5f32
+              effect.ripple_wavelength = Effects.to_float(params[:wavelength]?, 0.05f32)
+              effect.ripple_amplitude = Effects.to_float(params[:amplitude]?, 0.01f32)
+              effect.ripple_decay = Effects.to_float(params[:decay]?, 0.5f32)
             end
             
             effect
@@ -129,15 +129,15 @@ module PointClickEngine
           
           # Create glow effect
           private def self.create_glow(glow_mode : GlowMode, **params) : GlowShader
-            threshold = params[:threshold]?.try(&.as(Number).to_f32) || 0.8f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            threshold = Effects.to_float(params[:threshold]?, 0.8f32)
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
             
             effect = GlowShader.new(glow_mode, threshold, duration)
             
             # Common glow parameters
-            effect.intensity = params[:intensity]?.try(&.as(Number).to_f32) || 1.0f32
+            effect.intensity = Effects.to_float(params[:intensity]?, 1.0f32)
             effect.blur_passes = params[:blur_passes]?.try(&.as(Number).to_i32) || 3
-            effect.blur_scale = params[:blur_scale]?.try(&.as(Number).to_f32) || 1.0f32
+            effect.blur_scale = Effects.to_float(params[:blur_scale]?, 1.0f32)
             
             if color = parse_color(params[:tint]?)
               effect.tint_color = color
@@ -148,13 +148,13 @@ module PointClickEngine
               if color = parse_color(params[:select_color]?)
                 effect.select_color = color
               end
-              effect.select_tolerance = params[:tolerance]?.try(&.as(Number).to_f32) || 0.1f32
+              effect.select_tolerance = Effects.to_float(params[:tolerance]?, 0.1f32)
             end
             
             # Lens glow specific
             if glow_mode.lens?
-              effect.lens_dispersion = params[:dispersion]?.try(&.as(Number).to_f32) || 0.3f32
-              effect.lens_halo_width = params[:halo_width]?.try(&.as(Number).to_f32) || 0.5f32
+              effect.lens_dispersion = Effects.to_float(params[:dispersion]?, 0.3f32)
+              effect.lens_halo_width = Effects.to_float(params[:halo_width]?, 0.5f32)
             end
             
             effect

@@ -33,15 +33,15 @@ module PointClickEngine
                              end
 
             color = parse_color(params[:color]?) || RL::YELLOW
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
 
             effect = HighlightEffect.new(highlight_type, color, duration)
-            effect.thickness = params[:thickness]?.try(&.as(Number).to_f32) || 2.0f32
-            effect.radius = params[:radius]?.try(&.as(Number).to_f32) || 10.0f32
+            effect.thickness = Effects.to_float(params[:thickness]?, 2.0f32)
+            effect.radius = Effects.to_float(params[:radius]?, 10.0f32)
             effect
           when "dissolve"
             mode = params[:mode]?.try(&.to_s) == "in" ? DissolveEffect::DissolveMode::In : DissolveEffect::DissolveMode::Out
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 1.0f32
+            duration = Effects.to_float(params[:duration]?, 1.0f32)
 
             effect = DissolveEffect.new(mode, duration)
             if pattern = params[:pattern]?.try(&.to_s)
@@ -56,9 +56,9 @@ module PointClickEngine
             effect.particle_color = parse_color(params[:particle_color]?)
             effect
           when "shake"
-            amplitude = params[:amplitude]?.try(&.as(Number).to_f32) || 5.0f32
-            frequency = params[:frequency]?.try(&.as(Number).to_f32) || 10.0f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.5f32
+            amplitude = Effects.to_float(params[:amplitude]?, 5.0f32)
+            frequency = Effects.to_float(params[:frequency]?, 10.0f32)
+            duration = Effects.to_float(params[:duration]?, 0.5f32)
 
             effect = ShakeEffect.new(amplitude, frequency, duration)
             effect.decay = params[:decay]? != false
@@ -71,9 +71,9 @@ module PointClickEngine
             end
             effect
           when "pulse", "breathe"
-            scale_amount = params[:scale_amount]?.try(&.as(Number).to_f32) || 0.1f32
-            speed = params[:speed]?.try(&.as(Number).to_f32) || 2.0f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            scale_amount = Effects.to_float(params[:scale_amount]?, 0.1f32)
+            speed = Effects.to_float(params[:speed]?, 2.0f32)
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
 
             effect = PulseEffect.new(scale_amount, speed, duration)
             if easing = params[:easing]?.try(&.to_s)
@@ -96,28 +96,28 @@ module PointClickEngine
                    end
 
             color = parse_color(params[:color]?)
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
 
             effect = ColorShiftEffect.new(mode, color, duration)
-            effect.speed = params[:speed]?.try(&.as(Number).to_f32) || 1.0f32
+            effect.speed = Effects.to_float(params[:speed]?, 1.0f32)
             effect
           when "float", "hover"
-            amplitude = params[:amplitude]?.try(&.as(Number).to_f32) || 10.0f32
-            speed = params[:speed]?.try(&.as(Number).to_f32) || 1.0f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            amplitude = Effects.to_float(params[:amplitude]?, 10.0f32)
+            speed = Effects.to_float(params[:speed]?, 1.0f32)
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
 
             # Use sway variant if sway parameters present
             if params[:sway_amplitude]? || params[:sway]?
               effect = SwayFloatEffect.new(amplitude, speed, duration)
-              effect.sway_amplitude = params[:sway_amplitude]?.try(&.as(Number).to_f32) || 5.0f32
-              effect.sway_speed = params[:sway_speed]?.try(&.as(Number).to_f32) || 0.7f32
+              effect.sway_amplitude = Effects.to_float(params[:sway_amplitude]?, 5.0f32)
+              effect.sway_speed = Effects.to_float(params[:sway_speed]?, 0.7f32)
             else
               effect = FloatEffect.new(amplitude, speed, duration)
             end
 
-            effect.phase = params[:phase]?.try(&.as(Number).to_f32) || 0.0f32
+            effect.phase = Effects.to_float(params[:phase]?, 0.0f32)
             effect.rotation = params[:rotation]? == true
-            effect.rotation_amount = params[:rotation_amount]?.try(&.as(Number).to_f32) || 5.0f32
+            effect.rotation_amount = Effects.to_float(params[:rotation_amount]?, 5.0f32)
             effect
           when "particle", "particles"
             # Delegate to particle effect factory

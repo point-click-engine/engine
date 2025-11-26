@@ -5,6 +5,16 @@ require "raylib-cr"
 module PointClickEngine
   module Graphics
     module Effects
+      # Helper to safely extract Float32 from a parameter value
+      def self.to_float(value, default : Float32 = 0.0f32) : Float32
+        case value
+        when Float32 then value
+        when Float64 then value.to_f32
+        when Int32   then value.to_f32
+        when Int64   then value.to_f32
+        else default
+        end
+      end
       # Base class for all visual effects
       #
       # Effects can be applied to objects, scenes, or cameras to create

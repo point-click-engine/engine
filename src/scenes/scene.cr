@@ -51,7 +51,7 @@ module PointClickEngine
       property player : Characters::Character?
       
       @[YAML::Field(ignore: true)]
-      property scene_effects : Array(Graphics::Effects::SceneEffects::BaseSceneEffect | Graphics::Effects::ShaderEffect) = [] of (Graphics::Effects::SceneEffects::BaseSceneEffect | Graphics::Effects::ShaderEffect)
+      property scene_effects : Array(Graphics::Effects::SceneEffects::BaseSceneEffect) = [] of Graphics::Effects::SceneEffects::BaseSceneEffect
 
       @[YAML::Field(ignore: true)]
       property walkable_area : WalkableArea?

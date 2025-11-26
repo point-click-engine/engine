@@ -3,8 +3,9 @@
 # Creates atmospheric fog with distance-based density, color gradients,
 # and support for multiple fog layers.
 
-require "../../shader_effect"
+require "../shader_scene_effect"
 require "../../shader_library"
+require "../../../core/display"
 
 module PointClickEngine
   module Graphics
@@ -19,7 +20,7 @@ module PointClickEngine
         end
         
         # Shader-based fog effect
-        class FogShader < ShaderEffect
+        class FogShader < ShaderSceneEffect
           property fog_type : FogType = FogType::Linear
           property fog_color : RL::Color = RL::Color.new(r: 128, g: 128, b: 150, a: 200)
           property fog_density : Float32 = 0.02f32
@@ -199,6 +200,11 @@ module PointClickEngine
             effect.fog_end = @fog_end
             effect.height_falloff = @height_falloff
             effect
+          end
+          
+          # Alias for generic render method
+          def render_scene_with_effect(&block : -> Nil)
+            render_scene_with_fog(&block)
           end
         end
       end

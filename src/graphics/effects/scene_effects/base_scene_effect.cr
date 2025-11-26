@@ -259,9 +259,9 @@ module PointClickEngine
 
             case effect_name.downcase
             when "shake", "screen_shake", "camera_shake"
-              amplitude = params[:amplitude]?.try(&.as(Number).to_f32) || 10.0f32
-              frequency = params[:frequency]?.try(&.as(Number).to_f32) || 10.0f32
-              duration = params[:duration]?.try(&.as(Number).to_f32) || 0.5f32
+              amplitude = Effects.to_float(params[:amplitude]?, 10.0f32)
+              frequency = Effects.to_float(params[:frequency]?, 10.0f32)
+              duration = Effects.to_float(params[:duration]?, 0.5f32)
 
               SceneShakeEffect.new(amplitude, frequency, duration)
             when "tint", "color", "color_overlay"
@@ -273,7 +273,7 @@ module PointClickEngine
                      end
 
               color = ObjectEffects.parse_color(params[:color]?)
-              duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+              duration = Effects.to_float(params[:duration]?, 0.0f32)
 
               SceneColorEffect.new(mode, color, duration)
             else
@@ -295,7 +295,7 @@ module PointClickEngine
             else TransitionType::Fade
             end
             
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 1.0f32
+            duration = Effects.to_float(params[:duration]?, 1.0f32)
             
             # Create the transition effect
             transition = TransitionEffect.new(transition_type, duration)

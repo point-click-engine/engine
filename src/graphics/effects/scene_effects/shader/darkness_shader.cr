@@ -3,8 +3,9 @@
 # Creates vignette, darkness overlays, and light source support
 # for atmospheric lighting and mood effects.
 
-require "../../shader_effect"
+require "../shader_scene_effect"
 require "../../shader_library"
+require "../../../core/display"
 
 module PointClickEngine
   module Graphics
@@ -30,7 +31,7 @@ module PointClickEngine
         end
         
         # Shader-based darkness effect
-        class DarknessShader < ShaderEffect
+        class DarknessShader < ShaderSceneEffect
           property darkness_type : DarknessType = DarknessType::Vignette
           property darkness_color : RL::Color = RL::Color.new(r: 0, g: 0, b: 0, a: 200)
           property darkness_intensity : Float32 = 0.8f32
@@ -235,6 +236,11 @@ module PointClickEngine
             effect.gradient_angle = @gradient_angle
             effect.light_sources = @light_sources.dup
             effect
+          end
+          
+          # Alias for generic render method
+          def render_scene_with_effect(&block : -> Nil)
+            render_scene_with_darkness(&block)
           end
         end
       end

@@ -260,9 +260,9 @@ module PointClickEngine
             case effect_name.downcase
             when "shake", "camera_shake"
               # Reuse object shake effect
-              amplitude = params[:amplitude]?.try(&.as(Number).to_f32) || 10.0f32
-              frequency = params[:frequency]?.try(&.as(Number).to_f32) || 10.0f32
-              duration = params[:duration]?.try(&.as(Number).to_f32) || 0.5f32
+              amplitude = Effects.to_float(params[:amplitude]?, 10.0f32)
+              frequency = Effects.to_float(params[:frequency]?, 10.0f32)
+              duration = Effects.to_float(params[:duration]?, 0.5f32)
 
               shake = ObjectEffects::ShakeEffect.new(amplitude, frequency, duration)
               CameraEffectAdapter.new(shake)
@@ -270,10 +270,10 @@ module PointClickEngine
               target = parse_vector2(params[:target]?)
               follow = FollowEffect.new(target)
 
-              follow.deadzone_width = params[:deadzone_width]?.try(&.as(Number).to_f32) || 100.0f32
-              follow.deadzone_height = params[:deadzone_height]?.try(&.as(Number).to_f32) || 80.0f32
-              follow.follow_speed = params[:follow_speed]?.try(&.as(Number).to_f32) || 5.0f32
-              follow.look_ahead = params[:look_ahead]?.try(&.as(Number).to_f32) || 0.0f32
+              follow.deadzone_width = Effects.to_float(params[:deadzone_width]?, 100.0f32)
+              follow.deadzone_height = Effects.to_float(params[:deadzone_height]?, 80.0f32)
+              follow.follow_speed = Effects.to_float(params[:follow_speed]?, 5.0f32)
+              follow.look_ahead = Effects.to_float(params[:look_ahead]?, 0.0f32)
 
               if offset = parse_vector2(params[:offset]?)
                 follow.offset = offset
@@ -282,10 +282,10 @@ module PointClickEngine
               follow
             when "pan", "pan_to"
               target = parse_vector2(params[:target]?) || RL::Vector2.new(x: 0, y: 0)
-              duration = params[:duration]?.try(&.as(Number).to_f32) || 2.0f32
+              duration = Effects.to_float(params[:duration]?, 2.0f32)
 
               pan = PanEffect.new(target, duration)
-              pan.pan_speed = params[:speed]?.try(&.as(Number).to_f32) || 200.0f32
+              pan.pan_speed = Effects.to_float(params[:speed]?, 200.0f32)
               pan.use_duration = params[:use_duration]? != false
 
               if easing_name = params[:easing]?.try(&.to_s)
@@ -300,10 +300,10 @@ module PointClickEngine
                 else 1.0f32
                 end
               end || 1.0f32
-              duration = params[:duration]?.try(&.as(Number).to_f32) || 1.0f32
+              duration = Effects.to_float(params[:duration]?, 1.0f32)
 
               zoom = ZoomEffect.new(target_zoom, duration)
-              zoom.zoom_speed = params[:speed]?.try(&.as(Number).to_f32) || 2.0f32
+              zoom.zoom_speed = Effects.to_float(params[:speed]?, 2.0f32)
 
               if center = parse_vector2(params[:center]?)
                 zoom.zoom_center = center
@@ -315,29 +315,29 @@ module PointClickEngine
 
               zoom
             when "sway", "camera_sway"
-              duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+              duration = Effects.to_float(params[:duration]?, 0.0f32)
 
               sway = SwayEffect.new(duration)
-              sway.amplitude_x = params[:amplitude_x]?.try(&.as(Number).to_f32) || 10.0f32
-              sway.amplitude_y = params[:amplitude_y]?.try(&.as(Number).to_f32) || 5.0f32
-              sway.frequency_x = params[:frequency_x]?.try(&.as(Number).to_f32) || 0.5f32
-              sway.frequency_y = params[:frequency_y]?.try(&.as(Number).to_f32) || 0.3f32
-              sway.phase_offset = params[:phase]?.try(&.as(Number).to_f32) || 0.0f32
+              sway.amplitude_x = Effects.to_float(params[:amplitude_x]?, 10.0f32)
+              sway.amplitude_y = Effects.to_float(params[:amplitude_y]?, 5.0f32)
+              sway.frequency_x = Effects.to_float(params[:frequency_x]?, 0.5f32)
+              sway.frequency_y = Effects.to_float(params[:frequency_y]?, 0.3f32)
+              sway.phase_offset = Effects.to_float(params[:phase]?, 0.0f32)
 
               sway
             when "float", "camera_float"
               # Reuse object float effect
-              amplitude = params[:amplitude]?.try(&.as(Number).to_f32) || 10.0f32
-              speed = params[:speed]?.try(&.as(Number).to_f32) || 1.0f32
-              duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+              amplitude = Effects.to_float(params[:amplitude]?, 10.0f32)
+              speed = Effects.to_float(params[:speed]?, 1.0f32)
+              duration = Effects.to_float(params[:duration]?, 0.0f32)
 
               float = ObjectEffects::FloatEffect.new(amplitude, speed, duration)
               CameraEffectAdapter.new(float)
             when "pulse", "camera_pulse"
               # Reuse object pulse for zoom pulsing
-              scale_amount = params[:zoom_amount]?.try(&.as(Number).to_f32) || 0.1f32
-              speed = params[:speed]?.try(&.as(Number).to_f32) || 2.0f32
-              duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+              scale_amount = Effects.to_float(params[:zoom_amount]?, 0.1f32)
+              speed = Effects.to_float(params[:speed]?, 2.0f32)
+              duration = Effects.to_float(params[:duration]?, 0.0f32)
 
               pulse = ObjectEffects::PulseEffect.new(scale_amount, speed, duration)
               CameraEffectAdapter.new(pulse)

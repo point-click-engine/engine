@@ -73,6 +73,11 @@ module PointClickEngine
         def add_scene_effect(effect : Effect)
           @scene_effects.add_effect(effect)
         end
+        
+        # Get all active scene effects
+        def scene_effects : Array(Effect)
+          @scene_effects.active_effects
+        end
 
         # Add camera effect
         def add_camera_effect(effect_name : String, **params) : Effect?
@@ -214,10 +219,8 @@ module PointClickEngine
         # Get active rain effect if any
         def active_rain_effect
           @scene_effects.active_effects.each do |effect|
-            if rain = effect.as?(ShaderEffect)
-              if rain.class.name.includes?("RainShader")
-                return rain
-              end
+            if effect.class.name.includes?("RainShader")
+              return effect
             end
           end
           nil
@@ -226,10 +229,8 @@ module PointClickEngine
         # Get active fog effect if any
         def active_fog_effect
           @scene_effects.active_effects.each do |effect|
-            if fog = effect.as?(ShaderEffect)
-              if fog.class.name.includes?("FogShader")
-                return fog
-              end
+            if effect.class.name.includes?("FogShader")
+              return effect
             end
           end
           nil
@@ -238,10 +239,8 @@ module PointClickEngine
         # Get active darkness effect if any
         def active_darkness_effect
           @scene_effects.active_effects.each do |effect|
-            if darkness = effect.as?(ShaderEffect)
-              if darkness.class.name.includes?("DarknessShader")
-                return darkness
-              end
+            if effect.class.name.includes?("DarknessShader")
+              return effect
             end
           end
           nil
@@ -250,10 +249,8 @@ module PointClickEngine
         # Get active underwater effect if any
         def active_underwater_effect
           @scene_effects.active_effects.each do |effect|
-            if underwater = effect.as?(ShaderEffect)
-              if underwater.class.name.includes?("UnderwaterShader")
-                return underwater
-              end
+            if effect.class.name.includes?("UnderwaterShader")
+              return effect
             end
           end
           nil
@@ -305,8 +302,8 @@ module PointClickEngine
             if effect = pool.pop?
               # Reset and configure pooled effect
               effect.reset
-              effect.duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
-              effect.intensity = params[:intensity]?.try(&.as(Number).to_f32) || 1.0f32
+              effect.duration = Effects.to_float(params[:duration]?, 0.0f32)
+              effect.intensity = Effects.to_float(params[:intensity]?, 1.0f32)
               configure_effect(effect, **params)
               return effect
             end

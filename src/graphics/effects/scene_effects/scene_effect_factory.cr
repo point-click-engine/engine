@@ -16,6 +16,32 @@ module PointClickEngine
       module SceneEffects
         # Factory for creating shader-based scene effects
         module ShaderSceneEffectFactory
+          # Create effect from YAML parameters (consolidates all effect creation logic)
+          def self.create_from_yaml(effect_type : String, params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : BaseSceneEffect?
+            # Map fog_type to type for fog effects
+            if effect_type == "fog" && params.has_key?("fog_type") && !params.has_key?("type")
+              params["type"] = params["fog_type"]
+            end
+            
+            # Let each create method handle its own parameters
+            case effect_type.downcase
+            when "fog"
+              create_fog_from_hash(params)
+            when "rain"
+              create_rain_from_hash(params)
+            when "darkness", "vignette"
+              create_darkness_from_hash(params)
+            when "underwater"
+              create_underwater_from_hash(params)
+            when "simple_rain"
+              create_simple_rain_from_hash(params)
+            when "test_overlay"
+              create_test_overlay_from_hash(params)
+            else
+              nil
+            end
+          end
+          
           # Create a scene effect by name
           def self.create(effect_name : String, **params) : BaseSceneEffect?
             case effect_name.downcase
@@ -56,7 +82,7 @@ module PointClickEngine
             type_name = params[:type]?.try(&.to_s) || "fade"
             transition_type = parse_transition_type(type_name)
             
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 1.0f32
+            duration = Effects.to_float(params[:duration]?, 1.0f32)
             reverse = params[:reverse]?.try(&.as(Bool)) || false
             
             TransitionEffect.new(transition_type, duration, reverse)
@@ -73,8 +99,8 @@ module PointClickEngine
             end
             
             color = parse_color(params[:color]?) || RL::Color.new(r: 128, g: 128, b: 150, a: 200)
-            density = params[:density]?.try(&.as(Number).to_f32) || 0.02f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            density = Effects.to_float(params[:density]?, 0.02f32)
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
             
             effect = FogShader.new(fog_type, color, density, duration)
             
@@ -99,8 +125,8 @@ module PointClickEngine
             else RainIntensity::Medium
             end
             
-            wind = params[:wind]?.try(&.as(Number).to_f32) || 0.2f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            wind = Effects.to_float(params[:wind]?, 0.2f32)
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
             
             effect = RainShader.new(intensity, wind, duration)
             
@@ -123,8 +149,8 @@ module PointClickEngine
             else DarknessType::Vignette
             end
             
-            intensity = params[:intensity]?.try(&.as(Number).to_f32) || 0.8f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            intensity = Effects.to_float(params[:intensity]?, 0.8f32)
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
             
             effect = DarknessShader.new(darkness_type, intensity, duration)
             
@@ -153,7 +179,7 @@ module PointClickEngine
             end
             
             color = parse_color(params[:color]?) || RL::Color.new(r: 0, g: 80, b: 120, a: 100)
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
             
             effect = UnderwaterShader.new(quality, color, duration)
             
@@ -190,9 +216,9 @@ module PointClickEngine
           
           private def self.create_screen_shake(**params) : BaseSceneEffect?
             # This might reuse the existing SceneShakeEffect
-            amplitude = params[:amplitude]?.try(&.as(Number).to_f32) || 10.0f32
-            frequency = params[:frequency]?.try(&.as(Number).to_f32) || 10.0f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.5f32
+            amplitude = Effects.to_float(params[:amplitude]?, 10.0f32)
+            frequency = Effects.to_float(params[:frequency]?, 10.0f32)
+            duration = Effects.to_float(params[:duration]?, 0.5f32)
             
             SceneShakeEffect.new(amplitude, frequency, duration)
           end
@@ -200,7 +226,7 @@ module PointClickEngine
           private def self.create_flash(**params) : BaseSceneEffect?
             # Create a color overlay effect
             color = parse_color(params[:color]?) || RL::WHITE
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.2f32
+            duration = Effects.to_float(params[:duration]?, 0.2f32)
             
             SceneColorEffect.new(
               ObjectEffects::ColorShiftEffect::ColorMode::Flash,
@@ -280,6 +306,169 @@ module PointClickEngine
             RL::Color.new(r: r, g: g, b: b, a: a)
           rescue
             nil
+          end
+          
+          # Create fog from hash (for YAML loading)
+          private def self.create_fog_from_hash(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : FogShader?
+            fog_type = case params["type"]?.try(&.to_s) || params["fog_type"]?.try(&.to_s)
+            when "linear"      then FogType::Linear
+            when "exponential" then FogType::Exponential
+            when "layered"     then FogType::Layered
+            when "volumetric"  then FogType::Volumetric
+            else FogType::Linear
+            end
+            
+            color = if color_array = params["color"]?.as?(Array(Int32))
+              RL::Color.new(
+                r: color_array[0].to_u8,
+                g: color_array[1].to_u8,
+                b: color_array[2].to_u8,
+                a: (color_array[3]? || 255).to_u8
+              )
+            else
+              RL::Color.new(r: 128, g: 128, b: 150, a: 200)
+            end
+            
+            density = params["density"]?.as?(Float32) || 0.02f32
+            duration = params["duration"]?.as?(Float32) || 0.0f32
+            
+            effect = FogShader.new(fog_type, color, density, duration)
+            
+            if fog_start = params["start"]?.as?(Float32)
+              effect.fog_start = fog_start
+            end
+            if fog_end = params["end"]?.as?(Float32)
+              effect.fog_end = fog_end
+            end
+            if height_falloff = params["height_falloff"]?.as?(Float32)
+              effect.height_falloff = height_falloff
+            end
+            
+            effect
+          end
+          
+          # Create rain from hash
+          private def self.create_rain_from_hash(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : RainShader?
+            intensity = case params["intensity"]?.try(&.to_s)
+            when "light"  then RainIntensity::Light
+            when "medium" then RainIntensity::Medium
+            when "heavy"  then RainIntensity::Heavy
+            when "storm"  then RainIntensity::Storm
+            else RainIntensity::Medium
+            end
+            
+            wind = params["wind"]?.as?(Float32) || 0.2f32
+            duration = params["duration"]?.as?(Float32) || 0.0f32
+            
+            effect = RainShader.new(intensity, wind, duration)
+            
+            if color_array = params["color"]?.as?(Array(Int32))
+              effect.rain_color = RL::Color.new(
+                r: color_array[0].to_u8,
+                g: color_array[1].to_u8,
+                b: color_array[2].to_u8,
+                a: (color_array[3]? || 255).to_u8
+              )
+            end
+            
+            effect.splash_enabled = params["splashes"]?.as?(Bool) != false
+            
+            effect
+          end
+          
+          # Create darkness from hash
+          private def self.create_darkness_from_hash(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : DarknessShader?
+            darkness_type = case params["type"]?.try(&.to_s) || params["darkness_type"]?.try(&.to_s)
+            when "vignette"   then DarknessType::Vignette
+            when "gradient"   then DarknessType::Gradient
+            when "spotlight"  then DarknessType::Spotlight
+            when "multilight" then DarknessType::MultiLight
+            else DarknessType::Vignette
+            end
+            
+            intensity = params["intensity"]?.as?(Float32) || 0.8f32
+            duration = params["duration"]?.as?(Float32) || 0.0f32
+            
+            effect = DarknessShader.new(darkness_type, intensity, duration)
+            
+            if color_array = params["color"]?.as?(Array(Int32))
+              effect.darkness_color = RL::Color.new(
+                r: color_array[0].to_u8,
+                g: color_array[1].to_u8,
+                b: color_array[2].to_u8,
+                a: (color_array[3]? || 255).to_u8
+              )
+            end
+            
+            if inner = params["inner_radius"]?.as?(Float32)
+              effect.inner_radius = inner
+            end
+            if outer = params["outer_radius"]?.as?(Float32)
+              effect.outer_radius = outer
+            end
+            if angle = params["gradient_angle"]?.as?(Float32)
+              effect.gradient_angle = angle
+            end
+            
+            effect
+          end
+          
+          # Create underwater from hash
+          private def self.create_underwater_from_hash(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : UnderwaterShader?
+            quality = case params["quality"]?.try(&.to_s)
+            when "low"    then UnderwaterQuality::Low
+            when "medium" then UnderwaterQuality::Medium
+            when "high"   then UnderwaterQuality::High
+            else UnderwaterQuality::Medium
+            end
+            
+            color = if color_array = params["color"]?.as?(Array(Int32))
+              RL::Color.new(
+                r: color_array[0].to_u8,
+                g: color_array[1].to_u8,
+                b: color_array[2].to_u8,
+                a: (color_array[3]? || 255).to_u8
+              )
+            else
+              RL::Color.new(r: 0, g: 80, b: 120, a: 100)
+            end
+            
+            duration = params["duration"]?.as?(Float32) || 0.0f32
+            
+            effect = UnderwaterShader.new(quality, color, duration)
+            
+            if amplitude = params["wave_amplitude"]?.as?(Float32)
+              effect.wave_amplitude = amplitude
+            end
+            if frequency = params["wave_frequency"]?.as?(Float32)
+              effect.wave_frequency = frequency
+            end
+            if speed = params["wave_speed"]?.as?(Float32)
+              effect.wave_speed = speed
+            end
+            if caustics = params["caustics_intensity"]?.as?(Float32)
+              effect.caustics_intensity = caustics
+            end
+            if blur = params["blur_amount"]?.as?(Float32)
+              effect.blur_amount = blur
+            end
+            if bubbles = params["bubble_density"]?.as?(Float32)
+              effect.bubble_density = bubbles
+            end
+            
+            effect
+          end
+          
+          # Create simple rain from hash (placeholder)
+          private def self.create_simple_rain_from_hash(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : BaseSceneEffect?
+            # For now, just use regular rain
+            create_rain_from_hash(params)
+          end
+          
+          # Create test overlay from hash (placeholder)
+          private def self.create_test_overlay_from_hash(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : BaseSceneEffect?
+            # For now, just use fog
+            create_fog_from_hash(params)
           end
         end
       end

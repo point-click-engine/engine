@@ -3,8 +3,9 @@
 # Creates underwater atmosphere with wave distortion, caustics,
 # color tinting, and bubble particles.
 
-require "../../shader_effect"
+require "../shader_scene_effect"
 require "../../shader_library"
+require "../../../core/display"
 
 module PointClickEngine
   module Graphics
@@ -18,7 +19,7 @@ module PointClickEngine
         end
         
         # Shader-based underwater effect
-        class UnderwaterShader < ShaderEffect
+        class UnderwaterShader < ShaderSceneEffect
           property quality : UnderwaterQuality = UnderwaterQuality::Medium
           property water_color : RL::Color = RL::Color.new(r: 0, g: 80, b: 120, a: 100)
           property wave_amplitude : Float32 = 0.01f32
@@ -202,6 +203,11 @@ module PointClickEngine
             effect.blur_amount = @blur_amount
             effect.bubble_density = @bubble_density
             effect
+          end
+          
+          # Alias for generic render method
+          def render_scene_with_effect(&block : -> Nil)
+            render_scene_with_underwater(&block)
           end
         end
       end

@@ -10,6 +10,7 @@ require "../assets/asset_loader"
 require "../ui/cursor_manager"
 require "../core/exceptions"
 require "../graphics/effects/scene_effects/scene_effect_factory"
+require "../graphics/effects/scene_effects/yaml_effect_config"
 
 module PointClickEngine
   module Scenes
@@ -246,63 +247,31 @@ module PointClickEngine
           scene.script_path = script_path.as_s
         end
 
-        # Load scene effects
+        # Load scene effects using YAML serialization
         if effects = scene_data["effects"]?
+          puts "[SceneLoader] Loading #{effects.as_a.size} effects for scene '#{scene.name}'"
           effects.as_a.each do |effect_data|
-            effect_type = effect_data["type"]?.try(&.as_s) || ""
-            
-            # Convert YAML parameters for the specific effect type
-            params = {} of String => String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32)
-            
-            effect_data.as_h.each do |key, value|
-              key_str = key.as_s
-              next if key_str == "type"  # Skip the type key
-              
-              # Map fog_type to type for the factory
-              param_key = key_str == "fog_type" ? "type" : key_str
-              param_symbol = param_key.to_s
-              
-              params[param_symbol] = case value.raw
-                                     when String then value.as_s
-                                     when Int64 then value.as_i
-                                     when Float64 then value.as_f.to_f32
-                                     when Bool then value.as_bool
-                                     when Array
-                                       # Handle color arrays
-                                       value.as_a.map { |v| v.as_i }
-                                     else
-                                       value.to_s
-                                     end
-            end
-            
-            # Use existing private methods to create effects based on type
             begin
-              effect = case effect_type
-                      when "fog"
-                        create_fog_effect(params)
-                      when "rain"
-                        create_rain_effect(params)
-                      when "darkness"
-                        create_darkness_effect(params)
-                      when "underwater"
-                        create_underwater_effect(params)
-                      when "simple_rain"
-                        create_simple_rain_effect(params)
-                      when "test_overlay"
-                        create_test_overlay_effect(params)
-                      else
-                        nil
-                      end
+              effect_type = effect_data["type"]?.try(&.as_s) || "unknown"
+              puts "[SceneLoader] Loading effect type: #{effect_type}"
               
-              if effect
+              # Use the YAML-serializable config approach
+              # Convert YAML::Any to string then parse it back
+              yaml_string = effect_data.to_yaml
+              if config = Graphics::Effects::SceneEffects::EffectConfig.from_yaml(yaml_string)
+                effect = config.create_effect
                 scene.scene_effects << effect
+                puts "[SceneLoader] Successfully created and added #{effect.class.name} to scene"
               else
-                puts "[SceneLoader] Warning: Unknown effect type '#{effect_type}'"
+                puts "[SceneLoader] Warning: Unknown or unsupported effect type '#{effect_type}'"
               end
             rescue ex
+              effect_type = effect_data["type"]?.try(&.as_s) || "unknown"
               puts "[SceneLoader] Error creating effect '#{effect_type}': #{ex.message}"
+              puts "[SceneLoader] Backtrace: #{ex.backtrace.first(3).join("\n")}"
             end
           end
+          puts "[SceneLoader] Scene '#{scene.name}' now has #{scene.scene_effects.size} effects"
         end
 
         # Load walkable areas
@@ -378,169 +347,6 @@ module PointClickEngine
         end
 
         scene
-      end
-
-      # Create a fog effect from parsed parameters
-      private def self.create_fog_effect(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : Graphics::Effects::SceneEffects::FogShader?
-        fog_type = case params["type"]?.try(&.to_s)
-        when "linear"      then Graphics::Effects::SceneEffects::FogType::Linear
-        when "exponential" then Graphics::Effects::SceneEffects::FogType::Exponential
-        when "layered"     then Graphics::Effects::SceneEffects::FogType::Layered
-        when "volumetric"  then Graphics::Effects::SceneEffects::FogType::Volumetric
-        else Graphics::Effects::SceneEffects::FogType::Linear
-        end
-        
-        # Parse color array to RL::Color
-        color = if color_array = params["color"]?.try(&.as(Array(Int32)))
-          RL::Color.new(
-            r: color_array[0].to_u8,
-            g: color_array[1].to_u8,
-            b: color_array[2].to_u8,
-            a: (color_array[3]? || 255).to_u8
-          )
-        else
-          RL::Color.new(r: 128, g: 128, b: 150, a: 200)
-        end
-        
-        density = params["density"]?.try(&.as(Float32)) || 0.02f32
-        duration = params["duration"]?.try(&.as(Float32)) || 0.0f32
-        
-        effect = Graphics::Effects::SceneEffects::FogShader.new(fog_type, color, density, duration)
-        
-        # Set additional parameters if provided
-        if fog_start = params["start"]?.try(&.as(Float32))
-          effect.fog_start = fog_start
-        end
-        if fog_end = params["end"]?.try(&.as(Float32))
-          effect.fog_end = fog_end
-        end
-        
-        effect
-      end
-
-      # Create a rain effect from parsed parameters
-      private def self.create_rain_effect(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : Graphics::Effects::SceneEffects::RainShader?
-        rain_intensity = case params["intensity"]?.try(&.to_s)
-        when "light"  then Graphics::Effects::SceneEffects::RainIntensity::Light
-        when "medium" then Graphics::Effects::SceneEffects::RainIntensity::Medium
-        when "heavy"  then Graphics::Effects::SceneEffects::RainIntensity::Heavy
-        when "storm"  then Graphics::Effects::SceneEffects::RainIntensity::Storm
-        else Graphics::Effects::SceneEffects::RainIntensity::Medium
-        end
-        
-        wind_strength = params["wind"]?.try(&.as(Float32)) || 0.2f32
-        duration = params["duration"]?.try(&.as(Float32)) || 0.0f32
-        
-        effect = Graphics::Effects::SceneEffects::RainShader.new(rain_intensity, wind_strength, duration)
-        
-        # Parse color array to RL::Color
-        if color_array = params["color"]?.try(&.as(Array(Int32)))
-          effect.rain_color = RL::Color.new(
-            r: color_array[0].to_u8,
-            g: color_array[1].to_u8,
-            b: color_array[2].to_u8,
-            a: (color_array[3]? || 255).to_u8
-          )
-        end
-        
-        if splashes = params["splashes"]?.try(&.as(Bool))
-          effect.splash_enabled = splashes
-        end
-        
-        effect
-      end
-
-      # Create a simple CPU-based rain effect from parsed parameters
-      private def self.create_simple_rain_effect(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : Graphics::Effects::SceneEffects::RainEffect?
-        intensity = params["intensity"]?.try(&.to_s) == "heavy" ? 1.0f32 : 0.5f32
-        duration = params["duration"]?.try(&.as(Float32)) || 0.0f32
-        
-        effect = Graphics::Effects::SceneEffects::RainEffect.new(intensity, duration)
-        
-        # Set wind speed if provided
-        if wind = params["wind"]?
-          case wind
-          when Float32
-            effect.wind_speed = -wind
-          when Int32
-            effect.wind_speed = -wind.to_f32
-          when String
-            effect.wind_speed = -wind.to_f32
-          end
-        end
-        
-        # Parse color array to RL::Color
-        if color_array = params["color"]?.try(&.as(Array(Int32)))
-          effect.drop_color = RL::Color.new(
-            r: color_array[0].to_u8,
-            g: color_array[1].to_u8,
-            b: color_array[2].to_u8,
-            a: (color_array[3]? || 255).to_u8
-          )
-        end
-        
-        effect
-      end
-
-      # Create a simple test overlay effect that draws a colored rectangle
-      private def self.create_test_overlay_effect(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : Graphics::Effects::SceneEffects::TestOverlayEffect?
-        # Parse color array to RL::Color
-        color = if color_array = params["color"]?.try(&.as(Array(Int32)))
-          RL::Color.new(
-            r: color_array[0].to_u8,
-            g: color_array[1].to_u8,
-            b: color_array[2].to_u8,
-            a: (color_array[3]? || 255).to_u8
-          )
-        else
-          RL::Color.new(r: 255, g: 0, b: 0, a: 100)
-        end
-        
-        Graphics::Effects::SceneEffects::TestOverlayEffect.new(color)
-      end
-      
-      # Create a darkness effect from parsed parameters
-      private def self.create_darkness_effect(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : Graphics::Effects::SceneEffects::DarknessShader?
-        intensity = params["intensity"]?.try(&.as(Float32)) || 0.8f32
-        duration = params["duration"]?.try(&.as(Float32)) || 0.0f32
-        
-        # Just use simple vignette darkness
-        darkness_type = Graphics::Effects::SceneEffects::DarknessType::Vignette
-        
-        Graphics::Effects::SceneEffects::DarknessShader.new(darkness_type, intensity, duration)
-      end
-      
-      # Create an underwater effect from parsed parameters
-      private def self.create_underwater_effect(params : Hash(String, String | Float32 | Int32 | Bool | Array(Int32) | Array(Float32))) : Graphics::Effects::SceneEffects::UnderwaterShader?
-        # Determine quality level
-        quality = Graphics::Effects::SceneEffects::UnderwaterQuality::Medium
-        
-        # Parse water color
-        water_color = if color_array = params["color"]?.try(&.as(Array(Int32)))
-          RL::Color.new(
-            r: color_array[0].to_u8,
-            g: color_array[1].to_u8,
-            b: color_array[2].to_u8,
-            a: (color_array[3]? || 100).to_u8
-          )
-        else
-          RL::Color.new(r: 0, g: 80, b: 120, a: 100)
-        end
-        
-        duration = params["duration"]?.try(&.as(Float32)) || 0.0f32
-        
-        effect = Graphics::Effects::SceneEffects::UnderwaterShader.new(quality, water_color, duration)
-        
-        # Set wave parameters if provided
-        if wave_amplitude = params["wave_amplitude"]?.try(&.as(Float32))
-          effect.wave_amplitude = wave_amplitude
-        end
-        
-        if wave_frequency = params["wave_frequency"]?.try(&.as(Float32))
-          effect.wave_frequency = wave_frequency
-        end
-        
-        effect
       end
 
       # Load a condition from YAML data

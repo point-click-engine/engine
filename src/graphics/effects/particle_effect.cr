@@ -195,7 +195,7 @@ module PointClickEngine
                    return nil
                  end
 
-          duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
+          duration = Effects.to_float(params[:duration]?, 0.0f32)
           follow = params[:follow]? != false
 
           effect = ParticleEffect.new(type, duration, follow)
@@ -218,7 +218,7 @@ module PointClickEngine
           end
 
           # Set intensity
-          effect.intensity = params[:intensity]?.try(&.as(Number).to_f32) || 1.0f32
+          effect.intensity = Effects.to_float(params[:intensity]?, 1.0f32)
 
           effect
         end

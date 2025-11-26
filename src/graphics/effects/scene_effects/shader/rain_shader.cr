@@ -3,8 +3,9 @@
 # Creates realistic rain with wind, splashes, and depth layers
 # all rendered efficiently on the GPU.
 
-require "../../shader_effect"
+require "../shader_scene_effect"
 require "../../shader_library"
+require "../../../core/display"
 
 module PointClickEngine
   module Graphics
@@ -19,7 +20,7 @@ module PointClickEngine
         end
         
         # Shader-based rain effect
-        class RainShader < ShaderEffect
+        class RainShader < ShaderSceneEffect
           property rain_intensity : RainIntensity = RainIntensity::Medium
           property wind_strength : Float32 = 0.2f32
           property rain_color : RL::Color = RL::Color.new(r: 200, g: 200, b: 255, a: 100)
@@ -202,7 +203,7 @@ module PointClickEngine
           def render_scene_with_rain(&block : -> Nil)
             return yield unless shader = @shader
             return yield unless render_texture = @render_texture
-            
+
             # Render scene to texture
             RL.begin_texture_mode(render_texture)
             RL.clear_background(RL::BLANK)
@@ -237,6 +238,11 @@ module PointClickEngine
             effect.splash_enabled = @splash_enabled
             effect.depth_layers = @depth_layers
             effect
+          end
+          
+          # Alias for generic render method
+          def render_scene_with_effect(&block : -> Nil)
+            render_scene_with_rain(&block)
           end
         end
       end

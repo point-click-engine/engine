@@ -16,6 +16,17 @@ module PointClickEngine
       module ObjectEffects
         # Factory for shader-based object effects
         module ShaderObjectFactory
+          # Helper to safely extract Float32 from parameter
+          private def self.to_float(value, default : Float32) : Float32
+            case value
+            when Float32 then value
+            when Float64 then value.to_f32
+            when Int32   then value.to_f32
+            when Int64   then value.to_f32
+            else default
+            end
+          end
+
           # Create a shader-based object effect by name
           def self.create(effect_name : String, **params) : Effect?
             case effect_name.downcase
@@ -46,129 +57,118 @@ module PointClickEngine
           # Create highlight effect
           private def self.create_highlight(**params) : HighlightShader
             type = case params[:type]?.try(&.to_s)
-                   when "outline" then HighlightMode::Outline
-                   when "glow"    then HighlightMode::Glow
-                   when "rim"     then HighlightMode::RimLight
-                   else HighlightMode::Glow
+                   when "outline" then HighlightStyle::Outline
+                   when "glow"    then HighlightStyle::Glow
+                   when "rim"     then HighlightStyle::RimLight
+                   else HighlightStyle::Glow
                    end
-            
+
             color = ObjectEffects.parse_color(params[:color]?) || RL::YELLOW
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
-            
+            duration = to_float(params[:duration]?, 0.0f32)
+
             effect = HighlightShader.new(type, color, duration)
-            effect.thickness = params[:thickness]?.try(&.as(Number).to_f32) || 2.0f32
-            effect.intensity = params[:intensity]?.try(&.as(Number).to_f32) || 1.0f32
-            effect.softness = params[:softness]?.try(&.as(Number).to_f32) || 0.5f32
-            
+            effect.thickness = to_float(params[:thickness]?, 2.0f32)
+            effect.glow_intensity = to_float(params[:intensity]?, 1.0f32)
+
             effect
           end
           
           # Create dissolve effect
           private def self.create_dissolve(**params) : DissolveShader
+            pattern = case params[:pattern]?.try(&.to_s)
+                      when "circular" then DissolvePattern::Circular
+                      when "linear"   then DissolvePattern::Linear
+                      when "diamond"  then DissolvePattern::Diamond
+                      when "spiral"   then DissolvePattern::Spiral
+                      else DissolvePattern::Noise
+                      end
             mode = params[:mode]?.try(&.to_s) == "in" ? DissolveMode::In : DissolveMode::Out
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 1.0f32
-            
-            effect = DissolveShader.new(mode, duration)
-            
+            duration = to_float(params[:duration]?, 1.0f32)
+
+            effect = DissolveShader.new(pattern, mode, duration)
+
             if edge_color = ObjectEffects.parse_color(params[:edge_color]?)
               effect.edge_color = edge_color
             end
-            
-            effect.edge_thickness = params[:edge_thickness]?.try(&.as(Number).to_f32) || 0.05f32
-            effect.noise_scale = params[:noise_scale]?.try(&.as(Number).to_f32) || 10.0f32
-            
+
+            effect.edge_width = to_float(params[:edge_thickness]?, 0.05f32)
+            effect.noise_scale = to_float(params[:noise_scale]?, 10.0f32)
+
             effect
           end
           
           # Create shake effect
           private def self.create_shake(**params) : ShakeShader
-            amplitude = params[:amplitude]?.try(&.as(Number).to_f32) || 5.0f32
-            frequency = params[:frequency]?.try(&.as(Number).to_f32) || 10.0f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.5f32
-            
-            effect = ShakeShader.new(amplitude, frequency, duration)
-            
-            effect.shake_mode = case params[:direction]?.try(&.to_s)
-                                when "horizontal" then ShakeMode::Horizontal
-                                when "vertical"   then ShakeMode::Vertical
-                                when "rotation"   then ShakeMode::Rotation
-                                else ShakeMode::Both
-                                end
-            
-            effect.decay_enabled = params[:decay]? != false
-            effect.chromatic_aberration = params[:chromatic]?.try(&.as(Number).to_f32) || 0.0f32
-            
+            pattern = case params[:direction]?.try(&.to_s)
+                      when "directional" then ShakePattern::Directional
+                      when "rotational"  then ShakePattern::Rotational
+                      when "vibrate"     then ShakePattern::Vibrate
+                      when "impact"      then ShakePattern::Impact
+                      else ShakePattern::Random
+                      end
+            amplitude = to_float(params[:amplitude]?, 5.0f32)
+            frequency = to_float(params[:frequency]?, 30.0f32)
+            duration = to_float(params[:duration]?, 0.5f32)
+
+            effect = ShakeShader.new(pattern, amplitude, frequency, duration)
+            effect.decay_rate = to_float(params[:decay_rate]?, 2.0f32)
+
             effect
           end
-          
+
           # Create pulse effect
           private def self.create_pulse(**params) : PulseShader
-            scale_amount = params[:scale_amount]?.try(&.as(Number).to_f32) || 0.1f32
-            speed = params[:speed]?.try(&.as(Number).to_f32) || 2.0f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
-            
-            effect = PulseShader.new(scale_amount, speed, duration)
-            
-            effect.pulse_mode = case params[:mode]?.try(&.to_s)
-                                when "heartbeat" then PulseMode::Heartbeat
-                                when "bounce"    then PulseMode::Bounce
-                                else PulseMode::Breathe
-                                end
-            
-            effect.glow_enabled = params[:glow]? == true
-            effect.glow_intensity = params[:glow_intensity]?.try(&.as(Number).to_f32) || 0.5f32
-            
-            effect
+            pattern = case params[:mode]?.try(&.to_s)
+                      when "heartbeat" then PulsePattern::Heartbeat
+                      when "bounce"    then PulsePattern::Bounce
+                      when "breathe"   then PulsePattern::Breathe
+                      when "alert"     then PulsePattern::Alert
+                      else PulsePattern::Sine
+                      end
+            scale_amount = to_float(params[:scale_amount]?, 0.1f32)
+            speed = to_float(params[:speed]?, 2.0f32)
+            duration = to_float(params[:duration]?, 0.0f32)
+
+            PulseShader.new(pattern, scale_amount, speed, duration)
           end
-          
+
           # Create color shift effect
           private def self.create_color_shift(effect_name : String, **params) : ColorShiftShader
             mode = case params[:mode]?.try(&.to_s) || effect_name
-                   when "flash"              then ColorMode::Flash
-                   when "rainbow"            then ColorMode::Rainbow
-                   when "grayscale", "gray"  then ColorMode::Grayscale
-                   when "sepia"              then ColorMode::Sepia
-                   else ColorMode::Tint
+                   when "flash"              then ColorShiftMode::Flash
+                   when "rainbow"            then ColorShiftMode::Rainbow
+                   when "grayscale", "gray"  then ColorShiftMode::Grayscale
+                   when "sepia"              then ColorShiftMode::Sepia
+                   when "negative"           then ColorShiftMode::Negative
+                   else ColorShiftMode::Tint
                    end
-            
-            color = ObjectEffects.parse_color(params[:color]?)
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
-            
+
+            color = ObjectEffects.parse_color(params[:color]?) || RL::WHITE
+            duration = to_float(params[:duration]?, 0.0f32)
+
             effect = ColorShiftShader.new(mode, color, duration)
-            effect.speed = params[:speed]?.try(&.as(Number).to_f32) || 1.0f32
-            effect.intensity = params[:intensity]?.try(&.as(Number).to_f32) || 1.0f32
-            
+            effect.flash_speed = to_float(params[:speed]?, 4.0f32)
+
             effect
           end
-          
+
           # Create float effect
           private def self.create_float(**params) : FloatShader
-            amplitude = params[:amplitude]?.try(&.as(Number).to_f32) || 10.0f32
-            speed = params[:speed]?.try(&.as(Number).to_f32) || 1.0f32
-            duration = params[:duration]?.try(&.as(Number).to_f32) || 0.0f32
-            
-            effect = FloatShader.new(amplitude, speed, duration)
-            
-            # Configure float mode
-            effect.float_mode = if params[:sway_amplitude]? || params[:sway]?
-                                  FloatMode::Sway
-                                elsif params[:orbit]?
-                                  FloatMode::Orbit
-                                elsif params[:figure8]?
-                                  FloatMode::Figure8
-                                else
-                                  FloatMode::Simple
-                                end
-            
-            effect.phase_offset = params[:phase]?.try(&.as(Number).to_f32) || 0.0f32
-            effect.rotation_enabled = params[:rotation]? == true
-            effect.rotation_speed = params[:rotation_speed]?.try(&.as(Number).to_f32) || 1.0f32
-            
-            if effect.float_mode.sway?
-              effect.horizontal_amplitude = params[:sway_amplitude]?.try(&.as(Number).to_f32) || 5.0f32
-              effect.horizontal_speed = params[:sway_speed]?.try(&.as(Number).to_f32) || 0.7f32
-            end
-            
+            pattern = case params[:pattern]?.try(&.to_s)
+                      when "circular" then FloatPattern::Circular
+                      when "figure8"  then FloatPattern::Figure8
+                      when "random"   then FloatPattern::Random
+                      when "hover"    then FloatPattern::Hover
+                      else FloatPattern::Sine
+                      end
+            amplitude_x = to_float(params[:amplitude_x]?, 0.0f32)
+            amplitude_y = to_float(params[:amplitude]?, 10.0f32)
+            frequency = to_float(params[:speed]?, 2.0f32)
+            duration = to_float(params[:duration]?, 0.0f32)
+
+            effect = FloatShader.new(pattern, amplitude_x, amplitude_y, frequency, duration)
+            effect.phase_offset = to_float(params[:phase]?, 0.0f32)
+
             effect
           end
         end
