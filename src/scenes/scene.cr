@@ -70,6 +70,10 @@ module PointClickEngine
       property navigation_cell_size : Int32 = 16
       property script_path : String?
 
+      # Base directory for resolving relative paths (set by SceneLoader)
+      @[YAML::Field(ignore: true)]
+      property base_dir : String = ""
+
       # Legacy compatibility - will be removed
       @[YAML::Field(ignore: true)]
       property background : RL::Texture2D?
@@ -561,7 +565,17 @@ module PointClickEngine
       # Script loading
       def load_script(engine : Core::Engine)
         return unless script_path = @script_path
-        engine.system_manager.script_engine.try &.execute_script_file(script_path)
+
+        # Resolve path relative to base_dir if set
+        full_path = if @base_dir.empty?
+                      script_path
+                    else
+                      File.join(@base_dir, script_path)
+                    end
+
+        puts "[Scene] Loading script: #{full_path}"
+        result = engine.system_manager.script_engine.try &.execute_script_file(full_path)
+        puts "[Scene] Script load result: #{result}"
       end
 
       # Toggle hotspot highlighting

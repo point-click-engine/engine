@@ -565,6 +565,49 @@ module PointClickEngine
       end
 
       # ===================
+      # Timer Events
+      # ===================
+
+      # Fired when a timer is triggered
+      class TimerFiredEvent < GameEvent
+        define_event_type "timer:fired"
+
+        getter timer_id : String
+        getter callback_code : String?
+
+        def initialize(@timer_id : String, @callback_code : String? = nil)
+          super()
+        end
+      end
+
+      # ===================
+      # Cutscene Events
+      # ===================
+
+      # Fired when a cutscene starts
+      class CutsceneStartedEvent < GameEvent
+        define_event_type "cutscene:started"
+
+        getter cutscene_id : String
+
+        def initialize(@cutscene_id : String)
+          super()
+        end
+      end
+
+      # Fired when a cutscene ends
+      class CutsceneEndedEvent < GameEvent
+        define_event_type "cutscene:ended"
+
+        getter cutscene_id : String
+        getter skipped : Bool
+
+        def initialize(@cutscene_id : String, @skipped : Bool = false)
+          super()
+        end
+      end
+
+      # ===================
       # Custom Events
       # ===================
 

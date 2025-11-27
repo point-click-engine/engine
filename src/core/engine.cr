@@ -17,6 +17,8 @@ require "./save_system"
 require "../inventory/inventory_system"
 require "./game_state_manager"
 require "./quest_system"
+require "./timer_manager"
+require "../cutscenes/cutscene_manager"
 
 module PointClickEngine
   module Core
@@ -41,6 +43,8 @@ module PointClickEngine
       property inventory : Inventory::InventorySystem = Inventory::InventorySystem.new
       property game_state_manager : GameStateManager?
       property quest_manager : QuestManager?
+      property timer_manager : TimerManager = TimerManager.new
+      property cutscene_manager : Cutscenes::CutsceneManager = Cutscenes::CutsceneManager.new
 
       # Core components
       @input_handler : EngineComponents::InputHandler?
@@ -147,6 +151,9 @@ module PointClickEngine
         # Initialize subsystems
         @system_manager.initialize_systems(@window_width, @window_height)
 
+        # Wire up timer manager with EventBus
+        @timer_manager.event_bus = @system_manager.event_bus
+
         # Setup menu callbacks via SystemManager
         @system_manager.setup_menu_callbacks(self)
 
@@ -212,6 +219,12 @@ module PointClickEngine
 
         # Update systems
         @system_manager.update_systems(dt)
+
+        # Update timer manager
+        @timer_manager.update(dt)
+
+        # Update cutscene manager
+        @cutscene_manager.update(dt)
 
         # Update scene
         @current_scene.try(&.update(dt))
@@ -540,6 +553,12 @@ module PointClickEngine
           end
 
           puts "[Engine] Current scene player: #{@current_scene.try(&.player) ? "exists" : "nil"}"
+
+          # Load scene script if it has one
+          if scene = @current_scene
+            scene.load_script(self)
+          end
+
           @current_scene.try(&.on_enter)
         when .failure?
           raise "Failed to change scene: #{result.error.message}"

@@ -32,6 +32,9 @@ module PointClickEngine
 
         scene = Scene.new(scene_data["name"].as_s)
 
+        # Set base directory for resolving relative paths (parent of scene file directory)
+        scene.base_dir = File.dirname(scene_dir)
+
         if scale = scene_data["scale"]?
           scene.scale = scale.as_f.to_f32
         end

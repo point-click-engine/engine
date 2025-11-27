@@ -1,4 +1,9 @@
 # Scene-related Lua API component
+#
+# EventBus Integration:
+# Scripts register handlers via scene.on_enter(), scene.on_exit(), scene.on_item_use()
+# Engine publishes SceneEnteredEvent, SceneExitedEvent to EventBus
+# ScriptEngine subscribes and calls scene._handle_event()
 
 require "luajit"
 require "../core/engine"
@@ -24,11 +29,11 @@ module PointClickEngine
           function scene.change(scene_name)
             _engine_change_scene(scene_name)
           end
-          
+
           function scene.get_current()
             return _engine_get_current_scene()
           end
-          
+
           function scene.add_hotspot(name, x, y, width, height)
             return _engine_add_hotspot(name, x, y, width, height)
           end
@@ -47,6 +52,60 @@ module PointClickEngine
 
           function scene.enable_hotspot(name, enabled)
             _engine_enable_hotspot(name, enabled)
+          end
+
+          -- ================================
+          -- Event Handler Registration (EventBus pattern)
+          -- ================================
+          -- Scripts register handlers here. When events occur:
+          -- 1. Engine publishes event to EventBus (e.g., SceneEnteredEvent)
+          -- 2. ScriptEngine receives event via subscription
+          -- 3. ScriptEngine calls scene._handle_event() with event data
+          -- 4. _handle_event() invokes the registered Lua handler
+
+          scene._event_handlers = {}
+
+          -- Register a handler for scene events
+          -- event_type: "enter", "exit", "item_use"
+          function scene.on(event_type, handler)
+            if type(handler) == "function" then
+              scene._event_handlers[event_type] = handler
+            end
+          end
+
+          -- Convenience methods that map to scene.on()
+          function scene.on_enter(handler)
+            scene.on("enter", handler)
+          end
+
+          function scene.on_exit(handler)
+            scene.on("exit", handler)
+          end
+
+          function scene.on_item_use(handler)
+            scene.on("item_use", handler)
+          end
+
+          function scene.on_update(handler)
+            scene.on("update", handler)
+          end
+
+          -- Internal: called by ScriptEngine when events arrive from EventBus
+          -- event_type: "enter", "exit", "item_use", "update"
+          -- For "enter"/"exit": passes scene_name, previous_scene
+          -- For "item_use": passes item_id, target
+          -- For "update": passes delta_time
+          function scene._handle_event(event_type, ...)
+            local handler = scene._event_handlers[event_type]
+            if handler then
+              return handler(...)
+            end
+            return false
+          end
+
+          -- Global convenience function
+          function change_scene(scene_name)
+            scene.change(scene_name)
           end
         LUA
 

@@ -1,4 +1,9 @@
 # Character-related Lua API component
+#
+# EventBus Integration:
+# Scripts register handlers via character.on_interact()
+# Engine publishes CharacterInteractEvent to EventBus
+# ScriptEngine subscribes and calls character._handle_event()
 
 require "luajit"
 require "../core/engine"
@@ -23,15 +28,15 @@ module PointClickEngine
           function character.say(character_name, text)
             _engine_character_say(character_name, text)
           end
-          
+
           function character.move_to(character_name, x, y)
             _engine_character_move_to(character_name, x, y)
           end
-          
+
           function character.get_position(character_name)
             return _engine_character_get_position(character_name)
           end
-          
+
           function character.set_animation(character_name, animation_name)
             _engine_character_set_animation(character_name, animation_name)
           end
@@ -55,6 +60,71 @@ module PointClickEngine
           function character.stop_walking(character_name)
             _engine_character_stop_walking(character_name)
           end
+
+          -- ================================
+          -- Event Handler Registration (EventBus pattern)
+          -- ================================
+          -- Scripts register handlers here. When events occur:
+          -- 1. Engine publishes CharacterInteractEvent to EventBus
+          -- 2. ScriptEngine receives event via subscription
+          -- 3. ScriptEngine calls character._handle_event() with event data
+          -- 4. _handle_event() invokes the registered Lua handler
+
+          character._interact_callbacks = {}
+
+          -- Register a callback for when a character is interacted with
+          -- The callback receives target and verb as arguments
+          function character.on_interact(character_name, callback)
+            if type(callback) == "function" then
+              character._interact_callbacks[character_name] = callback
+            end
+          end
+
+          -- Internal: called by ScriptEngine when CharacterInteractEvent arrives from EventBus
+          -- event_type: "interact"
+          -- For "interact": passes character_name, target, verb
+          function character._handle_event(event_type, character_name, target, verb)
+            if event_type == "interact" then
+              local callback = character._interact_callbacks[character_name]
+              if callback then
+                callback(target, verb)
+                return true
+              end
+            end
+            return false
+          end
+
+          -- Check if character exists in scene
+          function character.exists(character_name)
+            return _engine_character_exists(character_name)
+          end
+
+          -- ================================
+          -- Global convenience functions
+          -- ================================
+          function has_character(character_name)
+            return character.exists(character_name)
+          end
+
+          function get_character_position(character_name)
+            return character.get_position(character_name)
+          end
+
+          function play_character_animation(character_name, animation_name)
+            character.set_animation(character_name, animation_name)
+          end
+
+          function move_character(character_name, x, y)
+            character.move_to(character_name, x, y)
+          end
+
+          function hide_character(character_name)
+            character.set_visible(character_name, false)
+          end
+
+          function show_character(character_name)
+            character.set_visible(character_name, true)
+          end
         LUA
 
         # Register Crystal callbacks
@@ -67,6 +137,23 @@ module PointClickEngine
         register_set_visible
         register_is_walking
         register_stop_walking
+        register_exists
+      end
+
+      private def register_exists
+        @registry.register_value_function("_engine_character_exists", 1) do |state|
+          if state.size >= 1
+            char_name = state.to_string(1)
+
+            if scene = Core::Engine.instance.current_scene
+              state.push(scene.get_character(char_name) != nil)
+            else
+              state.push(false)
+            end
+          else
+            state.push(false)
+          end
+        end
       end
 
       private def register_say

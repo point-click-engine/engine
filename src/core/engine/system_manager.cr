@@ -71,6 +71,8 @@ module PointClickEngine
           # Initialize scripting engine
           begin
             @script_engine = Scripting::ScriptEngine.new
+            # Subscribe script engine to EventBus for event-driven Lua callbacks
+            @script_engine.not_nil!.subscribe_to_events(@event_bus)
             puts "Script engine initialized successfully"
           rescue ex
             puts "Warning: Script engine initialization failed: #{ex.message}"
@@ -129,6 +131,9 @@ module PointClickEngine
 
         # Cleanup all systems
         def cleanup_systems
+          # Unsubscribe script engine from EventBus before cleanup
+          @script_engine.try(&.unsubscribe_from_events(@event_bus))
+
           # Cleanup systems that have cleanup methods
           @audio_manager.try(&.cleanup) # Has cleanup method
           @shader_system.try(&.cleanup)  # Has cleanup method

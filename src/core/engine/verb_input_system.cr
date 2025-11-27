@@ -8,6 +8,7 @@ require "../../inventory/inventory_system"
 require "../../ui/dialog_manager"
 require "../../audio/audio_manager"
 require "../../graphics/graphics"
+require "../events/game_events"
 
 module PointClickEngine
   module Core
@@ -136,8 +137,12 @@ module PointClickEngine
         end
 
         private def execute_verb_on_hotspot(verb : UI::VerbType, hotspot : Scenes::Hotspot, pos : RL::Vector2, player : Characters::Character?)
-          # Check for action commands first (like scene transitions)
           verb_name = verb.to_s.downcase
+
+          # Publish HotspotClickedEvent to EventBus for script handlers
+          @engine.event_bus.publish(Events::HotspotClickedEvent.new(hotspot.name, verb_name, pos))
+
+          # Check for action commands first (like scene transitions)
           puts "[VerbInput] Checking action for verb: #{verb_name} on hotspot: #{hotspot.name}"
           if command = hotspot.action_commands[verb_name]?
             puts "[VerbInput] Found action command: #{command}"
@@ -210,6 +215,12 @@ module PointClickEngine
         end
 
         private def execute_verb_on_character(verb : UI::VerbType, character : Characters::Character, player : Characters::Character?)
+          verb_name = verb.to_s.downcase
+
+          # Publish CharacterInteractEvent to EventBus for script handlers
+          target = player.try(&.name) || "player"
+          @engine.event_bus.publish(Events::CharacterInteractEvent.new(character.name, target, verb_name))
+
           # Check for custom handler first
           if handler = @character_verb_handlers[verb]?
             handler.call(character)
@@ -332,6 +343,7 @@ module PointClickEngine
 
           if input_manager.key_pressed?(Raylib::KeyboardKey::I)
             @engine.inventory.toggle_visibility
+            puts "[VerbInput] Inventory toggled, visible: #{@engine.inventory.visible}, items: #{@engine.inventory.items.size}"
           end
 
           # Tab to highlight hotspots
