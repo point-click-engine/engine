@@ -39,9 +39,9 @@ module PointClickEngine
           # Always handle keyboard input for verb selection (this should work even during dialogs)
           handle_keyboard_input
 
-          # Additional safety check: ensure no dialog is consuming mouse input
+          # Block mouse input if a dialog is active - let the dialog handle clicks
           if dm = @engine.dialog_manager
-            return if dm.dialog_consumed_input?
+            return if dm.is_dialog_active?
           end
 
           raw_mouse = RL.get_mouse_position

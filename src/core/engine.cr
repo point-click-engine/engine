@@ -172,6 +172,9 @@ module PointClickEngine
         while @running && !RL.close_window?
           dt = RL.get_frame_time
 
+          # Reset input state at start of each frame
+          InputState.reset
+
           # Update phase
           update(dt)
 

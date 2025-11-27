@@ -373,9 +373,21 @@ module PointClickEngine
 
         if !@choices.empty?
           base_choice_y = @position.y + @size.y - (@choices.size * 30) - @padding
+
+          # Convert screen coordinates to game coordinates for hover detection
+          raw_mouse = RL.get_mouse_position
+          mouse_pos = if engine = Core::Engine.instance
+                        if dm = engine.display_manager
+                          dm.screen_to_game(raw_mouse)
+                        else
+                          raw_mouse
+                        end
+                      else
+                        raw_mouse
+                      end
+
           @choices.each_with_index do |choice, index|
             choice_rect = get_choice_rect(index, base_choice_y)
-            mouse_pos = RL.get_mouse_position
             color = RL.check_collision_point_rec?(mouse_pos, choice_rect) ? RL::YELLOW : RL::WHITE
             RL.draw_text("> #{choice.text}", choice_rect.x.to_i, choice_rect.y.to_i, @font_size, color)
           end
