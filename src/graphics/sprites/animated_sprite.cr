@@ -58,6 +58,7 @@ module PointClickEngine
                        @frame_height : Int32, @frame_count : Int32)
           super(texture_path)
           update_source_rect
+          center_origin # Re-center based on frame dimensions
         end
 
         # Initialize at position
@@ -65,6 +66,15 @@ module PointClickEngine
                        @frame_width : Int32, @frame_height : Int32, @frame_count : Int32)
           super(x, y, texture_path)
           update_source_rect
+          center_origin # Re-center based on frame dimensions
+        end
+
+        # Override center_origin to use frame dimensions instead of texture dimensions
+        def center_origin
+          @origin = RL::Vector2.new(
+            x: @frame_width / 2.0f32,
+            y: @frame_height / 2.0f32
+          )
         end
 
         # Start playing animation

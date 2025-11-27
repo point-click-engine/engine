@@ -126,12 +126,9 @@ module PointClickEngine
           return unless @visible
           return unless tex = @texture
 
-          # Apply effects if present
-          if effects = @effects
-            # Effects need context - this is simplified
-            # In real use, would need renderer context
-            return
-          end
+          # Note: Effects require a render context for proper application.
+          # Use draw_with_context() when effects are needed.
+          # The basic draw() method always renders the sprite directly.
 
           source = @source_rect || RL::Rectangle.new(
             x: 0, y: 0,

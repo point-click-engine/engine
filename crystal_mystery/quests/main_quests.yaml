@@ -1,130 +1,312 @@
+# Crystal Mystery - Quest Definitions
+# A point-and-click mystery game quest system
+# Quests progress naturally through investigation and discovery
+
 quests:
+  # ============================================
+  # MAIN QUEST: The Missing Crystal
+  # This is the primary quest that drives the story
+  # ============================================
   - id: "find_crystal"
     name: "The Missing Crystal"
-    description: "A valuable crystal has gone missing from the laboratory. Find it and uncover the truth."
+    description: "The legendary Crystal of Luminus has vanished from Professor Ashworth's laboratory. Someone took it in the night - but who, and why? The answer lies somewhere in this ancient mansion."
     status: active
-    priority: high
+    priority: critical
+    chapter: 1
     objectives:
       - id: "examine_lab"
-        description: "Examine the laboratory for clues"
+        description: "Search the laboratory for clues"
+        hint: "The workbench might hold secrets the thief left behind."
         type: flag
-        condition: "lab_examined"
+        condition: "workbench_examined"
         completed: false
+        order: 1
       - id: "talk_to_scientist"
-        description: "Question the scientist about the missing crystal"
+        description: "Question Professor Ashworth about the theft"
+        hint: "The scientist seems distraught. He may know more than he realizes."
         type: flag
         condition: "scientist_questioned"
         completed: false
+        order: 2
       - id: "find_crystal_clue"
-        description: "Find evidence of where the crystal might be"
+        description: "Discover evidence of the crystal's whereabouts"
+        hint: "Look for notes, symbols, anything that might point to the crystal's location."
         type: item
         condition: "mysterious_note"
         completed: false
+        order: 3
       - id: "locate_crystal"
-        description: "Find the missing crystal"
+        description: "Find the Crystal of Luminus"
+        hint: "The moonflowers bloom only in the crystal's presence. Follow the light."
         type: item
         condition: "crystal"
         completed: false
+        order: 4
     rewards:
       - type: achievement
         id: "crystal_detective"
         name: "Crystal Detective"
-        description: "Solved the mystery of the missing crystal"
+        description: "Found the legendary Crystal of Luminus"
       - type: experience
         amount: 100
+    on_complete: "start_quest:butler_mystery"
 
+  # ============================================
+  # SECONDARY QUEST: The Butler's Secret
+  # Investigate the suspicious butler
+  # ============================================
   - id: "butler_mystery"
     name: "The Butler's Secret"
-    description: "The butler seems to be hiding something. Investigate his activities."
+    description: "James Thornton, the butler, has served the Ashworth family for twenty years. But lately, his behavior has been... suspicious. What is he hiding?"
     status: inactive
-    prerequisites: ["find_crystal"]
-    priority: medium
+    priority: high
+    chapter: 2
+    auto_activate_on:
+      - flag: "butler_questioned"
     objectives:
-      - id: "follow_butler"
-        description: "Follow the butler to see what he's up to"
+      - id: "discover_butler_interest"
+        description: "Learn what the butler has been researching"
+        hint: "The professor mentioned the butler asking questions. What kind?"
         type: flag
-        condition: "butler_followed"
+        condition: "butler_reading_confirmed"
         completed: false
-      - id: "search_butler_room"
-        description: "Search the butler's quarters"
+        order: 1
+      - id: "find_hidden_letters"
+        description: "Discover the butler's hidden activities"
+        hint: "Servants often know secrets they shouldn't. Has he been intercepting mail?"
         type: flag
-        condition: "butler_room_searched"
+        condition: "butler_protector_revealed"
         completed: false
-      - id: "confront_butler"
-        description: "Confront the butler with the evidence"
+        order: 2
+      - id: "get_butler_confession"
+        description: "Get the butler to confess what he knows"
+        hint: "Press him with evidence. He may be hiding something - or protecting someone."
         type: flag
-        condition: "butler_confronted"
+        condition: "butler_confessed"
         completed: false
+        order: 3
+      - id: "obtain_brass_key"
+        description: "Acquire the brass key the butler found"
+        hint: "The serpent key unlocks something important. Convince him to give it to you."
+        type: item
+        condition: "brass_key"
+        completed: false
+        order: 4
     rewards:
       - type: achievement
         id: "butler_truth"
         name: "The Butler's Truth"
-        description: "Uncovered the butler's secret"
+        description: "Uncovered what the butler was hiding"
       - type: item
         id: "brass_key"
-        name: "Butler's Brass Key"
+        name: "Ornate Brass Key"
+    on_complete: "start_quest:library_investigation"
 
+  # ============================================
+  # SECONDARY QUEST: Secrets in the Library
+  # Research the crystal's history and powers
+  # ============================================
   - id: "library_investigation"
     name: "Secrets in the Library"
-    description: "The library holds ancient knowledge that might help solve the mystery."
+    description: "The grand library holds centuries of knowledge about the Crystal of Luminus. Ancient texts, family journals, forgotten rituals - the answers to unlock the crystal's true potential lie within."
     status: inactive
-    prerequisites: ["butler_mystery"]
-    priority: medium
+    priority: high
+    chapter: 2
+    auto_activate_on:
+      - flag: "visited_library"
+      - flag: "butler_questioned"
     objectives:
       - id: "find_research_notes"
-        description: "Locate the research notes in the library"
+        description: "Locate the scientific research notes"
+        hint: "The professor's research must be documented somewhere. Check the bookshelves."
         type: item
         condition: "research_notes"
         completed: false
+        order: 1
+      - id: "examine_grandfather_journal"
+        description: "Find Lord Ashworth's final journal entry"
+        hint: "The brass key opens something important. Perhaps the desk drawer?"
+        type: flag
+        condition: "grandfather_journal_found"
+        completed: false
+        order: 2
       - id: "decode_ancient_text"
-        description: "Decipher the ancient text about crystals"
+        description: "Decipher the crystal ritual described in ancient texts"
+        hint: "The mysterious note and the lamp together might reveal hidden knowledge."
         type: flag
-        condition: "ancient_text_decoded"
+        condition: "ritual_decoded"
         completed: false
-      - id: "discover_ritual"
-        description: "Learn about the crystal enhancement ritual"
+        order: 3
+      - id: "discover_secret_passage"
+        description: "Find the hidden passage to the garden"
+        hint: "Lord Ashworth's portrait seems to follow you. Perhaps it hides more than secrets."
         type: flag
-        condition: "ritual_discovered"
+        condition: "secret_passage_revealed"
         completed: false
+        order: 4
     rewards:
       - type: achievement
         id: "scholar"
         name: "Scholar of Mysteries"
-        description: "Uncovered ancient knowledge"
-      - type: item
-        id: "crystal_lens"
-        name: "Crystal Enhancement Lens"
+        description: "Uncovered ancient knowledge about the crystal"
+      - type: experience
+        amount: 75
 
-  - id: "final_revelation"
-    name: "The Final Truth"
-    description: "All the pieces are coming together. Time to solve the ultimate mystery."
+  # ============================================
+  # SECONDARY QUEST: Garden Investigation
+  # Explore the moonlit garden for clues
+  # ============================================
+  - id: "garden_investigation"
+    name: "The Moonlit Garden"
+    description: "The garden holds its own mysteries - a guardian statue, a resonating fountain, and moonflowers that bloom only in the crystal's presence. What secrets lie hidden in the fog?"
     status: inactive
-    prerequisites: ["library_investigation"]
-    priority: critical
+    priority: high
+    chapter: 2
+    auto_activate_on:
+      - flag: "visited_garden"
     objectives:
-      - id: "combine_evidence"
-        description: "Combine all evidence to reveal the truth"
+      - id: "examine_statue"
+        description: "Investigate the guardian statue"
+        hint: "The robed figure's hands are cupped, as if holding something precious."
+        type: flag
+        condition: "statue_examined"
+        completed: false
+        order: 1
+      - id: "discover_clues"
+        description: "Find evidence of who placed the crystal in the garden"
+        hint: "Someone was here recently. Look for footprints, fabric, any sign of passage."
+        type: flag
+        condition: "flowerbed_examined"
+        completed: false
+        order: 2
+      - id: "learn_activation"
+        description: "Learn how to properly activate the crystal"
+        hint: "The statue may hold more secrets. Use the crystal lens to see what's hidden."
+        type: flag
+        condition: "activation_method_learned"
+        completed: false
+        order: 3
+      - id: "investigate_shed"
+        description: "Search the garden shed for evidence"
+        hint: "Someone's been living there. The garden key should open it."
+        type: flag
+        condition: "shed_searched"
+        completed: false
+        order: 4
+    rewards:
+      - type: achievement
+        id: "garden_explorer"
+        name: "Garden Explorer"
+        description: "Uncovered the garden's secrets"
+      - type: experience
+        amount: 75
+
+  # ============================================
+  # OPTIONAL QUEST: The Father's Return
+  # Discover the truth about the professor's father
+  # ============================================
+  - id: "father_mystery"
+    name: "The Father's Return"
+    description: "Professor Ashworth's father abandoned the family decades ago, fleeing the crystal's influence. But evidence suggests he may have returned. Why now? What does he want?"
+    status: inactive
+    priority: medium
+    chapter: 3
+    auto_activate_on:
+      - flag: "father_theory_formed"
+    objectives:
+      - id: "confirm_father_theory"
+        description: "Find evidence supporting the father theory"
+        hint: "The butler mentioned seeing a familiar figure. Search for more proof."
+        type: flag
+        condition: "father_evidence_found"
+        completed: false
+        order: 1
+      - id: "trace_crystal_origin"
+        description: "Discover where the crystal came from"
+        hint: "The globe in the library has markings. Perhaps they point somewhere specific."
+        type: flag
+        condition: "crystal_origin_traced"
+        completed: false
+        order: 2
+      - id: "understand_motive"
+        description: "Understand why the father returned"
+        hint: "He fled to protect himself. Perhaps he returned to protect his son."
+        type: flag
+        condition: "father_motive_understood"
+        completed: false
+        order: 3
+    rewards:
+      - type: achievement
+        id: "family_truth"
+        name: "Family Ties"
+        description: "Discovered the truth about the professor's father"
+      - type: experience
+        amount: 50
+
+  # ============================================
+  # FINAL QUEST: The Final Revelation
+  # Complete the crystal ritual and solve the mystery
+  # ============================================
+  - id: "final_revelation"
+    name: "The Final Revelation"
+    description: "All the pieces are in place. The crystal, the lens, the knowledge of the ritual. At 11:47, when the moon reaches its apex, the veil between worlds grows thin. It's time to complete what Lord Ashworth began."
+    status: inactive
+    priority: critical
+    chapter: 3
+    prerequisites:
+      - "find_crystal:locate_crystal"
+    auto_activate_on:
+      - flag: "activation_method_learned"
+      - item: "crystal_lens"
+    objectives:
+      - id: "gather_components"
+        description: "Gather all components for the ritual"
+        hint: "You need the crystal, the focusing lens, and knowledge of the proper method."
         type: multi_item
-        conditions: ["crystal", "research_notes", "crystal_lens"]
+        conditions: ["crystal", "crystal_lens"]
         completed: false
-      - id: "confront_mastermind"
-        description: "Confront the true culprit behind everything"
+        order: 1
+      - id: "reach_fountain"
+        description: "Go to the fountain in the garden"
+        hint: "Where light meets water, truth shall emerge."
         type: flag
-        condition: "mastermind_confronted"
+        condition: "at_fountain"
         completed: false
+        order: 2
       - id: "restore_crystal"
-        description: "Use the knowledge to restore the crystal's power"
+        description: "Activate the crystal at the fountain"
+        hint: "Hold the crystal over the water, focus the moonlight through the lens."
         type: flag
-        condition: "crystal_restored"
+        condition: "fountain_activated"
         completed: false
+        order: 3
     rewards:
       - type: achievement
         id: "master_detective"
         name: "Master Detective"
-        description: "Solved the ultimate mystery"
+        description: "Solved the ultimate mystery of the Crystal of Luminus"
       - type: ending
         id: "good_ending"
         name: "The Crystal's Light"
-        description: "You have restored the crystal and brought light back to the world"
+        description: "The crystal's power is restored, and the veil between worlds shimmers with possibility"
       - type: experience
         amount: 500
+
+# ============================================
+# Quest Chain Notes:
+# ============================================
+# The game flows naturally through investigation:
+#
+# 1. Player starts in laboratory or library
+# 2. Questioning scientist/butler reveals suspicions
+# 3. Finding clues in library leads to garden
+# 4. Finding crystal in garden statue
+# 5. Getting lens from cabinet (with brass key)
+# 6. Learning activation method from statue markings
+# 7. Activating crystal at fountain = VICTORY
+#
+# Optional paths:
+# - Father mystery adds depth but isn't required
+# - Butler confession reveals brass key location
+# - Secret passage provides alternate garden access
+# ============================================

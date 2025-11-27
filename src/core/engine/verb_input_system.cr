@@ -142,14 +142,18 @@ module PointClickEngine
           if command = hotspot.action_commands[verb_name]?
             puts "[VerbInput] Found action command: #{command}"
             
-            # Parse transition command
+            # Parse command based on prefix
+            # Supported prefixes:
+            #   transition:scene:type:duration:x,y - Scene transition
+            #   script: or lua: - Execute as Lua code
+            #   (no prefix) - Display as plain text message
             if command.starts_with?("transition:")
               parts = command.split(":")
               if parts.size >= 2
                 scene_name = parts[1]
                 transition_type = parts.size > 2 ? parts[2] : "fade"
                 duration = parts.size > 3 ? (parts[3].to_f32? || 1.0f32) : 1.0f32
-                
+
                 # Parse position if provided
                 position = if parts.size > 4
                   coords = parts[4].split(",")
@@ -159,17 +163,22 @@ module PointClickEngine
                     RL::Vector2.new(x: x || 0, y: y || 0) if x && y
                   end
                 end
-                
+
                 # Use the scene manager's transition method
                 @engine.scene_manager.change_scene_with_transition(scene_name, transition_type, duration, position)
-                
+
                 puts "[VerbInput] Transition executed successfully"
                 return
               end
+            elsif command.starts_with?("script:") || command.starts_with?("lua:")
+              # Extract script code after prefix
+              script_code = command.sub(/^(script|lua):/, "").strip
+              puts "[VerbInput] Executing script: #{script_code}"
+              @engine.system_manager.script_engine.try(&.execute_script(script_code))
             else
-              puts "[VerbInput] Not a transition command, executing as script"
-              # Execute as script command if not a transition
-              @engine.system_manager.script_engine.try(&.execute_script(command))
+              # Plain text - display as message
+              puts "[VerbInput] Displaying message: #{command}"
+              show_message(command)
             end
           else
             puts "[VerbInput] No action command for verb #{verb_name}"

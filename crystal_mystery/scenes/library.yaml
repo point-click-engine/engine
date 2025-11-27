@@ -1,18 +1,27 @@
 name: library
+display_name: "The Grand Library"
+description: "A magnificent Victorian library filled with ancient tomes and the whisper of secrets long forgotten."
 background_path: assets/backgrounds/library.png
 logical_width: 1024
 logical_height: 768
 enable_pathfinding: true
 navigation_cell_size: 16
-enable_camera_scrolling: false  # Library fits in viewport
+enable_camera_scrolling: false
 script_path: scripts/library.lua
-default_transition_duration: 2.0  # Default duration for transitions from this scene
+default_transition_duration: 2.0
+ambient_track: castle_ambient
+
+# Atmospheric effects - rain against the windows
 effects:
   - type: rain
     intensity: medium
     wind: 0.15
     color: [180, 190, 220, 200]
     splashes: true
+
+# Room description when entering
+on_enter_text: "The grand library stretches before you, its towering shelves heavy with centuries of knowledge. Rain patters softly against the tall windows, casting dancing shadows across the worn Persian rugs."
+
 walkable_areas:
   regions:
     - name: main_floor
@@ -46,37 +55,56 @@ walkable_areas:
       max_y: 700
       min_scale: 1.0
       max_scale: 1.2
+
+# Action prefixes:
+#   (no prefix) = plain text message to display
+#   script: = execute as Lua code
+#   transition: = scene change
+
 hotspots:
+  # Main interactive elements
   - name: bookshelf
     x: 100
     y: 200
     width: 150
     height: 300
+    description: "Towering mahogany bookshelves"
+    default_verb: look
+    highlight_on_hover: true
     actions:
-      look: "Ancient books line the shelves"
-      use: "examine_bookshelf"
+      look: "Row upon row of leather-bound volumes fill the shelves. Some spines are cracked with age, others gilded in fading gold leaf. A few titles catch your eye: Crystalline Resonance, The Hidden Properties of Light."
+      use: "script:examine_bookshelf()"
+      take: "These books belong to the mansion. Though one particular volume seems loose..."
+
   - name: desk
     x: 400
     y: 400
     width: 200
     height: 150
+    description: "An ornate mahogany writing desk"
+    default_verb: look
+    highlight_on_hover: true
     actions:
-      look: "A mahogany desk with scattered papers"
-      use: "examine_desk"
+      look: "A magnificent Victorian writing desk dominates the center of the room. Scattered papers cover its leather top, along with an antique inkwell and a half-written letter."
+      use: "script:examine_desk()"
+      open: "script:examine_desk()"
+
   - name: door_to_lab
     x: 850
     y: 300
     width: 100
     height: 200
-    description: "Door to the laboratory"
+    description: "Heavy oak door to the laboratory"
     default_verb: open
     object_type: door
     actions:
-      look: "A heavy wooden door leading to the laboratory"
-      open: "transition:laboratory:swirl::100,400"  # Uses scene's default duration (2.0s)
-      use: "transition:laboratory:swirl:2.0:100,400"  # Explicit 2 second duration
+      look: "A heavy oak door reinforced with iron bands. A small brass plate reads Laboratory - Authorized Personnel Only."
+      open: "transition:laboratory:swirl:2.0:100,400"
+      use: "transition:laboratory:swirl:2.0:100,400"
+
   - name: painting
     type: polygon
+    description: "Portrait of Lord Ashworth"
     points:
       - x: 500
         y: 100
@@ -88,9 +116,71 @@ hotspots:
         y: 280
       - x: 500
         y: 250
+    highlight_on_hover: true
     actions:
-      look: "A portrait of the mansion's founder"
-      use: "examine_painting"
+      look: "A stern portrait of a Victorian gentleman - presumably Lord Ashworth. His eyes seem to follow you, and there is something peculiar about the frame."
+      use: "script:examine_painting()"
+      push: "script:examine_painting()"
+
+  # Atmospheric elements
+  - name: window
+    x: 700
+    y: 150
+    width: 120
+    height: 250
+    description: "Rain-streaked window"
+    default_verb: look
+    actions:
+      look: "Rain streams down the tall window, blurring the view of the overgrown garden beyond. Lightning occasionally illuminates the silhouette of an old fountain."
+      open: "The window is locked tight against the storm. Probably wise."
+      use: "script:examine_window()"
+
+  - name: fireplace
+    x: 250
+    y: 280
+    width: 100
+    height: 150
+    description: "Ornate marble fireplace"
+    default_verb: look
+    actions:
+      look: "An elaborate marble fireplace with carved cherubs and vines. The embers glow faintly. The mantelpiece holds a dusty clock stopped at 11:47."
+      use: "script:examine_fireplace()"
+
+  - name: globe
+    x: 750
+    y: 450
+    width: 80
+    height: 120
+    description: "Antique terrestrial globe"
+    default_verb: look
+    highlight_on_hover: true
+    actions:
+      look: "An antique globe on a brass stand. The continents are mapped in sepia tones. Someone has circled a location in Eastern Europe with red ink."
+      use: "script:on_globe_click()"
+      take: "The globe is far too heavy to carry."
+
+  - name: reading_chair
+    x: 180
+    y: 500
+    width: 100
+    height: 120
+    description: "Worn leather armchair"
+    default_verb: look
+    actions:
+      look: "A well-worn leather armchair with a reading lamp beside it. An open book lies face-down on the armrest - someone left in a hurry."
+      use: "script:examine_reading_chair()"
+      take: "That would be rather impractical."
+
+  - name: ladder
+    x: 120
+    y: 350
+    width: 40
+    height: 200
+    description: "Rolling library ladder"
+    default_verb: look
+    actions:
+      look: "A brass-railed ladder on wheels for reaching the upper shelves. The wood is worn smooth where hands have gripped it."
+      use: "script:examine_ladder()"
 
 characters:
   - name: butler
@@ -102,3 +192,8 @@ characters:
       frame_width: 100
       frame_height: 100
     scale: 3.0
+    facing: right
+    dialog: butler_dialog
+    description: "The butler stands stiffly, hands clasped behind his back"
+    on_look: "A tall, thin man in an impeccable black suit. His face is carefully neutral, but his eyes dart nervously when he thinks you're not watching."
+    on_talk: "start_dialog:butler"
