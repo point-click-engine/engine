@@ -1,4 +1,0 @@
-name: "slow_scene"
-background_path: "test_assets/slow_bg.png"
-audio:
-  background_music: "test_audio/slow_music.wav"

@@ -2,6 +2,7 @@ require "../spec_helper"
 
 describe "Player Visibility in Scene Transitions" do
   it "ensures player is visible in all scenes" do
+    RaylibContext.ensure_window(1024, 768, "Test Game")
     # Create a minimal engine setup
     engine = PointClickEngine::Core::Engine.new(1024, 768, "Test Game")
 
@@ -104,6 +105,7 @@ describe "Player Visibility in Scene Transitions" do
   end
 
   it "ensures player is drawn even without walkable areas" do
+    RaylibContext.ensure_window(1024, 768, "Test Game")
     engine = PointClickEngine::Core::Engine.new(1024, 768, "Test Game")
 
     # Create scene without walkable area

@@ -108,8 +108,10 @@ module PointClickEngine
 
       # Initializes the engine and all subsystems
       def init
-        # Initialize Raylib window
-        RL.init_window(@window_width, @window_height, @window_title)
+        # Initialize Raylib window only if not already open (for tests using RaylibContext)
+        unless RL.window_ready?
+          RL.init_window(@window_width, @window_height, @window_title)
+        end
         RL.set_target_fps(@target_fps)
 
         # Initialize subsystems

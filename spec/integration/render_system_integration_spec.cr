@@ -3,7 +3,7 @@ require "../spec_helper"
 describe "Render System Integration" do
   describe "Renderer Registration" do
     it "ensures all UI components with draw methods are registered with render layers" do
-      RL.init_window(800, 600, "Renderer Registration Test")
+      RaylibContext.ensure_window(800, 600, "Renderer Registration Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Renderer Test")
       engine.init
 
@@ -39,12 +39,10 @@ describe "Render System Integration" do
       # Test that render layers exist for all expected UI components
       stats = render_manager.get_render_stats
       stats.should_not be_nil
-
-      RL.close_window
     end
 
     it "verifies all render layers have at least one renderer registered" do
-      RL.init_window(800, 600, "Layer Coverage Test")
+      RaylibContext.ensure_window(800, 600, "Layer Coverage Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Layer Test")
       engine.init
 
@@ -55,14 +53,12 @@ describe "Render System Integration" do
       # Test by triggering a render frame - if any components aren't registered,
       # they won't be drawn and this might cause issues
       render_manager.render(0.016f32)
-
-      RL.close_window
     end
   end
 
   describe "Input Consumption Logic" do
     it "ensures floating dialogs don't block input" do
-      RL.init_window(800, 600, "Input Consumption Test")
+      RaylibContext.ensure_window(800, 600, "Input Consumption Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test")
       engine.init
 
@@ -86,12 +82,10 @@ describe "Render System Integration" do
       # When no actual input happens, consumed_input is false initially
       # but the dialog is present and would consume input if it occurred
       dialog_manager.dialog_consumed_input?.should be_false # No input actually happened in test
-
-      RL.close_window
     end
 
     it "ensures verb input system works when floating dialogs are present" do
-      RL.init_window(800, 600, "Verb Input Test")
+      RaylibContext.ensure_window(800, 600, "Verb Input Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Verb Test")
       engine.init
 
@@ -114,14 +108,12 @@ describe "Render System Integration" do
         verb_system.cursor_manager.cycle_verb_forward
         verb_system.cursor_manager.current_verb.should_not eq(initial_verb)
       end
-
-      RL.close_window
     end
   end
 
   describe "Coordinate System Consistency" do
     it "ensures UI components use game coordinates not screen coordinates" do
-      RL.init_window(800, 600, "Coordinate System Test")
+      RaylibContext.ensure_window(800, 600, "Coordinate System Test")
       engine = PointClickEngine::Core::Engine.new(1024, 768, "Coordinate Test") # Different from screen size
       engine.init
 
@@ -138,14 +130,12 @@ describe "Render System Integration" do
         # Position should be within game bounds, not screen bounds
         # This test would catch the coordinate system bug we fixed
       end
-
-      RL.close_window
     end
   end
 
   describe "Integration Smoke Tests" do
     it "runs a complete rendering cycle with all systems active" do
-      RL.init_window(800, 600, "Full Integration Test")
+      RaylibContext.ensure_window(800, 600, "Full Integration Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Integration Test")
       engine.init
 
@@ -171,8 +161,6 @@ describe "Render System Integration" do
       if verb_system = engine.verb_input_system
         verb_system.enabled.should be_true
       end
-
-      RL.close_window
     end
   end
 end

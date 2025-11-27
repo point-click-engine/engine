@@ -24,8 +24,8 @@ describe "Engine Auto-Save Functionality" do
 
   describe "auto-save during update" do
     it "saves game when timer reaches interval" do
+      RaylibContext.ensure_window(800, 600, "Auto-Save Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Auto-Save Test")
-      RL.init_window(800, 600, "Auto-Save Test")
       engine.init
 
       # Enable auto-save with 2 second interval
@@ -47,14 +47,13 @@ describe "Engine Auto-Save Functionality" do
       saved_content.includes?("title: Auto-Save Test").should be_true
 
       # Cleanup
-      RL.close_window
       File.delete("saves/autosave.yml") if File.exists?("saves/autosave.yml")
       Dir.delete("saves") if Dir.empty?("saves")
     end
 
     it "resets timer after auto-save" do
+      RaylibContext.ensure_window(800, 600, "Timer Reset Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Timer Reset Test")
-      RL.init_window(800, 600, "Timer Reset Test")
       engine.init
 
       engine.enable_auto_save(1.0f32) # 1 second interval
@@ -74,14 +73,13 @@ describe "Engine Auto-Save Functionality" do
       engine.auto_save_timer.should be_close(0.0f32, 0.01f32)
 
       # Cleanup
-      RL.close_window
       File.delete("saves/autosave.yml") if File.exists?("saves/autosave.yml")
       Dir.delete("saves") if Dir.empty?("saves")
     end
 
     it "does not save when auto-save is disabled" do
+      RaylibContext.ensure_window(800, 600, "No Save Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "No Save Test")
-      RL.init_window(800, 600, "No Save Test")
       engine.init
 
       # Auto-save disabled by default
@@ -96,12 +94,11 @@ describe "Engine Auto-Save Functionality" do
       File.exists?("saves/autosave.yml").should be_false
 
       # Cleanup
-      RL.close_window
     end
 
     it "creates saves directory if it doesn't exist" do
+      RaylibContext.ensure_window(800, 600, "Dir Creation Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Dir Creation Test")
-      RL.init_window(800, 600, "Dir Creation Test")
       engine.init
 
       # Ensure saves directory doesn't exist
@@ -120,7 +117,6 @@ describe "Engine Auto-Save Functionality" do
       File.exists?("saves/autosave.yml").should be_true
 
       # Cleanup
-      RL.close_window
       File.delete("saves/autosave.yml")
       Dir.delete("saves")
     end
@@ -139,14 +135,13 @@ describe "Engine Auto-Save Functionality" do
       File.write("autosave_config.yaml", config_yaml)
       config = PointClickEngine::Core::GameConfig.from_file("autosave_config.yaml")
 
-      RL.init_window(800, 600, "Config Auto-Save Test")
+      RaylibContext.ensure_window(800, 600, "Config Auto-Save Test")
       engine = config.create_engine
 
       # Should be enabled with default 5 minute interval
       engine.auto_save_interval.should eq(300.0f32)
 
       # Cleanup
-      RL.close_window
       File.delete("autosave_config.yaml")
     end
   end

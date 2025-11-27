@@ -2,6 +2,7 @@ require "../spec_helper"
 
 describe "Dialog input blocking" do
   it "blocks game input when dialog is active" do
+    RaylibContext.ensure_window(800, 600, "Test")
     # Create a minimal engine setup
     engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
     engine.init
@@ -42,6 +43,7 @@ describe "Dialog input blocking" do
   end
 
   it "resumes game input after dialog closes" do
+    RaylibContext.ensure_window(800, 600, "Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
     engine.init
 

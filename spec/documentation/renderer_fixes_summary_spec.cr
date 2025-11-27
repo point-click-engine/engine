@@ -137,7 +137,7 @@ describe "Renderer Registration Fixes Documentation" do
   end
 
   it "validates the final renderer registration state" do
-    RL.init_window(800, 600, "Final State Validation")
+    RaylibContext.ensure_window(800, 600, "Final State Validation")
     engine = PointClickEngine::Core::Engine.new(
       800,
       600,
@@ -179,7 +179,5 @@ describe "Renderer Registration Fixes Documentation" do
 
     # Should have all 5 critical UI components
     registered_components.size.should be >= 5
-
-    RL.close_window
   end
 end

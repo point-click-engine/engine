@@ -3,7 +3,7 @@ require "../spec_helper"
 describe "Door Interaction System" do
   describe "Action-based transitions for doors" do
     it "triggers scene transitions through hotspot actions" do
-      RL.init_window(800, 600, "Door Interaction Test")
+      RaylibContext.ensure_window(800, 600, "Door Interaction Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Door Test")
       engine.init
       engine.enable_verb_input
@@ -40,7 +40,6 @@ describe "Door Interaction System" do
       # Check action commands
       door_hotspot.action_commands["open"].should eq("transition:next_scene:swirl:2.0:100,400")
 
-      RL.close_window
     end
 
     it "parses transition commands correctly" do
@@ -74,7 +73,7 @@ describe "Door Interaction System" do
     end
 
     it "supports different verbs triggering transitions" do
-      RL.init_window(800, 600, "Multi-verb Transition Test")
+      RaylibContext.ensure_window(800, 600, "Multi-verb Transition Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Multi-verb Test")
       engine.init
 
@@ -112,13 +111,12 @@ describe "Door Interaction System" do
       button_hotspot.action_commands["use"].should eq("transition:control_room:matrix_rain:2.5")
       button_hotspot.action_commands["push"].should eq("transition:control_room:matrix_rain:2.5")
 
-      RL.close_window
     end
   end
 
   describe "Verb System Integration" do
     it "correctly handles door hotspots with open verb" do
-      RL.init_window(800, 600, "Verb Integration Test")
+      RaylibContext.ensure_window(800, 600, "Verb Integration Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Verb Test")
       engine.init
 
@@ -163,11 +161,10 @@ describe "Door Interaction System" do
         bookshelf.default_verb.should eq(PointClickEngine::UI::VerbType::Look)
       end
 
-      RL.close_window
     end
 
     it "preserves backward compatibility for non-door hotspots" do
-      RL.init_window(800, 600, "Compatibility Test")
+      RaylibContext.ensure_window(800, 600, "Compatibility Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Compatibility Test")
       engine.init
 
@@ -196,7 +193,6 @@ describe "Door Interaction System" do
         hotspot.action_commands.empty?.should be_true
       end
 
-      RL.close_window
     end
 
     it "handles action commands without transitions" do

@@ -86,13 +86,13 @@ end
 {% if flag?(:with_graphics_tests) %}
 describe "PointClickEngine::Graphics::Effects::SceneEffects (GPU tests)" do
   before_all do
-    RL.init_window(100, 100, "SceneEffect Tests")
+    RaylibContext.ensure_window(100, 100, "SceneEffect Tests")
     # Reset context check to pick up the new window
     PointClickEngine::Graphics::Effects::ShaderEffect.reset_context_check
   end
 
   after_all do
-    RL.close_window
+    RaylibContext.release_window
   end
 
   describe "shader availability with GPU" do

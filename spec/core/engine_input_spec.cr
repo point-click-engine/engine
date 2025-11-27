@@ -19,7 +19,7 @@ end
 describe "Engine Input Handling" do
   describe "mouse input handling" do
     it "processes click events through input manager" do
-      RL.init_window(800, 600, "Input Test")
+      RaylibContext.ensure_window(800, 600, "Input Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
@@ -37,11 +37,10 @@ describe "Engine Input Handling" do
       clicked = true
 
       clicked.should be_true
-      RL.close_window
     end
 
     it "handles hotspot interactions" do
-      RL.init_window(800, 600, "Input Test")
+      RaylibContext.ensure_window(800, 600, "Input Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
@@ -57,12 +56,10 @@ describe "Engine Input Handling" do
       # Click on hotspot area
       found_hotspot = scene.get_hotspot_at(RL::Vector2.new(x: 100, y: 100))
       found_hotspot.should eq(hotspot)
-
-      RL.close_window
     end
 
     it "handles character interactions" do
-      RL.init_window(800, 600, "Input Test")
+      RaylibContext.ensure_window(800, 600, "Input Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
@@ -77,14 +74,12 @@ describe "Engine Input Handling" do
       # Click on character area
       found_character = scene.get_character_at(RL::Vector2.new(x: 150, y: 200))
       found_character.should eq(character)
-
-      RL.close_window
     end
   end
 
   describe "keyboard input handling" do
     it "handles debug mode toggle" do
-      RL.init_window(800, 600, "Input Test")
+      RaylibContext.ensure_window(800, 600, "Input Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
@@ -98,11 +93,10 @@ describe "Engine Input Handling" do
       PointClickEngine::Core::Engine.debug_mode = !PointClickEngine::Core::Engine.debug_mode
 
       PointClickEngine::Core::Engine.debug_mode.should_not eq(initial_debug)
-      RL.close_window
     end
 
     it "handles inventory toggle" do
-      RL.init_window(800, 600, "Input Test")
+      RaylibContext.ensure_window(800, 600, "Input Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
@@ -115,13 +109,12 @@ describe "Engine Input Handling" do
       inventory_toggled = true
 
       inventory_toggled.should be_true
-      RL.close_window
     end
   end
 
   describe "input state management" do
     it "tracks mouse position accurately" do
-      RL.init_window(800, 600, "Input Test")
+      RaylibContext.ensure_window(800, 600, "Input Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
@@ -132,12 +125,10 @@ describe "Engine Input Handling" do
       mouse_pos.should_not be_nil
       mouse_pos.x.should be_a(Float32)
       mouse_pos.y.should be_a(Float32)
-
-      RL.close_window
     end
 
     it "manages input handler lifecycle" do
-      RL.init_window(800, 600, "Input Test")
+      RaylibContext.ensure_window(800, 600, "Input Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
@@ -151,14 +142,12 @@ describe "Engine Input Handling" do
 
       engine.input_handler.not_nil!.handle_clicks = true
       engine.input_handler.not_nil!.handle_clicks.should be_true
-
-      RL.close_window
     end
   end
 
   describe "input validation and filtering" do
     it "filters inactive scene elements" do
-      RL.init_window(800, 600, "Input Test")
+      RaylibContext.ensure_window(800, 600, "Input Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
@@ -175,12 +164,10 @@ describe "Engine Input Handling" do
       # Click on inactive hotspot should return nil
       found_hotspot = scene.get_hotspot_at(RL::Vector2.new(x: 100, y: 100))
       found_hotspot.should be_nil
-
-      RL.close_window
     end
 
     it "respects input blocking elements" do
-      RL.init_window(800, 600, "Input Test")
+      RaylibContext.ensure_window(800, 600, "Input Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test Game")
       engine.init
 
@@ -201,8 +188,6 @@ describe "Engine Input Handling" do
       # Click on overlapping area - should get the front-most (blocking) hotspot
       found_hotspot = scene.get_hotspot_at(RL::Vector2.new(x: 125, y: 125))
       found_hotspot.should eq(behind_hotspot) # behind_hotspot was added last, so it's front-most
-
-      RL.close_window
     end
   end
 end

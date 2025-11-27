@@ -18,7 +18,7 @@ end
 
 describe "Engine Dialog System Integration" do
   it "handles basic dialog system integration" do
-    RL.init_window(800, 600, "Dialog System Test")
+    RaylibContext.ensure_window(800, 600, "Dialog System Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
@@ -30,11 +30,10 @@ describe "Engine Dialog System Integration" do
     character.on_interact(character)
     character.name.should eq("talker")
 
-    RL.close_window
   end
 
   it "manages dialog choice selections" do
-    RL.init_window(800, 600, "Dialog Choice Test")
+    RaylibContext.ensure_window(800, 600, "Dialog Choice Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
@@ -44,11 +43,10 @@ describe "Engine Dialog System Integration" do
 
     selected_choice.should eq("Option B")
 
-    RL.close_window
   end
 
   it "tracks conversation state" do
-    RL.init_window(800, 600, "Conversation State Test")
+    RaylibContext.ensure_window(800, 600, "Conversation State Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
@@ -60,11 +58,10 @@ describe "Engine Dialog System Integration" do
     in_conversation = !current_partner.nil?
     in_conversation.should be_true
 
-    RL.close_window
   end
 
   it "manages dialog history and variables" do
-    RL.init_window(800, 600, "Dialog Variables Test")
+    RaylibContext.ensure_window(800, 600, "Dialog Variables Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
@@ -77,11 +74,10 @@ describe "Engine Dialog System Integration" do
     game_variables["player_level"].should eq(5)
     game_variables["has_sword"].should be_true
 
-    RL.close_window
   end
 
   it "handles multiple character conversations" do
-    RL.init_window(800, 600, "Multi Character Test")
+    RaylibContext.ensure_window(800, 600, "Multi Character Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
@@ -103,11 +99,10 @@ describe "Engine Dialog System Integration" do
     current_scene = engine.current_scene.not_nil!
     current_scene.characters.size.should eq(2)
 
-    RL.close_window
   end
 
   it "handles conditional dialog branches" do
-    RL.init_window(800, 600, "Conditional Dialog Test")
+    RaylibContext.ensure_window(800, 600, "Conditional Dialog Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
@@ -125,11 +120,10 @@ describe "Engine Dialog System Integration" do
     available_options.includes?("Buy item").should be_true
     available_options.includes?("Complete quest").should be_true
 
-    RL.close_window
   end
 
   it "manages dialog UI state" do
-    RL.init_window(800, 600, "Dialog UI Test")
+    RaylibContext.ensure_window(800, 600, "Dialog UI Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
@@ -144,11 +138,10 @@ describe "Engine Dialog System Integration" do
     dialog_visible.should be_true
     current_text.should eq("Hello, adventurer!")
 
-    RL.close_window
   end
 
   it "handles dialog progression and cancellation" do
-    RL.init_window(800, 600, "Dialog Control Test")
+    RaylibContext.ensure_window(800, 600, "Dialog Control Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Test Game")
     engine.init
 
@@ -170,6 +163,5 @@ describe "Engine Dialog System Integration" do
 
     dialog_active.should be_false
 
-    RL.close_window
   end
 end

@@ -7,7 +7,7 @@ describe "Architectural Pattern Compliance" do
       # must be registered with either the render manager or called
       # from within a registered renderer
 
-      RL.init_window(800, 600, "Component Registration Test")
+      RaylibContext.ensure_window(800, 600, "Component Registration Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Registration Test")
       engine.init
 
@@ -26,14 +26,13 @@ describe "Architectural Pattern Compliance" do
         verb_system.cursor_manager.should_not be_nil
       end
 
-      RL.close_window
     end
 
     it "validates input consumption hierarchy" do
       # This spec documents the pattern: input-consuming components
       # should have clear priority order and not conflict
 
-      RL.init_window(800, 600, "Input Hierarchy Test")
+      RaylibContext.ensure_window(800, 600, "Input Hierarchy Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Input Test")
       engine.init
 
@@ -54,13 +53,12 @@ describe "Architectural Pattern Compliance" do
         dialog_manager.dialog_consumed_input?.should be_false # until user interacts
       end
 
-      RL.close_window
     end
   end
 
   describe "System Coordination Patterns" do
     it "ensures systems don't have circular dependencies" do
-      RL.init_window(800, 600, "Dependency Test")
+      RaylibContext.ensure_window(800, 600, "Dependency Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Dependency Test")
       engine.init
 
@@ -72,11 +70,10 @@ describe "Architectural Pattern Compliance" do
       # No system should require another system to be fully initialized
       # before it can be created (circular dependency)
 
-      RL.close_window
     end
 
     it "validates layer-based rendering architecture" do
-      RL.init_window(800, 600, "Layer Architecture Test")
+      RaylibContext.ensure_window(800, 600, "Layer Architecture Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Layer Test")
       engine.init
 
@@ -97,7 +94,6 @@ describe "Architectural Pattern Compliance" do
       render_stats = render_manager.get_render_stats
       render_stats.should_not be_nil
 
-      RL.close_window
     end
   end
 
@@ -106,7 +102,7 @@ describe "Architectural Pattern Compliance" do
       # This test would catch the original bug we fixed:
       # components that have draw() methods but aren't registered anywhere
 
-      RL.init_window(800, 600, "Missing Registration Test")
+      RaylibContext.ensure_window(800, 600, "Missing Registration Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Missing Registration Test")
       engine.init
 
@@ -124,11 +120,10 @@ describe "Architectural Pattern Compliance" do
       # A proper integration test would verify this actually renders,
       # but that requires more complex rendering state inspection
 
-      RL.close_window
     end
 
     it "prevents coordinate system mismatches" do
-      RL.init_window(800, 600, "Coordinate Mismatch Test")
+      RaylibContext.ensure_window(800, 600, "Coordinate Mismatch Test")
 
       # Create engine with different game vs screen resolution
       engine = PointClickEngine::Core::Engine.new(1024, 768, "Coordinate Test") # Game size
@@ -152,7 +147,6 @@ describe "Architectural Pattern Compliance" do
       (back_to_screen.x - screen_center.x).abs.should be < 2f32
       (back_to_screen.y - screen_center.y).abs.should be < 2f32
 
-      RL.close_window
     end
   end
 end

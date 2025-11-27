@@ -14,6 +14,7 @@ describe "Engine-Manager Integration" do
     end
 
     it "managers are ready before engine initialization" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
 
       # Even before init, managers should be available
@@ -34,6 +35,7 @@ describe "Engine-Manager Integration" do
 
   describe "scene management delegation" do
     it "delegates scene operations to SceneManager" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
@@ -59,6 +61,7 @@ describe "Engine-Manager Integration" do
     end
 
     it "handles scene removal correctly" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
@@ -85,6 +88,7 @@ describe "Engine-Manager Integration" do
 
   describe "resource management delegation" do
     it "delegates resource operations to ResourceManager" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
@@ -104,6 +108,7 @@ describe "Engine-Manager Integration" do
 
   describe "input management delegation" do
     it "delegates input operations to InputManager" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
@@ -124,6 +129,7 @@ describe "Engine-Manager Integration" do
 
   describe "render management delegation" do
     it "delegates render operations to RenderManager" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 

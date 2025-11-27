@@ -46,6 +46,7 @@ module RaylibMock
   module MockRaylib
     @@headless_mode = false
     @@window_should_close = false
+    @@window_ready = false
     @@frame_time = 0.016f32
     @@mouse_position = Vector2.new
     @@key_states = {} of Int32 => Bool
@@ -56,15 +57,19 @@ module RaylibMock
     end
 
     def self.init_window(width : Int32, height : Int32, title : String)
-      # No-op in headless mode
+      @@window_ready = true
     end
 
     def self.close_window
-      # No-op in headless mode
+      @@window_ready = false
     end
 
     def self.close_window? : Bool
       @@window_should_close
+    end
+
+    def self.window_ready? : Bool
+      @@window_ready
     end
 
     def self.set_window_should_close(should_close : Bool)
@@ -146,9 +151,39 @@ module RaylibMock
 
     def self.reset_mock_state
       @@window_should_close = false
+      @@window_ready = false
       @@key_states.clear
       @@mouse_states.clear
       @@mouse_position = Vector2.new
+    end
+
+    # Additional mock methods for spec compatibility
+    def self.set_target_fps(fps : Int32)
+      # No-op
+    end
+
+    def self.get_time : Float64
+      0.0
+    end
+
+    def self.draw_fps(x : Int32, y : Int32)
+      # No-op
+    end
+
+    def self.set_window_size(width : Int32, height : Int32)
+      # No-op
+    end
+
+    def self.get_screen_width : Int32
+      800
+    end
+
+    def self.get_screen_height : Int32
+      600
+    end
+
+    def self.poll_input_events
+      # No-op - this is crucial for preventing hangs
     end
   end
 end

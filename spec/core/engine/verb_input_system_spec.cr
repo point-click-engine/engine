@@ -13,6 +13,7 @@ describe PointClickEngine::Core::EngineComponents::VerbInputSystem do
 
   describe "#process_input" do
     it "handles left click with current verb" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
       verb_system = PointClickEngine::Core::EngineComponents::VerbInputSystem.new(engine)
@@ -101,6 +102,7 @@ describe PointClickEngine::Core::EngineComponents::VerbInputSystem do
 
   describe "action-based transitions" do
     it "triggers transitions through hotspot actions" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
       verb_system = PointClickEngine::Core::EngineComponents::VerbInputSystem.new(engine)

@@ -93,9 +93,9 @@ describe "Engine Integration with YAML Configuration" do
     File.write("test_minimal_game/game_config.yaml", config_yaml)
 
     # Load and create engine
-    config = PointClickEngine::Core::GameConfig.from_file("test_minimal_game/game_config.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("test_minimal_game/game_config.yaml", skip_preflight: true)
 
-    RL.init_window(640, 480, "Minimal Test Game")
+    RaylibContext.ensure_window(640, 480, "Minimal Test Game")
     engine = config.create_engine
 
     # Verify engine is properly configured
@@ -123,7 +123,6 @@ describe "Engine Integration with YAML Configuration" do
     # engine.current_scene_name.should eq("test_room")
 
     # Cleanup
-    RL.close_window
     FileUtils.rm_rf("test_minimal_game")
   end
 
@@ -193,9 +192,9 @@ describe "Engine Integration with YAML Configuration" do
     File.write("test_multi_scene/assets/room2.png", "dummy")
 
     # Load config and create engine
-    config = PointClickEngine::Core::GameConfig.from_file("test_multi_scene/game_config.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("test_multi_scene/game_config.yaml", skip_preflight: true)
 
-    RL.init_window(800, 600, "Multi-Scene Test")
+    RaylibContext.ensure_window(800, 600, "Multi-Scene Test")
     engine = config.create_engine
 
     # Verify both scenes loaded
@@ -228,7 +227,6 @@ describe "Engine Integration with YAML Configuration" do
     end
 
     # Cleanup
-    RL.close_window
     FileUtils.rm_rf("test_multi_scene")
   end
 
@@ -289,9 +287,9 @@ describe "Engine Integration with YAML Configuration" do
     File.write("test_quest_game/scenes/test_scene.yaml", scene_yaml)
 
     # Load config and create engine
-    config = PointClickEngine::Core::GameConfig.from_file("test_quest_game/game_config.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("test_quest_game/game_config.yaml", skip_preflight: true)
 
-    RL.init_window(800, 600, "Quest Test")
+    RaylibContext.ensure_window(800, 600, "Quest Test")
     engine = config.create_engine
 
     # Verify quest manager exists
@@ -311,7 +309,6 @@ describe "Engine Integration with YAML Configuration" do
     quest.try(&.active).should be_true
 
     # Cleanup
-    RL.close_window
     FileUtils.rm_rf("test_quest_game")
   end
 
@@ -339,9 +336,9 @@ describe "Engine Integration with YAML Configuration" do
     YAML
 
     File.write("state_setup_test.yaml", config_yaml)
-    config = PointClickEngine::Core::GameConfig.from_file("state_setup_test.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("state_setup_test.yaml", skip_preflight: true)
 
-    RL.init_window(800, 600, "State Setup Test")
+    RaylibContext.ensure_window(800, 600, "State Setup Test")
     engine = config.create_engine
 
     # Trigger game start
@@ -362,7 +359,6 @@ describe "Engine Integration with YAML Configuration" do
     gsm.get_variable("completion_percentage").should eq(25.5)
 
     # Cleanup
-    RL.close_window
     File.delete("state_setup_test.yaml")
   end
 
@@ -374,9 +370,9 @@ describe "Engine Integration with YAML Configuration" do
     YAML
 
     File.write("bare_minimum.yaml", config_yaml)
-    config = PointClickEngine::Core::GameConfig.from_file("bare_minimum.yaml")
+    config = PointClickEngine::Core::GameConfig.from_file("bare_minimum.yaml", skip_preflight: true)
 
-    RL.init_window(1024, 768, "Bare Minimum")
+    RaylibContext.ensure_window(1024, 768, "Bare Minimum")
     engine = config.create_engine
 
     # Should use all defaults
@@ -384,7 +380,8 @@ describe "Engine Integration with YAML Configuration" do
     engine.window_height.should eq(768)
     engine.target_fps.should eq(60)
     engine.show_fps.should be_false
-    engine.auto_save_interval.should eq(0.0f32)
+    # Auto-save is now enabled by default with 5 minute interval
+    engine.auto_save_interval.should eq(300.0f32)
 
     # No features should be enabled by default
     engine.verb_input_system.should be_nil
@@ -397,7 +394,6 @@ describe "Engine Integration with YAML Configuration" do
     engine.scenes.size.should eq(0)
 
     # Cleanup
-    RL.close_window
     File.delete("bare_minimum.yaml")
   end
 end

@@ -61,7 +61,7 @@ YAML
       File.write("scene_load_config.yaml", config_yaml)
       config = PointClickEngine::Core::GameConfig.from_file("scene_load_config.yaml", skip_preflight: true)
 
-      RL.init_window(800, 600, "Scene Loading Test")
+      RaylibContext.ensure_window(800, 600, "Scene Loading Test")
       engine = config.create_engine
 
       # Both scenes should be loaded
@@ -79,7 +79,6 @@ YAML
       room2.hotspots.first.name.should eq("object2")
 
       # Cleanup
-      RL.close_window
       File.delete("scene_load_config.yaml")
     end
 
@@ -113,7 +112,7 @@ YAML
       File.write("multi_pattern_config.yaml", config_yaml)
       config = PointClickEngine::Core::GameConfig.from_file("multi_pattern_config.yaml", skip_preflight: true)
 
-      RL.init_window(800, 600, "Multi Pattern Test")
+      RaylibContext.ensure_window(800, 600, "Multi Pattern Test")
       engine = config.create_engine
 
       engine.scenes.size.should eq(2)
@@ -121,7 +120,6 @@ YAML
       engine.scenes.has_key?("bonus").should be_true
 
       # Cleanup
-      RL.close_window
       File.delete("multi_pattern_config.yaml")
       File.delete("test_scenes/main/main.yaml")
       File.delete("test_scenes/bonus/bonus.yaml")
@@ -189,7 +187,7 @@ YAML
       File.write("script_config.yaml", config_yaml)
       config = PointClickEngine::Core::GameConfig.from_file("script_config.yaml", skip_preflight: true)
 
-      RL.init_window(800, 600, "Script Test")
+      RaylibContext.ensure_window(800, 600, "Script Test")
       engine = config.create_engine
 
       engine.scenes.has_key?("scripted_room").should be_true
@@ -197,7 +195,6 @@ YAML
       scene.script_path.should eq("test_scenes/scripted_room.lua")
 
       # Cleanup
-      RL.close_window
       File.delete("script_config.yaml")
       File.delete("test_scenes/scripted_room.lua")
     end
@@ -225,7 +222,7 @@ YAML
       File.write("invalid_config.yaml", config_yaml)
       config = PointClickEngine::Core::GameConfig.from_file("invalid_config.yaml", skip_preflight: true)
 
-      RL.init_window(800, 600, "Invalid Scene Test")
+      RaylibContext.ensure_window(800, 600, "Invalid Scene Test")
 
       # Should raise error when trying to create engine with invalid scene
       expect_raises(PointClickEngine::Core::SceneError) do
@@ -233,7 +230,6 @@ YAML
       end
 
       # Cleanup
-      RL.close_window
       File.delete("invalid_config.yaml")
       File.delete("test_scenes/invalid.yaml")
       Dir.delete("test_scenes")

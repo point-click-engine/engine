@@ -107,6 +107,7 @@ describe PointClickEngine::UI::DialogManager do
   end
 
   it "properly converts screen coordinates to game coordinates" do
+    RaylibContext.ensure_window(800, 600, "Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
     engine.init
 

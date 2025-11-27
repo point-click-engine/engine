@@ -28,7 +28,7 @@ describe "Engine GameStateManager Integration" do
   describe "update callback integration" do
     it "updates game state manager during engine update" do
       engine = PointClickEngine::Core::Engine.new(800, 600, "Update Test")
-      RL.init_window(800, 600, "Update Test")
+      RaylibContext.ensure_window(800, 600, "Update Test")
       engine.init
 
       gsm = PointClickEngine::GameStateManager.new
@@ -66,7 +66,6 @@ describe "Engine GameStateManager Integration" do
       gsm.game_time.should be_close(1.1, 0.01)
 
       # Cleanup
-      RL.close_window
     end
   end
 
@@ -87,7 +86,7 @@ describe "Engine GameStateManager Integration" do
       File.write("manager_config.yaml", config_yaml)
       config = PointClickEngine::Core::GameConfig.from_file("manager_config.yaml")
 
-      RL.init_window(800, 600, "Manager Test")
+      RaylibContext.ensure_window(800, 600, "Manager Test")
       engine = config.create_engine
 
       # Managers should be created
@@ -108,7 +107,6 @@ describe "Engine GameStateManager Integration" do
       gsm.game_time.should be_close(1.0, 0.01)
 
       # Cleanup
-      RL.close_window
       File.delete("manager_config.yaml")
     end
 
@@ -156,7 +154,7 @@ describe "Engine GameStateManager Integration" do
 
       config = PointClickEngine::Core::GameConfig.from_file("state_change_config.yaml")
 
-      RL.init_window(800, 600, "State Change Test")
+      RaylibContext.ensure_window(800, 600, "State Change Test")
       engine = config.create_engine
 
       gsm = engine.game_state_manager.not_nil!
@@ -180,7 +178,6 @@ describe "Engine GameStateManager Integration" do
       quest.try(&.objectives.first.completed).should be_true
 
       # Cleanup
-      RL.close_window
       File.delete("state_change_config.yaml")
       File.delete("test_quests/quest.yaml")
       File.delete("test_scenes/test_scene.yaml")
@@ -205,7 +202,7 @@ describe "Engine GameStateManager Integration" do
       File.write("timer_config.yaml", config_yaml)
       config = PointClickEngine::Core::GameConfig.from_file("timer_config.yaml")
 
-      RL.init_window(800, 600, "Timer Test")
+      RaylibContext.ensure_window(800, 600, "Timer Test")
       engine = config.create_engine
 
       # Trigger game:new to set up UI
@@ -230,7 +227,6 @@ describe "Engine GameStateManager Integration" do
       gui.try(&.labels.has_key?("hint_0")).should be_false
 
       # Cleanup
-      RL.close_window
       File.delete("timer_config.yaml")
     end
   end

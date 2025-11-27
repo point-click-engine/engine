@@ -5,6 +5,7 @@ require "../../src/core/engine/render_coordinator"
 describe "Engine-RenderCoordinator Integration" do
   describe "rendering delegation" do
     it "passes correct parameters to RenderCoordinator" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
@@ -23,6 +24,7 @@ describe "Engine-RenderCoordinator Integration" do
     end
 
     it "handles camera based on scene scrolling settings" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
@@ -49,6 +51,7 @@ describe "Engine-RenderCoordinator Integration" do
 
   describe "render coordinator configuration" do
     it "allows UI visibility control" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
@@ -65,6 +68,7 @@ describe "Engine-RenderCoordinator Integration" do
     end
 
     it "allows hotspot highlighting control" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 

@@ -2,7 +2,7 @@ require "../spec_helper"
 
 describe "Keyboard Shortcuts During Dialog" do
   it "allows F1 debug toggle even when dialog is active" do
-    RL.init_window(800, 600, "Keyboard Shortcut Test")
+    RaylibContext.ensure_window(800, 600, "Keyboard Shortcut Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Shortcut Test")
     engine.init
 
@@ -23,12 +23,11 @@ describe "Keyboard Shortcuts During Dialog" do
     # Verify debug mode changed
     PointClickEngine::Core::Engine.debug_mode.should_not eq(initial_debug_mode)
 
-    RL.close_window
     PointClickEngine::Core::Engine.reset_instance
   end
 
   it "allows Tab hotspot highlight toggle even when dialog is active" do
-    RL.init_window(800, 600, "Hotspot Highlight Test")
+    RaylibContext.ensure_window(800, 600, "Hotspot Highlight Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Hotspot Test")
     engine.init
 
@@ -56,12 +55,11 @@ describe "Keyboard Shortcuts During Dialog" do
     # Verify hotspot highlight state changed
     render_manager.hotspot_highlighting_enabled?.should_not eq(initial_highlight_enabled)
 
-    RL.close_window
     PointClickEngine::Core::Engine.reset_instance
   end
 
   it "blocks mouse input when dialog is active but allows keyboard shortcuts" do
-    RL.init_window(800, 600, "Input Blocking Test")
+    RaylibContext.ensure_window(800, 600, "Input Blocking Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Input Block Test")
     engine.init
 
@@ -82,12 +80,11 @@ describe "Keyboard Shortcuts During Dialog" do
     # Keyboard shortcuts should still function through the special handler
     # This is handled by InputManager's process_keyboard_shortcuts_only method
 
-    RL.close_window
     PointClickEngine::Core::Engine.reset_instance
   end
 
   it "handles verb input system keyboard shortcuts during dialog" do
-    RL.init_window(800, 600, "Verb Keyboard Test")
+    RaylibContext.ensure_window(800, 600, "Verb Keyboard Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Verb Test")
     engine.init
 
@@ -111,12 +108,11 @@ describe "Keyboard Shortcuts During Dialog" do
       # which is called even when dialogs are active
     end
 
-    RL.close_window
     PointClickEngine::Core::Engine.reset_instance
   end
 
   it "handles mouse wheel verb cycling during dialog" do
-    RL.init_window(800, 600, "Mouse Wheel Test")
+    RaylibContext.ensure_window(800, 600, "Mouse Wheel Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Wheel Test")
     engine.init
 
@@ -151,7 +147,6 @@ describe "Keyboard Shortcuts During Dialog" do
       cursor_manager.current_verb.should_not eq(initial_verb)
     end
 
-    RL.close_window
     PointClickEngine::Core::Engine.reset_instance
   end
 end

@@ -2,7 +2,7 @@ require "../spec_helper"
 
 describe "Renderer Registration System" do
   it "registers dialog manager in render pipeline" do
-    RL.init_window(800, 600, "Dialog Manager Renderer Test")
+    RaylibContext.ensure_window(800, 600, "Dialog Manager Renderer Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Renderer Test")
     engine.init
 
@@ -26,11 +26,10 @@ describe "Renderer Registration System" do
       engine_instance.system_manager.dialog_manager.should_not be_nil
     end
 
-    RL.close_window
   end
 
   it "registers verb input system cursor in UI layer" do
-    RL.init_window(800, 600, "Cursor Renderer Test")
+    RaylibContext.ensure_window(800, 600, "Cursor Renderer Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Cursor Renderer Test")
     engine.init
 
@@ -58,11 +57,10 @@ describe "Renderer Registration System" do
     render_manager = engine.render_manager
     render_manager.should_not be_nil
 
-    RL.close_window
   end
 
   it "registers achievement manager in UI layer" do
-    RL.init_window(800, 600, "Achievement Renderer Test")
+    RaylibContext.ensure_window(800, 600, "Achievement Renderer Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Achievement Renderer Test")
     engine.init
 
@@ -82,11 +80,10 @@ describe "Renderer Registration System" do
       am.responds_to?(:update).should be_true
     end
 
-    RL.close_window
   end
 
   it "validates render layer structure and component registration" do
-    RL.init_window(800, 600, "Render Layer Structure Test")
+    RaylibContext.ensure_window(800, 600, "Render Layer Structure Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Layer Structure Test")
     engine.init
 
@@ -105,11 +102,10 @@ describe "Renderer Registration System" do
     engine.inventory.should_not be_nil
     engine.inventory.responds_to?(:draw).should be_true
 
-    RL.close_window
   end
 
   it "ensures UI components are properly layered for rendering order" do
-    RL.init_window(800, 600, "Render Order Test")
+    RaylibContext.ensure_window(800, 600, "Render Order Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Render Order Test")
     engine.init
     engine.enable_verb_input
@@ -160,11 +156,10 @@ describe "Renderer Registration System" do
     # Should have at least 5 UI components with draw methods
     components_with_draw.size.should be >= 5
 
-    RL.close_window
   end
 
   it "validates floating dialog rendering integration" do
-    RL.init_window(800, 600, "Floating Dialog Renderer Test")
+    RaylibContext.ensure_window(800, 600, "Floating Dialog Renderer Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Floating Dialog Renderer Test")
     engine.init
 
@@ -191,11 +186,10 @@ describe "Renderer Registration System" do
       dm.responds_to?(:draw).should be_true
     end
 
-    RL.close_window
   end
 
   it "tests cursor visual feedback rendering system" do
-    RL.init_window(800, 600, "Cursor Visual Feedback Test")
+    RaylibContext.ensure_window(800, 600, "Cursor Visual Feedback Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Cursor Visual Feedback Test")
     engine.init
     engine.enable_verb_input
@@ -228,11 +222,10 @@ describe "Renderer Registration System" do
       display_manager.should_not be_nil
     end
 
-    RL.close_window
   end
 
   it "validates achievement notification rendering" do
-    RL.init_window(800, 600, "Achievement Notification Test")
+    RaylibContext.ensure_window(800, 600, "Achievement Notification Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Achievement Notification Test")
     engine.init
 
@@ -253,11 +246,10 @@ describe "Renderer Registration System" do
       am.responds_to?(:unlock).should be_true
     end
 
-    RL.close_window
   end
 
   it "ensures render pipeline completeness" do
-    RL.init_window(800, 600, "Render Pipeline Completeness Test")
+    RaylibContext.ensure_window(800, 600, "Render Pipeline Completeness Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Pipeline Completeness Test")
     engine.init
     engine.enable_verb_input
@@ -316,6 +308,5 @@ describe "Renderer Registration System" do
     # Should have at least 8 rendering systems
     render_systems.size.should be >= 8
 
-    RL.close_window
   end
 end
