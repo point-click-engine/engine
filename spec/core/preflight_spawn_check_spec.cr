@@ -23,6 +23,8 @@ describe PointClickEngine::Core::PreflightCheck do
         sprite:
           frame_width: 56
           frame_height: 56
+          columns: 4
+          rows: 4
         scale: 2.0
         
       start_scene: "test_scene"
@@ -95,11 +97,13 @@ describe PointClickEngine::Core::PreflightCheck do
       player:
         name: "TestPlayer"
         start_position:
-          x: 305.0  # Very close to obstacle edge
+          x: 320.0  # Very close to obstacle edge (wall at 350, radius ~42, distance=30)
           y: 400.0
         sprite:
           frame_width: 56
           frame_height: 56
+          columns: 4
+          rows: 4
         scale: 1.5
         
       start_scene: "test_scene"
@@ -169,8 +173,14 @@ describe PointClickEngine::Core::PreflightCheck do
         sprite:
           frame_width: 56
           frame_height: 56
+          columns: 4
+          rows: 4
         scale: 2.0
-        
+
+      window:
+        width: 1024
+        height: 768
+
       start_scene: "library"
       
       assets:
@@ -245,10 +255,16 @@ describe PointClickEngine::Core::PreflightCheck do
         sprite:
           frame_width: 56
           frame_height: 56
+          columns: 4
+          rows: 4
         scale: 1.0
-        
+
+      window:
+        width: 1024
+        height: 768
+
       start_scene: "test_scene"
-      
+
       assets:
         scenes:
           - "test_scene.yaml"
@@ -259,7 +275,7 @@ describe PointClickEngine::Core::PreflightCheck do
       background_path: "test_bg.png"
       logical_width: 1024
       logical_height: 768
-      
+
       walkable_areas:
         regions:
           - name: main_area
@@ -306,7 +322,13 @@ describe PointClickEngine::Core::PreflightCheck do
         sprite:
           frame_width: 56
           frame_height: 56
-        
+          columns: 4
+          rows: 4
+
+      window:
+        width: 1024
+        height: 768
+
       start_scene: "test_scene"
       
       assets:

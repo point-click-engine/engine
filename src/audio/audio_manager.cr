@@ -38,15 +38,13 @@ module PointClickEngine
         end
       end
 
-      def finalize
+      # Explicit cleanup - do NOT use finalizer as it causes GC deadlocks with Raylib
+      def cleanup
         if sound = @sound
-          begin
-            if sound.frame_count > 0
-              RAudio.unload_sound(sound)
-            end
-          rescue ex
-            # Ignore errors during finalization
+          if sound.frame_count > 0
+            RAudio.unload_sound(sound)
           end
+          @sound = nil
         end
       end
     end
@@ -97,15 +95,13 @@ module PointClickEngine
         end
       end
 
-      def finalize
+      # Explicit cleanup - do NOT use finalizer as it causes GC deadlocks with Raylib
+      def cleanup
         if music = @music
-          begin
-            if music.frame_count > 0
-              RAudio.unload_music_stream(music)
-            end
-          rescue ex
-            # Ignore errors during finalization
+          if music.frame_count > 0
+            RAudio.unload_music_stream(music)
           end
+          @music = nil
         end
       end
     end
@@ -274,7 +270,7 @@ module PointClickEngine
 
       def clear_cache
         @sound_effect_manager.clear_cache
-        @music_manager.finalize
+        @music_manager.cleanup
         @resource_cache = AudioResourceCache.new
       end
 
@@ -301,15 +297,11 @@ module PointClickEngine
         @volume_controller.from_settings(settings)
       end
 
-      def finalize
-        begin
-          @sound_effect_manager.finalize
-          @music_manager.finalize
-
-          RAudio.close_audio_device
-        rescue ex
-          # Ignore errors during finalization
-        end
+      # Explicit cleanup - do NOT use finalizer as it causes GC deadlocks with Raylib
+      def cleanup
+        @sound_effect_manager.cleanup
+        @music_manager.cleanup
+        RAudio.close_audio_device
       end
 
       private def setup_volume_callbacks

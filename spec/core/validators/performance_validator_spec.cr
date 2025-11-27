@@ -460,10 +460,9 @@ describe "Performance Validation" do
       window:
         width: 800
         height: 600
-      performance:
         target_fps: 120
       assets:
-        scenes: ["test_scenes/*.yaml"] 
+        scenes: ["test_scenes/*.yaml"]
       start_scene: "test"
       YAML
 

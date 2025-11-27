@@ -222,6 +222,7 @@ describe "Simple Preflight Validation Tests" do
         width: 1024
         height: 768
       assets:
+        scenes: []
         audio:
           music:
             theme: "test_assets/big_music.ogg"
@@ -232,13 +233,15 @@ describe "Simple Preflight Validation Tests" do
       begin
         result = PointClickEngine::Core::PreflightCheck.run("test_game.yaml")
 
-        # Should have warnings about large assets
-        large_asset_warning = result.warnings.any? { |w| w.includes?("Large assets") }
-        large_asset_warning.should be_true
+        # Should have performance hints about large assets
+        large_asset_hint = result.performance_hints.any? { |h| h.includes?("Large assets") }
+        large_asset_hint.should be_true
       ensure
         File.delete("test_game.yaml") if File.exists?("test_game.yaml")
-        File.delete("test_assets/big_music.ogg") if File.exists?("test_assets/big_music.ogg")
-        Dir.delete("test_assets") if Dir.exists?("test_assets")
+        if Dir.exists?("test_assets")
+          Dir.glob("test_assets/*").each { |f| File.delete(f) if File.exists?(f) }
+          Dir.delete("test_assets")
+        end
       end
     end
 
@@ -306,11 +309,12 @@ describe "Simple Preflight Validation Tests" do
 
     it "counts resources" do
       Dir.mkdir_p("sprites")
-      Dir.mkdir_p("backgrounds")
+      Dir.mkdir_p("sounds")
 
       # Create some test files
       3.times { |i| File.write("sprites/sprite_#{i}.png", "png") }
-      2.times { |i| File.write("backgrounds/bg_#{i}.jpg", "jpg") }
+      File.write("sounds/click.wav", "wav content")
+      File.write("sounds/theme.ogg", "ogg content")
 
       config_yaml = <<-YAML
       game:
@@ -319,11 +323,13 @@ describe "Simple Preflight Validation Tests" do
         width: 1024
         height: 768
       assets:
+        sprites:
+          - "sprites/*.png"
         audio:
           sounds:
-            click: "click.wav"
+            click: "sounds/click.wav"
           music:
-            theme: "theme.ogg"
+            theme: "sounds/theme.ogg"
       YAML
 
       File.write("test_game.yaml", config_yaml)
@@ -337,7 +343,6 @@ describe "Simple Preflight Validation Tests" do
       ensure
         File.delete("test_game.yaml") if File.exists?("test_game.yaml")
         3.times { |i| File.delete("sprites/sprite_#{i}.png") if File.exists?("sprites/sprite_#{i}.png") }
-        2.times { |i| File.delete("backgrounds/bg_#{i}.jpg") if File.exists?("backgrounds/bg_#{i}.jpg") }
 
         # Clean up any remaining files in directories before deleting them
         if Dir.exists?("sprites")
@@ -345,9 +350,9 @@ describe "Simple Preflight Validation Tests" do
           Dir.delete("sprites")
         end
 
-        if Dir.exists?("backgrounds")
-          Dir.glob("backgrounds/*").each { |f| File.delete(f) if File.exists?(f) }
-          Dir.delete("backgrounds")
+        if Dir.exists?("sounds")
+          Dir.glob("sounds/*").each { |f| File.delete(f) if File.exists?(f) }
+          Dir.delete("sounds")
         end
       end
     end

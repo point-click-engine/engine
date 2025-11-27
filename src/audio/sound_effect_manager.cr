@@ -54,13 +54,13 @@ module PointClickEngine
       # Unload a specific sound effect
       def unload_sound(name : String) : Nil
         if sound = @sound_effects.delete(name)
-          sound.finalize
+          sound.cleanup
         end
       end
 
       # Clear all cached sound effects
       def clear_cache : Nil
-        @sound_effects.each_value(&.finalize)
+        @sound_effects.each_value(&.cleanup)
         @sound_effects.clear
       end
 
@@ -79,8 +79,9 @@ module PointClickEngine
         @sfx_volume = volume.clamp(0.0f32, 1.0f32)
       end
 
-      # Clean up all resources
-      def finalize
+      # Explicit cleanup method - caller is responsible for calling this
+      # Do NOT use finalizer as it causes GC deadlocks with Raylib
+      def cleanup
         clear_cache
       end
     end

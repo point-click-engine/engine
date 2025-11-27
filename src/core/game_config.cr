@@ -287,12 +287,6 @@ module PointClickEngine
           puts "[DEBUG] No player config found" if Engine.debug_mode
         end
 
-        # Apply settings
-        if s = settings
-          Engine.debug_mode = s.debug_mode
-          engine.show_fps = s.show_fps
-        end
-
         # Load and apply user settings (creates default file if none exists)
         user_settings_path = File.join(config_base_dir, "user_settings.yaml")
         user_settings = UserSettings.load(user_settings_path)
@@ -307,6 +301,12 @@ module PointClickEngine
 
         # Apply user settings to engine
         user_settings.apply_to_engine(engine)
+
+        # Apply game config settings AFTER user settings (game config takes precedence)
+        if s = settings
+          Engine.debug_mode = s.debug_mode
+          engine.show_fps = s.show_fps
+        end
 
         # Set target FPS
         engine.target_fps = window.try(&.target_fps) || 60

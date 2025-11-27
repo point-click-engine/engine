@@ -120,7 +120,7 @@ describe "Renderer Registration System" do
 
     # Menu system (already registered)
     if menu = engine.system_manager.menu_system
-      if menu.responds_to?(:draw)
+      if menu.responds_to?(:draw) || menu.responds_to?(:render)
         components_with_draw << "menu_system"
       end
     end
@@ -277,8 +277,10 @@ describe "Renderer Registration System" do
       render_systems << "inventory"
     end
 
-    if engine.system_manager.menu_system.try(&.responds_to?(:draw))
-      render_systems << "menu_system"
+    if menu = engine.system_manager.menu_system
+      if menu.responds_to?(:draw) || menu.responds_to?(:render)
+        render_systems << "menu_system"
+      end
     end
 
     if engine.system_manager.achievement_manager.try(&.responds_to?(:draw))
@@ -305,8 +307,8 @@ describe "Renderer Registration System" do
     render_systems.includes?("dialog_manager").should be_true
     # Transitions are now handled by the effect system
 
-    # Should have at least 8 rendering systems
-    render_systems.size.should be >= 8
+    # Should have at least 7 rendering systems (transitions now handled by effect system)
+    render_systems.size.should be >= 7
 
   end
 end

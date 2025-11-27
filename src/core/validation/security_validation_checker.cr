@@ -120,13 +120,14 @@ module PointClickEngine
 
             # Common secret patterns
             secret_patterns = {
-              /[a-zA-Z0-9]{32,}/            => "potential API key or token",
-              /password\s*[:=]\s*[^\s\n]+/i => "password assignment",
-              /secret\s*[:=]\s*[^\s\n]+/i   => "secret assignment",
-              /api_key\s*[:=]\s*[^\s\n]+/i  => "API key assignment",
-              /database_password/i          => "database password reference",
-              /private_key/i                => "private key reference",
-              /-----BEGIN.*KEY-----/        => "cryptographic key",
+              /[a-zA-Z0-9]{32,}/            => "potential API key or token (sensitive data)",
+              /password\s*[:=]\s*[^\s\n]+/i => "password assignment containing sensitive data",
+              /secret\s*[:=]\s*[^\s\n]+/i   => "secret assignment containing sensitive data",
+              /api_key\s*[:=]\s*[^\s\n]+/i  => "API key assignment containing sensitive data",
+              /database_password/i          => "database password reference containing sensitive data",
+              /private_key/i                => "private key reference containing sensitive data",
+              /-----BEGIN.*KEY-----/        => "cryptographic key containing sensitive data",
+              /secret_api_key/i             => "API key field containing sensitive data",
             }
 
             secret_patterns.each do |pattern, description|

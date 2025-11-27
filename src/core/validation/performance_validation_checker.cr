@@ -18,15 +18,62 @@ module PointClickEngine
 
           return result unless context.include_performance_checks
 
+          analyze_scene_backgrounds(config, context, result)
           analyze_asset_performance(config, context, result)
           analyze_rendering_performance(config, result)
           analyze_memory_usage(config, context, result)
           analyze_audio_performance(config, context, result)
+          analyze_scene_complexity(config, context, result)
           validate_audio_volume_settings(config, result)
           validate_feature_compatibility(config, result)
           provide_optimization_hints(config, result)
 
           result
+        end
+
+        # Analyzes scene background images for performance issues
+        private def analyze_scene_backgrounds(config : GameConfig, context : ValidationContext, result : ValidationResult)
+          return unless assets = config.assets
+
+          assets.scenes.each do |pattern|
+            Dir.glob(File.join(context.base_dir, pattern)).each do |scene_path|
+              next unless File.exists?(scene_path) && scene_path.ends_with?(".yaml")
+
+              begin
+                scene_content = File.read(scene_path)
+                if match = scene_content.match(/background_path:\s*["']?([^"'\n]+)["']?/)
+                  background_path = match[1].strip.gsub(/^["']|["']$/, "")
+                  full_path = File.join(context.base_dir, background_path)
+
+                  if File.exists?(full_path)
+                    size = File.size(full_path)
+                    size_mb = size / 1_048_576.0
+                    scene_name = File.basename(scene_path, ".yaml")
+
+                    if size_mb > 10.0
+                      result.add_warning("Scene '#{scene_name}' background is large (#{size_mb.round(1)} MB)")
+                      result.add_performance_hint("Consider compressing large background image in scene '#{scene_name}'")
+                    elsif size_mb > 5.0
+                      result.add_performance_hint("Background in scene '#{scene_name}' is moderately large (#{size_mb.round(1)} MB)")
+                    end
+
+                    # Check for resolution mismatch if window config exists
+                    if window = config.window
+                      window_pixels = window.width * window.height
+                      # Estimate image resolution from file size (rough heuristic)
+                      # Assume ~4 bytes per pixel for uncompressed, PNG compresses ~2-5x
+                      estimated_pixels = (size * 3).to_i64 # Conservative estimate
+                      if estimated_pixels > window_pixels * 4
+                        result.add_performance_hint("Background '#{File.basename(background_path)}' may have higher resolution than needed for #{window.width}x#{window.height} window - consider downscaling")
+                      end
+                    end
+                  end
+                end
+              rescue
+                # Ignore parse errors
+              end
+            end
+          end
         end
 
         # Analyzes asset-related performance considerations
@@ -36,16 +83,79 @@ module PointClickEngine
           large_assets = [] of String
           total_asset_size = 0_i64
           texture_memory_usage = 0_i64
+          total_asset_count = 0
 
           # Analyze audio asset performance
           if audio = assets.audio
             analyze_audio_asset_performance(audio, context, result, large_assets, pointerof(total_asset_size))
           end
 
-          # Skip sprite analysis - sprites are defined in scenes, not in assets config
+          # Count and analyze all PNG/image files in common asset directories
+          ["test_assets", "assets", "sprites", "images", "backgrounds"].each do |asset_dir|
+            full_dir = File.join(context.base_dir, asset_dir)
+            if Dir.exists?(full_dir)
+              Dir.glob(File.join(full_dir, "**/*.{png,jpg,jpeg,bmp,gif}")).each do |file|
+                total_asset_count += 1
+                if File.exists?(file)
+                  size = File.size(file)
+                  total_asset_size += size
+                  texture_memory_usage += estimate_texture_memory_usage(file)
+                  size_mb = size / 1_048_576.0
+                  if size_mb > 5.0
+                    large_assets << "#{File.basename(file)}: #{size_mb.round(1)} MB"
+                  end
+                end
+              end
+            end
+          end
+
+          # Warn about excessive asset count
+          if total_asset_count > 50
+            result.add_performance_hint("Many asset files (#{total_asset_count}) found - consider using asset bundling or atlasing")
+          end
+
+          # Analyze audio referenced in scene files
+          analyze_scene_audio_references(config, context, result)
 
           # Report overall findings
           report_asset_performance_summary(large_assets, total_asset_size, texture_memory_usage, result)
+        end
+
+        # Analyzes audio files referenced in scene YAML files
+        private def analyze_scene_audio_references(config : GameConfig, context : ValidationContext, result : ValidationResult)
+          return unless assets = config.assets
+
+          assets.scenes.each do |pattern|
+            Dir.glob(File.join(context.base_dir, pattern)).each do |scene_path|
+              next unless File.exists?(scene_path) && scene_path.ends_with?(".yaml")
+
+              begin
+                scene_content = File.read(scene_path)
+
+                # Check for audio references in scenes
+                if match = scene_content.match(/background_music:\s*["']?([^"'\n]+)["']?/)
+                  audio_path = match[1].strip.gsub(/^["']|["']$/, "")
+                  full_path = File.join(context.base_dir, audio_path)
+
+                  if File.exists?(full_path)
+                    size = File.size(full_path)
+                    size_mb = size / 1_048_576.0
+                    ext = File.extname(full_path).downcase
+
+                    if size_mb > 20.0
+                      result.add_performance_hint("Large audio file '#{File.basename(audio_path)}' (#{size_mb.round(1)} MB) - consider compression")
+                    end
+
+                    if ext == ".wav" && size_mb > 3.0
+                      result.add_performance_hint("Large WAV audio file '#{File.basename(audio_path)}' - consider compression to OGG format")
+                    end
+                  end
+                end
+              rescue
+                # Ignore parse errors
+              end
+            end
+          end
         end
 
         # Analyzes audio asset performance
@@ -199,6 +309,7 @@ module PointClickEngine
         # Analyzes memory usage patterns
         private def analyze_memory_usage(config : GameConfig, context : ValidationContext, result : ValidationResult)
           estimated_memory_usage = 0_i64
+          texture_memory = 0_i64
 
           # Estimate based on assets
           if assets = config.assets
@@ -211,6 +322,12 @@ module PointClickEngine
             # Texture memory (already calculated above)
             texture_memory = estimate_total_texture_memory(assets, context)
             estimated_memory_usage += texture_memory
+
+            # Report texture memory specifically
+            texture_memory_mb = texture_memory / 1_048_576.0
+            if texture_memory_mb > 0
+              result.add_info("Estimated texture memory usage: #{texture_memory_mb.round(1)} MB")
+            end
           end
 
           # Scene memory
@@ -220,10 +337,12 @@ module PointClickEngine
           # Report memory analysis
           total_memory_mb = estimated_memory_usage / 1_048_576.0
           if total_memory_mb > 1024 # 1GB
-            result.add_performance_hint("Estimated memory usage is high: #{total_memory_mb.round(1)} MB")
+            result.add_performance_hint("Estimated memory usage is high (#{total_memory_mb.round(1)} MB) - potential memory pressure on lower-end devices")
             result.add_performance_hint("Consider asset streaming or loading optimization for memory-constrained devices")
           elsif total_memory_mb > 512 # 512MB
-            result.add_performance_hint("Estimated memory usage: #{total_memory_mb.round(1)} MB - monitor for mobile compatibility")
+            result.add_performance_hint("Estimated memory usage (#{total_memory_mb.round(1)} MB) - monitor for memory pressure on mobile devices")
+          elsif total_memory_mb > 256 # 256MB
+            result.add_performance_hint("Estimated memory usage: #{total_memory_mb.round(1)} MB - acceptable for desktop but monitor for mobile")
           else
             result.add_info("Estimated memory usage: #{total_memory_mb.round(1)} MB")
           end
@@ -319,6 +438,123 @@ module PointClickEngine
           if audio.sounds.size > 50
             result.add_performance_hint("Many sound effects (#{audio.sounds.size}) - consider sound pooling and limits")
           end
+
+          # Check individual audio file sizes
+          audio.music.each do |name, path|
+            full_path = File.expand_path(path, context.base_dir)
+            if File.exists?(full_path)
+              size = File.size(full_path)
+              size_mb = size / 1_048_576.0
+              ext = File.extname(full_path).downcase
+
+              if size_mb > 20.0
+                result.add_performance_hint("Large audio file '#{name}' (#{size_mb.round(1)} MB) - consider compression or streaming")
+              end
+
+              if ext == ".wav" && size_mb > 5.0
+                result.add_performance_hint("Large WAV audio file '#{name}' - consider OGG or MP3 compression")
+              end
+            end
+          end
+
+          audio.sounds.each do |name, path|
+            full_path = File.expand_path(path, context.base_dir)
+            if File.exists?(full_path)
+              size = File.size(full_path)
+              size_mb = size / 1_048_576.0
+              ext = File.extname(full_path).downcase
+
+              if size_mb > 10.0
+                result.add_performance_hint("Large sound effect '#{name}' (#{size_mb.round(1)} MB) - consider compression")
+              end
+
+              if ext == ".wav" && size_mb > 2.0
+                result.add_performance_hint("Large WAV sound '#{name}' - consider converting to compressed format")
+              end
+            end
+          end
+        end
+
+        # Analyzes scene complexity for performance considerations
+        private def analyze_scene_complexity(config : GameConfig, context : ValidationContext, result : ValidationResult)
+          return unless assets = config.assets
+
+          # Check target FPS setting from window config
+          target_fps = config.window.try(&.target_fps) || 60
+
+          assets.scenes.each do |pattern|
+            Dir.glob(File.join(context.base_dir, pattern)).each do |scene_path|
+              next unless File.exists?(scene_path) && scene_path.ends_with?(".yaml")
+
+              begin
+                scene_content = File.read(scene_path)
+                scene_name = File.basename(scene_path, ".yaml")
+                scene_data = YAML.parse(scene_content)
+
+                # Count hotspots
+                hotspot_count = 0
+                if hotspots = scene_data["hotspots"]?
+                  hotspot_count = hotspots.as_a.size
+                end
+
+                # Count characters
+                character_count = 0
+                if characters = scene_data["characters"]?
+                  character_count = characters.as_a.size
+                end
+
+                # Count interactive objects
+                object_count = 0
+                if objects = scene_data["objects"]?
+                  object_count = objects.as_a.size
+                end
+
+                total_entities = hotspot_count + character_count + object_count
+
+                # Warn about complex scenes
+                if total_entities > 50
+                  result.add_performance_hint("Scene '#{scene_name}' has #{total_entities} entities - may impact performance at #{target_fps} fps")
+                end
+
+                if hotspot_count > 100
+                  result.add_performance_hint("Scene '#{scene_name}' has many hotspots (#{hotspot_count}) - consider reducing for better performance")
+                end
+
+                # Calculate estimated scene load time
+                scene_total_size = estimate_scene_total_asset_size(scene_path, scene_content, context)
+                if scene_total_size > 20 * 1024 * 1024 # 20MB
+                  load_time_estimate = scene_total_size / (10.0 * 1024 * 1024) # Assume 10MB/s load speed
+                  result.add_performance_hint("Scene '#{scene_name}' may have slow loading time (estimated #{load_time_estimate.round(1)}s)")
+                end
+              rescue
+                # Ignore parse errors
+              end
+            end
+          end
+
+          # High FPS warning
+          if target_fps > 60
+            result.add_performance_hint("Targeting #{target_fps} fps - ensure performance optimization for high frame rate rendering")
+          end
+        end
+
+        # Estimate total asset size for a scene
+        private def estimate_scene_total_asset_size(scene_path : String, scene_content : String, context : ValidationContext) : Int64
+          total_size = 0_i64
+
+          # Background
+          if match = scene_content.match(/background_path:\s*["']?([^"'\n]+)["']?/)
+            bg_path = File.join(context.base_dir, match[1].strip.gsub(/^["']|["']$/, ""))
+            total_size += File.size(bg_path) if File.exists?(bg_path)
+          end
+
+          # Audio in scene
+          if match = scene_content.match(/background_music:\s*["']?([^"'\n]+)["']?/)
+            audio_path = File.join(context.base_dir, match[1].strip.gsub(/^["']|["']$/, ""))
+            total_size += File.size(audio_path) if File.exists?(audio_path)
+          end
+
+          total_size
         end
 
         # Audio volume validation is now handled by UserSettings validation

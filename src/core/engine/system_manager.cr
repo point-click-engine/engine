@@ -126,7 +126,7 @@ module PointClickEngine
         # Cleanup all systems
         def cleanup_systems
           # Cleanup systems that have cleanup methods
-          @audio_manager.try(&.finalize) # Has finalize method
+          @audio_manager.try(&.cleanup) # Has cleanup method
           @shader_system.try(&.cleanup)  # Has cleanup method
           # @gui.try(&.cleanup)               # No cleanup method - GUI::GUIManager
           @script_engine.try(&.cleanup)      # Has cleanup method

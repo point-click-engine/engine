@@ -152,15 +152,15 @@ module PointClickEngine
       def unload_music(name : String) : Nil
         if music = @music_tracks.delete(name)
           music.stop if music == @current_music
-          music.finalize
+          music.cleanup
         end
       end
 
-      # Clean up all resources
-      def finalize
+      # Explicit cleanup - do NOT use finalizer as it causes GC deadlocks with Raylib
+      def cleanup
         @music_tracks.each_value do |music|
           music.stop
-          music.finalize
+          music.cleanup
         end
         @music_tracks.clear
       end

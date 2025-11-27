@@ -3817,3 +3817,768 @@ registry.registered?(Interface)  # check if registered
 registry.clear_scope             # clear scoped instances
 registry.reset                   # clear everything
 ```
+
+---
+
+## 16. Graphics System Improvements
+
+### Current Issues Found
+
+#### Critical Issues
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| **Hardcoded viewport mismatch** | `movement_effects.cr:45-46` | Uses 1280x720 instead of Display's 1024x768 reference |
+| **Non-existent camera zoom property** | `base_camera_effect.cr:64` | Attempts to access `camera.zoom` which doesn't exist - dead code |
+| **Screen space rendering incomplete** | `renderer.cr:320` | `draw_screen_space` does nothing - UI affected by camera |
+| **Assumed 60 FPS delta time** | `sprite.cr:166` | Hardcoded `0.016f32` instead of actual dt |
+
+#### Code Quality Issues
+
+| Issue | Location | Fix |
+|-------|----------|-----|
+| Three global singletons | `effect_manager.cr:364`, `shader_manager.cr:54`, `text_renderer.cr:288` | Move to ServiceRegistry |
+| Duplicate effect factory patterns | `ObjectEffects`, `SceneEffects`, `CameraEffects` | Unify parameter parsing |
+| Color interpolation duplicated | `color.cr`, `particle.cr:189`, `text_renderer.cr:277` | Centralize in utility |
+| Position restoration pattern repeated | `shake.cr`, `float.cr`, `highlight.cr` | Extract to Effect base class |
+| Snow/Wind shader effects not implemented | `scene_effect_factory.cr:221,232` | Returns nil - implement or remove |
+
+#### Hardcoded Values
+
+| Value | Location | Should Use |
+|-------|----------|------------|
+| `1280, 720` | `movement_effects.cr:45-46` | `Display::REFERENCE_WIDTH/HEIGHT` |
+| `1024, 768` | `transition_effect.cr:113,135` | `Display::REFERENCE_WIDTH/HEIGHT` |
+| `10.0f32` | Multiple effect files | `EffectConstants.DEFAULT_AMPLITUDE` |
+| `0.016f32` | `sprite.cr:166` | Actual delta time parameter |
+
+### Proposed Changes
+
+#### 16.1 Fix Viewport Size Retrieval
+
+```crystal
+# In movement_effects.cr - replace hardcoded viewport
+private def get_viewport_size : Tuple(Int32, Int32)
+  if display = Graphics::Core::Display.instance?
+    {display.game_width, display.game_height}
+  else
+    {Graphics::Core::Display::REFERENCE_WIDTH, Graphics::Core::Display::REFERENCE_HEIGHT}
+  end
+end
+```
+
+#### 16.2 Move Singletons to ServiceRegistry
+
+```crystal
+# In Services module
+def self.configure_graphics
+  @@registry.register(Graphics::Effects::EffectManager, ServiceLifetime::Singleton) do |r|
+    Graphics::Effects::EffectManager.new
+  end
+
+  @@registry.register(Graphics::Shaders::ShaderManager, ServiceLifetime::Singleton) do |r|
+    Graphics::Shaders::ShaderManager.new
+  end
+end
+```
+
+#### 16.3 Unify Effect Factory Pattern
+
+```crystal
+# New: src/graphics/effects/effect_factory_base.cr
+module PointClickEngine::Graphics::Effects
+  abstract class EffectFactoryBase
+    protected def parse_duration(params : Hash) : Float32
+      params["duration"]?.try(&.to_f32) || 1.0f32
+    end
+
+    protected def parse_color(params : Hash, key : String, default : RL::Color) : RL::Color
+      if color_str = params[key]?
+        ColorUtils.parse(color_str) || default
+      else
+        default
+      end
+    end
+
+    protected def parse_float(params : Hash, key : String, default : Float32) : Float32
+      params[key]?.try(&.to_f32) || default
+    end
+  end
+end
+```
+
+#### 16.4 Add Graphics Events
+
+```crystal
+# Graphics events for EventBus
+class EffectStartedEvent < Core::GameEvent
+  define_event_type "graphics:effect_started"
+  getter effect_type : String
+  getter target_id : String?
+end
+
+class EffectCompletedEvent < Core::GameEvent
+  define_event_type "graphics:effect_completed"
+  getter effect_type : String
+  getter target_id : String?
+end
+
+class AnimationFrameEvent < Core::GameEvent
+  define_event_type "graphics:animation_frame"
+  getter sprite_id : String
+  getter frame : Int32
+end
+
+class AnimationCompleteEvent < Core::GameEvent
+  define_event_type "graphics:animation_complete"
+  getter sprite_id : String
+  getter animation_name : String
+end
+```
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/graphics/effects/camera_effects/movement_effects.cr` | Get viewport from Display |
+| `src/graphics/effects/camera_effects/base_camera_effect.cr` | Remove dead zoom code |
+| `src/graphics/core/renderer.cr` | Implement screen space rendering |
+| `src/graphics/sprites/sprite.cr` | Use actual delta time |
+| `src/graphics/effects/effect_manager.cr` | Remove singleton, use ServiceRegistry |
+| `src/graphics/shaders/shader_manager.cr` | Remove singleton, use ServiceRegistry |
+| `src/graphics/sprites/animated_sprite.cr` | Publish animation events |
+
+---
+
+## 17. Assets System Improvements
+
+### Current Issues Found
+
+#### Critical Issues
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| **ZIP reader recreation on every access** | `asset_manager.cr:119,150,171` | Performance - re-parses archive for each read |
+| **Cache clear too aggressive** | `asset_manager.cr:85` | Unmounting one archive clears ALL cache |
+| **Inconsistent error handling** | `asset_manager.cr:96-137` | `read_file` raises, `read_bytes` returns nil |
+| **No error handling on mount** | `asset_manager.cr:72` | Corrupted ZIP crashes without message |
+
+#### Code Quality Issues
+
+| Issue | Location | Fix |
+|-------|----------|-----|
+| Duplicate temp file pattern | `asset_loader.cr:9-52` | Three identical load methods |
+| TODO: AssetLoader not used | `sprite.cr:71` | Sprite loads textures directly |
+| Debug puts in calling code | `scriptable_character.cr:36`, `script_engine.cr:60` | Use proper logging |
+
+### Proposed Changes
+
+#### 17.1 Cache ZIP Readers
+
+```crystal
+# In asset_manager.cr
+@zip_readers : Hash(String, Compress::Zip::Reader) = {} of String => Compress::Zip::Reader
+
+def get_zip_reader(mount_point : String) : Compress::Zip::Reader?
+  return @zip_readers[mount_point] if @zip_readers.has_key?(mount_point)
+
+  if archive_data = @archive_data[mount_point]?
+    reader = Compress::Zip::Reader.new(IO::Memory.new(archive_data))
+    @zip_readers[mount_point] = reader
+    reader
+  end
+end
+```
+
+#### 17.2 Fix Selective Cache Clearing
+
+```crystal
+def unmount_archive(mount_point : String = "/")
+  @archives.delete(mount_point)
+  @archive_data.delete(mount_point)
+  @zip_readers.delete(mount_point)
+
+  # Only clear cache entries from this mount point
+  @cache.reject! do |path, _|
+    path.starts_with?(mount_point)
+  end
+end
+```
+
+#### 17.3 Unify Asset Loading
+
+```crystal
+# New: Extract common pattern in asset_loader.cr
+private def self.load_via_temp_file(path : String, extension : String, &loader : String -> T) : T forall T
+  if bytes = AssetManager.read_bytes(path)
+    temp_path = File.tempname("asset", extension)
+    begin
+      File.write(temp_path, bytes)
+      loader.call(temp_path)
+    ensure
+      File.delete(temp_path) if File.exists?(temp_path)
+    end
+  else
+    loader.call(path)
+  end
+end
+
+def self.load_texture(path : String) : RL::Texture2D
+  load_via_temp_file(path, File.extname(path)) { |p| RL.load_texture(p) }
+end
+```
+
+#### 17.4 Add Asset Events
+
+```crystal
+class AssetLoadedEvent < Core::GameEvent
+  define_event_type "assets:loaded"
+  getter path : String
+  getter asset_type : String  # "texture", "sound", "music"
+end
+
+class AssetErrorEvent < Core::GameEvent
+  define_event_type "assets:error"
+  getter path : String
+  getter error : String
+end
+
+class ArchiveMountedEvent < Core::GameEvent
+  define_event_type "assets:archive_mounted"
+  getter mount_point : String
+end
+```
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/assets/asset_manager.cr` | Cache ZIP readers, selective cache clear, error handling |
+| `src/assets/asset_loader.cr` | Extract duplicate temp file pattern |
+| `src/graphics/sprites/sprite.cr` | Use AssetLoader instead of direct RL calls |
+
+---
+
+## 18. Audio System Improvements
+
+### Current Issues Found
+
+#### Critical Issues
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| **Dual fade implementations differ** | `ambient_sound_manager.cr:142-145 vs 323-328` | Full vs Stub have different math - results differ |
+| **Cache eviction disconnected from cleanup** | `audio_resource_cache.cr:111` | Memory leaks if managers don't clean up |
+| **`available?` always returns true** | `audio_manager.cr:13-16` | No actual audio device check |
+
+#### Code Quality Issues
+
+| Issue | Location | Fix |
+|-------|----------|-----|
+| Spatial distance calc duplicated 3x | `ambient_sound_manager.cr:165`, `footstep_system.cr:72`, `sound_effect_manager.cr:34` | Extract to utility |
+| Volume clamping duplicated 20+ times | Multiple files | Extract to helper |
+| Debug puts in production | `ambient_sound_manager.cr:51`, `footstep_system.cr:303` | Use ErrorLogger |
+| Only VolumeController has callbacks | `volume_controller.cr:21` | Migrate all to EventBus |
+
+#### Hardcoded Values
+
+| Value | Location | Should Use |
+|-------|----------|------------|
+| `1_000_000_u64` | `audio_manager.cr:169` | `AudioConfig.estimated_sfx_size` |
+| `5_000_000_u64` | `audio_manager.cr:194` | `AudioConfig.estimated_music_size` |
+| `100_000_000_u64` | `audio_resource_cache.cr:8` | `AudioConfig.max_cache_memory` |
+| `500.0` | Multiple files | `AudioConfig.default_max_distance` |
+| `2.0` | `audio_manager.cr:207` | `AudioConfig.default_crossfade_duration` |
+
+### Proposed Changes
+
+#### 18.1 Extract Spatial Audio Utility
+
+```crystal
+# New: src/audio/spatial_audio_utils.cr
+module PointClickEngine::Audio
+  module SpatialAudioUtils
+    def self.calculate_distance(pos1 : RL::Vector2, pos2 : RL::Vector2) : Float32
+      Math.sqrt((pos2.x - pos1.x) ** 2 + (pos2.y - pos1.y) ** 2).to_f32
+    end
+
+    def self.calculate_volume_factor(distance : Float32, max_distance : Float32) : Float32
+      (1.0f32 - (distance / max_distance)).clamp(0.0f32, 1.0f32)
+    end
+
+    def self.clamp_volume(volume : Float32) : Float32
+      volume.clamp(0.0f32, 1.0f32)
+    end
+  end
+end
+```
+
+#### 18.2 Fix Fade Implementation Consistency
+
+```crystal
+# Unified fade calculation
+private def calculate_fade(progress : Float32, start_volume : Float32, target_volume : Float32) : Float32
+  start_volume + (progress * (target_volume - start_volume))
+end
+```
+
+#### 18.3 Add Audio Events
+
+```crystal
+class MusicStartedEvent < Core::GameEvent
+  define_event_type "audio:music_started"
+  getter track_name : String
+end
+
+class MusicEndedEvent < Core::GameEvent
+  define_event_type "audio:music_ended"
+  getter track_name : String
+end
+
+class SoundPlayedEvent < Core::GameEvent
+  define_event_type "audio:sound_played"
+  getter sound_name : String
+  getter position : RL::Vector2?
+end
+
+class FootstepEvent < Core::GameEvent
+  define_event_type "audio:footstep"
+  getter character_id : String
+  getter surface : SurfaceType
+end
+
+class VolumeChangedEvent < Core::GameEvent
+  define_event_type "audio:volume_changed"
+  getter channel : Symbol  # :master, :music, :sfx, :ambient
+  getter volume : Float32
+end
+```
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/audio/ambient_sound_manager.cr` | Fix fade, remove puts, use spatial utility |
+| `src/audio/footstep_system.cr` | Remove puts, use spatial utility, publish events |
+| `src/audio/sound_effect_manager.cr` | Use spatial utility |
+| `src/audio/volume_controller.cr` | Migrate callbacks to EventBus |
+| `src/audio/audio_manager.cr` | Check audio device availability |
+
+---
+
+## 19. Inventory System Improvements
+
+### Current Issues Found
+
+#### Critical Issues
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| **Engine singleton dependency** | `inventory_system.cr:329-333` | Tight coupling with Engine |
+| **Redundant `.not_nil!`** | `inventory_system.cr:359` | Unnecessary after nil check |
+| **Duplicate initializers** | `inventory_system.cr:190-202` | API confusion |
+
+#### Code Quality Issues
+
+| Issue | Location | Fix |
+|-------|----------|-----|
+| Hardcoded slot size `64.0` | `inventory_system.cr:159` | Use ConfigurationManager |
+| Hardcoded colors | `inventory_system.cr:166,418` | Extract constants |
+| Hardcoded text sizes | `inventory_system.cr:436,451` | Use ConfigurationManager |
+| No asset loading error handling | `inventory_item.cr:48-51` | Add try/catch |
+| Empty item names allowed | `inventory_item.cr:22-28` | Validate non-empty |
+| EventSystem not used | `inventory_system.cr:181,185` | Migrate Proc callbacks |
+
+### Proposed Changes
+
+#### 19.1 Use EventBus Instead of Callbacks
+
+```crystal
+# Replace Proc callbacks with EventBus
+# OLD:
+property on_item_used : Proc(InventoryItem, String, Nil)?
+property on_items_combined : Proc(InventoryItem, InventoryItem, String?, Nil)?
+
+# NEW: Remove properties, publish events directly
+def use_item_on(item : InventoryItem, target : String)
+  # ... existing logic ...
+  Core::Events.publish(ItemUsedEvent.new(item.name, target))
+end
+
+def try_combine_items(item1 : InventoryItem, item2 : InventoryItem)
+  # ... existing logic ...
+  Core::Events.publish(ItemsCombinedEvent.new(item1.name, item2.name, result_item_name))
+end
+```
+
+#### 19.2 Extract Configuration
+
+```crystal
+# In ConfigurationManager or InventoryConfig
+module InventoryConfig
+  SLOT_SIZE = 64.0f32
+  PADDING = 8.0f32
+  BACKGROUND_COLOR = RL::Color.new(r: 0, g: 0, b: 0, a: 200)
+  SLOT_COLOR = RL::Color.new(r: 50, g: 50, b: 50, a: 255)
+  TEXT_SIZE = 12
+  COMBINATION_TEXT = "Combination Mode - Click another item"
+end
+```
+
+#### 19.3 Add Inventory Events
+
+```crystal
+# Add to game_events.cr
+class ItemsCombinedEvent < Core::GameEvent
+  define_event_type "inventory:items_combined"
+  getter item1_name : String
+  getter item2_name : String
+  getter result_item : String?
+end
+
+# Existing events to use:
+# ITEM_ADDED, ITEM_REMOVED, ITEM_SELECTED, ITEM_USED
+```
+
+#### 19.4 Validate Item Names
+
+```crystal
+# In inventory_item.cr
+def initialize(@name : String, @description : String)
+  raise ArgumentError.new("Item name cannot be empty") if @name.empty?
+end
+```
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/inventory/inventory_system.cr` | Remove Engine dependency, use EventBus, extract config |
+| `src/inventory/inventory_item.cr` | Validate names, handle asset loading errors |
+
+---
+
+## 20. Localization System Improvements
+
+### Current Issues Found
+
+#### Critical Issues
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| **GSub regex vulnerability** | `translation.cr:41` | User input could inject regex patterns |
+| **Silent locale change failure** | `localization_manager.cr:126-128` | No notification if locale unavailable |
+| **Hardcoded En_US fallback** | `translation.cr:21` | Bypasses configured fallback locale |
+| **No error handling on file load** | `localization_manager.cr:24-45` | Invalid YAML crashes game |
+
+#### Code Quality Issues
+
+| Issue | Location | Fix |
+|-------|----------|-----|
+| Inappropriate singleton pattern | `localization_manager.cr:12-17` | Integrate with Engine/ServiceRegistry |
+| No event system integration | N/A | Add `locale_changed` event |
+| Only `.yml` supported | `localization_manager.cr:49` | Also support `.yaml` |
+| Duplicate null coalescing | Lines 66, 137, 144 | Extract helper method |
+| No logging at all | N/A | Add warnings for missing translations |
+
+### Proposed Changes
+
+#### 20.1 Fix GSub Vulnerability
+
+```crystal
+# Use literal string replacement instead of regex
+def interpolate(locale : Locale, params : Hash(String, String)) : String
+  result = text(locale)
+  params.each do |key, value|
+    placeholder = "{{#{key}}}"
+    result = result.gsub(placeholder, value)  # This is actually safe - gsub with string is literal
+  end
+  result
+end
+```
+
+#### 20.2 Add Locale Change Event
+
+```crystal
+class LocaleChangedEvent < Core::GameEvent
+  define_event_type "localization:locale_changed"
+  getter old_locale : Locale
+  getter new_locale : Locale
+end
+
+def set_locale(locale : Locale) : Bool
+  return false unless locale_available?(locale)
+
+  old_locale = @current_locale
+  @current_locale = locale
+
+  Core::Events.publish(LocaleChangedEvent.new(old_locale, locale))
+  true
+end
+```
+
+#### 20.3 Add Error Handling
+
+```crystal
+def load_from_file(path : String) : Bool
+  begin
+    content = File.read(path)
+    data = YAML.parse(content)
+    # ... parse translations ...
+    true
+  rescue ex : File::NotFoundError
+    ErrorLogger.error("Localization file not found: #{path}")
+    false
+  rescue ex : YAML::ParseException
+    ErrorLogger.error("Invalid YAML in localization file #{path}: #{ex.message}")
+    false
+  end
+end
+```
+
+#### 20.4 Use Configured Fallback
+
+```crystal
+# In translation.cr
+def text(locale : Locale, fallback_locale : Locale? = nil) : String
+  @translations[locale]? ||
+    (fallback_locale && @translations[fallback_locale]?) ||
+    @key
+end
+
+# In localization_manager.cr
+def translate(key : String) : String
+  translation = get_translation(key)
+  translation.text(@current_locale, @fallback_locale)
+end
+```
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/localization/localization_manager.cr` | Add events, error handling, support .yaml |
+| `src/localization/translation.cr` | Use configured fallback locale |
+
+---
+
+## 21. Navigation System Improvements
+
+### Current Issues Found
+
+#### Critical Issues
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| **Inverted boolean logic in configure()** | `pathfinding.cr:127-141` | `allow_diagonal: false` still triggers update |
+| **Division by zero** | `path_optimizer.cr:341,344` | Empty paths crash stats calculation |
+| **Float equality comparison** | `path_optimizer.cr:197` | `distance == 0` unreliable with floats |
+| **Unsafe `.as()` casts** | `pathfinding.cr:195-197` | Type mismatch crashes |
+
+#### Code Quality Issues
+
+| Issue | Location | Fix |
+|-------|----------|-----|
+| Magic numbers in thresholds | `pathfinding.cr:251-270` | Extract to GameConstants |
+| Duplicate A* loop structure | `astar_algorithm.cr:98-265` | Extract common logic |
+| Duplicate optimization methods | `path_optimizer.cr` | Parameterize single method |
+| O(n) open list search | `astar_algorithm.cr:119-126` | Use heap/priority queue |
+
+#### Hardcoded Values
+
+| Value | Location | Should Use |
+|-------|----------|------------|
+| `100.0f32` | `astar_algorithm.cr:187` | `PathfindingConstants.DEFAULT_PARTIAL_PATH_MAX_DISTANCE` |
+| `1000, 10000` | `pathfinding.cr:251-256` | Grid size thresholds |
+| `5000, 10000, 20000` | `pathfinding.cr:251-256` | Max search nodes |
+| `80.0, 50.0` | `pathfinding.cr:262-270` | Walkable percentage thresholds |
+| `10, 6, 4` | `pathfinding.cr:262-270` | Max lookahead values |
+
+### Proposed Changes
+
+#### 21.1 Fix Configure Method
+
+```crystal
+def configure(allow_diagonal : Bool? = nil,
+              prevent_corner_cutting : Bool? = nil,
+              heuristic_method : HeuristicCalculator::Method? = nil,
+              max_search_nodes : Int32? = nil)
+  # Use unless nil? instead of truthy check
+  unless allow_diagonal.nil?
+    @algorithm.movement_validator.allow_diagonal = allow_diagonal
+  end
+
+  unless prevent_corner_cutting.nil?
+    @algorithm.movement_validator.prevent_corner_cutting = prevent_corner_cutting
+  end
+  # ...
+end
+```
+
+#### 21.2 Fix Division by Zero
+
+```crystal
+def get_optimization_stats(original : Array(RL::Vector2), optimized : Array(RL::Vector2)) : Hash(String, Float32)
+  original_length = calculate_path_length(original)
+  optimized_length = calculate_path_length(optimized)
+
+  {
+    "original_points" => original.size.to_f32,
+    "optimized_points" => optimized.size.to_f32,
+    "reduction_percentage" => original.size > 0 ?
+      ((original.size - optimized.size).to_f32 / original.size * 100) : 0.0f32,
+    "length_change_percentage" => original_length > 0.0001f32 ?
+      ((optimized_length - original_length) / original_length * 100) : 0.0f32,
+  }
+end
+```
+
+#### 21.3 Fix Float Comparison
+
+```crystal
+EPSILON = 0.0001f32
+
+def has_clear_path_precise(start : RL::Vector2, target : RL::Vector2, samples : Int32 = 10) : Bool
+  distance = Math.sqrt((target.x - start.x) ** 2 + (target.y - start.y) ** 2)
+
+  if distance < EPSILON  # Use epsilon instead of ==
+    return true
+  end
+  # ...
+end
+```
+
+#### 21.4 Fix Unsafe Casts
+
+```crystal
+def draw_performance_info(x : Int32, y : Int32, path_length : Float32)
+  return unless @enable_debug
+  stats = @algorithm.get_search_stats
+
+  search_time = stats["search_time_ms"]?.try(&.as?(Float64)) || 0.0
+  nodes_searched = stats["nodes_searched"]?.try(&.as?(Int32)) || 0
+
+  @debug_renderer.draw_performance_info(x, y, search_time / 1000, nodes_searched, path_length)
+end
+```
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/navigation/pathfinding.cr` | Fix configure(), extract constants, fix casts |
+| `src/navigation/path_optimizer.cr` | Fix division by zero, float comparison |
+| `src/navigation/astar_algorithm.cr` | Consider heap for open list |
+
+---
+
+## 22. Updated Complete Files Summary
+
+### Files to DELETE (4 total)
+| File | Reason |
+|------|--------|
+| `src/scripting/event_system.cr` | Replaced by core EventBus |
+| `src/scripting/game_state_manager.cr` | Duplicate of core GameStateManager |
+
+### Files to CREATE (~20 total)
+| File | Purpose |
+|------|---------|
+| `src/core/conditions/*.cr` | Type-safe condition system (5 files) |
+| `src/core/events/*.cr` | Unified EventBus (3 files) |
+| `src/core/di/*.cr` | Service registry (2 files) |
+| `src/tools/validate.cr` | CLI validator |
+| `src/ui/ui_helpers.cr` | Coordinate conversion helpers |
+| `src/ui/menu_items.cr` | MenuItem enum |
+| `src/characters/animation_names.cr` | Animation constants |
+| `src/audio/spatial_audio_utils.cr` | Spatial audio calculations |
+| `src/graphics/effects/effect_factory_base.cr` | Unified effect factory |
+| `schemas/*.schema.json` | YAML autocomplete (4 files) |
+
+### Files to MODIFY - Critical Fixes (Immediate Priority)
+| File | Fix |
+|------|-----|
+| `src/ui/floating_text.cr` | Initialize `@fade_out_start_time` |
+| `src/ui/floating_dialog.cr` | Remove debug `puts` |
+| `src/scenes/conditions.cr` | Fix StateCondition (always false) |
+| `src/characters/dialogue/dialog_tree.cr` | Fix injection vulnerability |
+| `src/navigation/pathfinding.cr` | Fix configure() boolean logic |
+| `src/navigation/path_optimizer.cr` | Fix division by zero |
+| `src/audio/ambient_sound_manager.cr` | Fix fade calculation mismatch |
+| `src/graphics/effects/camera_effects/movement_effects.cr` | Fix hardcoded viewport |
+
+### Files to MODIFY - EventBus Migration
+| File | Changes |
+|------|---------|
+| `src/core/game_state_manager.cr` | Remove callbacks → EventBus |
+| `src/core/scene_manager.cr` | Remove callbacks → EventBus |
+| `src/core/quest_system.cr` | Remove notifications → EventBus |
+| `src/core/engine.cr` | Add `Events.process()` |
+| `src/scenes/scene.cr` | Publish scene events |
+| `src/inventory/inventory_system.cr` | Replace Proc callbacks with events |
+| `src/audio/volume_controller.cr` | Replace callbacks with events |
+| `src/localization/localization_manager.cr` | Add locale change events |
+| `src/graphics/sprites/animated_sprite.cr` | Publish animation events |
+
+### Files to MODIFY - Singleton Removal
+| File | Changes |
+|------|---------|
+| `src/graphics/effects/effect_manager.cr` | Move to ServiceRegistry |
+| `src/graphics/shaders/shader_manager.cr` | Move to ServiceRegistry |
+| `src/graphics/ui/text_renderer.cr` | Move to ServiceRegistry |
+| `src/localization/localization_manager.cr` | Integrate with Engine |
+
+### Files to MODIFY - Code Quality
+| File | Changes |
+|------|---------|
+| `src/assets/asset_manager.cr` | Cache ZIP readers, selective cache clear |
+| `src/assets/asset_loader.cr` | Extract duplicate temp file pattern |
+| `src/audio/ambient_sound_manager.cr` | Remove puts, use spatial utility |
+| `src/audio/footstep_system.cr` | Remove puts, use spatial utility |
+| `src/inventory/inventory_item.cr` | Validate names, handle asset errors |
+
+---
+
+## 23. Updated Implementation Order
+
+### Phase 1: Critical Bug Fixes (Do First)
+1. Fix `src/ui/floating_text.cr` - uninitialized variable
+2. Fix `src/scenes/conditions.cr` - StateCondition always false
+3. Fix `src/navigation/pathfinding.cr` - configure() boolean logic
+4. Fix `src/navigation/path_optimizer.cr` - division by zero
+5. Fix `src/audio/ambient_sound_manager.cr` - fade calculation
+6. Fix `src/graphics/effects/camera_effects/movement_effects.cr` - viewport
+7. Fix `src/characters/dialogue/dialog_tree.cr` - injection vulnerability
+8. Remove debug puts from production code
+
+### Phase 2: Core Infrastructure
+1. Create `src/core/conditions/` - type-safe conditions + validator
+2. Create `src/core/events/EventBus` - unified event system
+3. Create `src/core/di/ServiceRegistry` - dependency injection
+4. Create JSON schemas and CLI validator tool
+
+### Phase 3: Event System Migration
+1. **Delete** `src/scripting/event_system.cr`
+2. Update core managers (GameStateManager, SceneManager, QuestManager)
+3. Update inventory system - replace Proc callbacks
+4. Update audio system - replace VolumeController callbacks
+5. Update localization - add locale change events
+6. Update graphics - add animation events
+
+### Phase 4: Singleton Removal
+1. Move EffectManager to ServiceRegistry
+2. Move ShaderManager to ServiceRegistry
+3. Move TextRenderer to ServiceRegistry
+4. Integrate LocalizationManager with Engine
+
+### Phase 5: Code Quality Improvements
+1. Fix asset manager - cache ZIP readers, selective cache clear
+2. Extract audio spatial utility
+3. Extract graphics effect factory base
+4. Validate inventory item names
+5. Add error handling throughout
+
+### Phase 6: Testing & Polish
+1. Update all specs for EventBus
+2. Add integration tests for event flow
+3. Run CLI validator on all YAML files
+4. Document migration guide
