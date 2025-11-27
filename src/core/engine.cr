@@ -15,6 +15,7 @@ require "./render_manager"
 require "./resource_manager"
 require "./save_system"
 require "../inventory/inventory_system"
+require "../inventory/item_registry"
 require "./game_state_manager"
 require "./quest_system"
 require "./timer_manager"
@@ -41,6 +42,7 @@ module PointClickEngine
       property render_manager : RenderManager = RenderManager.new
       property resource_manager : ResourceManager = ResourceManager.new
       property inventory : Inventory::InventorySystem = Inventory::InventorySystem.new
+      property item_registry : Inventory::ItemRegistry = Inventory::ItemRegistry.new
       property game_state_manager : GameStateManager?
       property quest_manager : QuestManager?
       property timer_manager : TimerManager = TimerManager.new
@@ -56,6 +58,9 @@ module PointClickEngine
       # Auto-save functionality
       property auto_save_interval : Float32 = 0.0_f32
       property auto_save_timer : Float32 = 0.0_f32
+
+      # Player control (disabled during cutscenes)
+      property player_control_enabled : Bool = true
 
       # Fullscreen state
       @fullscreen : Bool = false
@@ -329,6 +334,9 @@ module PointClickEngine
         unless skip_overlays
           @effect_manager.draw_scene_overlays(renderer)
         end
+
+        # Draw cutscene visuals (sprites, backgrounds, text overlays)
+        @cutscene_manager.draw
 
         # Render highlighted hotspots if enabled
         if @render_coordinator.hotspot_highlight_enabled && @current_scene
@@ -614,17 +622,11 @@ module PointClickEngine
         @system_manager.menu_system.try(&.enter_game)
 
         # Trigger the game started event
+        # Scene loading is handled by GameStartedEvent subscribers (game_config.cr)
+        # which may play an intro cutscene first
         puts "[Engine] Triggering GameStartedEvent"
         @system_manager.event_bus.publish_sync(Events::GameStartedEvent.new(new_game: true))
         puts "[Engine] Event triggered"
-
-        # Load the starting scene from scene manager
-        if scene_name = scene_manager.start_scene
-          puts "[Engine] Changing to start scene: #{scene_name}"
-          change_scene(scene_name)
-        else
-          puts "Warning: No start scene defined in game config"
-        end
       end
 
       # Auto-save handling

@@ -123,6 +123,7 @@ nodes:
     character_name: butler
     flags:
       set: ["butler_confessed", "butler_has_brass_key"]
+    actions: ["add_to_inventory:butler_confession"]
     choices:
       - text: "The brass key? Tell me about that."
         target_node_id: brass_key_confession
@@ -130,6 +131,115 @@ nodes:
         target_node_id: who_did_it
       - text: "Why should I believe you?"
         target_node_id: why_believe
+
+  brass_key_confession:
+    id: brass_key_confession
+    text: "I found it hidden behind a tome on mansion history. A serpent-shaped key, clearly old and valuable. I recognized the crest - it belonged to the grandfather. I took it, meaning to return it, but then I wondered... what does it open?"
+    character_name: butler
+    flags:
+      set: ["brass_key_confession_heard"]
+    choices:
+      - text: "And what does it open?"
+        target_node_id: key_destination
+      - text: "Give me the key now."
+        target_node_id: key_handover_direct
+      - text: "You stole from your employer."
+        target_node_id: theft_accusation
+
+  key_handover_direct:
+    id: key_handover_direct
+    text: "Here, take it. I've carried its weight long enough. The key opens a cabinet in the laboratory - the grandfather's final research. Perhaps you'll find what I was too afraid to discover."
+    character_name: butler
+    flags:
+      set: ["brass_key_received", "butler_gives_key"]
+    actions: ["add_to_inventory:brass_key", "complete_quest_objective:butler_mystery:obtain_brass_key"]
+    choices:
+      - text: "Thank you for your honesty."
+        target_node_id: honesty_thanks
+      - text: "Now tell me who took the crystal."
+        target_node_id: who_did_it
+      - text: "I'll find what you couldn't."
+        target_node_id: determination_response
+
+  theft_accusation:
+    id: theft_accusation
+    text: "Stole? I... yes. I suppose I did. Twenty years of faithful service, and I stooped to thievery. But you don't understand - I was trying to protect him! The professor follows the same path as his grandfather. Someone had to find answers before it consumed him too."
+    character_name: butler
+    choices:
+      - text: "Protecting him by stealing?"
+        target_node_id: protection_paradox
+      - text: "Just give me the key."
+        target_node_id: key_handover_direct
+      - text: "What answers were you seeking?"
+        target_node_id: answers_sought
+
+  protection_paradox:
+    id: protection_paradox
+    text: "I know it sounds absurd. But the key opens secrets the grandfather tried to hide. Secrets that might explain how to break the crystal's hold. If I could find a cure before the professor knew... but I was a coward. I never opened that cabinet."
+    character_name: butler
+    actions: ["add_to_inventory:brass_key", "complete_quest_objective:butler_mystery:obtain_brass_key"]
+    flags:
+      set: ["brass_key_received", "butler_gives_key"]
+    choices:
+      - text: "I'll find the cure you couldn't."
+        target_node_id: determination_response
+      - text: "The professor deserves to know."
+        target_node_id: professor_deserves
+
+  answers_sought:
+    id: answers_sought
+    text: "The grandfather spent his final years trying to understand the crystal's influence. How it bonds with bloodlines. How it... changes people. His notes might hold the key to freeing the Ashworths. Here - take the key. Find what I couldn't."
+    character_name: butler
+    actions: ["add_to_inventory:brass_key", "complete_quest_objective:butler_mystery:obtain_brass_key"]
+    flags:
+      set: ["brass_key_received", "butler_gives_key"]
+    choices:
+      - text: "I will."
+        target_node_id: determination_response
+      - text: "Who else might want this knowledge?"
+        target_node_id: who_else_wants
+
+  honesty_thanks:
+    id: honesty_thanks
+    text: "Honesty? I've been anything but. The letters I burned, the visitors I turned away, the secrets I kept... but perhaps honesty begins now. Find the crystal, Detective. Before it's too late."
+    character_name: butler
+    choices:
+      - text: "I will. Tell me about the visitors."
+        target_node_id: visitor_details
+      - text: "What letters did you burn?"
+        target_node_id: burned_letters
+      - text: "I should investigate the laboratory."
+        target_node_id: end_conversation
+
+  determination_response:
+    id: determination_response
+    text: "I believe you will. You have a determination the Ashworths lack - the ability to step back from the crystal's pull. Be careful in that laboratory. The grandfather's secrets are not for the faint of heart."
+    character_name: butler
+    choices:
+      - text: "What should I expect to find?"
+        target_node_id: cabinet_warning
+      - text: "Thank you for your help."
+        target_node_id: end_conversation
+
+  cabinet_warning:
+    id: cabinet_warning
+    text: "The grandfather was researching the veil between worlds. He believed the crystal could open doorways - to other places, other times. Whatever he discovered the night he died... it was enough to stop his heart. Tread carefully."
+    character_name: butler
+    choices:
+      - text: "I'll be careful."
+        target_node_id: end_conversation
+      - text: "Where exactly is this cabinet?"
+        target_node_id: cabinet_location
+
+  cabinet_location:
+    id: cabinet_location
+    text: "In the laboratory, near the window. A specimen cabinet with glass doors. The brass key opens a hidden compartment in its base. That's where the grandfather kept his most dangerous research."
+    character_name: butler
+    flags:
+      set: ["cabinet_location_known"]
+    choices:
+      - text: "I'll investigate immediately."
+        target_node_id: end_conversation
 
   grandfather_knowledge:
     id: grandfather_knowledge
@@ -451,6 +561,7 @@ nodes:
     character_name: butler
     flags:
       set: ["butler_confessed", "butler_has_brass_key"]
+    actions: ["add_to_inventory:butler_confession"]
     choices:
       - text: "What does the key open?"
         target_node_id: key_destination
@@ -478,8 +589,8 @@ nodes:
     text: "I... yes. Perhaps that would be best. Whatever secrets the grandfather left behind - they shouldn't be faced alone. Take the key, Detective. But be prepared. The Ashworths don't keep ordinary secrets."
     character_name: butler
     flags:
-      set: ["butler_gives_key"]
-    actions: ["give_item:brass_key"]
+      set: ["brass_key_received", "butler_gives_key"]
+    actions: ["add_to_inventory:brass_key"]
     choices:
       - text: "Thank you for trusting me."
         target_node_id: trust_response
@@ -760,6 +871,7 @@ nodes:
     character_name: butler
     flags:
       set: ["butler_confessed", "butler_has_brass_key"]
+    actions: ["add_to_inventory:butler_confession"]
     choices:
       - text: "What key? Show me."
         target_node_id: show_key
@@ -797,8 +909,8 @@ nodes:
     text: "Here... it's just an old brass key I found behind a book. The serpent bow, the unusual notches. I thought the professor wouldn't miss it - it had been hidden for decades. But if it helps find the real thief..."
     character_name: butler
     flags:
-      set: ["butler_gives_key"]
-    actions: ["give_item:brass_key"]
+      set: ["brass_key_received", "butler_gives_key"]
+    actions: ["add_to_inventory:brass_key"]
     choices:
       - text: "This might unlock something important."
         target_node_id: key_importance
@@ -1179,8 +1291,8 @@ nodes:
     text: "Take it. Whatever it unlocks, whatever truths it reveals... I hope they help you find the crystal. And perhaps... perhaps help end this curse once and for all."
     character_name: butler
     flags:
-      set: ["butler_gives_key"]
-    actions: ["give_item:brass_key"]
+      set: ["brass_key_received", "butler_gives_key"]
+    actions: ["add_to_inventory:brass_key"]
     choices:
       - text: "Thank you, James."
         target_node_id: gratitude_response

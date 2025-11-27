@@ -122,6 +122,21 @@ hotspots:
       use: "script:examine_painting()"
       push: "script:examine_painting()"
 
+  # Secret passage (initially hidden, revealed via painting)
+  - name: secret_passage
+    x: 520
+    y: 260
+    width: 80
+    height: 100
+    description: "Hidden passage behind the portrait"
+    default_verb: use
+    enabled: false
+    highlight_on_hover: true
+    actions:
+      look: "A dark passage leads through the wall toward the garden. Cobwebs suggest it hasn't been used in years."
+      use: "script:use_secret_passage()"
+      open: "script:use_secret_passage()"
+
   # Atmospheric elements
   - name: window
     x: 700
@@ -181,6 +196,20 @@ hotspots:
     actions:
       look: "A brass-railed ladder on wheels for reaching the upper shelves. The wood is worn smooth where hands have gripped it."
       use: "script:examine_ladder()"
+
+  - name: ancient_tome
+    x: 130
+    y: 280
+    width: 60
+    height: 50
+    description: "An ancient leather-bound tome"
+    default_verb: look
+    highlight_on_hover: true
+    actions:
+      look: "A particularly ancient tome with a crystalline symbol embossed on its spine. The leather is cracked with age, but the pages seem remarkably well-preserved."
+      use: "script:on_ancient_tome_click()"
+      take: "The book is chained to the shelf with a delicate silver chain. Someone wanted to make sure it stayed here."
+      open: "script:on_ancient_tome_click()"
 
 characters:
   - name: butler

@@ -60,7 +60,8 @@ describe PointClickEngine::Core::GameConfig do
 
       File.write("minimal_config.yaml", yaml_content)
 
-      config = PointClickEngine::Core::GameConfig.from_file("minimal_config.yaml")
+      # Skip preflight since this test is for optional field defaults
+      config = PointClickEngine::Core::GameConfig.from_file("minimal_config.yaml", skip_preflight: true)
 
       # Window should be nil and engine should use defaults
       config.window.should be_nil
@@ -255,7 +256,7 @@ describe PointClickEngine::Core::GameConfig do
       yaml_content = <<-YAML
       game:
         title: "State Test"
-      
+
       initial_state:
         flags:
           game_started: true
@@ -267,7 +268,7 @@ describe PointClickEngine::Core::GameConfig do
       YAML
 
       File.write("state_test_config.yaml", yaml_content)
-      config = PointClickEngine::Core::GameConfig.from_file("state_test_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("state_test_config.yaml", skip_preflight: true)
 
       RaylibContext.ensure_window(800, 600, "State Test")
       engine = config.create_engine
@@ -302,7 +303,7 @@ describe PointClickEngine::Core::GameConfig do
       YAML
 
       File.write("ui_test_config.yaml", yaml_content)
-      config = PointClickEngine::Core::GameConfig.from_file("ui_test_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("ui_test_config.yaml", skip_preflight: true)
 
       RaylibContext.ensure_window(800, 600, "UI Test")
 
@@ -320,11 +321,8 @@ describe PointClickEngine::Core::GameConfig do
       intro_scene = PointClickEngine::Scenes::Scene.new("intro")
       engine.add_scene(intro_scene)
 
-      # Trigger game:new event to test UI setup
-      engine.event_system.trigger("game:new")
-
-      # Process the event queue
-      engine.event_system.process_events
+      # Trigger GameStartedEvent to test UI setup
+      engine.event_bus.publish_sync(PointClickEngine::Core::Events::GameStartedEvent.new(new_game: true))
 
       # Check GUI has hints
       gui = engine.gui
@@ -413,13 +411,13 @@ describe PointClickEngine::Core::GameConfig do
       yaml_content = <<-YAML
       game:
         title: "Auto-save Test"
-      
+
       features:
         - auto_save
       YAML
 
       File.write("autosave_test_config.yaml", yaml_content)
-      config = PointClickEngine::Core::GameConfig.from_file("autosave_test_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("autosave_test_config.yaml", skip_preflight: true)
 
       RaylibContext.ensure_window(800, 600, "Auto-save Test")
       engine = config.create_engine
@@ -434,13 +432,13 @@ describe PointClickEngine::Core::GameConfig do
       yaml_content = <<-YAML
       game:
         title: "Shader Test"
-      
+
       features:
         - shaders
       YAML
 
       File.write("shader_test_config.yaml", yaml_content)
-      config = PointClickEngine::Core::GameConfig.from_file("shader_test_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("shader_test_config.yaml", skip_preflight: true)
 
       RaylibContext.ensure_window(800, 600, "Shader Test")
       engine = config.create_engine

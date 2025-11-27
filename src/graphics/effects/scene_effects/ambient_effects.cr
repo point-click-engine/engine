@@ -440,6 +440,303 @@ module PointClickEngine
             RL.draw_rectangle(0, 0, viewport_width, viewport_height, @color)
           end
         end
+
+        # Letterbox effect for cinematic black bars
+        class LetterboxEffect < BaseSceneEffect
+          property ratio : Float32 = 2.35f32   # Cinematic aspect ratio
+          property bar_color : RL::Color = RL::BLACK
+          property animate_in : Bool = true
+
+          @current_progress : Float32 = 0.0f32
+          @target_progress : Float32 = 1.0f32
+          @animation_speed : Float32 = 2.0f32
+
+          def initialize(@ratio : Float32 = 2.35f32, duration : Float32 = 0.0f32, @animate_in : Bool = true)
+            super(duration)
+            @current_progress = @animate_in ? 0.0f32 : 1.0f32
+          end
+
+          def update(dt : Float32)
+            super
+
+            # Animate the letterbox in/out
+            if @current_progress < @target_progress
+              @current_progress = Math.min(@current_progress + dt * @animation_speed, @target_progress)
+            elsif @current_progress > @target_progress
+              @current_progress = Math.max(@current_progress - dt * @animation_speed, @target_progress)
+            end
+          end
+
+          def apply(context : EffectContext)
+            # Letterbox is purely overlay-based
+          end
+
+          def apply_to_layer(context : EffectContext, layer : Layers::Layer)
+            # No layer modifications needed
+          end
+
+          # Enable letterbox (animate in)
+          def enable(animation_duration : Float32 = 0.5f32)
+            @target_progress = 1.0f32
+            @animation_speed = animation_duration > 0 ? 1.0f32 / animation_duration : 100.0f32
+          end
+
+          # Disable letterbox (animate out)
+          def disable(animation_duration : Float32 = 0.5f32)
+            @target_progress = 0.0f32
+            @animation_speed = animation_duration > 0 ? 1.0f32 / animation_duration : 100.0f32
+          end
+
+          def enabled? : Bool
+            @current_progress > 0.01f32
+          end
+
+          # Draw the letterbox bars
+          def draw_overlay(renderer : PointClickEngine::Graphics::Renderer, viewport_width : Int32, viewport_height : Int32)
+            return if @current_progress <= 0.0f32
+
+            # Calculate bar height based on aspect ratio
+            current_aspect = viewport_width.to_f32 / viewport_height.to_f32
+            target_height = viewport_width.to_f32 / @ratio
+
+            if target_height < viewport_height
+              # Need letterbox bars (top and bottom)
+              bar_height = ((viewport_height - target_height) / 2.0f32 * @current_progress).to_i
+
+              # Draw top bar
+              RL.draw_rectangle(0, 0, viewport_width, bar_height, @bar_color)
+
+              # Draw bottom bar
+              RL.draw_rectangle(0, viewport_height - bar_height, viewport_width, bar_height, @bar_color)
+            else
+              # Need pillarbox bars (left and right) - rare for cinematic
+              target_width = viewport_height.to_f32 * @ratio
+              bar_width = ((viewport_width - target_width) / 2.0f32 * @current_progress).to_i
+
+              # Draw left bar
+              RL.draw_rectangle(0, 0, bar_width, viewport_height, @bar_color)
+
+              # Draw right bar
+              RL.draw_rectangle(viewport_width - bar_width, 0, bar_width, viewport_height, @bar_color)
+            end
+          end
+        end
+
+        # Sparkle/magic particle effect
+        class SparkleEffect < BaseSceneEffect
+          property particle_count : Int32 = 50
+          property color : RL::Color = RL::Color.new(r: 255, g: 255, b: 200, a: 200)
+          property spawn_area : RL::Rectangle?
+          property fullscreen : Bool = true
+
+          @particles : Array(Sparkle)
+
+          def initialize(@particle_count : Int32 = 50, duration : Float32 = 0.0f32, @fullscreen : Bool = true)
+            super(duration)
+            @particles = [] of Sparkle
+
+            # Pre-populate particles
+            @particle_count.times do
+              @particles << create_random_sparkle
+            end
+          end
+
+          def update(dt : Float32)
+            super
+
+            # Update particles
+            @particles.each(&.update(dt))
+
+            # Remove dead particles
+            @particles.reject!(&.dead?)
+
+            # Spawn new particles to maintain count
+            while @particles.size < @particle_count
+              @particles << create_random_sparkle
+            end
+          end
+
+          def apply(context : EffectContext)
+          end
+
+          def apply_to_layer(context : EffectContext, layer : Layers::Layer)
+          end
+
+          def draw_overlay(renderer : PointClickEngine::Graphics::Renderer, viewport_width : Int32, viewport_height : Int32)
+            @particles.each { |p| p.draw(@color) }
+          end
+
+          private def create_random_sparkle : Sparkle
+            if area = @spawn_area
+              Sparkle.new(
+                RL::Vector2.new(
+                  x: area.x + Random.rand(area.width),
+                  y: area.y + Random.rand(area.height)
+                )
+              )
+            else
+              Sparkle.new(
+                RL::Vector2.new(
+                  x: Random.rand(Display::REFERENCE_WIDTH).to_f32,
+                  y: Random.rand(Display::REFERENCE_HEIGHT).to_f32
+                )
+              )
+            end
+          end
+        end
+
+        # Individual sparkle particle
+        class Sparkle
+          property position : RL::Vector2
+          property lifetime : Float32 = 0.0f32
+          property max_lifetime : Float32
+          property size : Float32
+          property drift : RL::Vector2
+
+          def initialize(@position : RL::Vector2)
+            @max_lifetime = Random.rand(0.5f32..2.0f32)
+            @size = Random.rand(2.0f32..6.0f32)
+            @drift = RL::Vector2.new(
+              x: Random.rand(-10.0f32..10.0f32),
+              y: Random.rand(-20.0f32..-5.0f32)  # Float upward
+            )
+          end
+
+          def update(dt : Float32)
+            @lifetime += dt
+            @position.x += @drift.x * dt
+            @position.y += @drift.y * dt
+          end
+
+          def dead? : Bool
+            @lifetime >= @max_lifetime
+          end
+
+          def draw(base_color : RL::Color)
+            # Fade in and out
+            progress = @lifetime / @max_lifetime
+            alpha = if progress < 0.2
+                      (progress / 0.2f32 * 255).to_u8
+                    elsif progress > 0.8
+                      ((1.0f32 - (progress - 0.8f32) / 0.2f32) * 255).to_u8
+                    else
+                      255_u8
+                    end
+
+            # Twinkle effect
+            twinkle = (Math.sin(@lifetime * 15) * 0.3 + 0.7).to_f32
+            final_alpha = (alpha * twinkle).to_u8
+
+            color = RL::Color.new(r: base_color.r, g: base_color.g, b: base_color.b, a: final_alpha)
+
+            # Draw sparkle as a star shape
+            current_size = @size * twinkle
+            RL.draw_circle(@position.x.to_i, @position.y.to_i, current_size, color)
+
+            # Draw cross lines for sparkle effect
+            line_length = current_size * 2
+            RL.draw_line_ex(
+              RL::Vector2.new(x: @position.x - line_length, y: @position.y),
+              RL::Vector2.new(x: @position.x + line_length, y: @position.y),
+              1.0f32, color
+            )
+            RL.draw_line_ex(
+              RL::Vector2.new(x: @position.x, y: @position.y - line_length),
+              RL::Vector2.new(x: @position.x, y: @position.y + line_length),
+              1.0f32, color
+            )
+          end
+        end
+
+        # Smoke/dust particle effect
+        class SmokeEffect < BaseSceneEffect
+          property particle_count : Int32 = 30
+          property color : RL::Color = RL::Color.new(r: 100, g: 100, b: 100, a: 80)
+          property spawn_position : RL::Vector2?
+          property spread : Float32 = 100.0f32
+          property rise_speed : Float32 = 30.0f32
+
+          @particles : Array(SmokeParticle)
+
+          def initialize(@particle_count : Int32 = 30, duration : Float32 = 0.0f32)
+            super(duration)
+            @particles = [] of SmokeParticle
+
+            @particle_count.times do
+              @particles << create_random_particle
+            end
+          end
+
+          def update(dt : Float32)
+            super
+            @particles.each(&.update(dt))
+            @particles.reject!(&.dead?)
+
+            while @particles.size < @particle_count
+              @particles << create_random_particle
+            end
+          end
+
+          def apply(context : EffectContext)
+          end
+
+          def apply_to_layer(context : EffectContext, layer : Layers::Layer)
+          end
+
+          def draw_overlay(renderer : PointClickEngine::Graphics::Renderer, viewport_width : Int32, viewport_height : Int32)
+            @particles.each { |p| p.draw(@color) }
+          end
+
+          private def create_random_particle : SmokeParticle
+            base_pos = @spawn_position || RL::Vector2.new(
+              x: Display::REFERENCE_WIDTH / 2.0f32,
+              y: Display::REFERENCE_HEIGHT.to_f32
+            )
+
+            SmokeParticle.new(
+              RL::Vector2.new(
+                x: base_pos.x + Random.rand(-@spread..@spread),
+                y: base_pos.y + Random.rand(-20.0f32..20.0f32)
+              ),
+              @rise_speed
+            )
+          end
+        end
+
+        # Individual smoke particle
+        class SmokeParticle
+          property position : RL::Vector2
+          property lifetime : Float32 = 0.0f32
+          property max_lifetime : Float32
+          property size : Float32
+          property rise_speed : Float32
+          property drift_x : Float32
+
+          def initialize(@position : RL::Vector2, @rise_speed : Float32 = 30.0f32)
+            @max_lifetime = Random.rand(2.0f32..5.0f32)
+            @size = Random.rand(20.0f32..50.0f32)
+            @drift_x = Random.rand(-15.0f32..15.0f32)
+          end
+
+          def update(dt : Float32)
+            @lifetime += dt
+            @position.y -= @rise_speed * dt
+            @position.x += @drift_x * dt
+            @size += dt * 10  # Grow over time
+          end
+
+          def dead? : Bool
+            @lifetime >= @max_lifetime || @position.y < -@size
+          end
+
+          def draw(base_color : RL::Color)
+            progress = @lifetime / @max_lifetime
+            alpha = ((1.0f32 - progress) * base_color.a).to_u8
+
+            color = RL::Color.new(r: base_color.r, g: base_color.g, b: base_color.b, a: alpha)
+            RL.draw_circle(@position.x.to_i, @position.y.to_i, @size, color)
+          end
+        end
       end
     end
   end

@@ -8,6 +8,7 @@ require "../characters/player"
 require "../scenes/scene_loader"
 require "../graphics/graphics"
 require "../characters/dialogue/dialog_tree"
+require "../cutscenes/cutscene_loader"
 require "./exceptions"
 require "./validators/config_validator"
 require "./error_reporter"
@@ -79,7 +80,9 @@ module PointClickEngine
         property scenes : Array(String) = [] of String
         property dialogs : Array(String) = [] of String
         property quests : Array(String) = [] of String
+        property items : Array(String) = [] of String
         property sprites : Array(String) = [] of String
+        property cutscenes : Array(String) = [] of String
         property audio : AudioConfig?
       end
 
@@ -118,6 +121,12 @@ module PointClickEngine
         property opening_message : String?
       end
 
+      class StartupConfig
+        include YAML::Serializable
+        property intro_cutscene : String?
+        property skip_intro_if : String?
+      end
+
       property game : GameInfo
       property window : WindowConfig?
       property display : DisplayConfig?
@@ -126,6 +135,7 @@ module PointClickEngine
       property assets : AssetsConfig?
       property settings : SettingsConfig?
       property initial_state : InitialState?
+      property startup : StartupConfig?
       property start_scene : String?
       property start_music : String?
       property ui : UIConfig?
@@ -383,6 +393,37 @@ module PointClickEngine
           end)
         end
 
+        # Load item definitions
+        engine.item_registry.base_dir = config_base_dir
+        assets.try(&.items.each do |pattern|
+          Dir.glob(File.join(config_base_dir, pattern)).each do |path|
+            if File.exists?(path)
+              ErrorReporter.report_progress("Loading items '#{File.basename(path)}'")
+              success = engine.item_registry.load_from_file(path)
+              ErrorReporter.report_progress_done(success)
+            end
+          end
+        end)
+
+        # Load cutscenes
+        engine.cutscene_manager.base_dir = config_base_dir
+        assets.try(&.cutscenes.each do |pattern|
+          Dir.glob(File.join(config_base_dir, pattern)).each do |path|
+            if File.exists?(path)
+              begin
+                ErrorReporter.report_progress("Loading cutscene '#{File.basename(path)}'")
+                cutscene = Cutscenes::CutsceneLoader.load_from_yaml(path, engine)
+                engine.cutscene_manager.add_cutscene(cutscene)
+                puts "[GameConfig] Loaded cutscene '#{cutscene.name}' with #{cutscene.actions.size} actions"
+                ErrorReporter.report_progress_done(true)
+              rescue ex
+                ErrorReporter.report_progress_done(false)
+                ErrorReporter.report_warning("Failed to load cutscene from #{path}: #{ex.message}", "Loading cutscenes")
+              end
+            end
+          end
+        end)
+
         # Load audio
         if audio = engine.system_manager.audio_manager
           assets.try(&.audio).try do |audio_config|
@@ -450,48 +491,92 @@ module PointClickEngine
       private def setup_ui(engine : Engine)
         # Set up game start handler
         ui_config = self.ui
+        startup_config = self.startup
         start_scene_name = self.start_scene
         start_music_name = self.start_music
+        intro_cutscene_name = startup_config.try(&.intro_cutscene)
+        skip_intro_flag = startup_config.try(&.skip_intro_if)
 
         puts "[DEBUG] Setting up GameStartedEvent handler"
         engine.event_bus.subscribe(Events::GameStartedEvent) do |event|
           next unless event.new_game
           puts "[DEBUG] GameStartedEvent triggered!"
-          # Change to start scene
-          if scene_name = start_scene_name
-            engine.change_scene(scene_name)
-          end
 
-          # Play start music
-          if music_name = start_music_name
-            puts "[Engine] Playing start music: #{music_name}"
-            engine.system_manager.audio_manager.try do |audio|
-              audio.play_music(music_name, true)
-              puts "[Engine] Music play command sent"
+          # Check if we should skip the intro cutscene
+          should_skip_intro = false
+          if skip_flag = skip_intro_flag
+            if gsm = engine.game_state_manager
+              should_skip_intro = gsm.get_flag(skip_flag)
             end
           end
 
-          # Show opening message
-          if u = ui_config
-            if msg = u.opening_message
-              engine.system_manager.dialog_manager.try &.show_message(msg)
+          # Play intro cutscene if configured and not skipped
+          if !should_skip_intro && (cutscene_name = intro_cutscene_name)
+            puts "[Engine] Playing intro cutscene: #{cutscene_name}"
+            # Store scene/music info for after cutscene
+            final_scene = start_scene_name
+            final_music = start_music_name
+            final_ui = ui_config
+
+            engine.cutscene_manager.play_cutscene(cutscene_name, ->do
+              # After cutscene completes, transition to start scene
+              if scene_name = final_scene
+                engine.change_scene_with_transition(scene_name, "fade", 1.0f32)
+              end
+
+              # Play start music if cutscene didn't set one
+              if music_name = final_music
+                engine.system_manager.audio_manager.try do |audio|
+                  audio.play_music(music_name, true)
+                end
+              end
+
+              # Show UI hints after cutscene
+              setup_ui_hints(engine, final_ui)
+
+              engine.start_game
+            end)
+          else
+            # No intro cutscene - go directly to start scene
+            if scene_name = start_scene_name
+              engine.change_scene_with_transition(scene_name, "fade", 1.0f32)
             end
 
-            # Show hints
-            if gui = engine.gui
-              y_offset = 10f32
-              u.hints.each_with_index do |hint, i|
-                label_id = "hint_#{i}"
-                gui.add_label(label_id, hint.text,
-                  Raylib::Vector2.new(x: 10f32, y: y_offset),
-                  16, Raylib::WHITE)
-                y_offset += 20f32
+            # Play start music
+            if music_name = start_music_name
+              puts "[Engine] Playing start music: #{music_name}"
+              engine.system_manager.audio_manager.try do |audio|
+                audio.play_music(music_name, true)
+                puts "[Engine] Music play command sent"
               end
             end
+
+            # Show opening message and hints
+            setup_ui_hints(engine, ui_config)
+
+            # Start the game
+            engine.start_game
+          end
+        end
+      end
+
+      private def setup_ui_hints(engine : Engine, ui_config : UIConfig?)
+        if u = ui_config
+          if msg = u.opening_message
+            engine.system_manager.dialog_manager.try &.show_message(msg)
           end
 
-          # Start the game
-          engine.start_game
+          # Show hints
+          if gui = engine.gui
+            y_offset = 10f32
+            u.hints.each_with_index do |hint, i|
+              label_id = "hint_#{i}"
+              gui.add_label(label_id, hint.text,
+                Raylib::Vector2.new(x: 10f32, y: y_offset),
+                16, Raylib::WHITE)
+              y_offset += 20f32
+            end
+          end
         end
       end
 

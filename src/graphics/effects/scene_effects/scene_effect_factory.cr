@@ -84,6 +84,14 @@ module PointClickEngine
             when "flash"
               create_flash(**params)
 
+            # Cinematic effects
+            when "letterbox"
+              create_letterbox(**params)
+            when "sparkles", "magic", "sparkle"
+              create_sparkles(**params)
+            when "smoke", "dust"
+              create_smoke(**params)
+
             else
               nil
             end
@@ -238,20 +246,73 @@ module PointClickEngine
             amplitude = Effects.to_float(params[:amplitude]?, 10.0f32)
             frequency = Effects.to_float(params[:frequency]?, 10.0f32)
             duration = Effects.to_float(params[:duration]?, 0.5f32)
-            
+
             SceneShakeEffect.new(amplitude, frequency, duration)
           end
-          
+
           private def self.create_flash(**params) : BaseSceneEffect?
             # Create a color overlay effect
             color = parse_color(params[:color]?) || RL::WHITE
             duration = Effects.to_float(params[:duration]?, 0.2f32)
-            
+
             SceneColorEffect.new(
               ObjectEffects::ColorShiftEffect::ColorMode::Flash,
               color,
               duration
             )
+          end
+
+          private def self.create_letterbox(**params) : BaseSceneEffect?
+            ratio = Effects.to_float(params[:ratio]?, 2.35f32)
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
+            animate = params[:animate]? != false
+
+            effect = LetterboxEffect.new(ratio, duration, animate)
+
+            if color = parse_color(params[:color]?)
+              effect.bar_color = color
+            end
+
+            effect
+          end
+
+          private def self.create_sparkles(**params) : BaseSceneEffect?
+            count = params[:count]?.try do |c|
+              case c
+              when Number then c.to_i
+              else 50
+              end
+            end || 50
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
+
+            effect = SparkleEffect.new(count, duration)
+
+            if color = parse_color(params[:color]?)
+              effect.color = color
+            end
+
+            effect
+          end
+
+          private def self.create_smoke(**params) : BaseSceneEffect?
+            count = params[:count]?.try do |c|
+              case c
+              when Number then c.to_i
+              else 30
+              end
+            end || 30
+            duration = Effects.to_float(params[:duration]?, 0.0f32)
+
+            effect = SmokeEffect.new(count, duration)
+
+            if color = parse_color(params[:color]?)
+              effect.color = color
+            end
+
+            effect.rise_speed = Effects.to_float(params[:speed]?, 30.0f32)
+            effect.spread = Effects.to_float(params[:spread]?, 100.0f32)
+
+            effect
           end
           
           # Helper to parse transition type

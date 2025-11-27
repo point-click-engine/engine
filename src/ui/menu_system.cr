@@ -340,8 +340,8 @@ module PointClickEngine
         end
 
         @input_handler.on_selection do |index|
+          # Only navigate - action execution is handled by handle_mouse_click
           @navigator.navigate_to(index)
-          execute_current_action
         end
 
         @input_handler.on_cancellation do

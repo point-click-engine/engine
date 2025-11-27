@@ -125,7 +125,12 @@ module PointClickEngine
       def draw
         return unless @playing
 
-        # Draw fade overlay if active
+        # Draw current action if it has visual content
+        if @current_action_index < @actions.size
+          @actions[@current_action_index].draw
+        end
+
+        # Draw fade overlay if active (on top)
         @fade_overlay.try(&.draw)
       end
 

@@ -9,6 +9,7 @@
 require "luajit"
 require "../core/engine"
 require "../inventory/inventory_item"
+require "../inventory/item_registry"
 
 module PointClickEngine
   module Scripting
@@ -81,12 +82,28 @@ module PointClickEngine
 
       private def register_callbacks
         @registry.register_void_function("_engine_inventory_add_item") do |state|
-          if state.size >= 2
+          if state.size >= 1
             name = state.to_string(1)
-            desc = state.to_string(2)
+            desc = state.size >= 2 ? state.to_string(2) : ""
 
-            item = Inventory::InventoryItem.new(name, desc)
-            Core::Engine.instance.inventory.add_item(item)
+            engine = Core::Engine.instance
+
+            # Try to create item from registry first (has full definition with icon, etc.)
+            item = engine.item_registry.create_item(name)
+
+            # Fall back to basic item if not in registry
+            if item.nil?
+              item = Inventory::InventoryItem.new(name, desc)
+            end
+
+            engine.inventory.add_item(item)
+
+            # Show pickup message if defined
+            if pickup_msg = engine.item_registry.on_pickup_message(name)
+              if dm = engine.system_manager.dialog_manager
+                dm.show_message(pickup_msg)
+              end
+            end
           end
         end
 

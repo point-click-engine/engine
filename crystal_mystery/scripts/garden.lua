@@ -7,6 +7,9 @@ function on_enter()
     print("Entering garden...")
     set_game_state("visited_garden", true)
 
+    -- Play garden theme music
+    play_music("garden_theme", 0.5)
+
     -- Play ambient sounds - night crickets, distant owl, water trickling
     play_ambient("garden_night", 0.35)
 
@@ -42,6 +45,9 @@ end
 function examine_fountain()
     show_message("A beautiful marble fountain carved with symbols matching those on the mysterious note.")
     show_message("Clear water bubbles from a lotus-shaped spout, moonlight dancing on its surface.")
+
+    -- Set flag for quest objective
+    set_game_state("at_fountain", true)
 
     if has_item("crystal") and has_item("crystal_lens") and get_game_state("activation_method_learned") then
         -- Full activation sequence
@@ -153,8 +159,10 @@ function examine_garden_shed()
         if not get_game_state("shed_searched") then
             show_message("Among the notes, you find detailed observations of the professor's schedule...")
             show_message("And a letter signed 'Your loving father' - addressed to Edmund Ashworth!")
+            show_message("The letter speaks of protecting Edmund from the crystal's curse - he took it to save his son!")
             set_game_state("shed_searched", true)
             set_game_state("father_evidence_found", true)
+            set_game_state("father_motive_understood", true)
 
             if get_game_state("father_theory_formed") then
                 show_message("The father theory is confirmed! He's been watching, waiting for the right moment.")
@@ -300,10 +308,12 @@ function examine_greenhouse()
             show_message("Inside, the blue light emanates from crystalline flowers - grown from the crystal's influence!")
             show_message("Someone has been cultivating them, studying how the crystal affects living things.")
 
-            if not has_item("garden_key") then
-                show_message("Hidden among the plants, you find a rusted iron key with a flower design!")
-                add_to_inventory("garden_key")
-                play_sound("pickup")
+            -- Find evidence of research
+            if not get_game_state("greenhouse_research_found") then
+                show_message("Among the plants, you find notes about the crystal's effect on living things...")
+                show_message("The handwriting matches the scientist's. He's been conducting secret experiments here.")
+                set_game_state("greenhouse_research_found", true)
+                set_game_state("scientist_secret_experiments", true)
             end
         else
             show_message("The greenhouse's crystalline garden continues to pulse with unearthly light.")

@@ -5,7 +5,19 @@
 -- Scene enter handler
 function on_enter()
     print("Entering laboratory...")
+
+    -- Play intro cutscene on first game start
+    if not get_game_state("intro_completed") then
+        print("Starting intro cutscene...")
+        set_game_state("intro_completed", true)
+        start_cutscene("intro_sequence")
+        return  -- Cutscene will handle everything
+    end
+
     set_game_state("visited_laboratory", true)
+
+    -- Play laboratory theme music
+    play_music("laboratory_theme", 0.5)
 
     -- Play ambient sounds - equipment hum, bubbling beakers
     play_ambient("laboratory_hum", 0.25)
@@ -211,15 +223,31 @@ end
 function examine_safe()
     show_message("A heavy iron safe bolted to the floor. The combination dial shows signs of recent use.")
 
+    if get_game_state("safe_opened") then
+        show_message("The safe stands open and empty.")
+        return
+    end
+
     if not get_game_state("safe_examined") then
         show_message("Whatever the professor keeps here, he didn't trust it to the cabinet.")
         show_message("Without the combination, you won't be opening this.")
         set_game_state("safe_examined", true)
     end
 
-    -- Try 11:47 as combination hint
+    -- Try 11:47 as combination if we've discovered the alignment time
     if get_game_state("alignment_time_confirmed") then
-        show_message("11:47... could that be relevant to the combination?")
+        show_message("11:47... that number keeps appearing. You try it as the combination...")
+        show_message("11... 47... Click! The safe swings open!")
+        play_sound("success")
+        set_game_state("safe_opened", true)
+
+        show_message("Inside you find old documents and a rusty iron key with a flower-shaped bow.")
+        show_message("A note reads: 'For the garden. What grows there must not be disturbed.' - E.A.")
+
+        if not has_item("garden_key") then
+            add_to_inventory("garden_key")
+            play_sound("pickup")
+        end
     end
 end
 

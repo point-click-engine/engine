@@ -3,7 +3,7 @@ nodes:
   greeting:
     id: greeting
     text: "Ah, Detective! Thank goodness you're here. Something terrible has happened - a crime of the highest scientific magnitude!"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "What happened exactly?"
         target_node_id: explain_theft
@@ -15,7 +15,7 @@ nodes:
   formal_introduction:
     id: formal_introduction
     text: "Yes, yes, Detective Ashwood. I'm Professor Edmund Ashworth - the 'A' in those notes you may find around here. I've devoted my life to studying crystalline energy, and now... now it's all been stolen!"
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["scientist_name_revealed"]
     choices:
@@ -29,7 +29,7 @@ nodes:
   family_connection:
     id: family_connection
     text: "Indeed - Lord Ashworth was my great-great-grandfather. He built this mansion specifically to house and study the Crystal of Luminus. The research has been passed down through generations. And now, on my watch, it's been taken!"
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["family_history_revealed"]
     choices:
@@ -43,7 +43,7 @@ nodes:
   crystal_history:
     id: crystal_history
     text: "Since 1847, when my ancestor discovered it during an expedition to the Carpathian Mountains. The local villagers called it cursed, but Lord Ashworth recognized its true scientific potential. He built this entire laboratory around it."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["crystal_origin_known"]
     choices:
@@ -57,7 +57,7 @@ nodes:
   curse_details:
     id: curse_details
     text: "Superstitious nonsense, mostly. They claimed the crystal could amplify emotions - turn love to obsession, curiosity to madness, ambition to destruction. But that's merely its energy amplification properties misunderstood by primitive minds!"
-    speaker: scientist
+    character_name: scientist
     actions: ["camera.sway(8.0, 12.0)"]
     choices:
       - text: "And has it ever caused... problems?"
@@ -70,7 +70,7 @@ nodes:
   crystal_problems:
     id: crystal_problems
     text: "There were... incidents. My grandfather became obsessed with unlocking its full potential. Spent years in this very laboratory, barely eating, rarely sleeping. He died at his workbench, still reaching for the crystal. But that was just dedication, not a curse!"
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["grandfather_obsession_known"]
     choices:
@@ -84,7 +84,7 @@ nodes:
   personal_effects:
     id: personal_effects
     text: "I... I haven't slept properly in months. The equations keep spinning in my head. But that's normal for a scientist on the verge of a breakthrough! The crystal was about to reveal secrets that would change everything!"
-    speaker: scientist
+    character_name: scientist
     actions: ["camera.sway(5.0, 15.0)"]
     flags:
       set: ["scientist_obsessed"]
@@ -99,7 +99,7 @@ nodes:
   breakthrough_details:
     id: breakthrough_details
     text: "At precisely 11:47 PM, when the moon reaches its apex, the crystal resonates with the fountain in the garden. Together, they create a frequency that could... well, theoretically... open doorways. To where, I cannot say. But the potential!"
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["resonance_secret_known", "fountain_clue_given"]
     choices:
@@ -113,7 +113,7 @@ nodes:
   dimensional_theory:
     id: dimensional_theory
     text: "Other places, other times, other... possibilities. Lord Ashworth's journals speak of 'glimpses beyond the veil.' I thought it metaphor until I began my own experiments. The crystal showed me things, Detective. Wonderful, terrible things."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["dimensional_theory_known"]
     choices:
@@ -127,7 +127,7 @@ nodes:
   visions_description:
     id: visions_description
     text: "Glimpses of the mansion in different eras. Shadows of people who once lived here. And once... once I saw myself, older, warning me about something. But the vision faded before I could understand."
-    speaker: scientist
+    character_name: scientist
     actions: ["camera.sway(10.0, 20.0)"]
     choices:
       - text: "That's deeply unsettling."
@@ -138,7 +138,7 @@ nodes:
   unsettling_agreement:
     id: unsettling_agreement
     text: "Yes... yes it was. But also exhilarating! To pierce the veil of time itself! You must help me recover it, Detective. Not just for science, but... I need to understand what my future self was trying to tell me."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll help you, Professor."
         target_node_id: accept_case
@@ -148,7 +148,7 @@ nodes:
   calming_approach:
     id: calming_approach
     text: "You're right, you're right. Deep breaths. It's just... the Crystal of Luminus - my life's work, my family's legacy - it's been stolen! Someone broke into my laboratory and took it!"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "When did this happen?"
         target_node_id: timing
@@ -160,7 +160,7 @@ nodes:
   explain_theft:
     id: explain_theft
     text: "The Crystal of Luminus has been stolen! It was the centerpiece of my research into crystalline energy amplification - a breakthrough that could revolutionize physics itself! Without it, years of work are ruined!"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Tell me more about this crystal."
         target_node_id: crystal_details
@@ -172,7 +172,7 @@ nodes:
   timing:
     id: timing
     text: "I discovered it missing this morning when I came to check on my experiments. The display case was empty - not shattered, but carefully opened. Whoever did this knew exactly what they were doing."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "So it was an inside job?"
         target_node_id: inside_job
@@ -184,7 +184,7 @@ nodes:
   inside_job:
     id: inside_job
     text: "It... it pains me to consider it, but yes. The laboratory was locked. No windows broken. Someone used a key, and only three of us have keys - myself, the butler, and the owner of the estate."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["inside_job_confirmed"]
     choices:
@@ -198,7 +198,7 @@ nodes:
   no_cameras:
     id: no_cameras
     text: "Security cameras? In a Victorian mansion? I suppose I should have installed some, but the crystal's existence was meant to be secret. The fewer records, the better. Or so I thought."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Who knew about the crystal?"
         target_node_id: who_knew
@@ -210,7 +210,7 @@ nodes:
   no_evidence:
     id: no_evidence
     text: "No visual evidence, no. But there may be other clues. The thief left in a hurry - I found a scrap of fabric caught on the cabinet's lock. Dark wool, like a servant's uniform."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["fabric_clue_given"]
     choices:
@@ -224,7 +224,7 @@ nodes:
   examine_fabric:
     id: examine_fabric
     text: "Here - I preserved it on the workbench. Black wool, finely woven. Expensive material, actually. Not your typical servant's fare, but similar enough to cast suspicion."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["fabric_examined"]
     choices:
@@ -238,7 +238,7 @@ nodes:
   planted_evidence:
     id: planted_evidence
     text: "Planted? You mean... to frame someone? I hadn't considered that. But who would be clever enough - and cruel enough - to frame an innocent person while stealing the crystal?"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Someone who knows the mansion well."
         target_node_id: insider_knowledge
@@ -250,7 +250,7 @@ nodes:
   yesterday_visitors:
     id: yesterday_visitors
     text: "Yesterday? Let me think... The butler came in around 11:30 to check the locks, as he always does. I was working until midnight. Then I went to bed, and this morning... gone."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["timeline_established"]
     choices:
@@ -264,7 +264,7 @@ nodes:
   butler_timing:
     id: butler_timing
     text: "Yes, he does his rounds every night. Very thorough, very punctual. Though... now that you mention it, he seemed nervous last night. Kept glancing at the crystal case when he thought I wasn't looking."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["butler_suspicious_behavior"]
     choices:
@@ -278,7 +278,7 @@ nodes:
   last_sighting:
     id: last_sighting
     text: "I... yes, I believe so. I remember looking at it before turning off the lights. Its inner glow was particularly strong last night - almost as if it knew something was about to happen. But that's fanciful thinking."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "So the theft occurred between midnight and morning."
         target_node_id: theft_window
@@ -290,7 +290,7 @@ nodes:
   theft_window:
     id: theft_window
     text: "Yes, the witching hours. How appropriate, given the crystal's... reputation. I don't believe in the supernatural, Detective, but even I felt something in the air last night. A tension."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Tension? Explain."
         target_node_id: atmosphere_description
@@ -300,7 +300,7 @@ nodes:
   crystal_glow:
     id: crystal_glow
     text: "Yes! That's one of its remarkable properties. It seems to absorb ambient light and emit a soft luminescence. The intensity varies - I've been trying to correlate it with lunar phases and electromagnetic fields. Last night it was brighter than I've ever seen."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Could that brightness have attracted the thief?"
         target_node_id: visible_theft
@@ -312,7 +312,7 @@ nodes:
   access_question:
     id: access_question
     text: "Only myself, the butler, and occasionally the mansion's owner. But surely none of them would... Oh dear, I shouldn't have said that."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["scientist_mentioned_butler"]
     choices:
@@ -326,7 +326,7 @@ nodes:
   concern_explanation:
     id: concern_explanation
     text: "I don't want to cast aspersions without evidence. The butler has served this family for twenty years. But lately... lately he's been different. Asking questions about my research. Questions a servant shouldn't be interested in."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["butler_questions_research"]
     choices:
@@ -340,7 +340,7 @@ nodes:
   butler_questions:
     id: butler_questions
     text: "About the crystal's resonance frequency. About the optimal conditions for energy amplification. These aren't idle curiosities, Detective - these are the exact parameters needed to unlock the crystal's full potential!"
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["butler_knows_parameters"]
     choices:
@@ -354,7 +354,7 @@ nodes:
   information_shared:
     id: information_shared
     text: "I... I may have let some details slip. He seemed so genuinely interested, and I rarely have anyone to discuss my work with. It was nice to have someone listen, even if they didn't fully understand."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["scientist_shared_info"]
     choices:
@@ -368,7 +368,7 @@ nodes:
   shared_details:
     id: shared_details
     text: "The importance of the fountain's harmonic frequency. The significance of 11:47 PM. The crystal's alignment requirements. I was excited about my research - I never thought... oh, what have I done?"
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["all_info_compromised"]
     choices:
@@ -382,7 +382,7 @@ nodes:
   crystal_details:
     id: crystal_details
     text: "It's not just any crystal - it can amplify energy tenfold! In the wrong hands, it could be incredibly dangerous. The ancient texts speak of cities destroyed, minds shattered, reality itself bent to the wielder's will."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "That sounds more like magic than science."
         target_node_id: magic_science
@@ -394,7 +394,7 @@ nodes:
   magic_science:
     id: magic_science
     text: "Any sufficiently advanced science is indistinguishable from magic! The crystal simply operates on principles we don't fully understand yet. Quantum resonance, dimensional harmonics, crystalline energy matrices... there's a rational explanation for everything."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "If you say so, Professor."
         target_node_id: skeptical_response
@@ -406,7 +406,7 @@ nodes:
   skeptical_response:
     id: skeptical_response
     text: "I know how it sounds. When I first inherited my grandfather's research, I thought it was all nonsense too. Then I saw the crystal in action. Some things you have to experience to believe."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "What did you experience?"
         target_node_id: personal_experience
@@ -416,7 +416,7 @@ nodes:
   personal_experience:
     id: personal_experience
     text: "The first time I held it, I felt... connected. To the mansion, to my ancestors, to something vast and ancient. It knows things, Detective. It showed me glimpses of its history - the mountains where it formed, the hands that have held it."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "The crystal is sentient?"
         target_node_id: sentient_crystal
@@ -428,7 +428,7 @@ nodes:
   sentient_crystal:
     id: sentient_crystal
     text: "Not sentient in the way we understand it. More like... a vast memory. A recording of energies and intentions. It amplifies what it encounters. Pure intentions become purer. Dark intentions become..."
-    speaker: scientist
+    character_name: scientist
     actions: ["camera.sway(5.0, 10.0)"]
     choices:
       - text: "Darker."
@@ -439,7 +439,7 @@ nodes:
   darkness_confirmation:
     id: darkness_confirmation
     text: "Yes. That's why I'm so worried. If the thief has malicious intent, the crystal will amplify it. And if they attempt the resonance at 11:47... I don't know what could happen. Nothing good."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["danger_understood"]
     choices:
@@ -451,7 +451,7 @@ nodes:
   eleven_forty_seven:
     id: eleven_forty_seven
     text: "At 11:47 PM, the lunar alignment creates optimal conditions for the crystal's resonance. Combined with the fountain's harmonic frequency, the crystal's power peaks. My grandfather calculated this decades ago - it's engraved on the sundial in the garden."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["sundial_clue_given"]
     choices:
@@ -465,7 +465,7 @@ nodes:
   sundial_info:
     id: sundial_info
     text: "Yes - the marking for 11:47 is worn smooth from my grandfather's touch. He spent countless nights waiting for that exact moment, crystal in hand, standing by the fountain. He was so close to a breakthrough when he died."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "What was he trying to achieve?"
         target_node_id: grandfather_goal
@@ -477,7 +477,7 @@ nodes:
   grandfather_goal:
     id: grandfather_goal
     text: "He believed the crystal could open a doorway - a passage through time or space or... something else. His journals speak of 'lifting the veil between worlds.' Whether metaphor or literal truth, I cannot say."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "And you've continued his work?"
         target_node_id: continued_research
@@ -489,7 +489,7 @@ nodes:
   who_knew:
     id: who_knew
     text: "I was careful to keep it secret, but... well, the butler has been acting strangely lately. And there are ancient texts in the library that mention such crystals. Someone could have done their research."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["scientist_suspects_butler", "library_clue_given"]
     choices:
@@ -503,7 +503,7 @@ nodes:
   butler_suspicion:
     id: butler_suspicion
     text: "He's been... secretive lately. Asking odd questions about my research, staying late in the library. I caught him near my laboratory after hours once. He claimed he was checking the locks, but his eyes... his eyes were fixed on the crystal."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["scientist_suspects_butler"]
     choices:
@@ -517,7 +517,7 @@ nodes:
   butler_behavior:
     id: butler_behavior
     text: "Lingering near the laboratory door. Asking about my schedules. Questions about the crystal's security. And he's been reading old books from the library - the ones about crystal lore and ancient rituals."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["butler_reading_lore"]
     choices:
@@ -531,7 +531,7 @@ nodes:
   studying_confirmation:
     id: studying_confirmation
     text: "It seems that way, doesn't it? Twenty years of loyal service, and suddenly he's intensely interested in crystalline energy amplification? Either he's discovered a newfound passion for science, or..."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Or he's planning something."
         target_node_id: planning_confirmation
@@ -543,7 +543,7 @@ nodes:
   specific_books:
     id: specific_books
     text: "'Crystalline Resonance' by Lord Ashworth himself. 'The Hidden Properties of Light.' And most concerning - 'Servants of the Old Houses,' which contains legends about crystals being used to... change one's station in life."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["butler_motive_revealed"]
     choices:
@@ -557,7 +557,7 @@ nodes:
   station_change:
     id: station_change
     text: "The legend says the crystal can amplify desire itself. If someone wishes strongly enough for wealth, power, a different life... the crystal makes it possible. Or so the stories claim."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "The butler wants a better life."
         target_node_id: butler_wish
@@ -569,7 +569,7 @@ nodes:
   butler_wish:
     id: butler_wish
     text: "Twenty years serving others. Watching the wealthy come and go while he remains in shadow. If he believed the crystal could change that... perhaps the temptation was too great."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I understand the motive now."
         target_node_id: accept_case
@@ -579,7 +579,7 @@ nodes:
   confrontation_question:
     id: confrontation_question
     text: "I tried, but he became evasive. Said I was imagining things, that he was simply doing his duty. But I know what I saw, Detective. The way he looked at the crystal... there was hunger in his eyes."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["confrontation_failed"]
     choices:
@@ -593,7 +593,7 @@ nodes:
   hunger_explanation:
     id: hunger_explanation
     text: "Power, perhaps? Freedom? The crystal promises many things to those who understand its potential. I've felt it myself - the pull of its possibilities. If James discovered what it could do..."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["butler_name_james"]
     choices:
@@ -607,7 +607,7 @@ nodes:
   butler_name_confirm:
     id: butler_name_confirm
     text: "James Thornton, yes. He's been with the family since before I inherited the estate. I thought I could trust him implicitly. Perhaps I was naive."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Tell me more about him."
         target_node_id: butler_background
@@ -619,7 +619,7 @@ nodes:
   butler_background:
     id: butler_background
     text: "He was hired by my grandfather - the previous Professor Ashworth. James has seen the crystal's effects firsthand, watched two generations of our family become obsessed with it. If anyone outside the family knows its secrets..."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "It's him."
         target_node_id: butler_knowledge
@@ -631,7 +631,7 @@ nodes:
   butler_excuse:
     id: butler_excuse
     text: "He claimed he heard a noise and was investigating. But at 11 PM? And he was standing right by the crystal display, not near any windows or doors. His excuse didn't match his position."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["butler_alibi_suspicious"]
     choices:
@@ -645,7 +645,7 @@ nodes:
   question_butler:
     id: question_butler
     text: "Yes, please do. He's usually in the library at this hour - 'organizing,' he says. Though I suspect he's reading those crystal texts again. Be careful, Detective. If he is the thief, he may be desperate."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["butler_location_given"]
     choices:
@@ -659,7 +659,7 @@ nodes:
   library_suggestion:
     id: library_suggestion
     text: "Yes! The library contains several volumes about crystal lore - my grandfather's collection. Someone has been reading them recently; I noticed a few misplaced on my last visit. The butler denied touching them, but..."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["library_books_disturbed"]
     choices:
@@ -673,7 +673,7 @@ nodes:
   moved_books:
     id: moved_books
     text: "Lord Ashworth's journals, the tome on crystalline resonance, and - most disturbingly - a book on 'temporal manipulation.' Someone was researching the crystal's power over time itself."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["temporal_book_accessed"]
     choices:
@@ -685,7 +685,7 @@ nodes:
   time_power:
     id: time_power
     text: "Theoretical, of course. The crystal doesn't actually control time - it amplifies the observer's perception of it. But the book suggests... methods for going further. Much further."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Someone wants to travel through time."
         target_node_id: time_travel_theory
@@ -695,7 +695,7 @@ nodes:
   time_travel_theory:
     id: time_travel_theory
     text: "If they've read enough, they might try. The crystal, the fountain, the proper alignment... all the pieces are there. But without proper training, the attempt could be catastrophic. We must find the crystal!"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll recover it."
         target_node_id: accept_case
@@ -703,7 +703,7 @@ nodes:
   accept_case:
     id: accept_case
     text: "Thank you, Detective! Please, you must find the Crystal of Luminus before it's too late. Check my workbench - I left some research notes there that might help. And the garden... something about the garden feels important tonight."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["case_accepted", "workbench_clue_given"]
     quest_progress:
@@ -720,7 +720,7 @@ nodes:
   garden_importance:
     id: garden_importance
     text: "The fountain there was built to resonate with the crystal - they're attuned to each other. There's also a statue that my grandfather was obsessed with. He claimed it was 'the guardian.' And the moonflowers... they only bloom in the crystal's presence."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["garden_clues_given"]
     choices:
@@ -734,7 +734,7 @@ nodes:
   moonflower_clue:
     id: moonflower_clue
     text: "If they're blooming, the crystal has been in the garden recently! They respond to crystalline energy - it's how my grandfather discovered the fountain's resonance. Follow the flowers, Detective. They'll lead you to it."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["moonflower_tracker"]
     choices:
@@ -746,7 +746,7 @@ nodes:
   guardian_statue:
     id: guardian_statue
     text: "A robed figure with cupped hands, as if holding something precious. My grandfather believed it was built to house the crystal during certain rituals. He spent hours studying its every detail."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["statue_clue_given"]
     choices:
@@ -758,7 +758,7 @@ nodes:
   statue_theory:
     id: statue_theory
     text: "That's possible! The statue's hands are exactly the right shape to hold the crystal. If someone wanted to perform the resonance ritual properly, that statue would be essential."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I need to get to the garden."
         target_node_id: end_conversation
@@ -766,7 +766,7 @@ nodes:
   final_clues:
     id: final_clues
     text: "The butler has a key to everything in this mansion - including my private study. And there are old books in the library about crystal magic. The brass key in particular... it opens something important, though I never discovered what."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["butler_has_key", "library_contains_crystal_lore", "brass_key_mystery"]
     choices:
@@ -778,7 +778,7 @@ nodes:
   brass_key_info:
     id: brass_key_info
     text: "An ornate brass key with a serpent design. My grandfather mentioned it in his journals - said it was 'the key to everything.' I never found it among his possessions. Perhaps it's hidden somewhere in the mansion."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["brass_key_important"]
     choices:
@@ -790,7 +790,7 @@ nodes:
   butler_key_theory:
     id: butler_key_theory
     text: "If he's been searching the library as I suspect... perhaps. The key was last mentioned in connection with the library's restricted section. But I thought that was just a legend."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Legends often have truth in them."
         target_node_id: end_conversation
@@ -798,14 +798,14 @@ nodes:
   end_conversation:
     id: end_conversation
     text: "Good luck, Detective. The fate of the crystal - and perhaps much more - rests in your hands. Time is of the essence. The moon rises at 11:47... whatever happens, happens then."
-    speaker: scientist
-    action: end
+    character_name: scientist
+    is_end: true
 
   # Additional nodes for return visits
   return_visit:
     id: return_visit
     text: "Detective! Have you found any leads on my missing crystal? Please tell me you have news."
-    speaker: scientist
+    character_name: scientist
     conditions: ["case_accepted"]
     choices:
       - text: "Still investigating."
@@ -822,7 +822,7 @@ nodes:
   still_working:
     id: still_working
     text: "Please hurry, Detective. I fear what might happen if the crystal falls into the wrong hands. The alignment is approaching - we may only have hours left."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll find it soon."
         target_node_id: end_conversation
@@ -832,7 +832,7 @@ nodes:
   found_key:
     id: found_key
     text: "The brass key! Where did you find it? This is the key my grandfather wrote about - the one he called 'the key to everything!' It must open something crucial to finding the crystal!"
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["key_significance_confirmed"]
     choices:
@@ -844,7 +844,7 @@ nodes:
   key_purpose:
     id: key_purpose
     text: "According to grandfather's journals, it opens a cabinet in this very laboratory. A cabinet containing... his final notes. The ones he wrote the night he died. I never knew where he hid the key!"
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["cabinet_location_known"]
     choices:
@@ -856,7 +856,7 @@ nodes:
   open_cabinet:
     id: open_cabinet
     text: "Yes! The specimen cabinet - try the brass key there. If it fits... we may finally understand what grandfather discovered the night he died."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll try it immediately."
         target_node_id: end_conversation
@@ -864,7 +864,7 @@ nodes:
   butler_had_key:
     id: butler_had_key
     text: "The butler? Then he's been planning this for... how long? If he found the key, he must have found grandfather's journals too. He knows everything. This is worse than I thought."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["butler_fully_informed"]
     choices:
@@ -876,7 +876,7 @@ nodes:
   butler_confession_info:
     id: butler_confession_info
     text: "He confessed? Then... then there's hope! What did he say? Did he take the crystal too?"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "He says he didn't take the crystal."
         target_node_id: butler_denial
@@ -888,7 +888,7 @@ nodes:
   butler_denial:
     id: butler_denial
     text: "He denies taking the crystal? Then who... unless there's someone else involved. Someone we haven't considered. The butler may be a pawn, not the mastermind."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Who else would want it?"
         target_node_id: other_suspects
@@ -898,7 +898,7 @@ nodes:
   garden_lead:
     id: garden_lead
     text: "The garden! Yes, that makes sense. The fountain, the statue, the moonflowers... everything needed for the resonance ritual is there. If the crystal is anywhere, it's in that garden!"
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["garden_confirmed"]
     choices:
@@ -910,7 +910,7 @@ nodes:
   garden_search_tips:
     id: garden_search_tips
     text: "The statue's hands - check if something has been placed there recently. The fountain's basin - the crystal could be submerged in the water. And follow the moonflowers - they'll glow brightest near the crystal."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Thank you, Professor."
         target_node_id: end_conversation
@@ -918,7 +918,7 @@ nodes:
   butler_secrets:
     id: butler_secrets
     text: "Twenty years of secrets, Detective. He knows this mansion better than anyone. If he's been planning something, he's had two decades to prepare. We may have only scratched the surface."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll uncover the truth."
         target_node_id: end_conversation
@@ -926,7 +926,7 @@ nodes:
   other_suspects:
     id: other_suspects
     text: "I've been so focused on the butler, I haven't considered... the estate's owner visits rarely but knows about the crystal. And there are stories of scholars seeking it out over the years. Someone could have hired the butler."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Hired to steal the crystal?"
         target_node_id: hired_theory
@@ -936,7 +936,7 @@ nodes:
   hired_theory:
     id: hired_theory
     text: "If the butler was desperate enough - and he has been struggling financially - someone with knowledge of the crystal could have approached him. Offered him wealth beyond his dreams in exchange for..."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "In exchange for the crystal."
         target_node_id: exchange_confirmation
@@ -946,7 +946,7 @@ nodes:
   exchange_confirmation:
     id: exchange_confirmation
     text: "Precisely. But who? The academic world whispers about crystals like this, but finding someone bold enough to orchestrate a theft... that takes a special kind of desperation. Or madness."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll find out who's behind this."
         target_node_id: end_conversation
@@ -954,7 +954,7 @@ nodes:
   butler_info_repeat:
     id: butler_info_repeat
     text: "As I mentioned, he's been acting strangely - asking about my research, staying late in the library, showing unusual interest in the crystal. Very suspicious behavior for a butler of twenty years."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll investigate him further."
         target_node_id: end_conversation
@@ -963,7 +963,7 @@ nodes:
   research_explanation:
     id: research_explanation
     text: "My research focuses on crystalline energy amplification - the ability of certain crystals to absorb, store, and magnify various forms of energy. The Crystal of Luminus is the most powerful specimen ever discovered."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Where did it come from?"
         target_node_id: crystal_history
@@ -973,7 +973,7 @@ nodes:
   owner_info:
     id: owner_info
     text: "The current owner prefers to remain anonymous. They fund my research but rarely visit. I've met them only twice in ten years."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "That seems suspicious."
         target_node_id: owner_suspicious
@@ -983,7 +983,7 @@ nodes:
   owner_suspicious:
     id: owner_suspicious
     text: "Perhaps. But they have no reason to steal what they already own. Unless... unless they wanted to stop my research for some reason."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Why would they want that?"
         target_node_id: stop_research_theory
@@ -993,7 +993,7 @@ nodes:
   stop_research_theory:
     id: stop_research_theory
     text: "I was getting close to something. The crystal's full potential. Perhaps someone didn't want that knowledge revealed. But that's paranoid thinking, isn't it?"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "In this case, paranoia might be justified."
         target_node_id: accept_case
@@ -1001,7 +1001,7 @@ nodes:
   copied_key:
     id: copied_key
     text: "The keys are antique - custom made by my grandfather. Copying them would require specialized equipment and the original to work from. Only someone with extended access could manage it."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Like the butler."
         target_node_id: butler_suspicion
@@ -1011,7 +1011,7 @@ nodes:
   locksmith_theory:
     id: locksmith_theory
     text: "There's old Morrison in the village. But he's nearly blind now and hasn't taken work in years. No, whoever did this had to have inside access."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll investigate internally."
         target_node_id: accept_case
@@ -1019,7 +1019,7 @@ nodes:
   other_security:
     id: other_security
     text: "The laboratory door has a special lock - one of grandfather's designs. And the crystal itself was in a sealed display case. Nothing high-tech, but nothing easily bypassed either."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "But both were opened."
         target_node_id: locks_opened
@@ -1029,7 +1029,7 @@ nodes:
   locks_opened:
     id: locks_opened
     text: "Yes... with keys. Proper keys. Not picks, not force. Whoever took the crystal had the right keys for both locks. That narrows it down considerably."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "The butler again."
         target_node_id: butler_suspicion
@@ -1039,7 +1039,7 @@ nodes:
   other_clues:
     id: other_clues
     text: "There was a faint smell in the laboratory this morning. Roses and something metallic. And the dust on the floor was disturbed near the garden door. Someone came from outside."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["garden_entry_clue"]
     choices:
@@ -1051,7 +1051,7 @@ nodes:
   garden_entry:
     id: garden_entry
     text: "Yes, there's a glass door leading to the garden. It's usually locked, but... I may have left it open last night. I often step out to clear my head during late experiments."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Someone could have entered that way."
         target_node_id: garden_entry_theory
@@ -1061,7 +1061,7 @@ nodes:
   garden_entry_theory:
     id: garden_entry_theory
     text: "Without needing the butler's keys! They could have waited in the garden until I left, then slipped in... but they'd still need a key for the display case. Unless..."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Unless they had help from inside."
         target_node_id: insider_help
@@ -1071,7 +1071,7 @@ nodes:
   rose_smell:
     id: rose_smell
     text: "From the garden. The rose bushes there have an unusual scent - crystalline somehow, from years of exposure to the crystal's energy. If the thief came through the garden..."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["rose_bush_clue"]
     choices:
@@ -1083,7 +1083,7 @@ nodes:
   scent_tracking:
     id: scent_tracking
     text: "Exactly! Find someone smelling of roses and you may have found your thief. Though in a mansion with a garden, that could be anyone who's been outside recently."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "It's still a lead."
         target_node_id: accept_case
@@ -1091,7 +1091,7 @@ nodes:
   insider_help:
     id: insider_help
     text: "An outside thief with inside help. That would explain everything - access, knowledge, timing. But who inside would betray this family? And for what reason?"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll find out."
         target_node_id: accept_case
@@ -1099,7 +1099,7 @@ nodes:
   case_unlocked:
     id: case_unlocked
     text: "I... I always lock it. Always. But last night I was so excited about my calculations, so close to a breakthrough... perhaps I forgot. Oh, this is all my fault!"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Don't blame yourself."
         target_node_id: reassurance
@@ -1109,7 +1109,7 @@ nodes:
   reassurance:
     id: reassurance
     text: "You're right. Self-pity won't recover the crystal. Focus, Edmund, focus. What else can I tell you that might help?"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Any final clues?"
         target_node_id: final_clues
@@ -1120,7 +1120,7 @@ nodes:
   clothing_check:
     id: clothing_check
     text: "A good idea. The butler's suit, any visitors... though I fear by now the thief has changed clothes."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Worth checking anyway."
         target_node_id: accept_case
@@ -1128,7 +1128,7 @@ nodes:
   double_motive:
     id: double_motive
     text: "Remove the crystal AND frame an innocent servant? That's diabolically clever. Someone wanted to create chaos while achieving their goal."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll uncover the truth."
         target_node_id: accept_case
@@ -1136,7 +1136,7 @@ nodes:
   insider_knowledge:
     id: insider_knowledge
     text: "Someone who knows the mansion's layout, the relationships between staff, where to find evidence to plant... This was meticulously planned."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll be thorough."
         target_node_id: accept_case
@@ -1144,7 +1144,7 @@ nodes:
   alternative_worry:
     id: alternative_worry
     text: "I suppose it's possible. But worried about what? The crystal was secure - or so I thought. What could have concerned him enough to hover near it?"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Maybe he sensed something."
         target_node_id: sensing_theory
@@ -1154,7 +1154,7 @@ nodes:
   sensing_theory:
     id: sensing_theory
     text: "The crystal does affect people who spend time near it. Perhaps James felt something building - an energy, a presence. Twenty years of exposure would make him sensitive to changes."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Interesting. I'll investigate."
         target_node_id: accept_case
@@ -1162,7 +1162,7 @@ nodes:
   discovery_time:
     id: discovery_time
     text: "Around 7 AM. I'm an early riser when research is going well. I came to check my overnight calculations and found... nothing. Just an empty case where the crystal should have been."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Six to seven hours for the theft."
         target_node_id: theft_window
@@ -1172,7 +1172,7 @@ nodes:
   atmosphere_description:
     id: atmosphere_description
     text: "The air felt heavy, charged. Like before a thunderstorm, but indoors. The crystal was glowing brighter than usual, almost urgently. I should have known something was wrong."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "The crystal sensed danger?"
         target_node_id: crystal_warning
@@ -1182,7 +1182,7 @@ nodes:
   crystal_warning:
     id: crystal_warning
     text: "Perhaps. My grandfather's journals mention the crystal 'communicating' in times of crisis. I thought it metaphor, but now... maybe it was trying to warn me."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "We should find it quickly."
         target_node_id: accept_case
@@ -1190,7 +1190,7 @@ nodes:
   visible_theft:
     id: visible_theft
     text: "Through the garden door, the glow would have been visible. Like a beacon calling to anyone who knew what to look for. I should have been more careful."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "What's done is done. Let's find it."
         target_node_id: accept_case
@@ -1198,7 +1198,7 @@ nodes:
   intruder_check:
     id: intruder_check
     text: "I looked around but found no one. James seemed genuinely startled when I confronted him. Either he's innocent or an excellent actor."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Time will tell."
         target_node_id: accept_case
@@ -1206,7 +1206,7 @@ nodes:
   planning_theory:
     id: planning_theory
     text: "That's what I fear. Scouting the location, timing my movements, learning the crystal's position. Everything a thief would need to know."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll get to the bottom of this."
         target_node_id: accept_case
@@ -1214,7 +1214,7 @@ nodes:
   innocent_curiosity:
     id: innocent_curiosity
     text: "Perhaps, but the specific nature of his questions... resonance frequency, optimal alignment conditions. These aren't casual curiosities. These are operational parameters."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "He was gathering intelligence."
         target_node_id: accept_case
@@ -1222,7 +1222,7 @@ nodes:
   butler_motive:
     id: butler_motive
     text: "That's what troubles me. Unless he hoped to use the crystal himself, or... sell the information to someone who could."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Either way, he's involved."
         target_node_id: accept_case
@@ -1230,7 +1230,7 @@ nodes:
   regret_moment:
     id: regret_moment
     text: "I know, I know! I was lonely, excited about my work. James listened. I didn't think... didn't consider that he might be gathering information for another purpose."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "We all make mistakes."
         target_node_id: reassurance
@@ -1238,7 +1238,7 @@ nodes:
   butler_capability:
     id: butler_capability
     text: "With what I told him, yes. He knows enough to attempt the resonance. Whether he has the skill to survive it... that's another matter entirely."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Survive it?"
         target_node_id: survival_concern
@@ -1248,7 +1248,7 @@ nodes:
   survival_concern:
     id: survival_concern
     text: "The crystal's power is enormous. Without proper training, attempting full resonance could... well, it's not pleasant. My grandfather's notes describe early experiments. Several assistants did not fare well."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "This is urgent."
         target_node_id: accept_case
@@ -1256,7 +1256,7 @@ nodes:
   scientist_temptation:
     id: scientist_temptation
     text: "I... yes. The crystal offers so much. Knowledge, power, understanding. It takes discipline to resist using it for personal gain. I've had my weak moments."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "But you never stole it."
         target_node_id: never_stole
@@ -1266,7 +1266,7 @@ nodes:
   never_stole:
     id: never_stole
     text: "No. I had legitimate access. But if I'd been in James's position - serving others my whole life, watching them unlock secrets I could never touch... I can almost understand."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Understanding doesn't excuse theft."
         target_node_id: accept_case
@@ -1274,7 +1274,7 @@ nodes:
   butler_knowledge:
     id: butler_knowledge
     text: "Precisely. He knows more than any outsider ever could. If he's turned against us, he's a formidable threat. Handle him carefully, Detective."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I will."
         target_node_id: accept_case
@@ -1282,7 +1282,7 @@ nodes:
   protection_theory:
     id: protection_theory
     text: "Protecting it? From whom? From... wait. You think someone else is after the crystal? And James took it to keep it safe? That's... actually possible."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["protection_theory_considered"]
     choices:
@@ -1294,7 +1294,7 @@ nodes:
   alternative_theory:
     id: alternative_theory
     text: "If James learned someone was planning to steal the crystal... his twenty years of loyal service would compel him to act. Even if it meant looking guilty himself."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I need to hear his side."
         target_node_id: question_butler
@@ -1304,7 +1304,7 @@ nodes:
   book_location:
     id: book_location
     text: "In the library, on the upper shelves. I can point you to the exact section. The books have been there since my grandfather's time."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Show me after I look around."
         target_node_id: accept_case
@@ -1312,7 +1312,7 @@ nodes:
   legend_skepticism:
     id: legend_skepticism
     text: "That's what I thought too, until I saw the crystal's power firsthand. These 'legends' were written by people who witnessed its capabilities. They had no scientific framework to explain it, but they saw the truth."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll keep an open mind."
         target_node_id: accept_case
@@ -1320,7 +1320,7 @@ nodes:
   possibility_question:
     id: possibility_question
     text: "Possible? I've seen the crystal bend light, amplify sound, affect emotions. Why not amplify desire itself? The science is uncertain, but the anecdotes are compelling."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Dangerous in any hands."
         target_node_id: accept_case
@@ -1328,7 +1328,7 @@ nodes:
   planning_confirmation:
     id: planning_confirmation
     text: "It seems increasingly likely. The timing, the knowledge, the access... everything points to James. But I've known him so long. Could I have been so blind?"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "People can surprise us."
         target_node_id: accept_case
@@ -1336,7 +1336,7 @@ nodes:
   framing_theory:
     id: framing_theory
     text: "Framed? By whom? And for what purpose? Though I suppose... if someone wanted the crystal AND wanted James out of the way, planting evidence would serve both goals."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll investigate all possibilities."
         target_node_id: accept_case
@@ -1344,7 +1344,7 @@ nodes:
   secret_passage:
     id: secret_passage
     text: "There are rumors of hidden passages throughout the mansion - my grandfather designed it, after all. But I've never found any. If they exist, James would know. He knows every inch of this house."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["secret_passage_hint"]
     choices:
@@ -1356,7 +1356,7 @@ nodes:
   other_visitors:
     id: other_visitors
     text: "No visitors yesterday. The estate has been quiet all week. Just myself, James, and the occasional delivery. Though... there was a strange letter last week. I dismissed it as a prank."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["strange_letter_mentioned"]
     choices:
@@ -1368,7 +1368,7 @@ nodes:
   letter_details:
     id: letter_details
     text: "Anonymous, demanding I surrender 'the crystal' or face consequences. No return address, typed on old paper. I assumed it was someone's idea of a joke. Perhaps I was wrong."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "This changes everything."
         target_node_id: letter_importance
@@ -1378,7 +1378,7 @@ nodes:
   letter_importance:
     id: letter_importance
     text: "Someone knew about the crystal. Someone wanted it badly enough to threaten me. And when I didn't comply... they took matters into their own hands."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Or hired someone to."
         target_node_id: hired_thief
@@ -1388,7 +1388,7 @@ nodes:
   letter_location:
     id: letter_location
     text: "I threw it in my desk drawer. Here in the laboratory. You're welcome to examine it - I kept it more out of curiosity than concern. A decision I now regret."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll examine it."
         target_node_id: accept_case
@@ -1396,7 +1396,7 @@ nodes:
   hired_thief:
     id: hired_thief
     text: "James, you mean. He needed money - I knew about his debts but thought nothing of it. A desperate man makes for an easy accomplice."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "The pieces fit together."
         target_node_id: accept_case
@@ -1404,7 +1404,7 @@ nodes:
   peak_power:
     id: peak_power
     text: "At peak power... theoretically, it could amplify any energy source tenfold. Electrical, thermal, kinetic... even emotional or mental energy. The applications are limitless. So are the dangers."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Someone wants that power."
         target_node_id: accept_case
@@ -1412,7 +1412,7 @@ nodes:
   continued_research:
     id: continued_research
     text: "It's our family legacy. Each generation adds to the understanding. My grandfather made breakthroughs, my father made more, and I... I was on the verge of the greatest discovery yet."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "You'll make it still."
         target_node_id: accept_case
@@ -1420,7 +1420,7 @@ nodes:
   beyond_science:
     id: beyond_science
     text: "Perhaps it is. Perhaps there are forces in this universe that our science cannot yet explain. The crystal has taught me humility if nothing else. There's so much we don't know."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Let's focus on what we do know."
         target_node_id: accept_case
@@ -1428,7 +1428,7 @@ nodes:
   thief_goal:
     id: thief_goal
     text: "If they've read grandfather's notes, if they know about the alignment... they might try to open the doorway themselves. Without understanding, without preparation. The results could be catastrophic."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "We have to stop them."
         target_node_id: accept_case
@@ -1436,7 +1436,7 @@ nodes:
   grandfather_notes:
     id: grandfather_notes
     text: "Volumes of them, all in the library. Though the most important ones - his final research - were locked away. The key to that cabinet has been lost for decades."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["grandfather_notes_locked"]
     choices:
@@ -1448,7 +1448,7 @@ nodes:
   final_notes_content:
     id: final_notes_content
     text: "I never knew. Grandfather died the night he wrote them. He was in the laboratory, crystal in hand, and then... nothing. They found him at dawn, peaceful but gone. The notes locked away with him."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Those notes might be key to this."
         target_node_id: accept_case
@@ -1456,7 +1456,7 @@ nodes:
   caring_response:
     id: caring_response
     text: "You're kind to worry, Detective. But rest can wait until the crystal is found. Every hour it's missing is an hour someone else has to unlock its secrets. I can sleep when it's safe."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Then let's find it quickly."
         target_node_id: accept_case
@@ -1464,7 +1464,7 @@ nodes:
   hidden_doubt:
     id: hidden_doubt
     text: "I... perhaps. The crystal does strange things to the mind. My grandfather saw visions. My father heard whispers. And I... I dream of impossible things. But it's science, not magic. It must be."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "The line between them seems thin here."
         target_node_id: accept_case
@@ -1472,7 +1472,7 @@ nodes:
   prevention_theory:
     id: prevention_theory
     text: "Prevent what? My research? The crystal's use? If someone believes the crystal is dangerous enough to steal... they might think they're protecting the world by hiding it."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "A guardian, not a thief."
         target_node_id: guardian_theory
@@ -1482,7 +1482,7 @@ nodes:
   guardian_theory:
     id: guardian_theory
     text: "Like the statue in the garden - 'the guardian' grandfather called it. Perhaps someone sees themselves that way. Protecting the world from what the crystal could do. But they don't understand - without study, without control, it's more dangerous hidden."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Either way, I'll find it."
         target_node_id: accept_case
@@ -1490,7 +1490,7 @@ nodes:
   theft_motive:
     id: theft_motive
     text: "Power. Knowledge. Wealth. The crystal offers all of these. Or perhaps fear - someone wanting to prevent its use. Either way, they've stolen generations of research along with it."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll recover it."
         target_node_id: accept_case
@@ -1498,7 +1498,7 @@ nodes:
   mystery_warning:
     id: mystery_warning
     text: "Perhaps you're right. Perhaps I've been chasing something I was never meant to find. But I can't abandon my life's work now. Not when I was so close. Please, Detective. Find the crystal."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll do what I can."
         target_node_id: accept_case
@@ -1506,7 +1506,7 @@ nodes:
   danger_warning:
     id: danger_warning
     text: "Lost? No! You don't understand - in the wrong hands, without proper safeguards, the crystal could cause unimaginable harm. It needs to be recovered and protected. That's why you must find it!"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "I'll bring it back safely."
         target_node_id: accept_case
@@ -1514,7 +1514,7 @@ nodes:
   fountain_connection:
     id: fountain_connection
     text: "Yes! The fountain was built specifically to harmonize with the crystal. My grandfather discovered that water, flowing at the right rate through the carved channels, creates a frequency that amplifies the crystal's power."
-    speaker: scientist
+    character_name: scientist
     flags:
       set: ["fountain_mechanism_known"]
     choices:
@@ -1526,7 +1526,7 @@ nodes:
   fountain_danger:
     id: fountain_danger
     text: "If they know what they're doing, yes. The fountain, the crystal, the alignment at 11:47... all the pieces are there. Whoever took it may be planning to use it tonight!"
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "Then I have no time to waste."
         target_node_id: accept_case
@@ -1535,17 +1535,17 @@ nodes:
   crystal_returned:
     id: crystal_returned
     text: "My crystal! You found it! How can I ever thank you? The world is safe once again - and so is my research. You've done a tremendous service, Detective."
-    speaker: scientist
+    character_name: scientist
     conditions: ["has_crystal"]
     quest_progress:
       quest: "find_crystal"
       complete: true
-    action: end
+    is_end: true
 
   hiding_reason:
     id: hiding_reason
     text: "The final notes contained his most dangerous discoveries. He must have known someone would come looking. By hiding the key, he ensured only someone truly dedicated could access them."
-    speaker: scientist
+    character_name: scientist
     choices:
       - text: "The butler may have found it."
         target_node_id: butler_had_key

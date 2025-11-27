@@ -7,6 +7,9 @@ function on_enter()
     print("Entering library...")
     set_game_state("visited_library", true)
 
+    -- Play library theme music
+    play_music("library_theme", 0.5)
+
     -- Play ambient sounds - rain against windows, crackling fire
     play_ambient("castle_ambient", 0.3)
 
@@ -139,6 +142,17 @@ function examine_painting()
     end
 end
 
+-- Secret passage to garden (unlocked via painting)
+function use_secret_passage()
+    if get_game_state("secret_passage_revealed") then
+        show_message("You slip through the hidden passage behind the portrait...")
+        play_sound("door_open")
+        change_scene("garden")
+    else
+        show_message("The passage is hidden. You need to find another way.")
+    end
+end
+
 -- Fireplace - atmosphere and clues
 function examine_fireplace()
     show_message("The dying embers cast dancing shadows across the room.")
@@ -230,6 +244,7 @@ function on_door_to_lab_click()
         show_message("You push open the heavy oak door. The smell of chemicals wafts through.")
     end
 
+    -- YAML handles the transition, just change scene
     change_scene("laboratory")
 end
 
@@ -281,6 +296,7 @@ hotspot.on_click("reading_chair", examine_reading_chair)
 hotspot.on_click("ladder", examine_ladder)
 hotspot.on_click("window", examine_window)
 hotspot.on_click("door_to_lab", on_door_to_lab_click)
+hotspot.on_click("secret_passage", use_secret_passage)
 
 -- Register character interactions
 character.on_interact("butler", on_butler_interact)
