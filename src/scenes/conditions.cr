@@ -1,6 +1,10 @@
 # Condition system for dynamic hotspots and game logic
+#
+# This module provides both legacy YAML-based conditions and integration
+# with the new type-safe condition system from Core::Conditions.
 
 require "yaml"
+require "../core/conditions/conditions"
 
 module PointClickEngine
   module Scenes
@@ -21,6 +25,7 @@ module PointClickEngine
         inventory: InventoryCondition,
         state:     StateCondition,
         combined:  CombinedCondition,
+        string:    StringCondition,
       }
 
       abstract def evaluate(engine : Core::Engine) : Bool
@@ -165,6 +170,68 @@ module PointClickEngine
         else
           false
         end
+      end
+    end
+
+    # String-based condition using the new type-safe condition parser
+    #
+    # This allows using the powerful Core::Conditions syntax in YAML files:
+    # ```yaml
+    # condition:
+    #   type: string
+    #   expression: "has_key && gold >= 100 || quest:main:completed"
+    # ```
+    class StringCondition < Condition
+      property expression : String
+
+      @[YAML::Field(ignore: true)]
+      @parsed_condition : Core::Conditions::ConditionWrapper?
+
+      def initialize(@expression : String)
+      end
+
+      def evaluate(engine : Core::Engine) : Bool
+        gsm = engine.game_state_manager
+        return false unless gsm
+
+        # Parse and cache the condition on first evaluation
+        @parsed_condition ||= begin
+          result = Core::Conditions::ConditionParser.parse(@expression)
+          if result.success?
+            result.value
+          else
+            puts "Warning: Invalid condition '#{@expression}': #{result.error}"
+            Core::Conditions::ConditionWrapper.new(Core::Conditions::FalseCondition.new)
+          end
+        end
+
+        @parsed_condition.not_nil!.evaluate(gsm).success
+      end
+    end
+
+    # Helper module for parsing condition strings directly
+    module ConditionHelper
+      # Parse a string condition and evaluate it against an engine
+      def self.evaluate(condition_string : String, engine : Core::Engine) : Bool
+        gsm = engine.game_state_manager
+        return false unless gsm
+
+        result = Core::Conditions::ConditionParser.parse(condition_string)
+        return false unless result.success?
+
+        result.value.evaluate(gsm).success
+      end
+
+      # Validate a condition string without evaluating it
+      def self.validate(condition_string : String) : Bool
+        result = Core::Conditions::ConditionParser.parse(condition_string)
+        result.success?
+      end
+
+      # Get validation errors for a condition string
+      def self.validation_errors(condition_string : String) : String?
+        result = Core::Conditions::ConditionParser.parse(condition_string)
+        result.failure? ? result.error : nil
       end
     end
   end

@@ -4625,11 +4625,12 @@ All 8 critical bug fixes completed:
 **3.1 Engine Integration** ✓
 - Added `event_bus` property to SystemManager
 - Added `event_bus` accessor to Engine
-- EventBus processes alongside legacy EventSystem
+- **DELETED** `src/scripting/event_system.cr` - Legacy event system fully removed
+- All event handling now uses unified EventBus
 
 **3.2 GameStateManager Integration** ✓
 - Added optional EventBus parameter to constructor
-- State changes now publish to EventBus (if configured) alongside legacy callbacks
+- State changes now publish to EventBus
 
 **3.3 SceneManager Integration** ✓
 - Added optional EventBus property to SceneManager
@@ -4643,6 +4644,16 @@ All 8 critical bug fixes completed:
 - Added EventBus to AudioManager
 - Music/sound operations publish MusicStartedEvent, MusicStoppedEvent, SoundPlayedEvent
 
+**3.6 ScriptableCharacter Migration** ✓
+- Migrated from `Scripting::EventHandler` to `Core::Events::EventBus`
+- Character events (move, speak, property change) use typed events
+- Proper cleanup of event subscriptions
+
+**3.7 Game Start Event Migration** ✓
+- `game:new` string event replaced by `GameStartedEvent`
+- Updated: `src/core/engine.cr`, `src/core/game_config.cr`, `src/core/engine/game_builder.cr`
+- Achievement unlock events use `AchievementUnlockedEvent`
+
 #### Phase 4: Dependency Injection Support ✓
 
 **4.1 Engine DI** ✓
@@ -4650,14 +4661,9 @@ All 8 critical bug fixes completed:
 - Added `skip_singleton: true` option for testing multiple engine instances
 - Added custom service override fields
 
-**4.2 Testing Module** (`src/core/testing/`) ✓
-- `mocks.cr` - Mock implementations:
-  - `MockResourceLoader` - Tracks load operations without file I/O
-  - `MockInputManager` - Allows simulating mouse/keyboard input
-  - `MockRenderManager` - Tracks render calls
-  - `MockEventBus` - Tracks all published events
-  - `MockGameStateManager` - Records state changes
-  - `TestFactory` - Creates fully-mocked test engines
+**4.2 Testing** ✓
+- All test mocks should be in `spec/` directory, not `src/`
+- No `src/core/testing/` module needed
 
 #### Phase 5: Code Quality Improvements ✓
 
@@ -4711,30 +4717,75 @@ src/core/conditions/
 ├── composite.cr       # AND/OR/NOT combinators
 ├── builder.cr         # Fluent builder DSL
 ├── parser.cr          # String parser
+├── validation.cr      # Validation result types
+├── validator.cr       # Condition validator with suggestions
 └── conditions.cr      # Module index
-
-src/core/testing/
-├── mocks.cr           # Mock implementations
-└── testing.cr         # Module index
 
 src/audio/
 └── spatial_audio.cr   # Spatial audio utilities
+
+src/tools/
+└── validate.cr        # CLI validator tool
+```
+
+### Files Deleted
+
+```
+src/scripting/event_system.cr  # Replaced by Core::Events::EventBus
 ```
 
 ### Files Modified
 
-- `src/core/engine/system_manager.cr` - Added EventBus
-- `src/core/engine.cr` - Added DI support, EventBus accessor
+- `src/core/engine/system_manager.cr` - Replaced legacy EventSystem with EventBus
+- `src/core/engine.cr` - DI support, EventBus accessor, GameStartedEvent
 - `src/core/game_state_manager.cr` - Added EventBus integration
 - `src/core/scene_manager.cr` - Added EventBus integration
+- `src/core/game_config.cr` - Migrated to GameStartedEvent subscription
+- `src/core/engine/game_builder.cr` - Migrated to GameStartedEvent subscription
+- `src/core/achievement_manager.cr` - Uses AchievementUnlockedEvent
 - `src/inventory/inventory_system.cr` - Added EventBus integration
 - `src/inventory/inventory_item.cr` - Added validation
 - `src/audio/audio_manager.cr` - Added EventBus integration
 - `src/audio/sound_effect_manager.cr` - Use spatial utility
+- `src/characters/scriptable_character.cr` - Migrated to EventBus, removed legacy EventHandler
+- `src/point_click_engine.cr` - Removed legacy event aliases, added EventBus alias
 
-### Remaining Work (Phase 6)
+### Phase 6: Runtime Validation & Specs ✓
 
-- Update specs for EventBus (optional - existing specs still pass)
-- Add integration tests for event flow
-- Run CLI validator on all YAML files
+**6.1 Condition Validation System** ✓
+- `src/core/conditions/validation.cr` - ConditionValidationResult with detailed error types
+- `src/core/conditions/validator.cr` - ConditionValidator with Levenshtein suggestions
+- Supports registering known flags, variables, quests, achievements
+- Provides helpful "Did you mean?" suggestions for typos
+
+**6.2 CLI Validator Tool** ✓
+- `src/tools/validate.cr` - Command-line tool for validating YAML files
+- Supports batch validation of entire directories
+- Output formats: text (default), json
+- Options: --verbose, --strict, --config, --format
+
+**6.3 Scene Conditions Integration** ✓
+- Added `StringCondition` class to use Core::Conditions parser
+- Added `ConditionHelper` module for parsing condition strings
+- Full backwards compatibility with existing YAML conditions
+
+**6.4 Additional Character Events** ✓
+- `CharacterStateChangedEvent` - State transitions
+- `CharacterDirectionChangedEvent` - Direction changes
+- `CharacterInteractEvent` - Character interactions
+
+**6.5 Comprehensive Specs** ✓
+- `spec/core/events/event_bus_spec.cr` - 25 tests
+- `spec/core/di/service_registry_spec.cr` - 19 tests
+- `spec/core/conditions/conditions_spec.cr` - 39 tests
+- `spec/core/conditions/condition_parser_spec.cr` - 37 tests
+- `spec/audio/spatial_audio_spec.cr` - 21 tests
+- `spec/inventory/inventory_item_spec.cr` - 41 tests
+
+Total: 180+ new spec examples, all passing
+
+### Remaining Work (Future Enhancements)
+
+- Run CLI validator on all YAML files in existing games
 - Document migration guide for existing games
+- JSON Schema for YAML autocomplete (optional)

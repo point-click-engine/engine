@@ -52,7 +52,7 @@ module PointClickEngine
         # Trigger event
         begin
           engine = Engine.instance
-          engine.event_system.trigger_event("achievement_unlocked", {"id" => id, "name" => achievement.name})
+          engine.event_bus.publish(Events::AchievementUnlockedEvent.new(id, achievement.name))
         rescue
           # Engine not initialized yet
         end

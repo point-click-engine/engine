@@ -2,6 +2,7 @@
 # Handles environmental sounds, room ambience, and contextual audio
 
 require "../core/game_object"
+require "./spatial_audio"
 
 # Only require audio if explicitly enabled
 {% if flag?(:with_audio) %}
@@ -161,20 +162,15 @@ module PointClickEngine
         end
 
         private def update_spatial_audio(listener_position : RL::Vector2)
-          # Calculate distance-based volume
-          distance = Math.sqrt(
-            (listener_position.x - @config.position.x) ** 2 +
-            (listener_position.y - @config.position.y) ** 2
+          # Use SpatialAudio utility for distance-based volume
+          volume_factor = SpatialAudio.calculate_volume_factor(
+            @config.position,
+            listener_position,
+            @config.max_distance
           )
 
-          # Apply distance attenuation
-          if distance <= @config.max_distance
-            distance_factor = 1.0f32 - (distance / @config.max_distance)
-            spatial_volume = @target_volume * distance_factor
-            @current_volume = [@current_volume, spatial_volume].min
-          else
-            @current_volume = 0.0f32
-          end
+          spatial_volume = @target_volume * volume_factor
+          @current_volume = [@current_volume, spatial_volume].min
         end
 
         def cleanup

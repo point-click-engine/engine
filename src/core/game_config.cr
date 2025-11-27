@@ -453,9 +453,10 @@ module PointClickEngine
         start_scene_name = self.start_scene
         start_music_name = self.start_music
 
-        puts "[DEBUG] Setting up game:new event handler"
-        engine.system_manager.event_system.on("game:new") do
-          puts "[DEBUG] game:new event triggered!"
+        puts "[DEBUG] Setting up GameStartedEvent handler"
+        engine.event_bus.subscribe(Events::GameStartedEvent) do |event|
+          next unless event.new_game
+          puts "[DEBUG] GameStartedEvent triggered!"
           # Change to start scene
           if scene_name = start_scene_name
             engine.change_scene(scene_name)
@@ -485,10 +486,6 @@ module PointClickEngine
                   Raylib::Vector2.new(x: 10f32, y: y_offset),
                   16, Raylib::WHITE)
                 y_offset += 20f32
-
-                # Auto-hide after duration - using a timer event
-                # For now, we'll just note that hints should be hidden after duration
-                # This would need to be handled by the GUI system itself
               end
             end
           end

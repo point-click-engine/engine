@@ -247,14 +247,19 @@ module PointClickEngine
       # Volume control methods
       def set_master_volume(volume : Float32)
         @volume_controller.set_master_volume(volume)
+        # Update internal components
+        @music_manager.set_volume(@volume_controller.effective_music_volume)
+        @sound_effect_manager.update_volume(@volume_controller.effective_sfx_volume)
       end
 
       def set_music_volume(volume : Float32)
         @volume_controller.set_music_volume(volume)
+        @music_manager.set_volume(@volume_controller.effective_music_volume)
       end
 
       def set_sfx_volume(volume : Float32)
         @volume_controller.set_sfx_volume(volume)
+        @sound_effect_manager.update_volume(@volume_controller.effective_sfx_volume)
       end
 
       def toggle_mute
@@ -326,14 +331,9 @@ module PointClickEngine
       end
 
       private def setup_volume_callbacks
-        @volume_controller.on_volume_change do |type, volume|
-          case type
-          when :music
-            @music_manager.set_volume(volume)
-          when :sfx
-            @sound_effect_manager.update_volume(volume)
-          end
-        end
+        # Volume controller now uses EventBus for notifications
+        # We subscribe to volume changes via our own event_bus if set
+        # For internal component updates, we handle this in update() or when volumes are set
       end
 
       private def evict_least_used_resources

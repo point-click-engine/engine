@@ -3,6 +3,7 @@
 
 require "json"
 require "yaml"
+require "./events/events"
 
 module PointClickEngine
   module Core
@@ -256,7 +257,14 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property state_manager : GameStateManager?
 
+      @[JSON::Field(ignore: true)]
+      @[YAML::Field(ignore: true)]
+      property event_bus : Events::EventBus?
+
       def initialize
+      end
+
+      def initialize(@event_bus : Events::EventBus)
       end
 
       def add_quest(quest : Quest)
@@ -280,6 +288,11 @@ module PointClickEngine
 
         quest.start(state_manager)
         add_notification("Quest started: #{quest.name}")
+
+        if bus = @event_bus
+          bus.publish(Events::QuestStartedEvent.new(quest.id, quest.name))
+        end
+
         true
       end
 
@@ -289,6 +302,10 @@ module PointClickEngine
 
           if quest.update_progress(state_manager)
             add_notification("Quest completed: #{quest.name}")
+
+            if bus = @event_bus
+              bus.publish(Events::QuestCompletedEvent.new(quest.id, quest.name))
+            end
           end
         end
 

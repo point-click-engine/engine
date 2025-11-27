@@ -5,7 +5,7 @@ require "./lua_environment"
 require "./script_api_registry"
 require "./scene_script_api"
 require "./character_script_api"
-require "./game_state_manager"
+require "./lua_state_manager"
 
 module PointClickEngine
   module Scripting
@@ -16,7 +16,7 @@ module PointClickEngine
     # - ScriptAPIRegistry: Crystal function registration
     # - SceneScriptAPI: Scene-related Lua API
     # - CharacterScriptAPI: Character-related Lua API
-    # - GameStateManager: Script-accessible game state
+    # - LuaStateManager: Script-accessible Lua state
     class ScriptEngine
       getter lua : Luajit::LuaState
 
@@ -25,7 +25,7 @@ module PointClickEngine
       @registry : ScriptAPIRegistry
       @scene_api : SceneScriptAPI
       @character_api : CharacterScriptAPI
-      @state_manager : GameStateManager
+      @state_manager : LuaStateManager
 
       # Legacy property for compatibility
       def game_state : Hash(String, Luajit::LuaAny)
@@ -40,7 +40,7 @@ module PointClickEngine
         @registry = ScriptAPIRegistry.new(@lua)
         @scene_api = SceneScriptAPI.new(@lua, @registry)
         @character_api = CharacterScriptAPI.new(@lua, @registry)
-        @state_manager = GameStateManager.new
+        @state_manager = LuaStateManager.new
 
         # Setup environment and register APIs
         setup_engine

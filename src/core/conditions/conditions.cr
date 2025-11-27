@@ -31,6 +31,8 @@ require "./condition"
 require "./composite"
 require "./builder"
 require "./parser"
+require "./validation"
+require "./validator"
 
 module PointClickEngine
   module Core

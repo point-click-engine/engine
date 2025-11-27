@@ -5,7 +5,6 @@ require "../../audio/audio_manager"
 require "../../graphics/graphics"
 require "../../ui/gui_manager"
 require "../../scripting/script_engine"
-require "../../scripting/event_system"
 require "../../ui/dialog_manager"
 require "../config_manager"
 require "../../ui/menu_system"
@@ -22,18 +21,16 @@ module PointClickEngine
         property shader_system : Graphics::ShaderSystem?
         property gui : UI::GUIManager?
         property script_engine : Scripting::ScriptEngine?
-        property event_system : Scripting::EventSystem
         property dialog_manager : UI::DialogManager?
         property config : ConfigManager?
         property renderer : Graphics::Renderer?
         property display_manager : Graphics::Display?
         property menu_system : UI::MenuSystem?
 
-        # New unified event bus (coexists with event_system for backwards compatibility)
+        # Unified event bus
         property event_bus : Events::EventBus
 
         def initialize
-          @event_system = Scripting::EventSystem.new
           @event_bus = Events::EventBus.new
         end
 
@@ -126,8 +123,7 @@ module PointClickEngine
           # Transitions are now handled by the effect system
           @menu_system.try(&.update(dt))
 
-          # Process both event systems
-          @event_system.process_events
+          # Process events
           @event_bus.process
         end
 
@@ -145,7 +141,6 @@ module PointClickEngine
           # Systems without cleanup methods:
           # - @achievement_manager (no cleanup method)
           # - @gui (no cleanup method)
-          # - @event_system (no cleanup method)
           # - @config (no cleanup method)
           # - @menu_system (no cleanup method)
         end

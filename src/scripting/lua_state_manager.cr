@@ -1,22 +1,26 @@
-# Game state management for scripts component
+# Lua state management for scripts component
+#
+# This manages state accessible from Lua scripts, using Luajit::LuaAny
+# to support dynamic Lua types. This is distinct from Core::GameStateManager
+# which manages game flags/variables with Crystal types.
 
 require "luajit"
 
 module PointClickEngine
   module Scripting
-    # Manages game state accessible from Lua scripts
-    class GameStateManager
-      @game_state : Hash(String, Luajit::LuaAny) = {} of String => Luajit::LuaAny
+    # Manages state accessible from Lua scripts
+    class LuaStateManager
+      @lua_state : Hash(String, Luajit::LuaAny) = {} of String => Luajit::LuaAny
       @state_change_callbacks : Array(Proc(String, Luajit::LuaAny?, Nil)) = [] of Proc(String, Luajit::LuaAny?, Nil)
 
-      # Set a game state value
+      # Set a state value
       def set_state(key : String, value : Luajit::LuaAny?)
-        old_value = @game_state[key]?
+        old_value = @lua_state[key]?
 
         if value
-          @game_state[key] = value
+          @lua_state[key] = value
         else
-          @game_state.delete(key)
+          @lua_state.delete(key)
         end
 
         # Notify callbacks
@@ -25,20 +29,20 @@ module PointClickEngine
         end
       end
 
-      # Get a game state value
+      # Get a state value
       def get_state(key : String) : Luajit::LuaAny?
-        @game_state[key]?
+        @lua_state[key]?
       end
 
       # Check if a state key exists
       def has_state?(key : String) : Bool
-        @game_state.has_key?(key)
+        @lua_state.has_key?(key)
       end
 
       # Remove a state key
       def remove_state(key : String) : Bool
-        if @game_state.has_key?(key)
-          @game_state.delete(key)
+        if @lua_state.has_key?(key)
+          @lua_state.delete(key)
 
           # Notify callbacks with nil value
           @state_change_callbacks.each do |callback|
@@ -53,22 +57,22 @@ module PointClickEngine
 
       # Clear all state
       def clear_state
-        @game_state.clear
+        @lua_state.clear
       end
 
       # Get all state keys
       def state_keys : Array(String)
-        @game_state.keys
+        @lua_state.keys
       end
 
       # Get state as hash for serialization
       def to_hash : Hash(String, Luajit::LuaAny)
-        @game_state.dup
+        @lua_state.dup
       end
 
       # Load state from hash
       def from_hash(state : Hash(String, Luajit::LuaAny))
-        @game_state = state.dup
+        @lua_state = state.dup
       end
 
       # Register a callback for state changes
@@ -80,7 +84,7 @@ module PointClickEngine
       def get_states_with_prefix(prefix : String) : Hash(String, Luajit::LuaAny)
         result = {} of String => Luajit::LuaAny
 
-        @game_state.each do |key, value|
+        @lua_state.each do |key, value|
           if key.starts_with?(prefix)
             result[key] = value
           end
@@ -91,7 +95,7 @@ module PointClickEngine
 
       # Increment a numeric state value
       def increment_state(key : String, amount : Float64 = 1.0) : Float64?
-        if value = @game_state[key]?
+        if value = @lua_state[key]?
           case value
           when Float64
             new_value = value.as(Float64) + amount
@@ -117,7 +121,7 @@ module PointClickEngine
 
       # Toggle a boolean state value
       def toggle_state(key : String) : Bool
-        if value = @game_state[key]?
+        if value = @lua_state[key]?
           case value
           when Bool
             new_value = !value.as(Bool)

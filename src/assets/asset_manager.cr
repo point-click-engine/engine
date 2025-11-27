@@ -192,6 +192,41 @@ module PointClickEngine
       @cache.clear
     end
 
+    # Clear specific entries from cache by prefix
+    #
+    # - **prefix** : Path prefix to clear (e.g., "sprites/" clears all sprites)
+    def clear_cache_prefix(prefix : String)
+      normalized = normalize_path(prefix)
+      @cache.reject! { |key, _| key.starts_with?(normalized) || key.starts_with?(prefix) }
+    end
+
+    # Clear a single entry from cache
+    #
+    # - **path** : Path to clear from cache
+    def clear_cache_entry(path : String)
+      @cache.delete(path)
+      @cache.delete(normalize_path(path))
+    end
+
+    # Get cache size for debugging
+    def cache_size : Int32
+      @cache.size
+    end
+
+    # Get total cached bytes for debugging
+    def cache_bytes : Int64
+      total = 0_i64
+      @cache.each_value do |data|
+        case data
+        when Bytes
+          total += data.size
+        when String
+          total += data.bytesize
+        end
+      end
+      total
+    end
+
     private def normalize_path(path : String) : String
       path.lstrip('/')
     end

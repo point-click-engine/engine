@@ -435,11 +435,6 @@ module PointClickEngine
         @@debug_mode
       end
 
-      def event_system
-        @system_manager.event_system
-      end
-
-      # New unified event bus accessor
       def event_bus
         @system_manager.event_bus
       end
@@ -596,9 +591,9 @@ module PointClickEngine
         @system_manager.menu_system.try(&.hide)
         @system_manager.menu_system.try(&.enter_game)
 
-        # Trigger the game:new event
-        puts "[Engine] Triggering game:new event"
-        @system_manager.event_system.trigger("game:new")
+        # Trigger the game started event
+        puts "[Engine] Triggering GameStartedEvent"
+        @system_manager.event_bus.publish_sync(Events::GameStartedEvent.new(new_game: true))
         puts "[Engine] Event triggered"
 
         # Load the starting scene from scene manager

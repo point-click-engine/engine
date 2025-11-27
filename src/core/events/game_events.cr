@@ -138,6 +138,57 @@ module PointClickEngine
         end
       end
 
+      # Fired when a character's state changes
+      class CharacterStateChangedEvent < GameEvent
+        define_event_type "character:state:changed"
+
+        getter character_name : String
+        getter old_state : String
+        getter new_state : String
+
+        def initialize(@character_name : String, @old_state : String, @new_state : String)
+          super()
+        end
+      end
+
+      # Fired when a character's direction changes
+      class CharacterDirectionChangedEvent < GameEvent
+        define_event_type "character:direction:changed"
+
+        getter character_name : String
+        getter direction : String
+
+        def initialize(@character_name : String, @direction : String)
+          super()
+        end
+      end
+
+      # Fired when a character interacts with something
+      class CharacterInteractEvent < GameEvent
+        define_event_type "character:interact"
+
+        getter character_name : String
+        getter target : String
+        getter verb : String
+
+        def initialize(@character_name : String, @target : String, @verb : String = "use")
+          super()
+        end
+      end
+
+      # Fired when a character property changes
+      class CharacterPropertyChangedEvent < GameEvent
+        define_event_type "character:property:changed"
+
+        getter character_name : String
+        getter property_name : String
+        getter value : String
+
+        def initialize(@character_name : String, @property_name : String, @value : String)
+          super()
+        end
+      end
+
       # ===================
       # Inventory Events
       # ===================
@@ -340,6 +391,70 @@ module PointClickEngine
       end
 
       # ===================
+      # Quest Events
+      # ===================
+
+      # Fired when a quest is started
+      class QuestStartedEvent < GameEvent
+        define_event_type "quest:started"
+
+        getter quest_id : String
+        getter quest_name : String
+
+        def initialize(@quest_id : String, @quest_name : String)
+          super()
+        end
+      end
+
+      # Fired when a quest advances to a new step
+      class QuestAdvancedEvent < GameEvent
+        define_event_type "quest:advanced"
+
+        getter quest_id : String
+        getter step : String
+
+        def initialize(@quest_id : String, @step : String)
+          super()
+        end
+      end
+
+      # Fired when a quest is completed
+      class QuestCompletedEvent < GameEvent
+        define_event_type "quest:completed"
+
+        getter quest_id : String
+        getter quest_name : String
+
+        def initialize(@quest_id : String, @quest_name : String)
+          super()
+        end
+      end
+
+      # Fired when a quest objective is completed
+      class QuestObjectiveCompletedEvent < GameEvent
+        define_event_type "quest:objective:completed"
+
+        getter quest_id : String
+        getter objective_id : String
+
+        def initialize(@quest_id : String, @objective_id : String)
+          super()
+        end
+      end
+
+      # Fired when a quest is failed
+      class QuestFailedEvent < GameEvent
+        define_event_type "quest:failed"
+
+        getter quest_id : String
+        getter reason : String?
+
+        def initialize(@quest_id : String, @reason : String? = nil)
+          super()
+        end
+      end
+
+      # ===================
       # Audio Events
       # ===================
 
@@ -374,6 +489,18 @@ module PointClickEngine
         getter volume : Float32
 
         def initialize(@sound_name : String, @volume : Float32 = 1.0_f32)
+          super()
+        end
+      end
+
+      # Fired when volume settings change
+      class VolumeChangedEvent < GameEvent
+        define_event_type "audio:volume:changed"
+
+        getter channel : Symbol  # :master, :music, :sfx, :ambient, :voice, :mute
+        getter volume : Float32
+
+        def initialize(@channel : Symbol, @volume : Float32)
           super()
         end
       end
@@ -417,6 +544,22 @@ module PointClickEngine
         getter achievement_name : String
 
         def initialize(@achievement_id : String, @achievement_name : String = "")
+          super()
+        end
+      end
+
+      # ===================
+      # Localization Events
+      # ===================
+
+      # Fired when the locale changes
+      class LocaleChangedEvent < GameEvent
+        define_event_type "locale:changed"
+
+        getter old_locale : String
+        getter new_locale : String
+
+        def initialize(@old_locale : String, @new_locale : String)
           super()
         end
       end

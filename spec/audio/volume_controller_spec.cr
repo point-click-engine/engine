@@ -89,19 +89,23 @@ describe PointClickEngine::Audio::VolumeController do
     end
   end
 
-  describe "#on_volume_change" do
-    it "notifies volume changes" do
-      controller = PointClickEngine::Audio::VolumeController.new
+  describe "EventBus integration" do
+    it "publishes VolumeChangedEvent when volume changes" do
+      event_bus = PointClickEngine::Core::Events::EventBus.new
+      controller = PointClickEngine::Audio::VolumeController.new(event_bus)
 
       changes = [] of Tuple(Symbol, Float32)
 
-      controller.on_volume_change do |type, volume|
-        changes << {type, volume}
+      event_bus.subscribe(PointClickEngine::Core::Events::VolumeChangedEvent) do |event|
+        changes << {event.channel, event.volume}
       end
 
       controller.set_master_volume(0.7_f32)
       controller.set_music_volume(0.5_f32)
       controller.set_sfx_volume(0.9_f32)
+
+      # Process queued events
+      event_bus.process
 
       changes.size.should eq(3)
       changes[0].should eq({:master, 0.7_f32})

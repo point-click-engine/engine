@@ -102,7 +102,6 @@ require "./scenes/scene_loader"
 require "./scenes/transition_helper"
 
 # Scripting modules
-require "./scripting/event_system"
 require "./scripting/script_engine"
 require "./characters/scriptable_character"
 
@@ -211,13 +210,12 @@ module PointClickEngine
 
   # Scripting system aliases
   alias ScriptEngine = Scripting::ScriptEngine
-  alias EventSystem = Scripting::EventSystem
-  alias Event = Scripting::Event
-  alias EventHandler = Scripting::EventHandler
-  alias ScriptEventHandler = Scripting::ScriptEventHandler
-  alias FunctionEventHandler = Scripting::FunctionEventHandler
   alias ScriptableCharacter = Characters::ScriptableCharacter
   alias SimpleNPC = Characters::SimpleNPC
+
+  # Event system aliases
+  alias EventBus = Core::Events::EventBus
+  alias GameEvent = Core::Events::GameEvent
 
   # Navigation aliases
   alias Pathfinding = Navigation::Pathfinding

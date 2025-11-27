@@ -237,7 +237,8 @@ module PointClickEngine
 
         private def setup_callbacks
           # Set up new game event
-          @engine.event_system.on("game:new") do
+          @engine.event_bus.subscribe(Events::GameStartedEvent) do |event|
+            next unless event.new_game
             # Clear state
             @game_state_manager.clear
             @engine.inventory.clear
