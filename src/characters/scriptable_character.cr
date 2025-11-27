@@ -33,7 +33,7 @@ module PointClickEngine
           @script_content = AssetLoader.read_script(file_path)
           initialize_script
         rescue ex
-          puts "Failed to load script #{file_path}: #{ex.message}"
+          Core::ErrorLogger.error("Failed to load script #{file_path}: #{ex.message}")
         end
       end
 

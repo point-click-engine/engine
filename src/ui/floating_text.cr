@@ -33,6 +33,7 @@ module PointClickEngine
       property elapsed_time : Float32 = 0.0f32
       property is_fading_in : Bool = true
       property is_fading_out : Bool = false
+      property fade_out_start_time : Float32 = 0.0f32
       property selected_choice : Int32? = nil
       property on_choice_selected : Proc(Int32, Nil)?
       property on_text_completed : Proc(Nil)?
@@ -341,7 +342,6 @@ module PointClickEngine
         end
       end
 
-      @fade_out_start_time : Float32 = 0.0f32
     end
 
     # Manager for floating text instances

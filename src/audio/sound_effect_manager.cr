@@ -1,6 +1,7 @@
 # Sound effect management component
 
 require "raylib-cr/audio"
+require "./spatial_audio"
 
 module PointClickEngine
   module Audio
@@ -30,10 +31,8 @@ module PointClickEngine
       # Play a sound effect at a specific position (3D audio)
       def play_sound_at(name : String, position : RL::Vector2, listener_pos : RL::Vector2, max_distance : Float32 = 500.0) : Nil
         if sound = @sound_effects[name]?
-          # Calculate distance-based volume
-          distance = Math.sqrt((position.x - listener_pos.x)**2 + (position.y - listener_pos.y)**2)
-          volume_factor = 1.0 - (distance / max_distance).clamp(0.0, 1.0)
-
+          # Use spatial audio utility for distance-based volume
+          volume_factor = SpatialAudio.calculate_volume_factor(position, listener_pos, max_distance)
           sound.volume = (volume_factor * @sfx_volume).to_f32
           sound.play
         end

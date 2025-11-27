@@ -6,6 +6,7 @@
 
 require "./error_handling"
 require "./interfaces"
+require "./events/events"
 require "../scenes/scene"
 require "../graphics/effects/scene_effects/transition_effect"
 
@@ -65,7 +66,13 @@ module PointClickEngine
       # Reference to engine for effect manager access
       @engine : Engine?
 
+      # Optional EventBus for publishing scene events
+      property event_bus : Events::EventBus?
+
       def initialize(@engine : Engine? = nil)
+      end
+
+      def initialize(@engine : Engine?, @event_bus : Events::EventBus?)
       end
 
       # Add a scene to the manager
@@ -135,9 +142,20 @@ module PointClickEngine
           return Result(Scenes::Scene, SceneError).failure(SceneError.new("Scene not found: #{name}", name))
         end
 
+        previous_scene_name = @current_scene.try(&.name)
+
+        # Publish transition start event
+        if bus = @event_bus
+          bus.publish(Events::SceneTransitionStartEvent.new(name, previous_scene_name))
+        end
+
         # Execute exit callbacks for current scene
         if current = @current_scene
           execute_scene_exit_callbacks(current)
+          # Publish scene exited event
+          if bus = @event_bus
+            bus.publish(Events::SceneExitedEvent.new(current.name))
+          end
         end
 
         # Load scene from cache or create new instance
@@ -157,6 +175,11 @@ module PointClickEngine
 
         # Execute enter callbacks
         execute_scene_enter_callbacks(target_scene)
+
+        # Publish scene entered event
+        if bus = @event_bus
+          bus.publish(Events::SceneEnteredEvent.new(name, previous_scene_name))
+        end
 
         # Track performance
         @scene_load_times[name] = Time.monotonic - Time.monotonic

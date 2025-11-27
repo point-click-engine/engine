@@ -34,7 +34,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_content)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -56,7 +56,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       config_file = create_temp_config_file(invalid_yaml)
 
       expect_raises(YAML::ParseException) do
-        PointClickEngine::Core::GameConfig.from_file(config_file)
+        PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
       end
     end
 
@@ -75,7 +75,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(minimal_config)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -96,7 +96,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_without_title)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -115,7 +115,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_invalid_version)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -134,7 +134,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_without_start_scene)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -155,7 +155,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_invalid_dimensions)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -175,7 +175,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_extreme_dimensions)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -195,7 +195,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_unusual_aspect)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -216,7 +216,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_fullscreen)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -242,7 +242,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_features)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -265,7 +265,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_conflicting_features)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -291,7 +291,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_asset_patterns)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -314,7 +314,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_nonmatching_patterns)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -344,7 +344,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_player)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -369,7 +369,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_invalid_position)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -397,7 +397,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_locales)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -423,7 +423,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_performance)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -447,7 +447,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_extreme_performance)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -471,7 +471,7 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_missing_start_scene)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      config = PointClickEngine::Core::GameConfig.from_file(config_file, skip_preflight: true)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 
@@ -495,7 +495,8 @@ describe PointClickEngine::Core::Validators::ConfigValidator do
       YAML
 
       config_file = create_temp_config_file(config_with_asset_references)
-      config = PointClickEngine::Core::GameConfig.from_file(config_file)
+      # Use from_yaml directly to skip validation (so we can test validator separately)
+      config = PointClickEngine::Core::GameConfig.from_yaml(config_with_asset_references)
 
       errors = PointClickEngine::Core::Validators::ConfigValidator.validate(config, config_file)
 

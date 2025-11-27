@@ -249,29 +249,22 @@ module PointClickEngine
 
         # Load scene effects using YAML serialization
         if effects = scene_data["effects"]?
-          puts "[SceneLoader] Loading #{effects.as_a.size} effects for scene '#{scene.name}'"
           effects.as_a.each do |effect_data|
             begin
               effect_type = effect_data["type"]?.try(&.as_s) || "unknown"
-              puts "[SceneLoader] Loading effect type: #{effect_type}"
-              
+
               # Use the YAML-serializable config approach
               # Convert YAML::Any to string then parse it back
               yaml_string = effect_data.to_yaml
               if config = Graphics::Effects::SceneEffects::EffectConfig.from_yaml(yaml_string)
                 effect = config.create_effect
                 scene.scene_effects << effect
-                puts "[SceneLoader] Successfully created and added #{effect.class.name} to scene"
-              else
-                puts "[SceneLoader] Warning: Unknown or unsupported effect type '#{effect_type}'"
               end
             rescue ex
               effect_type = effect_data["type"]?.try(&.as_s) || "unknown"
-              puts "[SceneLoader] Error creating effect '#{effect_type}': #{ex.message}"
-              puts "[SceneLoader] Backtrace: #{ex.backtrace.first(3).join("\n")}"
+              Core::ErrorLogger.error("[SceneLoader] Error creating effect '#{effect_type}': #{ex.message}")
             end
           end
-          puts "[SceneLoader] Scene '#{scene.name}' now has #{scene.scene_effects.size} effects"
         end
 
         # Load walkable areas

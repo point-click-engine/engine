@@ -72,11 +72,10 @@ module PointClickEngine
 
           def update(dt : Float32)
             super(dt)
-            
+
             # Trigger midpoint callback at 50%
             if !@midpoint_triggered && progress >= 0.5
               @midpoint_triggered = true
-              puts "[TransitionEffect] Midpoint reached, triggering callback"
               @midpoint_callback.try(&.call)
             end
           end
@@ -135,14 +134,7 @@ module PointClickEngine
           def draw_overlay(renderer : PointClickEngine::Graphics::Renderer, width : Int32 = 1024, height : Int32 = 768)
             # For shader-based transitions, we need special handling
             # The shader effects work by modifying how the scene is displayed
-            # For now, we'll render non-shader versions
-            
-            # Check if we have a shader but log that it's loaded
-            if shader = @shader
-              puts "[TransitionEffect] Shader loaded for #{@transition_type}, but using fallback rendering"
-            end
-            
-            # Fallback to non-shader implementations
+            # For now, we'll render non-shader versions (fallback implementations)
             case @transition_type
             when .fade?
               # Draw a black overlay with varying opacity based on phase
@@ -418,14 +410,11 @@ module PointClickEngine
             begin
               shader = RL.load_shader_from_memory(vertex_source, fragment_source)
               if shader.id > 0
-                puts "[TransitionEffect] Successfully loaded shader for #{@transition_type}"
                 return shader
               else
-                puts "[TransitionEffect] Failed to load shader - invalid shader ID"
                 return nil
               end
             rescue ex
-              puts "[TransitionEffect] Failed to load shader - #{ex.message}"
               return nil
             end
           end

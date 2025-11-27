@@ -63,6 +63,11 @@ require "./core/error_reporter"
 require "./core/engine"
 require "./core/game_config"
 
+# New event-driven architecture
+require "./core/events/events"
+require "./core/di/di"
+require "./core/conditions/conditions"
+
 # Graphics modules
 require "./graphics/graphics"
 
@@ -108,6 +113,7 @@ require "./core/save_system"
 require "./audio/audio_manager"
 require "./audio/ambient_sound_manager"
 require "./audio/footstep_system"
+require "./audio/spatial_audio"
 
 # Asset management modules
 require "./assets/asset_manager"

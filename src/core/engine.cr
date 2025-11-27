@@ -62,6 +62,14 @@ module PointClickEngine
       # Current scene reference
       property current_scene : Scenes::Scene?
 
+      # Optional custom service overrides (for testing/DI)
+      @custom_resource_manager : IResourceLoader?
+      @custom_input_manager : IInputManager?
+      @custom_render_manager : IRenderManager?
+
+      # Whether to skip singleton registration (for testing)
+      @skip_singleton : Bool = false
+
       # Get renderer from system manager
       def renderer : Graphics::Renderer
         @system_manager.renderer.not_nil!
@@ -104,6 +112,28 @@ module PointClickEngine
       def initialize(@window_width : Int32, @window_height : Int32, @window_title : String)
         raise "Engine already initialized" if @@instance
         @@instance = self
+      end
+
+      # Creates a new game engine instance with optional DI overrides
+      # Use skip_singleton: true for testing to allow multiple engine instances
+      def initialize(
+        @window_width : Int32,
+        @window_height : Int32,
+        @window_title : String,
+        resource_manager : IResourceLoader? = nil,
+        input_manager : IInputManager? = nil,
+        render_manager : IRenderManager? = nil,
+        skip_singleton : Bool = false
+      )
+        @skip_singleton = skip_singleton
+        unless skip_singleton
+          raise "Engine already initialized" if @@instance
+          @@instance = self
+        end
+
+        @custom_resource_manager = resource_manager
+        @custom_input_manager = input_manager
+        @custom_render_manager = render_manager
       end
 
       # Initializes the engine and all subsystems
@@ -407,6 +437,11 @@ module PointClickEngine
 
       def event_system
         @system_manager.event_system
+      end
+
+      # New unified event bus accessor
+      def event_bus
+        @system_manager.event_bus
       end
 
       def player=(value : Characters::Character?)

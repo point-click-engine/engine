@@ -6,6 +6,7 @@ require "./sound_effect_manager"
 require "./music_manager"
 require "./volume_controller"
 require "./audio_resource_cache"
+require "../core/events/events"
 
 module PointClickEngine
   module Audio
@@ -114,6 +115,9 @@ module PointClickEngine
       getter volume_controller : VolumeController
       getter resource_cache : AudioResourceCache
 
+      # Optional EventBus for publishing audio events
+      property event_bus : Core::Events::EventBus?
+
       # Legacy property mappings for compatibility
       delegate master_volume, to: @volume_controller
       delegate muted, to: @volume_controller
@@ -177,6 +181,11 @@ module PointClickEngine
 
         @resource_cache.access_resource(name)
         @sound_effect_manager.play_sound(name, @volume_controller.effective_sfx_volume)
+
+        # Publish event
+        if bus = @event_bus
+          bus.publish(Core::Events::SoundPlayedEvent.new(name, @volume_controller.effective_sfx_volume))
+        end
       end
 
       def play_sound_at(name : String, position : RL::Vector2, listener_pos : RL::Vector2, max_distance : Float32 = 500.0)
@@ -202,6 +211,11 @@ module PointClickEngine
 
         @resource_cache.access_resource("music_#{name}")
         @music_manager.play_music(name, loop)
+
+        # Publish event
+        if bus = @event_bus
+          bus.publish(Core::Events::MusicStartedEvent.new(name, loop))
+        end
       end
 
       def crossfade_to(name : String, duration : Float32 = 2.0, loop : Bool = true)
@@ -212,7 +226,14 @@ module PointClickEngine
       end
 
       def stop_music
+        # Get current music name before stopping
+        current_name = @music_manager.current_music.try(&.name)
         @music_manager.stop_music
+
+        # Publish event
+        if current_name && (bus = @event_bus)
+          bus.publish(Core::Events::MusicStoppedEvent.new(current_name))
+        end
       end
 
       def pause_music

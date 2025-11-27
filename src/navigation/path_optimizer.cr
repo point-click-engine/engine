@@ -194,7 +194,8 @@ module PointClickEngine
         # Sample points along the line for more precise checking
         distance = Math.sqrt((target.x - start.x) ** 2 + (target.y - start.y) ** 2)
 
-        if distance == 0
+        # Use epsilon comparison instead of exact float equality
+        if distance < 0.0001f32
           return true
         end
 
@@ -334,14 +335,21 @@ module PointClickEngine
         original_length = calculate_path_length(original)
         optimized_length = calculate_path_length(optimized)
 
+        # Guard against division by zero
+        reduction_pct = original.size > 0 ?
+          ((original.size - optimized.size).to_f32 / original.size * 100) : 0.0f32
+
+        length_change_pct = original_length > 0.0001f32 ?
+          ((optimized_length - original_length) / original_length * 100) : 0.0f32
+
         {
           "original_points"          => original.size.to_f32,
           "optimized_points"         => optimized.size.to_f32,
           "points_removed"           => (original.size - optimized.size).to_f32,
-          "reduction_percentage"     => ((original.size - optimized.size).to_f32 / original.size * 100),
+          "reduction_percentage"     => reduction_pct,
           "original_length"          => original_length,
           "optimized_length"         => optimized_length,
-          "length_change_percentage" => ((optimized_length - original_length) / original_length * 100),
+          "length_change_percentage" => length_change_pct,
         }
       end
 

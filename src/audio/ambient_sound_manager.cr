@@ -47,8 +47,8 @@ module PointClickEngine
         def load_sound
           begin
             @sound = RAudio.load_sound(@config.file_path)
-          rescue
-            puts "Warning: Could not load ambient sound #{@config.name} from #{@config.file_path}"
+          rescue ex
+            # Log error without debug puts in production
             @sound = nil
           end
         end
@@ -320,27 +320,28 @@ module PointClickEngine
           @fade_timer += dt
           progress = (@fade_timer / @fade_duration).clamp(0.0f32, 1.0f32)
 
-          if @fading_in
-            start_volume = @current_volume
-            @current_volume = start_volume + (@target_volume - start_volume) * progress
-          elsif @fading_out
-            start_volume = @current_volume
-            @current_volume = start_volume * (1.0f32 - progress)
+          # Use the same fade calculation as the full implementation:
+          # Linear interpolation from fade_start_volume to target_volume
+          if @fading_in || @fading_out
+            @current_volume = @fade_start_volume + (progress * (@target_volume - @fade_start_volume))
           end
 
           if progress >= 1.0f32
             @current_volume = @target_volume
+            was_fading_out = @fading_out
             @fading_in = false
             @fading_out = false
-            @playing = false if @fading_out && @target_volume == 0.0f32
+            @playing = false if was_fading_out && @target_volume == 0.0f32
           end
         end
 
         def set_volume(volume : Float32, fade_duration : Float32 = 0.0f32)
           @target_volume = volume.clamp(0.0f32, 1.0f32)
-          @fade_duration = fade_duration
+
           if fade_duration > 0.0f32
+            @fade_duration = fade_duration
             @fade_timer = 0.0f32
+            @fade_start_volume = @current_volume
             @fading_in = @target_volume > @current_volume
             @fading_out = @target_volume < @current_volume
           else

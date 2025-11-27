@@ -112,14 +112,11 @@ module PointClickEngine
           begin
             shader = RL.load_shader_from_memory(vertex_source, fragment_source)
             if shader.id > 0
-              puts "[ShaderEffect] Successfully loaded shader for #{self.class.name}"
               return shader
             else
-              puts "[ShaderEffect] Failed to load shader - invalid shader ID"
               return nil
             end
           rescue ex
-            puts "[ShaderEffect] Failed to load shader - #{ex.message}"
             return nil
           end
         end

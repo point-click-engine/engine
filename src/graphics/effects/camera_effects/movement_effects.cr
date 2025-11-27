@@ -40,10 +40,9 @@ module PointClickEngine
             target_x = target_pos.x + @offset.x
             target_y = target_pos.y + @offset.y
 
-            # Calculate distance from camera center
-            # TODO: Get viewport size from elsewhere since Graphics::Core::Camera doesn't have viewport
-            viewport_width = 1280
-            viewport_height = 720
+            # Calculate distance from camera center using Display reference dimensions
+            viewport_width = Core::Display::REFERENCE_WIDTH
+            viewport_height = Core::Display::REFERENCE_HEIGHT
             cam_center_x = camera.position.x + viewport_width / 2
             cam_center_y = camera.position.y + viewport_height / 2
 
@@ -192,8 +191,8 @@ module PointClickEngine
                 zoom_ratio = new_zoom / camera.zoom
 
                 # Adjust camera to keep center point in same screen position
-                cam_center_x = camera.position.x + 1280 / 2
-                cam_center_y = camera.position.y + 720 / 2
+                cam_center_x = camera.position.x + Core::Display::REFERENCE_WIDTH / 2
+                cam_center_y = camera.position.y + Core::Display::REFERENCE_HEIGHT / 2
 
                 offset_x = center.x - cam_center_x
                 offset_y = center.y - cam_center_y

@@ -24,10 +24,11 @@ describe PointClickEngine::Core::Engine do
 
         invalid_scene = PointClickEngine::Scenes::Scene.new("")
 
-        # Empty scene names should be rejected
-        expect_raises(ArgumentError) do
-          engine.add_scene(invalid_scene)
-        end
+        # Empty scene names should be rejected - returns failure Result
+        result = engine.add_scene(invalid_scene)
+        result.failure?.should be_true
+        error_msg = result.error.message || ""
+        error_msg.includes?("non-empty").should be_true
       end
 
       it "prevents duplicate scene names" do
@@ -39,9 +40,11 @@ describe PointClickEngine::Core::Engine do
 
         engine.add_scene(scene1)
 
-        expect_raises(ArgumentError) do
-          engine.add_scene(scene2)
-        end
+        # Adding duplicate should return failure Result
+        result = engine.add_scene(scene2)
+        result.failure?.should be_true
+        error_msg = result.error.message || ""
+        error_msg.includes?("already exists").should be_true
       end
 
       it "handles scene with complex configuration" do
@@ -94,7 +97,11 @@ describe PointClickEngine::Core::Engine do
 
         engine.change_scene_with_transition("target", "fade", 1.0f32)
 
-        # Current scene should be the target after transition starts
+        # Simulate time passing to allow transition to complete (past midpoint)
+        # The transition duration is 1.0 second, so we need to update past 0.5s
+        10.times { engine.effect_manager.update(0.1f32) }
+
+        # Current scene should be the target after transition midpoint is reached
         engine.current_scene.not_nil!.name.should eq("target")
       end
 
@@ -133,7 +140,10 @@ describe PointClickEngine::Core::Engine do
 
         engine.change_scene_with_transition("target", "fade", 1.0f32, target_pos)
 
-        # Player should be positioned correctly after transition
+        # Simulate time passing to allow transition to complete (past midpoint)
+        10.times { engine.effect_manager.update(0.1f32) }
+
+        # Player should be positioned correctly after transition midpoint
         if p = engine.player
           p.position.x.should eq(start_x.to_f32)
           p.position.y.should eq(start_y.to_f32)
@@ -279,6 +289,9 @@ describe PointClickEngine::Core::Engine do
         new_x, new_y = 150, 250
 
         engine.change_scene_with_transition("target", "fade", 1.0f32, RL::Vector2.new(x: new_x.to_f32, y: new_y.to_f32))
+
+        # Simulate time passing to allow transition to complete (past midpoint)
+        10.times { engine.effect_manager.update(0.1f32) }
 
         if p = engine.player
           p.position.x.should eq(new_x.to_f32)

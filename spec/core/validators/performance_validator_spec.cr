@@ -11,10 +11,27 @@ end
 
 def cleanup_test_assets(files : Array(String))
   files.each { |f| File.delete(f) if File.exists?(f) }
-  ["test_assets", "test_scenes", "test_audio"].each { |d| Dir.delete(d) if Dir.exists?(d) rescue nil }
+  # Clean up all remaining files in test directories and the directories themselves
+  ["test_assets", "test_scenes", "test_audio"].each do |d|
+    if Dir.exists?(d)
+      Dir.glob(File.join(d, "**/*")).each { |f| File.delete(f) if File.file?(f) }
+      begin
+        FileUtils.rm_rf(d)
+      rescue
+        # Ignore errors
+      end
+    end
+  end
+  # Also clean up config file
+  File.delete("test_config.yaml") if File.exists?("test_config.yaml")
 end
 
 describe "Performance Validation" do
+  before_each do
+    # Ensure clean state before each test
+    cleanup_test_assets([] of String)
+  end
+
   after_each do
     cleanup_test_assets([
       "test_assets/large_background.png",
@@ -143,8 +160,9 @@ describe "Performance Validation" do
       # Create large uncompressed audio file
       large_audio_size = 50 * 1024 * 1024 # 50MB uncompressed
       create_test_asset_files({
-        "test_audio/huge_sound.wav" => large_audio_size,
-        "test_audio/compressed.ogg" => 2 * 1024 * 1024, # 2MB compressed
+        "test_audio/huge_sound.wav"  => large_audio_size,
+        "test_audio/compressed.ogg"  => 2 * 1024 * 1024,  # 2MB compressed
+        "test_assets/bg.png"         => 1024,              # Background file
       })
 
       config_content = <<-YAML
@@ -467,11 +485,9 @@ describe "Performance Validation" do
       YAML
 
       # Create complex scene that might struggle at high FPS
-      scene_content = <<-YAML
-      name: "test"
-      background_path: "test_assets/complex_bg.png"
-      hotspots:
-      YAML
+      scene_content = "name: \"test\"\n"
+      scene_content += "background_path: \"test_assets/complex_bg.png\"\n"
+      scene_content += "hotspots:\n"
 
       # Add many hotspots to increase rendering complexity
       100.times do |i|

@@ -124,20 +124,21 @@ module PointClickEngine
                     prevent_corner_cutting : Bool? = nil,
                     heuristic_method : HeuristicCalculator::Method? = nil,
                     max_search_nodes : Int32? = nil)
-        if allow_diagonal
-          @algorithm.movement_validator.allow_diagonal = allow_diagonal.not_nil!
+        # Use unless nil? instead of truthy check to allow false values
+        unless allow_diagonal.nil?
+          @algorithm.movement_validator.allow_diagonal = allow_diagonal
         end
 
-        if prevent_corner_cutting
-          @algorithm.movement_validator.prevent_corner_cutting = prevent_corner_cutting.not_nil!
+        unless prevent_corner_cutting.nil?
+          @algorithm.movement_validator.prevent_corner_cutting = prevent_corner_cutting
         end
 
-        if heuristic_method
-          @algorithm.heuristic_calculator.method = heuristic_method.not_nil!
+        unless heuristic_method.nil?
+          @algorithm.heuristic_calculator.method = heuristic_method
         end
 
-        if max_search_nodes
-          @algorithm.max_search_nodes = max_search_nodes.not_nil!
+        unless max_search_nodes.nil?
+          @algorithm.max_search_nodes = max_search_nodes
         end
       end
 
@@ -190,10 +191,15 @@ module PointClickEngine
       def draw_performance_info(x : Int32, y : Int32, path_length : Float32)
         return unless @enable_debug
         stats = @algorithm.get_search_stats
+
+        # Use safe casts to avoid crashes if types don't match
+        search_time = stats["search_time_ms"]?.try(&.as?(Float64)) || 0.0
+        nodes_searched = stats["nodes_searched"]?.try(&.as?(Int32)) || 0
+
         @debug_renderer.draw_performance_info(
           x, y,
-          stats["search_time_ms"].as(Float64) / 1000,
-          stats["nodes_searched"].as(Int32),
+          search_time / 1000,
+          nodes_searched,
           path_length
         )
       end

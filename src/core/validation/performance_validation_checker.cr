@@ -111,7 +111,7 @@ module PointClickEngine
 
           # Warn about excessive asset count
           if total_asset_count > 50
-            result.add_performance_hint("Many asset files (#{total_asset_count}) found - consider using asset bundling or atlasing")
+            result.add_performance_hint("Found many assets (#{total_asset_count} files) - consider using asset bundling or atlasing")
           end
 
           # Analyze audio referenced in scene files
@@ -388,8 +388,8 @@ module PointClickEngine
               if File.exists?(scene_path) && scene_path.ends_with?(".yaml")
                 begin
                   scene_content = File.read(scene_path)
-                  if match = scene_content.match(/background_path:\s*(.+)/)
-                    background_path = match[1].strip
+                  if match = scene_content.match(/background_path:\s*["']?([^"'\n]+)["']?/)
+                    background_path = match[1].strip.gsub(/^["']|["']$/, "")
                     full_path = File.join(context.base_dir, background_path)
                     if File.exists?(full_path)
                       total_texture_memory += estimate_texture_memory_usage(full_path)
@@ -397,6 +397,18 @@ module PointClickEngine
                   end
                 rescue
                   # Ignore errors reading scene files
+                end
+              end
+            end
+          end
+
+          # Also count all texture files in common asset directories
+          ["test_assets", "assets", "sprites", "images", "backgrounds"].each do |asset_dir|
+            full_dir = File.join(context.base_dir, asset_dir)
+            if Dir.exists?(full_dir)
+              Dir.glob(File.join(full_dir, "**/*.{png,jpg,jpeg,bmp,gif}")).each do |file|
+                if File.exists?(file)
+                  total_texture_memory += estimate_texture_memory_usage(file)
                 end
               end
             end

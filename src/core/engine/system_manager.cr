@@ -10,6 +10,7 @@ require "../../ui/dialog_manager"
 require "../config_manager"
 require "../../ui/menu_system"
 require "./verb_input_system"
+require "../events/events"
 
 module PointClickEngine
   module Core
@@ -28,8 +29,12 @@ module PointClickEngine
         property display_manager : Graphics::Display?
         property menu_system : UI::MenuSystem?
 
+        # New unified event bus (coexists with event_system for backwards compatibility)
+        property event_bus : Events::EventBus
+
         def initialize
           @event_system = Scripting::EventSystem.new
+          @event_bus = Events::EventBus.new
         end
 
         # Initialize all engine systems
@@ -120,7 +125,10 @@ module PointClickEngine
           @dialog_manager.try(&.update(dt))
           # Transitions are now handled by the effect system
           @menu_system.try(&.update(dt))
+
+          # Process both event systems
           @event_system.process_events
+          @event_bus.process
         end
 
         # Cleanup all systems

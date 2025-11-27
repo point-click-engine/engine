@@ -4582,3 +4582,159 @@ end
 2. Add integration tests for event flow
 3. Run CLI validator on all YAML files
 4. Document migration guide
+
+---
+
+## 24. Implementation Progress
+
+### Completed Tasks
+
+#### Phase 1: Critical Bug Fixes ✓
+All 8 critical bug fixes completed:
+1. ✓ `src/ui/floating_text.cr` - Fixed uninitialized `@fade_out_start_time`
+2. ✓ `src/scenes/conditions.cr` - Fixed StateCondition always returning false
+3. ✓ `src/navigation/pathfinding.cr` - Fixed configure() boolean logic
+4. ✓ `src/navigation/path_optimizer.cr` - Fixed division by zero
+5. ✓ `src/audio/ambient_sound_manager.cr` - Fixed fade calculation
+6. ✓ `src/graphics/effects/camera_effects/movement_effects.cr` - Fixed viewport dimensions
+7. ✓ `src/characters/dialogue/dialog_tree.cr` - Added ConditionValidator for injection protection
+8. ✓ Removed debug puts from production code paths
+
+#### Phase 2: Core Infrastructure ✓
+
+**2.1 Unified EventBus** (`src/core/events/`)
+- `game_event.cr` - Base GameEvent class with consume/propagation support
+- `event_bus.cr` - Type-safe EventBus with priority-based handlers
+- `game_events.cr` - Concrete event types (SceneEnteredEvent, ItemAddedEvent, etc.)
+- `events.cr` - Module index file
+
+**2.2 ServiceRegistry for DI** (`src/core/di/`)
+- `service_registry.cr` - Service container with Singleton/Scoped/Transient lifetimes
+- `services.cr` - Global service configuration module
+- `di.cr` - Module index file
+
+**2.3 Type-Safe Condition System** (`src/core/conditions/`)
+- `condition.cr` - Base conditions (FlagCondition, VariableCondition, QuestCondition, TimeCondition, AchievementCondition)
+- `composite.cr` - Composite conditions (AndCondition, OrCondition, NotCondition)
+- `builder.cr` - Fluent builder DSL for conditions
+- `parser.cr` - String parser for YAML backwards compatibility
+- `conditions.cr` - Module index file
+
+#### Phase 3: Event System Migration ✓
+
+**3.1 Engine Integration** ✓
+- Added `event_bus` property to SystemManager
+- Added `event_bus` accessor to Engine
+- EventBus processes alongside legacy EventSystem
+
+**3.2 GameStateManager Integration** ✓
+- Added optional EventBus parameter to constructor
+- State changes now publish to EventBus (if configured) alongside legacy callbacks
+
+**3.3 SceneManager Integration** ✓
+- Added optional EventBus property to SceneManager
+- Scene transitions publish SceneTransitionStartEvent, SceneExitedEvent, SceneEnteredEvent
+
+**3.4 Inventory Integration** ✓
+- Added EventBus to InventorySystem
+- Item operations publish ItemAddedEvent, ItemRemovedEvent, ItemSelectedEvent, ItemUsedEvent, ItemCombinedEvent
+
+**3.5 Audio Integration** ✓
+- Added EventBus to AudioManager
+- Music/sound operations publish MusicStartedEvent, MusicStoppedEvent, SoundPlayedEvent
+
+#### Phase 4: Dependency Injection Support ✓
+
+**4.1 Engine DI** ✓
+- Added optional constructor parameters for custom managers
+- Added `skip_singleton: true` option for testing multiple engine instances
+- Added custom service override fields
+
+**4.2 Testing Module** (`src/core/testing/`) ✓
+- `mocks.cr` - Mock implementations:
+  - `MockResourceLoader` - Tracks load operations without file I/O
+  - `MockInputManager` - Allows simulating mouse/keyboard input
+  - `MockRenderManager` - Tracks render calls
+  - `MockEventBus` - Tracks all published events
+  - `MockGameStateManager` - Records state changes
+  - `TestFactory` - Creates fully-mocked test engines
+
+#### Phase 5: Code Quality Improvements ✓
+
+**5.1 Audio Spatial Utility** (`src/audio/spatial_audio.cr`) ✓
+- Extracted common distance/volume calculations
+- `calculate_distance()` - 2D distance calculation
+- `calculate_volume_factor()` - Distance-based volume with falloff
+- `calculate_pan()` - Stereo panning
+- `calculate_spatial_params()` - Combined volume and pan
+- `in_range?()` - Audibility check
+- Updated `SoundEffectManager` to use new utility
+
+**5.2 Input Validation** ✓
+- Added `ItemValidationError` class for inventory validation
+- Added comprehensive validation to `InventoryItem`:
+  - Name pattern validation (alphanumeric, underscores, dashes)
+  - Length limits for name, description
+  - Array size limits for combinables, usable_on
+  - `validate!` method that raises on error
+  - `validate` method that returns error array
+  - `valid?` convenience method
+
+### Implementation Summary
+
+All major phases of the improvement plan have been implemented:
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 1 | ✓ Complete | 8 critical bug fixes |
+| Phase 2 | ✓ Complete | EventBus, ServiceRegistry, Type-safe Conditions |
+| Phase 3 | ✓ Complete | EventBus integration across all major systems |
+| Phase 4 | ✓ Complete | DI support and Testing module |
+| Phase 5 | ✓ Complete | Audio utility extraction, input validation |
+
+### New Files Created
+
+```
+src/core/events/
+├── game_event.cr      # Base event class
+├── event_bus.cr       # Type-safe event bus
+├── game_events.cr     # 30+ concrete event types
+└── events.cr          # Module index
+
+src/core/di/
+├── service_registry.cr  # Service container
+├── services.cr          # Global service config
+└── di.cr               # Module index
+
+src/core/conditions/
+├── condition.cr       # Base condition types
+├── composite.cr       # AND/OR/NOT combinators
+├── builder.cr         # Fluent builder DSL
+├── parser.cr          # String parser
+└── conditions.cr      # Module index
+
+src/core/testing/
+├── mocks.cr           # Mock implementations
+└── testing.cr         # Module index
+
+src/audio/
+└── spatial_audio.cr   # Spatial audio utilities
+```
+
+### Files Modified
+
+- `src/core/engine/system_manager.cr` - Added EventBus
+- `src/core/engine.cr` - Added DI support, EventBus accessor
+- `src/core/game_state_manager.cr` - Added EventBus integration
+- `src/core/scene_manager.cr` - Added EventBus integration
+- `src/inventory/inventory_system.cr` - Added EventBus integration
+- `src/inventory/inventory_item.cr` - Added validation
+- `src/audio/audio_manager.cr` - Added EventBus integration
+- `src/audio/sound_effect_manager.cr` - Use spatial utility
+
+### Remaining Work (Phase 6)
+
+- Update specs for EventBus (optional - existing specs still pass)
+- Add integration tests for event flow
+- Run CLI validator on all YAML files
+- Document migration guide for existing games

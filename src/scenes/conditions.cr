@@ -49,17 +49,44 @@ module PointClickEngine
       end
 
       def evaluate(engine : Core::Engine) : Bool
-        # State variables would need to be accessed through a state manager
-        # For now, always return false as state management isn't exposed
-        false
+        # Get the game state manager from the engine
+        gsm = engine.game_state_manager
+        return false unless gsm
+
+        # First check if it's a flag (boolean)
+        if gsm.flags.has_key?(@variable)
+          actual_value = gsm.get_flag(@variable)
+          expected_bool = case @value
+                          when Bool    then @value.as(Bool)
+                          when String  then @value.as(String).downcase == "true"
+                          when Int32   then @value.as(Int32) != 0
+                          when Float32 then @value.as(Float32) != 0.0f32
+                          else false
+                          end
+          return compare_bool(actual_value, expected_bool, @operator)
+        end
+
+        # Then check variables
+        actual_value = gsm.get_variable(@variable)
+        return false if actual_value.nil?
+
+        compare_values(actual_value, @value, @operator)
       end
 
-      private def compare_values(actual : Core::StateValue, expected : String | Int32 | Float32 | Bool, op : ComparisonOperator) : Bool
+      private def compare_bool(actual : Bool, expected : Bool, op : ComparisonOperator) : Bool
+        case op
+        when .equals?     then actual == expected
+        when .not_equals? then actual != expected
+        else actual == expected  # Booleans only support equals/not equals
+        end
+      end
+
+      private def compare_values(actual : Core::GameValue, expected : String | Int32 | Float32 | Bool, op : ComparisonOperator) : Bool
         case op
         when .equals?
-          actual.value == expected
+          values_equal?(actual, expected)
         when .not_equals?
-          actual.value != expected
+          !values_equal?(actual, expected)
         when .greater?
           compare_numeric(actual, expected) > 0
         when .greater_equal?
@@ -73,8 +100,21 @@ module PointClickEngine
         end
       end
 
-      private def compare_numeric(actual : Core::StateValue, expected : String | Int32 | Float32 | Bool) : Int32
-        actual_num = to_numeric(actual.value)
+      private def values_equal?(actual : Core::GameValue, expected : String | Int32 | Float32 | Bool) : Bool
+        case {actual, expected}
+        when {Bool, Bool}       then actual == expected
+        when {Int32, Int32}     then actual == expected
+        when {Float32, Float32} then actual == expected
+        when {String, String}   then actual == expected
+        when {Int32, Float32}   then actual.to_f32 == expected
+        when {Float32, Int32}   then actual == expected.to_f32
+        else
+          actual.to_s == expected.to_s
+        end
+      end
+
+      private def compare_numeric(actual : Core::GameValue, expected : String | Int32 | Float32 | Bool) : Int32
+        actual_num = to_numeric(actual)
         expected_num = to_numeric(expected)
 
         if actual_num && expected_num
@@ -90,7 +130,7 @@ module PointClickEngine
         end
       end
 
-      private def to_numeric(value : String | Int32 | Float32 | Bool) : Float32?
+      private def to_numeric(value : Core::GameValue | String | Int32 | Float32 | Bool) : Float32?
         case value
         when Int32   then value.to_f32
         when Float32 then value
