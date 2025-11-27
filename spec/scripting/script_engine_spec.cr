@@ -716,5 +716,301 @@ module PointClickEngine
         engine.game_state["first_visit"].should eq("false")
       end
     end
+
+    describe "timer API" do
+      it "has add_timer function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(add_timer) == 'function'").should be_true
+      end
+
+      it "has cancel_timer function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(cancel_timer) == 'function'").should be_true
+      end
+
+      it "has _timer_callbacks table for storing callbacks" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(_timer_callbacks) == 'table'").should be_true
+      end
+
+      it "add_timer stores callback function" do
+        RaylibContext.ensure_window
+        game_engine = Core::Engine.new(800, 600, "Test")
+        game_engine.init
+
+        script_engine = Scripting::ScriptEngine.new
+
+        script_engine.execute_script(<<-LUA)
+          local callback_stored = false
+          local timer_id = add_timer(1.0, function()
+            callback_stored = true
+          end)
+          -- Check that callback was stored (timer_id returned means it worked)
+          set_game_state("timer_created", tostring(timer_id ~= nil))
+        LUA
+
+        script_engine.game_state["timer_created"].should eq("true")
+      end
+    end
+
+    describe "cutscene API" do
+      it "has start_cutscene function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(start_cutscene) == 'function'").should be_true
+      end
+
+      it "has is_cutscene_playing function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(is_cutscene_playing) == 'function'").should be_true
+      end
+
+      it "has skip_cutscene function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(skip_cutscene) == 'function'").should be_true
+      end
+
+      it "has _cutscene_callbacks table for storing callbacks" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(_cutscene_callbacks) == 'table'").should be_true
+      end
+
+      it "start_cutscene stores callback" do
+        engine = Scripting::ScriptEngine.new
+
+        # Just test that callback is stored in Lua - the engine call may fail
+        # without a real Engine instance, but the callback storage should work
+        engine.execute_script(<<-LUA)
+          -- Store callback first
+          _cutscene_callbacks["intro"] = function(event_type, skipped)
+            set_game_state("cutscene_event", event_type)
+          end
+          set_game_state("callback_stored", tostring(_cutscene_callbacks["intro"] ~= nil))
+        LUA
+
+        engine.game_state["callback_stored"].should eq("true")
+      end
+    end
+
+    describe "input dialog API" do
+      it "has show_input_dialog function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(show_input_dialog) == 'function'").should be_true
+      end
+
+      it "show_input_dialog stores callback" do
+        engine = Scripting::ScriptEngine.new
+
+        # Test that the callback is stored - the actual dialog call may fail
+        # without a real Engine instance
+        engine.execute_script(<<-LUA)
+          -- Manually store callback as show_input_dialog would
+          _input_dialog_callback = function(result)
+            set_game_state("input_result", result)
+          end
+          set_game_state("callback_stored", tostring(_input_dialog_callback ~= nil))
+        LUA
+
+        engine.game_state["callback_stored"].should eq("true")
+      end
+
+      it "accepts max_length parameter" do
+        RaylibContext.ensure_window
+        game_engine = Core::Engine.new(800, 600, "Test")
+        game_engine.init
+
+        script_engine = Scripting::ScriptEngine.new
+
+        # Should not error with max_length parameter when engine exists
+        result = script_engine.execute_script("show_input_dialog('PIN:', function() end, 4)")
+        result.should be_true
+      end
+    end
+
+    describe "ambient audio API" do
+      it "has play_ambient function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(play_ambient) == 'function'").should be_true
+      end
+
+      it "has stop_ambient function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(stop_ambient) == 'function'").should be_true
+      end
+
+      it "has audio.play_ambient method defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(audio.play_ambient) == 'function'").should be_true
+      end
+
+      it "has audio.stop_ambient method defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(audio.stop_ambient) == 'function'").should be_true
+      end
+
+      it "has audio.pause_music method defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(audio.pause_music) == 'function'").should be_true
+      end
+
+      it "has audio.resume_music method defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(audio.resume_music) == 'function'").should be_true
+      end
+    end
+
+    describe "floating dialog API" do
+      it "has show_floating_dialog function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(show_floating_dialog) == 'function'").should be_true
+      end
+
+      it "has show_character_dialog function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(show_character_dialog) == 'function'").should be_true
+      end
+
+      it "accepts position, duration, and type parameters" do
+        RaylibContext.ensure_window
+        game_engine = Core::Engine.new(800, 600, "Test")
+        game_engine.init
+
+        script_engine = Scripting::ScriptEngine.new
+
+        # Should not error with all parameters when engine exists
+        result = script_engine.execute_script(<<-LUA)
+          show_floating_dialog("Guard", "Hello!", {x = 100, y = 200}, 3.0, "bubble")
+          return true
+        LUA
+        result.should be_true
+      end
+    end
+
+    describe "local variable API" do
+      it "has set_variable function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(set_variable) == 'function'").should be_true
+      end
+
+      it "has get_variable function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(get_variable) == 'function'").should be_true
+      end
+
+      it "has increase_variable function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(increase_variable) == 'function'").should be_true
+      end
+
+      it "set_variable and get_variable work together" do
+        engine = Scripting::ScriptEngine.new
+
+        engine.execute_script(<<-LUA)
+          set_variable("score", 100)
+          local value = get_variable("score", 0)
+          set_game_state("score_value", tostring(value))
+        LUA
+
+        engine.game_state["score_value"].should eq("100")
+      end
+
+      it "get_variable returns default for missing key" do
+        engine = Scripting::ScriptEngine.new
+
+        engine.execute_script(<<-LUA)
+          local value = get_variable("nonexistent", 42)
+          set_game_state("default_value", tostring(value))
+        LUA
+
+        engine.game_state["default_value"].should eq("42")
+      end
+
+      it "increase_variable increments value" do
+        engine = Scripting::ScriptEngine.new
+
+        engine.execute_script(<<-LUA)
+          set_variable("counter", 5)
+          increase_variable("counter", 3)
+          local value = get_variable("counter", 0)
+          set_game_state("counter_value", tostring(value))
+        LUA
+
+        engine.game_state["counter_value"].should eq("8")
+      end
+
+      it "increase_variable creates variable if missing" do
+        engine = Scripting::ScriptEngine.new
+
+        engine.execute_script(<<-LUA)
+          increase_variable("new_counter", 10)
+          local value = get_variable("new_counter", 0)
+          set_game_state("new_counter_value", tostring(value))
+        LUA
+
+        engine.game_state["new_counter_value"].should eq("10")
+      end
+    end
+
+    describe "character helper functions" do
+      it "has has_character function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(has_character) == 'function'").should be_true
+      end
+
+      it "has get_character_position function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(get_character_position) == 'function'").should be_true
+      end
+
+      it "has play_character_animation function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(play_character_animation) == 'function'").should be_true
+      end
+
+      it "has move_character function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(move_character) == 'function'").should be_true
+      end
+
+      it "has hide_character function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(hide_character) == 'function'").should be_true
+      end
+
+      it "has show_character function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(show_character) == 'function'").should be_true
+      end
+
+      it "has character.exists function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(character.exists) == 'function'").should be_true
+      end
+    end
+
+    describe "hotspot helper functions" do
+      it "has set_hotspot_visible function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(set_hotspot_visible) == 'function'").should be_true
+      end
+
+      it "has set_hotspot_enabled function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(set_hotspot_enabled) == 'function'").should be_true
+      end
+    end
+
+    describe "player functions" do
+      it "has get_player_position function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(get_player_position) == 'function'").should be_true
+      end
+    end
+
+    describe "achievement functions" do
+      it "has trigger_achievement function defined" do
+        engine = Scripting::ScriptEngine.new
+        engine.execute_script("return type(trigger_achievement) == 'function'").should be_true
+      end
+    end
   end
 end

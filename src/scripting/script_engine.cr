@@ -342,8 +342,13 @@ module PointClickEngine
           end
 
           -- Show input dialog (for text input like safe combinations)
-          function show_input_dialog(prompt, callback)
-            _engine_show_input_dialog(prompt, callback)
+          -- prompt: Text to display above input field
+          -- callback: Function called with entered text (or empty string if cancelled)
+          -- max_length: Optional max characters (default 32)
+          function show_input_dialog(prompt, callback, max_length)
+            -- Store callback for later invocation
+            _input_dialog_callback = callback
+            _engine_show_input_dialog(prompt, max_length or 32)
           end
 
           -- Show floating dialog bubble (speech/thought)
@@ -455,17 +460,25 @@ module PointClickEngine
           end
         end
 
-        # Input dialog callback - shows a text input prompt
+        # Input dialog callback - shows a text input prompt with proper input handling
         @registry.register_void_function("_engine_show_input_dialog") do |state|
           if state.size >= 1
             prompt = state.to_string(1)
-            # Note: Input dialog functionality would need DialogManager support
-            # For now, log the request
-            puts "[Script] Input dialog requested: #{prompt}"
+            max_length = state.size >= 2 ? state.to_i32(2) : 32
+            lua_ref = @lua # Capture reference for closure
 
             if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
-              # Show as regular dialog for now - full input support would need UI work
-              dialog_manager.show_dialog("Input", prompt)
+              # Use the proper InputDialog system
+              dialog_manager.show_input_dialog(prompt, max_length) do |result|
+                # Call the stored Lua callback if any
+                # Escape single quotes in result for Lua string
+                escaped_result = result.gsub("'", "\\'").gsub("\\", "\\\\")
+                begin
+                  lua_ref.execute!("if _input_dialog_callback then _input_dialog_callback('#{escaped_result}') end")
+                rescue ex
+                  puts "[Script] Input dialog callback error: #{ex.message}"
+                end
+              end
             end
           end
         end
