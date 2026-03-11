@@ -133,7 +133,7 @@ module PointClickEngine
         resource_manager : IResourceLoader? = nil,
         input_manager : IInputManager? = nil,
         render_manager : IRenderManager? = nil,
-        skip_singleton : Bool = false
+        skip_singleton : Bool = false,
       )
         @skip_singleton = skip_singleton
         unless skip_singleton
@@ -238,7 +238,7 @@ module PointClickEngine
         # Update camera and effects
         mouse_pos = RL.get_mouse_position
         camera.update(dt)
-        
+
         # Update all effects (including scene transitions)
         @effect_manager.update(dt)
         @effect_manager.update_camera_effects(camera, dt)
@@ -262,7 +262,7 @@ module PointClickEngine
           else
             render_scene_content
           end
-        # Check if we have an active rain effect
+          # Check if we have an active rain effect
         elsif rain_effect = @effect_manager.active_rain_effect
           if rain_effect.responds_to?(:render_scene_with_rain)
             # Render scene with rain shader
@@ -272,7 +272,7 @@ module PointClickEngine
           else
             render_scene_content
           end
-        # Check if we have an active fog effect
+          # Check if we have an active fog effect
         elsif fog_effect = @effect_manager.active_fog_effect
           if fog_effect.responds_to?(:render_scene_with_fog)
             # Render scene with fog shader
@@ -282,7 +282,7 @@ module PointClickEngine
           else
             render_scene_content
           end
-        # Check if we have an active darkness effect
+          # Check if we have an active darkness effect
         elsif darkness_effect = @effect_manager.active_darkness_effect
           if darkness_effect.responds_to?(:render_scene_with_darkness)
             # Render scene with darkness shader
@@ -292,7 +292,7 @@ module PointClickEngine
           else
             render_scene_content
           end
-        # Check if we have an active underwater effect
+          # Check if we have an active underwater effect
         elsif underwater_effect = @effect_manager.active_underwater_effect
           if underwater_effect.responds_to?(:render_scene_with_underwater)
             # Render scene with underwater shader
@@ -316,17 +316,17 @@ module PointClickEngine
         # In a full implementation, this would be part of the renderer
         layers = Graphics::LayerManager.new
         layers.add_default_layers
-        
+
         # Apply scene effects (including transitions) to the layers
         @effect_manager.apply_scene_effects(renderer, layers, RL.get_frame_time)
-        
+
         # Render scene with camera using the renderer
         renderer.render do |context|
           @current_scene.try do |scene|
             scene.draw(camera)
           end
         end
-        
+
         # Draw action overlay visuals (sprites, backgrounds for sequences)
         @action_overlay_manager.draw
 
@@ -525,6 +525,10 @@ module PointClickEngine
         puts "[Engine] Hotspot highlighting: #{@render_coordinator.hotspot_highlight_enabled ? "ON" : "OFF"}"
       end
 
+      def hotspot_highlight_enabled? : Bool
+        @render_coordinator.hotspot_highlight_enabled
+      end
+
       # Scene management
       def change_scene(scene_name : String)
         puts "[Engine] Changing scene to: #{scene_name}"
@@ -542,12 +546,12 @@ module PointClickEngine
           if scene = @current_scene
             # Clear existing scene effects
             @effect_manager.clear_scene_effects
-            
+
             # Add scene effects to the effect manager
             scene.scene_effects.each do |effect|
               @effect_manager.add_scene_effect(effect)
             end
-            
+
             puts "[Engine] Transferred #{scene.scene_effects.size} scene effects to effect manager"
           end
 
@@ -580,15 +584,14 @@ module PointClickEngine
         end
       end
 
-
       def add_scene(scene : Scenes::Scene)
         scene_manager.add_scene(scene)
       end
 
       # Convenience method for scene transitions
       def change_scene_with_transition(scene_name : String, transition_type : String = "fade",
-                                     duration : Float32 = 1.0f32,
-                                     player_position : RL::Vector2? = nil)
+                                       duration : Float32 = 1.0f32,
+                                       player_position : RL::Vector2? = nil)
         scene_manager.change_scene_with_transition(scene_name, transition_type, duration, player_position)
       end
 

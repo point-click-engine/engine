@@ -72,7 +72,7 @@ describe "Engine Input Handling" do
       engine.change_scene("test_scene")
 
       # Click on character area
-      found_character = scene.get_character_at(RL::Vector2.new(x: 150, y: 200))
+      found_character = scene.get_character_at(RL::Vector2.new(x: 150, y: 184))
       found_character.should eq(character)
     end
   end

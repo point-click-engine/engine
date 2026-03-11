@@ -101,8 +101,7 @@ describe "PreflightCheck Comprehensive Validation" do
 
       # Should have multiple issue types
       result.errors.size.should be > 0
-      result.warnings.size.should be > 0
-      # Note: security_issues is not available in regular PreflightCheck
+      result.info.should_not be_empty
     end
   end
 

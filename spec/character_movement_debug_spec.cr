@@ -25,25 +25,20 @@ describe "Character Movement Debug" do
 
   it "verifies player exists after starting new game" do
     RaylibContext.with_window do
-      # Create engine and start new game
       engine = PointClickEngine::Core::Engine.new(800, 600, "Player Test")
       engine.init
 
-      # Manually set a start scene
       scene = PointClickEngine::Scenes::Scene.new("test_scene")
       scene.logical_width = 800
       scene.logical_height = 600
       engine.add_scene(scene)
-      engine.scene_manager.start_scene = "test_scene"
+      engine.current_scene = scene
 
-      # Create and add player
       player = PointClickEngine::Characters::Player.new("Test Player", vec2(100, 100), vec2(32, 32))
-      scene.player = player
+      engine.player = player
 
-      # Start new game
       engine.start_new_game
 
-      # Player should exist and be in the current scene
       engine.player.should_not be_nil
       engine.current_scene.should_not be_nil
       engine.current_scene.not_nil!.player.should eq(player)

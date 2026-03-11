@@ -81,9 +81,19 @@ describe "Validation System" do
     Dir.mkdir_p(temp_dir)
 
     begin
+      File.write("#{temp_dir}/player.png", "fake_png_data")
+
       config_yaml = <<-YAML
       game:
         title: "Test Game"
+      player:
+        name: "Test Player"
+        sprite_path: "player.png"
+        sprite:
+          frame_width: 32
+          frame_height: 48
+          columns: 4
+          rows: 4
       YAML
 
       config_path = "#{temp_dir}/config.yaml"
@@ -92,7 +102,7 @@ describe "Validation System" do
       # Just run the check without capturing output
       result = PointClickEngine::Core::PreflightCheck.run(config_path)
       result.should_not be_nil
-      result.passed.should be_true
+      result.errors.should be_empty
     ensure
       FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
     end

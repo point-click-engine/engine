@@ -22,7 +22,6 @@ describe "UI Fixes Integration Tests" do
       # Verify floating dialog was added
       dm.floating_manager.has_active_dialogs?.should be_true
     end
-
   end
 
   it "renders cursor with verb visual feedback in the UI layer" do
@@ -53,7 +52,6 @@ describe "UI Fixes Integration Tests" do
       # This should not crash and should handle drawing
       vs.cursor_manager.draw(mouse_pos)
     end
-
   end
 
   it "properly integrates keyboard shortcuts with dialog input blocking" do
@@ -82,7 +80,6 @@ describe "UI Fixes Integration Tests" do
       # Keyboard shortcuts should work via VerbInputSystem handle_keyboard_input
       # which is called before dialog input blocking check
     end
-
   end
 
   it "maintains hotspot highlighting state correctly" do
@@ -91,18 +88,17 @@ describe "UI Fixes Integration Tests" do
     engine.init
 
     # Test initial hotspot highlighting state
-    initial_state = engine.render_manager.hotspot_highlighting_enabled?
+    initial_state = engine.hotspot_highlight_enabled?
 
     # Test toggling hotspot highlighting
     engine.toggle_hotspot_highlight
-    new_state = engine.render_manager.hotspot_highlighting_enabled?
+    new_state = engine.hotspot_highlight_enabled?
     new_state.should_not eq(initial_state)
 
     # Test toggling again
     engine.toggle_hotspot_highlight
-    final_state = engine.render_manager.hotspot_highlighting_enabled?
+    final_state = engine.hotspot_highlight_enabled?
     final_state.should eq(initial_state)
-
   end
 
   it "handles door interactions with proper verb system integration" do
@@ -150,7 +146,6 @@ describe "UI Fixes Integration Tests" do
         verb_system.cursor_manager.current_verb.should eq(PointClickEngine::UI::VerbType::Open)
       end
     end
-
   end
 
   it "maintains consistent state across UI system integrations" do
@@ -196,6 +191,5 @@ describe "UI Fixes Integration Tests" do
         verb_system.cursor_manager.current_verb.should_not eq(initial_verb)
       end
     end
-
   end
 end

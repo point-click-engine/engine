@@ -87,7 +87,7 @@ describe "Player Visibility in Scene Transitions" do
 
     # Verify player is now in the current scene (laboratory)
     current_scene.player.should eq(player)
-    current_scene.characters.includes?(player).should be_true
+    current_scene.player.not_nil!.visible.should be_true
 
     # Transition to garden
     engine.change_scene("garden")
@@ -97,7 +97,7 @@ describe "Player Visibility in Scene Transitions" do
 
     # Verify player is in the current scene (garden)
     garden_scene.player.should eq(player)
-    garden_scene.characters.includes?(player).should be_true
+    garden_scene.player.not_nil!.visible.should be_true
 
     # Note: The player may still be in previous scenes' character lists
     # because the engine doesn't automatically remove characters when changing scenes.

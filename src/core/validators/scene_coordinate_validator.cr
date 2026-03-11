@@ -13,13 +13,12 @@ module PointClickEngine
           # Get expected display dimensions
           display_width = config.window.try(&.width) || 1024
           display_height = config.window.try(&.height) || 768
+          base_dir = config.config_base_dir.empty? ? Dir.current : config.config_base_dir
 
           # Load and validate each scene
           if scene_patterns = config.assets.try(&.scenes)
             scene_patterns.each do |pattern|
-              # Use current directory if config_path is not available
-              base_dir = Dir.current
-              full_pattern = pattern
+              full_pattern = Path[pattern].absolute? ? pattern : File.join(base_dir, pattern)
 
               Dir.glob(full_pattern).each do |scene_path|
                 validate_scene_file(scene_path, display_width, display_height, result)

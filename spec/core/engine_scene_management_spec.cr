@@ -32,7 +32,6 @@ describe "Engine Scene Management" do
       # Verify scene was added
       engine.scenes.has_key?("test_room").should be_true
       engine.scenes["test_room"].name.should eq("test_room")
-
     end
 
     it "handles scene transitions" do
@@ -64,14 +63,9 @@ describe "Engine Scene Management" do
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
-      # initial_scene = engine.current_scene_name
-
-      # Try to change to non-existent scene
-      engine.change_scene("nonexistent_scene")
-
-      # Should remain in same scene
-      # engine.current_scene_name.should eq(initial_scene)
-
+      expect_raises(Exception, /Failed to change scene/) do
+        engine.change_scene("nonexistent_scene")
+      end
     end
   end
 
@@ -96,7 +90,6 @@ describe "Engine Scene Management" do
       current_scene = engine.current_scene
       current_scene.should_not be_nil
       current_scene.try(&.hotspots.size).should eq(2)
-
     end
 
     it "manages characters within scenes" do
@@ -118,7 +111,6 @@ describe "Engine Scene Management" do
       current_scene.should_not be_nil
       current_scene.try(&.characters.size).should eq(1)
       current_scene.try(&.characters.first.name).should eq("npc")
-
     end
 
     it "handles player character positioning across scenes" do
@@ -148,7 +140,6 @@ describe "Engine Scene Management" do
       # engine.current_scene_name = "room2"
       scene2.player = player
       scene2.player.should eq(player)
-
     end
   end
 
@@ -190,7 +181,6 @@ describe "Engine Scene Management" do
       current = engine.current_scene.not_nil!
       current.scale.should eq(1.5f32)
       current.enable_pathfinding.should be_false
-
     end
 
     it "handles scene callback execution" do
@@ -221,7 +211,6 @@ describe "Engine Scene Management" do
       engine.current_scene = scene2
       # engine.current_scene_name = "room2"
       exit_called.should be_true
-
     end
   end
 
@@ -238,7 +227,6 @@ describe "Engine Scene Management" do
 
       # Verify script path is set
       scene.script_path.should eq("test_script.lua")
-
     end
 
     it "handles walkable area configuration" do
@@ -255,7 +243,6 @@ describe "Engine Scene Management" do
       # Verify pathfinding configuration
       scene.enable_pathfinding.should be_true
       scene.navigation_cell_size.should eq(8)
-
     end
   end
 
@@ -277,7 +264,6 @@ describe "Engine Scene Management" do
       current_scene = engine.current_scene.not_nil!
       current_scene.scale.should eq(0.75f32)
       current_scene.enable_camera_scrolling.should be_true
-
     end
   end
 end
