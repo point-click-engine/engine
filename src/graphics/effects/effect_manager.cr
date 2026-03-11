@@ -73,7 +73,7 @@ module PointClickEngine
         def add_scene_effect(effect : Effect)
           @scene_effects.add_effect(effect)
         end
-        
+
         # Get all active scene effects
         def scene_effects : Array(Effect)
           @scene_effects.active_effects
@@ -117,12 +117,12 @@ module PointClickEngine
           # Return finished effects to pools
           collect_finished_effects
         end
-        
+
         # Update camera effects and apply to camera
         def update_camera_effects(camera : Graphics::Core::Camera, dt : Float32)
           # Update camera effects
           @camera_effects.update(dt)
-          
+
           # Apply each camera effect directly
           @camera_effects.active_effects.each do |effect|
             if camera_effect = effect.as?(CameraEffects::BaseCameraEffect)
@@ -200,6 +200,8 @@ module PointClickEngine
               effect.draw_overlay(renderer)
             when SceneEffects::DarknessEffect
               effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+            when SceneEffects::FlickerEffect
+              effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
             when SceneEffects::UnderwaterEffect
               effect.draw_overlay(renderer)
             when SceneEffects::SparkleEffect
@@ -209,7 +211,7 @@ module PointClickEngine
             end
           end
         end
-        
+
         # Get active transition effect if any
         def active_transition : SceneEffects::TransitionEffect?
           @scene_effects.active_effects.each do |effect|
@@ -219,7 +221,7 @@ module PointClickEngine
           end
           nil
         end
-        
+
         # Get active rain effect if any
         def active_rain_effect
           @scene_effects.active_effects.each do |effect|
@@ -229,7 +231,7 @@ module PointClickEngine
           end
           nil
         end
-        
+
         # Get active fog effect if any
         def active_fog_effect
           @scene_effects.active_effects.each do |effect|
@@ -239,7 +241,7 @@ module PointClickEngine
           end
           nil
         end
-        
+
         # Get active darkness effect if any
         def active_darkness_effect
           @scene_effects.active_effects.each do |effect|
@@ -249,7 +251,7 @@ module PointClickEngine
           end
           nil
         end
-        
+
         # Get active underwater effect if any
         def active_underwater_effect
           @scene_effects.active_effects.each do |effect|
@@ -264,12 +266,12 @@ module PointClickEngine
         def clear_camera_effects
           @camera_effects.clear_effects
         end
-        
+
         # Clear all effects
         def clear_scene_effects
           @scene_effects.clear_effects
         end
-        
+
         def clear_all
           @scene_effects.clear_effects
           @camera_effects.clear_effects

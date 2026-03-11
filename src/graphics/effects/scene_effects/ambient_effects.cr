@@ -317,6 +317,53 @@ module PointClickEngine
           end
         end
 
+        # Simple screen flicker for lightning / unstable lighting beats.
+        class FlickerEffect < BaseSceneEffect
+          property intensity : Float32
+          property frequency : Float32
+
+          @elapsed_time : Float32 = 0.0f32
+          @current_alpha : UInt8 = 0u8
+
+          def initialize(@intensity : Float32 = 0.3f32, @frequency : Float32 = 8.0f32, duration : Float32 = 0.0f32)
+            super(duration)
+          end
+
+          def update(dt : Float32)
+            super
+            @elapsed_time += dt
+
+            pulse = Math.sin(@elapsed_time * @frequency * Math::PI * 2).abs.to_f32
+            bias = 0.35f32 + pulse * 0.65f32
+            @current_alpha = (@intensity * bias * 160.0f32).clamp(0.0f32, 255.0f32).to_u8
+          end
+
+          def apply(context : EffectContext)
+            # Overlay-only effect.
+          end
+
+          def apply_to_layer(context : EffectContext, layer : Layers::Layer)
+            return if layer.is_a?(Layers::UILayer)
+
+            dim = @current_alpha.to_f32 / 255.0f32
+            original = layer.tint
+            layer.tint = RL::Color.new(
+              r: (original.r.to_f32 * (1.0f32 - dim * 0.15f32)).to_u8,
+              g: (original.g.to_f32 * (1.0f32 - dim * 0.15f32)).to_u8,
+              b: (original.b.to_f32 * (1.0f32 - dim * 0.2f32)).to_u8,
+              a: original.a
+            )
+          end
+
+          def draw_overlay(renderer : PointClickEngine::Graphics::Renderer, viewport_width : Int32, viewport_height : Int32)
+            return if @current_alpha == 0u8
+
+            flash_alpha = (@current_alpha.to_f32 * 0.6f32).to_u8
+            RL.draw_rectangle(0, 0, viewport_width, viewport_height,
+              RL::Color.new(r: 255, g: 248, b: 230, a: flash_alpha))
+          end
+        end
+
         # Underwater effect using wave distortion and color
         class UnderwaterEffect < BaseSceneEffect
           property wave_amplitude : Float32 = 0.02f32
@@ -423,7 +470,7 @@ module PointClickEngine
           property color : RL::Color
 
           def initialize(@color : RL::Color)
-            super(0.0f32)  # No duration limit
+            super(0.0f32) # No duration limit
           end
 
           def apply(context : EffectContext)
@@ -443,7 +490,7 @@ module PointClickEngine
 
         # Letterbox effect for cinematic black bars
         class LetterboxEffect < BaseSceneEffect
-          property ratio : Float32 = 2.35f32   # Cinematic aspect ratio
+          property ratio : Float32 = 2.35f32 # Cinematic aspect ratio
           property bar_color : RL::Color = RL::BLACK
           property animate_in : Bool = true
 
@@ -598,7 +645,7 @@ module PointClickEngine
             @size = Random.rand(2.0f32..6.0f32)
             @drift = RL::Vector2.new(
               x: Random.rand(-10.0f32..10.0f32),
-              y: Random.rand(-20.0f32..-5.0f32)  # Float upward
+              y: Random.rand(-20.0f32..-5.0f32) # Float upward
             )
           end
 
@@ -722,7 +769,7 @@ module PointClickEngine
             @lifetime += dt
             @position.y -= @rise_speed * dt
             @position.x += @drift_x * dt
-            @size += dt * 10  # Grow over time
+            @size += dt * 10 # Grow over time
           end
 
           def dead? : Bool

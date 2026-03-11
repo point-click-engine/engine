@@ -199,6 +199,34 @@ describe PointClickEngine::Actions::ActionExecutor do
         action.get_custom("position").not_nil!.as_s.should eq("center")
       end
     end
+
+    it "preserves intro text position aliases" do
+      with_test_window do
+        engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
+        scene = PointClickEngine::Scenes::Scene.new("test")
+        executor = PointClickEngine::Actions::ActionExecutor.new(engine)
+
+        top_data = PointClickEngine::Actions::ActionData.create("show_text",
+          duration: 2.0f32,
+          text: "Top",
+          position: "center_top"
+        )
+        bottom_data = PointClickEngine::Actions::ActionData.create("show_text",
+          duration: 2.0f32,
+          text: "Bottom",
+          position: "center_bottom"
+        )
+
+        top_action = PointClickEngine::Actions::ActionInstance.new(top_data)
+        bottom_action = PointClickEngine::Actions::ActionInstance.new(bottom_data)
+
+        executor.start(top_action, scene)
+        executor.start(bottom_action, scene)
+
+        top_action.get_custom("position").not_nil!.as_s.should eq("center_top")
+        bottom_action.get_custom("position").not_nil!.as_s.should eq("center_bottom")
+      end
+    end
   end
 
   describe "camera actions" do
@@ -238,6 +266,36 @@ describe PointClickEngine::Actions::ActionExecutor do
     end
   end
 
+  describe "scene actions" do
+    it "uses a default duration for change_scene when none is provided" do
+      with_test_window do
+        engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
+        engine.init
+        executor = PointClickEngine::Actions::ActionExecutor.new(engine)
+
+        start_scene = PointClickEngine::Scenes::Scene.new("start")
+        target_scene = PointClickEngine::Scenes::Scene.new("target")
+        start_scene.default_transition_duration = 0.2f32
+
+        engine.add_scene(start_scene)
+        engine.add_scene(target_scene)
+        engine.change_scene("start")
+
+        action = PointClickEngine::Actions::ActionInstance.new(
+          PointClickEngine::Actions::ActionData.create("change_scene", target: "target")
+        )
+
+        executor.start(action, start_scene)
+
+        20.times do
+          engine.update(0.016f32)
+        end
+
+        engine.current_scene.not_nil!.name.should eq("target")
+      end
+    end
+  end
+
   describe PointClickEngine::Actions::ActionOverlayManager do
     it "resolves sprites by basename or stem" do
       manager = PointClickEngine::Actions::ActionOverlayManager.new
@@ -248,6 +306,32 @@ describe PointClickEngine::Actions::ActionExecutor do
 
       manager.remove_sprite("crystal")
       manager.has_sprite?("assets/items/crystal.png").should be_false
+    end
+
+    it "maps cinematic canvas coordinates to the current screen" do
+      manager = PointClickEngine::Actions::ActionOverlayManager.new
+      manager.set_canvas(320, 180)
+
+      position = manager.render_position_for(Raylib::Vector2.new(x: 160, y: 90), 1024, 768)
+      scale = manager.render_scale_for(2.0f32, 1024, 768)
+
+      position.x.should be_close(512.0f32, 0.01f32)
+      position.y.should be_close(384.0f32, 0.01f32)
+      scale.should be_close(6.4f32, 0.01f32)
+    end
+
+    it "supports fade-out removal without deleting the sprite immediately" do
+      manager = PointClickEngine::Actions::ActionOverlayManager.new
+      manager.add_sprite("assets/items/crystal.png", Raylib::Vector2.new(x: 0, y: 0))
+
+      manager.remove_sprite("crystal", 0.5f32)
+      manager.has_sprite?("crystal").should be_true
+
+      manager.update(0.25f32)
+      manager.has_sprite?("crystal").should be_true
+
+      manager.update(0.3f32)
+      manager.has_sprite?("crystal").should be_false
     end
   end
 

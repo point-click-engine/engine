@@ -231,6 +231,7 @@ module PointClickEngine
 
         # Update scene (includes action sequence updates via script_runner)
         @current_scene.try(&.update(dt))
+        @action_overlay_manager.update(dt)
 
         # Update inventory
         @inventory.update(dt)
@@ -329,6 +330,9 @@ module PointClickEngine
 
         # Draw action overlay visuals (sprites, backgrounds for sequences)
         @action_overlay_manager.draw
+
+        # Draw action-sequence text and other script overlays above sequence visuals.
+        @current_scene.try(&.draw_script_overlays)
 
         # Draw scene effect overlays (like transition fade, sparkles)
         # Skip overlays when rendering to texture for shader transitions

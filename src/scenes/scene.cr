@@ -484,7 +484,10 @@ module PointClickEngine
           end
         end
 
-        # Draw script runner overlays (text, custom visuals from actions)
+      end
+
+      # Draw script runner overlays (text, custom visuals from actions)
+      def draw_script_overlays
         @script_runner.try(&.draw)
       end
 

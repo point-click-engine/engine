@@ -212,6 +212,8 @@ module PointClickEngine
       def change_scene_with_transition(name : String, transition_type : String = "fade",
                                        duration : Float32 = 1.0f32,
                                        player_position : RL::Vector2? = nil) : Result(Nil, SceneError)
+        duration = 1.0f32 if duration <= 0
+
         # Validate scene exists
         unless @scenes.has_key?(name)
           return Result(Nil, SceneError).failure(SceneError.new("Scene not found: #{name}", name))

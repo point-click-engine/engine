@@ -7,6 +7,7 @@
 # - Reusable vector/color structs
 
 require "./action"
+require "../graphics/effects/scene_effects/ambient_effects"
 
 module PointClickEngine
   module Actions
@@ -270,17 +271,7 @@ module PointClickEngine
             audio.set_music_volume(start_vol)
           end
         when "hide_sprite"
-          sprite_path = get_string(action, "sprite")
-          if overlay_mgr = @engine.action_overlay_manager
-            # Resolve path using scene's base_dir
-            full_path = if scene = @engine.current_scene
-                          base = scene.base_dir
-                          base.empty? ? sprite_path : File.join(base, sprite_path)
-                        else
-                          sprite_path
-                        end
-            overlay_mgr.remove_sprite(full_path)
-          end
+          # Removal starts in start_hide_sprite so fade-outs can continue asynchronously.
         when "return_to_menu"
           @engine.return_to_menu
         end
@@ -312,7 +303,7 @@ module PointClickEngine
 
       private def start_character_move(action : ActionInstance, scene : Scenes::Scene)
         char_name = get_string(action, "character")
-        target = get_vector2(action, "target") || get_vector2(action, "to")
+        target = get_scene_vector2(action, "target", scene) || get_scene_vector2(action, "to", scene)
         return unless target
 
         if char = scene.get_character(char_name)
@@ -332,8 +323,8 @@ module PointClickEngine
       private def start_character_enter(action : ActionInstance, scene : Scenes::Scene)
         char_name = get_string(action, "character")
         from = get_string(action, "from", "left")
-        to = get_vector2(action, "to")
-        from_position = get_vector2(action, "from_position")
+        to = get_scene_vector2(action, "to", scene)
+        from_position = get_scene_vector2(action, "from_position", scene)
 
         if char = scene.get_character(char_name)
           start_pos = from_position || calculate_entry_position(from, to, scene)
@@ -409,7 +400,8 @@ module PointClickEngine
       end
 
       private def start_camera_pan(action : ActionInstance)
-        target = get_vector2(action, "target") || get_vector2(action, "to")
+        scene = @engine.current_scene
+        target = get_scene_vector2(action, "target", scene) || get_scene_vector2(action, "to", scene)
         return unless target
 
         easing = get_string(action, "easing", "ease_in_out")
@@ -423,6 +415,13 @@ module PointClickEngine
       private def start_camera_zoom(action : ActionInstance)
         target_zoom = action.data.params["target_zoom"]?.try(&.as_f.to_f32) || get_float(action, "target", 1.0f32)
         easing = get_string(action, "easing", "ease_in_out")
+
+        if scene = @engine.current_scene
+          if focus_target = resolve_focus_target(action, scene)
+            @engine.camera.center_on(focus_target)
+          end
+        end
+
         @engine.effect_manager.add_camera_effect("zoom",
           target: target_zoom,
           duration: action.data.duration,
@@ -432,8 +431,9 @@ module PointClickEngine
 
       private def start_camera_follow(action : ActionInstance, scene : Scenes::Scene)
         char_name = get_string(action, "character")
-        # Camera follow is typically handled by engine camera system
-        # This would set up the camera to track a character
+        if char = scene.get_character(char_name)
+          @engine.camera.center_on(char.position)
+        end
       end
 
       private def start_camera_focus(action : ActionInstance, scene : Scenes::Scene)
@@ -484,6 +484,11 @@ module PointClickEngine
         intensity = get_float(action, "intensity", 1.0f32)
 
         case effect.downcase
+        when "flicker"
+          frequency = get_float(action, "frequency", 8.0f32)
+          @engine.effect_manager.add_scene_effect(
+            Graphics::Effects::SceneEffects::FlickerEffect.new(intensity, frequency, action.data.duration)
+          )
         when "vignette", "darkness"
           @engine.effect_manager.add_scene_effect("darkness",
             type: "vignette",
@@ -539,6 +544,10 @@ module PointClickEngine
           else
             @engine.effect_manager.add_scene_effect("smoke", count: count, duration: duration)
           end
+        when "fire"
+          count = (intensity * 12).to_i
+          @engine.effect_manager.add_scene_effect("smoke", count: count, duration: duration,
+            speed: 18.0, color: [255, 180, 100, 90])
         when "dust"
           count = (intensity * 20).to_i
           @engine.effect_manager.add_scene_effect("smoke", count: count, duration: duration,
@@ -569,8 +578,16 @@ module PointClickEngine
         scale = get_float(action, "scale", 1.0f32)
         glow = get_bool(action, "glow", false)
         glow_color = get_color(action, "glow_color")
+        fade_in = get_float(action, "fade_in", 0.0f32)
+        tint = get_color(action, "color_tint") || Raylib::WHITE
+        animate = get_bool(action, "animate", false)
+        animation_frames = get_int(action, "animation_frames", 1)
+        animation_fps = get_float(action, "animation_fps", 0.0f32)
+        glow_pulse = get_bool(action, "glow_pulse", false)
+        glow_pulse_speed = get_float(action, "glow_pulse_speed", 1.0f32)
 
         if overlay_mgr = @engine.action_overlay_manager
+          configure_overlay_canvas(overlay_mgr)
           # Resolve path using scene's base_dir
           full_path = if scene = @engine.current_scene
                         base = scene.base_dir
@@ -578,25 +595,29 @@ module PointClickEngine
                       else
                         sprite_path
                       end
-          overlay_mgr.add_sprite(full_path, position, scale, glow, glow_color)
+          overlay_mgr.add_sprite(full_path, position, scale, glow, glow_color, tint, fade_in,
+            animate, animation_frames, animation_fps, glow_pulse, glow_pulse_speed)
         end
       end
 
       private def start_hide_sprite(action : ActionInstance)
-        # Hide handled in finish
+        sprite_path = get_string(action, "sprite")
+        fade_out = get_float(action, "fade_out", 0.0f32)
+
+        if overlay_mgr = @engine.action_overlay_manager
+          full_path = resolve_scene_path(sprite_path)
+          overlay_mgr.remove_sprite(full_path, fade_out)
+        end
       end
 
       private def start_show_background(action : ActionInstance)
         image = get_string(action, "image")
+        layer = get_int(action, "parallax_layer", 0)
         if overlay_mgr = @engine.action_overlay_manager
+          configure_overlay_canvas(overlay_mgr)
           # Resolve path using scene's base_dir
-          full_path = if scene = @engine.current_scene
-                        base = scene.base_dir
-                        base.empty? ? image : File.join(base, image)
-                      else
-                        image
-                      end
-          overlay_mgr.set_background(full_path)
+          full_path = resolve_scene_path(image)
+          overlay_mgr.set_background(full_path, layer)
         end
       end
 
@@ -689,7 +710,13 @@ module PointClickEngine
       private def start_change_scene(action : ActionInstance)
         target = get_string(action, "target")
         transition = get_string(action, "transition", "fade")
-        @engine.change_scene_with_transition(target, transition, action.data.duration)
+        duration = action.data.duration
+        if duration <= 0
+          duration = @engine.current_scene.try(&.default_transition_duration) || 1.0f32
+        end
+
+        @engine.action_overlay_manager.clear_all
+        @engine.change_scene_with_transition(target, transition, duration)
       end
 
       private def start_show_credits(action : ActionInstance)
@@ -762,13 +789,7 @@ module PointClickEngine
         return unless target
 
         if overlay_mgr = @engine.action_overlay_manager
-          # Resolve path using scene's base_dir
-          full_path = if scene = @engine.current_scene
-                        base = scene.base_dir
-                        base.empty? ? sprite_path : File.join(base, sprite_path)
-                      else
-                        sprite_path
-                      end
+          full_path = resolve_scene_path(sprite_path)
           overlay_mgr.move_sprite(full_path, target, progress)
         end
       end
@@ -814,9 +835,9 @@ module PointClickEngine
         x, y = case position
                when "center"
                  {(screen_width - text_width) // 2, screen_height // 2}
-               when "top"
+               when "top", "center_top"
                  {(screen_width - text_width) // 2, screen_height // 6}
-               when "bottom"
+               when "bottom", "center_bottom"
                  {(screen_width - text_width) // 2, (screen_height * 5) // 6}
                else
                  {(screen_width - text_width) // 2, screen_height // 2}
@@ -898,6 +919,21 @@ module PointClickEngine
         nil
       end
 
+      private def get_scene_vector2(action : ActionInstance, key : String, scene : Scenes::Scene?) : Raylib::Vector2?
+        vector = get_vector2(action, key)
+        return unless vector
+        return vector unless scene
+
+        if canvas = sequence_canvas_size(scene)
+          return Raylib::Vector2.new(
+            x: vector.x * scene.logical_width.to_f32 / canvas[0].to_f32,
+            y: vector.y * scene.logical_height.to_f32 / canvas[1].to_f32
+          )
+        end
+
+        vector
+      end
+
       private def get_color(action : ActionInstance, key : String) : Raylib::Color?
         if data = action.data.params[key]?
           if arr = data.as_a?
@@ -912,6 +948,51 @@ module PointClickEngine
         nil
       end
 
+      private def sequence_canvas_size(scene : Scenes::Scene) : Tuple(Int32, Int32)?
+        variables = scene.script_runner.try(&.variables)
+        return unless variables
+
+        width = yaml_any_to_int(variables["sequence_canvas_width"]?)
+        height = yaml_any_to_int(variables["sequence_canvas_height"]?)
+        return unless width && height
+        return if width <= 0 || height <= 0
+
+        {width, height}
+      end
+
+      private def yaml_any_to_int(value : YAML::Any?) : Int32?
+        return unless value
+
+        case value.raw
+        when Int64
+          value.as_i.to_i32
+        when Float64
+          value.as_f.to_i32
+        else
+          nil
+        end
+      end
+
+      private def configure_overlay_canvas(overlay_mgr : ActionOverlayManager)
+        if scene = @engine.current_scene
+          if canvas = sequence_canvas_size(scene)
+            overlay_mgr.set_canvas(canvas[0], canvas[1])
+            return
+          end
+        end
+
+        overlay_mgr.set_canvas(Raylib.get_screen_width, Raylib.get_screen_height)
+      end
+
+      private def resolve_scene_path(path : String) : String
+        if scene = @engine.current_scene
+          base = scene.base_dir
+          base.empty? ? path : File.join(base, path)
+        else
+          path
+        end
+      end
+
       private def parse_direction(dir : String) : Characters::Direction
         case dir.downcase
         when "left"  then Characters::Direction::Left
@@ -924,6 +1005,13 @@ module PointClickEngine
 
       private def calculate_entry_position(from : String, to : Raylib::Vector2?, scene : Scenes::Scene) : Raylib::Vector2
         target_y = to.try(&.y) || 300f32
+        if hotspot = scene.hotspot_manager.try(&.get_hotspot_by_name(from))
+          return Raylib::Vector2.new(
+            x: hotspot.position.x + hotspot.size.x / 2.0f32,
+            y: hotspot.position.y + hotspot.size.y
+          )
+        end
+
         case from.downcase
         when "left"   then Raylib::Vector2.new(x: -50f32, y: target_y)
         when "right"  then Raylib::Vector2.new(x: scene.logical_width.to_f32 + 50, y: target_y)
@@ -940,6 +1028,24 @@ module PointClickEngine
         when "top"    then Raylib::Vector2.new(x: current.x, y: -50f32)
         when "bottom" then Raylib::Vector2.new(x: current.x, y: scene.logical_height.to_f32 + 50)
         else               Raylib::Vector2.new(x: -50f32, y: current.y)
+        end
+      end
+
+      private def resolve_focus_target(action : ActionInstance, scene : Scenes::Scene) : Raylib::Vector2?
+        if focus = get_scene_vector2(action, "focus", scene)
+          return focus
+        end
+
+        focus_name = get_string(action, "focus")
+        return if focus_name.empty?
+
+        if character = scene.get_character(focus_name)
+          character.position
+        elsif hotspot = scene.hotspot_manager.try(&.get_hotspot_by_name(focus_name))
+          Raylib::Vector2.new(
+            x: hotspot.position.x + hotspot.size.x / 2.0f32,
+            y: hotspot.position.y + hotspot.size.y / 2.0f32
+          )
         end
       end
     end
