@@ -74,6 +74,7 @@ module PointClickEngine
       @released_buttons : Set(Raylib::MouseButton) = Set(Raylib::MouseButton).new
 
       # Input timing for double-clicks and long presses
+      @time_origin : Time::Instant = Time.instant
       @last_click_time : Float32 = 0.0_f32
       @last_click_position : Raylib::Vector2 = Raylib::Vector2.new
       @click_count : Int32 = 0
@@ -414,7 +415,7 @@ module PointClickEngine
 
         # Handle double-click detection
         if @pressed_buttons.includes?(Raylib::MouseButton::Left)
-          current_time = Time.monotonic.total_seconds.to_f32
+          current_time = elapsed_time_seconds
           time_since_last = current_time - @last_click_time
           distance_moved = Utils::VectorMath.distance(@mouse_position, @last_click_position)
 
@@ -429,9 +430,13 @@ module PointClickEngine
         end
 
         # Reset click count after timeout
-        if Time.monotonic.total_seconds.to_f32 - @last_click_time > DOUBLE_CLICK_TIME
+        if elapsed_time_seconds - @last_click_time > DOUBLE_CLICK_TIME
           @click_count = 0
         end
+      end
+
+      private def elapsed_time_seconds : Float32
+        (Time.instant - @time_origin).total_seconds.to_f32
       end
 
       private def check_mouse_button_state(button : Raylib::MouseButton)

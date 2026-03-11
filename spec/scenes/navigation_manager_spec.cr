@@ -306,9 +306,9 @@ describe PointClickEngine::Scenes::NavigationManager do
       large_manager = PointClickEngine::Scenes::NavigationManager.new(2000, 1500)
       large_manager.grid_cell_size = 5 # Smaller cells = more grid cells
 
-      start_time = Time.monotonic
+      start_time = Time.instant
       large_manager.setup_navigation
-      setup_time = Time.monotonic - start_time
+      setup_time = Time.instant - start_time
 
       # Setup should complete reasonably quickly even for large grids
       setup_time.should be < 1.second
@@ -320,9 +320,9 @@ describe PointClickEngine::Scenes::NavigationManager do
       manager = PointClickEngine::Scenes::NavigationManager.new(800, 600)
       manager.setup_navigation
 
-      start_time = Time.monotonic
+      start_time = Time.instant
       manager.optimize_navigation
-      optimize_time = Time.monotonic - start_time
+      optimize_time = Time.instant - start_time
 
       # Optimization should be fast
       optimize_time.should be < 100.milliseconds

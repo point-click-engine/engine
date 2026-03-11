@@ -375,9 +375,9 @@ describe PointClickEngine::Scenes::HotspotManager do
 
       manager.enable_spatial_optimization
 
-      start_time = Time.monotonic
+      start_time = Time.instant
       manager.update_hotspot_positions
-      update_time = Time.monotonic - start_time
+      update_time = Time.instant - start_time
 
       # Should complete quickly even with many hotspots
       update_time.should be < 100.milliseconds
@@ -524,24 +524,24 @@ describe PointClickEngine::Scenes::HotspotManager do
     it "handles large numbers of hotspots efficiently" do
       manager = PointClickEngine::Scenes::HotspotManager.new
       # Add many hotspots
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       1000.times do |i|
         hotspot = create_test_hotspot("hotspot_#{i}", i % 800, i % 600, 20, 20)
         manager.add_hotspot(hotspot)
       end
 
-      add_time = Time.monotonic - start_time
+      add_time = Time.instant - start_time
 
       # Should complete quickly
       add_time.should be < 1.second
 
       # Query should also be efficient
-      start_time = Time.monotonic
+      start_time = Time.instant
       100.times do |i|
         manager.get_hotspot_at(RL::Vector2.new((i * 8).to_f32, (i * 6).to_f32))
       end
-      query_time = Time.monotonic - start_time
+      query_time = Time.instant - start_time
 
       query_time.should be < 100.milliseconds
     end
@@ -559,15 +559,15 @@ describe PointClickEngine::Scenes::HotspotManager do
 
       # Time queries without optimization
       manager.disable_spatial_optimization
-      start_time = Time.monotonic
+      start_time = Time.instant
       100.times { manager.get_hotspot_at(test_point) }
-      time_without = Time.monotonic - start_time
+      time_without = Time.instant - start_time
 
       # Time queries with optimization
       manager.enable_spatial_optimization
-      start_time = Time.monotonic
+      start_time = Time.instant
       100.times { manager.get_hotspot_at(test_point) }
-      time_with = Time.monotonic - start_time
+      time_with = Time.instant - start_time
 
       # Spatial optimization may have overhead with small, evenly distributed hotspots
       # This is an edge case - in real games, hotspots are usually larger and clustered

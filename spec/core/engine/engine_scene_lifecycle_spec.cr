@@ -353,7 +353,7 @@ describe PointClickEngine::Core::Engine do
         engine.add_scene(target_scene)
         engine.change_scene("start")
 
-        start_time = Time.monotonic
+        start_time = Time.instant
 
         engine.change_scene_with_transition("target", "fade", 0.1f32)
 
@@ -362,7 +362,7 @@ describe PointClickEngine::Core::Engine do
           engine.update(0.016f32) # 60 FPS frame time
         end
 
-        duration = Time.monotonic - start_time
+        duration = Time.instant - start_time
         duration.should be < 1.second
       end
 

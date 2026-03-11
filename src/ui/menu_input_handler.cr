@@ -27,6 +27,7 @@ module PointClickEngine
       property mouse_position : RL::Vector2 = RL::Vector2.new(x: 0, y: 0)
       property last_input_time : Float64 = 0.0
       property input_repeat_delay : Float64 = 0.15
+      @time_origin : Time::Instant = Time.instant
 
       # Callback for input events
       property on_navigate : Proc(InputAction, Nil)?
@@ -48,7 +49,7 @@ module PointClickEngine
       #
       # Returns: The input action that occurred this frame
       def process_input(dt : Float64) : InputAction
-        current_time = Time.monotonic.total_seconds
+        current_time = elapsed_time_seconds
 
         # Update mouse position
         @mouse_position = RL.get_mouse_position
@@ -220,6 +221,10 @@ module PointClickEngine
       def reset_input_state
         @last_input_time = 0.0
         @mouse_position = RL::Vector2.new(x: 0, y: 0)
+      end
+
+      private def elapsed_time_seconds : Float64
+        (Time.instant - @time_origin).total_seconds
       end
 
       # Updates input configuration from settings

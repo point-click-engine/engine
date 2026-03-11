@@ -164,14 +164,14 @@ describe "Comprehensive Pathfinding Tests" do
         pathfinder = PointClickEngine::Navigation::Pathfinding.new(grid)
 
         # Time multiple pathfinding operations
-        start_time = Time.monotonic
+        start_time = Time.instant
 
         10.times do
           path = pathfinder.find_path(80f32, 80f32, 720f32, 720f32)
           path.should_not be_nil
         end
 
-        elapsed = Time.monotonic - start_time
+        elapsed = Time.instant - start_time
         # Should complete quickly (< 100ms for 10 paths on 50x50 grid)
         elapsed.total_milliseconds.should be < 100
       end

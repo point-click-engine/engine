@@ -307,16 +307,16 @@ describe "Save/Load System Reliability Tests" do
 
       begin
         # Measure save performance
-        start_time = Time.monotonic
+        start_time = Time.instant
         yaml_content = save_data.to_yaml
         File.write(test_file, yaml_content)
-        save_time = Time.monotonic - start_time
+        save_time = Time.instant - start_time
 
         # Measure load performance
-        load_start = Time.monotonic
+        load_start = Time.instant
         file_content = File.read(test_file)
         loaded_data = PointClickEngine::Core::SaveData.from_yaml(file_content)
-        load_time = Time.monotonic - load_start
+        load_time = Time.instant - load_start
 
         puts "Large save performance:"
         puts "  Variables: #{save_data.game_variables.size}"

@@ -282,9 +282,9 @@ describe "Pathfinding Integration Tests" do
       pathfinder.algorithm.max_search_nodes = 100
 
       # Try to find a very long path
-      start_time = Time.monotonic
+      start_time = Time.instant
       path = pathfinder.find_path(16.0_f32, 16.0_f32, 1584.0_f32, 1584.0_f32)
-      search_time = Time.monotonic - start_time
+      search_time = Time.instant - start_time
 
       # Should complete quickly due to node limit
       search_time.total_milliseconds.should be < 100.0

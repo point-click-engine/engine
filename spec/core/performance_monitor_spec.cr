@@ -320,7 +320,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
     it "handles many timing operations efficiently" do
       monitor = PointClickEngine::Core::PerformanceMonitor.new
 
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       # Perform many timing operations
       100.times do |i|
@@ -329,8 +329,7 @@ describe PointClickEngine::Core::PerformanceMonitor do
         monitor.end_timing(category)
       end
 
-      end_time = Time.monotonic
-      elapsed = (end_time - start_time).total_milliseconds
+      elapsed = (Time.instant - start_time).total_milliseconds
 
       # Should complete quickly (under 50ms)
       elapsed.should be < 50.0

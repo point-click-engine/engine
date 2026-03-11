@@ -164,7 +164,7 @@ module PointClickEngine
       #
       # - *dt* : Delta time since last frame
       def render(dt : Float32)
-        start_time = Time.monotonic
+        start_time = Time.instant
 
         # Reset frame statistics
         @objects_rendered = 0
@@ -179,7 +179,7 @@ module PointClickEngine
         RL.end_drawing
 
         # Update performance statistics
-        end_time = Time.monotonic
+        end_time = Time.instant
         @render_time = (end_time - start_time).total_milliseconds.to_f32
         update_fps_counter(dt)
         @frame_count += 1

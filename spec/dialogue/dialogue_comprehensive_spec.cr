@@ -385,13 +385,13 @@ describe "Dialogue System Comprehensive Tests" do
       tree.nodes.size.should eq(1000)
 
       # Test node lookup performance
-      start_time = Time.monotonic
+      start_time = Time.instant
       100.times do |i|
         node_id = "node_#{rand(1000)}"
         node = tree.nodes[node_id]?
         node.should_not be_nil
       end
-      lookup_time = Time.monotonic - start_time
+      lookup_time = Time.instant - start_time
 
       puts "Dialog node lookup performance:"
       puts "  Nodes: #{tree.nodes.size}"
@@ -424,9 +424,9 @@ describe "Dialogue System Comprehensive Tests" do
       tree.add_node(node)
 
       # Test choice filtering performance
-      start_time = Time.monotonic
+      start_time = Time.instant
       available_choices = node.choices.select(&.available?)
-      filter_time = Time.monotonic - start_time
+      filter_time = Time.instant - start_time
 
       puts "Choice filtering performance:"
       puts "  Total choices: #{node.choices.size}"

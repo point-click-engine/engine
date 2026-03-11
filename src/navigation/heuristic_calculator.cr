@@ -167,14 +167,13 @@ module PointClickEngine
 
         Method.each do |method|
           calculator = new(method)
-          start_time = Time.monotonic
+          start_time = Time.instant
 
           nodes.each do |node|
             calculator.calculate(node, target)
           end
 
-          end_time = Time.monotonic
-          results[method] = (end_time - start_time).total_seconds
+          results[method] = (Time.instant - start_time).total_seconds
         end
 
         results

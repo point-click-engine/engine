@@ -177,7 +177,7 @@ describe "Quest System Edge Case Testing" do
       end
 
       # Check all objectives
-      start_time = Time.monotonic
+      start_time = Time.instant
       completed_count = 0
 
       objectives.each do |objective|
@@ -186,7 +186,7 @@ describe "Quest System Edge Case Testing" do
         end
       end
 
-      check_time = Time.monotonic - start_time
+      check_time = Time.instant - start_time
 
       puts "Quest stress test results:"
       puts "  Total objectives: #{objectives.size}"

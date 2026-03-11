@@ -55,6 +55,7 @@ module PointClickEngine
       property enable_animations : Bool = true
       property pulse_speed : Float32 = 3.0
       property fade_speed : Float32 = 2.0
+      @animation_time_origin : Time::Instant = Time.instant
 
       def initialize
       end
@@ -234,13 +235,17 @@ module PointClickEngine
       def update_animations
         return unless @enable_animations
 
-        @animation.animation_time = Time.monotonic.total_seconds
+        @animation.animation_time = elapsed_animation_time_seconds
 
         # Update highlight pulse
         @animation.highlight_pulse = ((Math.sin(@animation.animation_time * @pulse_speed) + 1.0) / 2.0).to_f32
 
         # Update slide offset (subtle breathing effect)
         @animation.slide_offset = (Math.sin(@animation.animation_time * 1.5) * 2.0).to_f32
+      end
+
+      private def elapsed_animation_time_seconds : Float64
+        (Time.instant - @animation_time_origin).total_seconds
       end
 
       # Applies fade effect to color
