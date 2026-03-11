@@ -24,7 +24,7 @@ describe "PreflightCheck Scene Validation" do
         width: 1024
         height: 768
       player:
-        sprite_path: "../test_sprite.png"
+        sprite_path: "../spec/fixtures/assets/test_sprite.png"
         sprite:
           frame_width: 32
           frame_height: 48
@@ -67,7 +67,7 @@ describe "PreflightCheck Scene Validation" do
         width: 1024
         height: 768
       player:
-        sprite_path: "../test_sprite.png"
+        sprite_path: "../spec/fixtures/assets/test_sprite.png"
         sprite:
           frame_width: 32
           frame_height: 48
@@ -112,7 +112,7 @@ describe "PreflightCheck Scene Validation" do
         width: 1024
         height: 768
       player:
-        sprite_path: "../test_sprite.png"
+        sprite_path: "../spec/fixtures/assets/test_sprite.png"
         sprite:
           frame_width: 32
           frame_height: 48
@@ -186,7 +186,7 @@ describe "PreflightCheck Scene Validation" do
         width: 1024
         height: 768
       player:
-        sprite_path: "../test_sprite.png"
+        sprite_path: "../spec/fixtures/assets/test_sprite.png"
         sprite:
           frame_width: 32
           frame_height: 48

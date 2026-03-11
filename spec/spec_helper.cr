@@ -13,6 +13,10 @@ require "./support/resource_cleanup"
 # RL alias is defined in individual source files that need Raylib types
 require "../src/core/game_config"
 
+def spec_fixture_path(*parts : String) : String
+  File.join(File.expand_path("fixtures", __DIR__), *parts)
+end
+
 # =============================================================================
 # SHARED WINDOW MANAGEMENT FOR SPECS
 # =============================================================================

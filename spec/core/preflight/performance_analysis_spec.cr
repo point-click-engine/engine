@@ -33,7 +33,7 @@ describe "PreflightCheck Performance Analysis" do
       width: 1024
       height: 768
     player:
-      sprite_path: "../test_sprite.png"
+      sprite_path: "../spec/fixtures/assets/test_sprite.png"
       sprite:
         frame_width: 32
         frame_height: 48
@@ -59,7 +59,7 @@ describe "PreflightCheck Performance Analysis" do
     File.write("test_game_dir/audio/huge_sound.wav", "x" * 12_000_000)
     File.write("test_game_dir/scenes/test.yaml", <<-YAML
       name: test
-      background_path: test_sprite.png
+      background_path: spec/fixtures/assets/test_sprite.png
       background_music: test_game_dir/audio/huge_sound.wav
     YAML
     )
@@ -94,7 +94,7 @@ describe "PreflightCheck Performance Analysis" do
       width: 1920
       height: 1080
     player:
-      sprite_path: "../test_sprite.png"
+      sprite_path: "../spec/fixtures/assets/test_sprite.png"
       sprite:
         frame_width: 32
         frame_height: 48
@@ -134,7 +134,7 @@ describe "PreflightCheck Performance Analysis" do
       width: 800
       height: 600
     player:
-      sprite_path: "../test_sprite.png"
+      sprite_path: "../spec/fixtures/assets/test_sprite.png"
       sprite:
         frame_width: 32
         frame_height: 48

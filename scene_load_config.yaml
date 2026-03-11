@@ -1,5 +1,0 @@
-game:
-  title: "Scene Loading Test"
-
-assets:
-  scenes: ["test_scenes/*.yaml"]

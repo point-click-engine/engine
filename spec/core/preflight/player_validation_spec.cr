@@ -132,7 +132,7 @@ describe "PreflightCheck Player Configuration Validation" do
       height: 768
     player:
       name: "Hero"
-      sprite_path: "test_sprite.png"
+      sprite_path: "spec/fixtures/assets/test_sprite.png"
       sprite:
         frame_width: 32
         frame_height: 48
@@ -160,7 +160,7 @@ describe "PreflightCheck Player Configuration Validation" do
       height: 768
     player:
       name: "Hero"
-      sprite_path: "test_sprite.png"
+      sprite_path: "spec/fixtures/assets/test_sprite.png"
       sprite:
         frame_width: 32
         frame_height: 48

@@ -29,7 +29,6 @@ describe "PreflightCheck Development Environment" do
 
   it "reports resource summary when assets are configured" do
     create_test_directory_structure
-    File.write("test_sprites/player.png", "fake_png")
     File.write("test_audio/theme.ogg", "fake_ogg")
     File.write("test_scenes/intro.yaml", create_test_scene("intro"))
 
@@ -42,7 +41,7 @@ describe "PreflightCheck Development Environment" do
       height: 768
     player:
       name: "Test Player"
-      sprite_path: "test_sprites/player.png"
+      sprite_path: "spec/fixtures/assets/player.png"
       sprite:
         frame_width: 32
         frame_height: 48

@@ -1,9 +1,0 @@
-game:
-  title: "Manager Test"
-
-initial_state:
-  flags:
-    test_flag: true
-  variables:
-    test_var: 42
-    game_time: 0.0

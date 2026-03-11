@@ -2,11 +2,22 @@ require "../../spec_helper"
 require "../../../src/core/preflight_check"
 require "../../../src/core/game_config"
 
+def root_test_sprite_fixture : String
+  "spec/fixtures/assets/test_sprite.png"
+end
+
+def nested_test_sprite_fixture : String
+  "../spec/fixtures/assets/test_sprite.png"
+end
+
+def root_player_sprite_fixture : String
+  "spec/fixtures/assets/player.png"
+end
+
 def cleanup_test_files
   test_files = [
     "test_game.yaml",
     "test_scene.yaml",
-    "test_sprite.png",
     "test_music.ogg",
     "test_sound.wav",
   ]
@@ -25,16 +36,12 @@ def cleanup_test_files
 
   generated_files = [
     "test_scenes/intro.yaml",
-    "test_sprites/player.png",
     "test_audio/theme.ogg",
     "user_settings.yaml",
     "invalid.yaml",
   ]
 
   generated_files.each { |f| File.delete(f) if File.exists?(f) }
-
-  # Baseline sprite fixture used by create_minimal_config
-  File.write("test_sprite.png", "fake_png_data")
 end
 
 def create_minimal_config(additional_config = "")
@@ -47,7 +54,7 @@ def create_minimal_config(additional_config = "")
     height: 768
   player:
     name: "Test Player"
-    sprite_path: "test_sprite.png"
+    sprite_path: "#{root_test_sprite_fixture}"
     sprite:
       frame_width: 32
       frame_height: 48
@@ -64,7 +71,7 @@ end
 def create_test_scene(name : String, additional_config = "")
   <<-YAML
   name: #{name}
-  background_path: "test_sprite.png"
+  background_path: "#{root_test_sprite_fixture}"
   walkable_areas:
     regions:
       - name: floor
@@ -80,7 +87,6 @@ end
 
 def create_test_directory_structure
   Dir.mkdir_p("test_scenes")
-  Dir.mkdir_p("test_sprites")
   Dir.mkdir_p("test_audio")
   Dir.mkdir_p("test_saves")
   Dir.mkdir_p("test_locales")

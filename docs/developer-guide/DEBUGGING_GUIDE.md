@@ -1,12 +1,12 @@
 # Point & Click Engine Debugging Guide
 
-This guide provides comprehensive debugging strategies and tools for developers working with the Point & Click Engine. It covers common issues, debugging techniques, and includes ready-to-use test files for diagnosing problems.
+This guide provides debugging strategies for developers working with the Point & Click Engine. It focuses on maintained specs and the current engine surfaces rather than one-off probe scripts.
 
 ## Table of Contents
 
 1. [Quick Debugging Checklist](#quick-debugging-checklist)
 2. [Common Issues and Solutions](#common-issues-and-solutions)
-3. [Debug Tools Overview](#debug-tools-overview)
+3. [Focused Specs](#focused-specs)
 4. [Movement System Debugging](#movement-system-debugging)
 5. [Debug Output Interpretation](#debug-output-interpretation)
 6. [Testing Strategies](#testing-strategies)
@@ -22,20 +22,19 @@ When encountering issues with your Point & Click game, follow this checklist:
    PointClickEngine::Core::Engine.debug_mode = true
    ```
 
-2. **Check Basic Functionality**
+2. **Check Existing Automated Coverage**
    ```bash
-   make analyze  # Verify all components can be instantiated
+   ./run_specs_safely.sh fast
    ```
 
-3. **Test in Isolation**
+3. **Run A Focused Spec Slice**
    ```bash
-   make test-simple    # Test without constraints
-   make test-clicks    # Test input handling only
+   crystal spec spec/navigation/pathfinding_integration_spec.cr
    ```
 
-4. **Test Full System**
+4. **Test The Full Suite In Batches**
    ```bash
-   make test-comprehensive  # Test with all features enabled
+   ./run_specs_safely.sh
    ```
 
 ## Common Issues and Solutions
@@ -48,7 +47,7 @@ When encountering issues with your Point & Click game, follow this checklist:
 
 **Quick Diagnosis:**
 ```bash
-make test-clicks  # Tests basic input handling
+crystal spec spec/integration/player_visibility_test_spec.cr spec/navigation/pathfinding_integration_spec.cr
 ```
 
 **Potential Causes and Solutions:**
@@ -83,7 +82,7 @@ make test-clicks  # Tests basic input handling
 
 **Quick Diagnosis:**
 ```bash
-make test-simple  # Test without walkable area constraints
+crystal spec spec/core/preflight/scene_validation_spec.cr spec/navigation/pathfinding_integration_spec.cr
 ```
 
 **Potential Causes and Solutions:**
@@ -150,48 +149,23 @@ puts "Update called, dt: #{dt}" if Engine.debug_mode
    puts "Animation state: #{player.character.current_animation}"
    ```
 
-## Debug Tools Overview
+## Focused Specs
 
-### Available Debug Commands
-
-The engine includes a Makefile with these debug commands:
+Use the maintained specs as the primary debugging surface.
 
 ```bash
-# System Analysis
-make analyze              # Verify component instantiation
+# Pathfinding, coordinate conversion, waypoint advancement
+crystal spec spec/navigation/pathfinding_integration_spec.cr
 
-# Movement Testing
-make test-simple         # Basic movement without constraints
-make test-comprehensive  # Full system with walkable areas
-make test-clicks        # Minimal click handling test
-make test-debug         # Advanced debugging with custom classes
+# Same-cell movement edge cases
+crystal spec spec/navigation/same_cell_movement_spec.cr
 
-# Run all tests
-make test-movement      # Runs all movement tests sequentially
+# Movement controller behavior
+crystal spec spec/characters/movement_controller_spec.cr
+
+# Preflight and asset-format validation
+crystal spec spec/core/preflight/audio_validation_spec.cr spec/core/preflight/scene_validation_spec.cr
 ```
-
-### Debug Test Files
-
-1. **`simple_movement_test.cr`**
-   - Tests basic player movement
-   - No walkable area constraints
-   - Press SPACE for debug info
-
-2. **`test_player_movement.cr`**
-   - Comprehensive debugging
-   - Custom debug classes
-   - Walkable area testing
-   - Extensive logging
-
-3. **`debug_clicks.cr`**
-   - Minimal click handling
-   - Engine-level debugging
-   - Input pipeline testing
-
-4. **`analyze_movement_issues.cr`**
-   - Static system analysis
-   - Component verification
-   - Method existence checks
 
 ## Movement System Debugging
 
@@ -287,14 +261,15 @@ A successful movement operation produces this sequence:
 Start with the simplest test and add complexity:
 
 ```bash
-# Level 1: Basic input
-make test-clicks
+# Level 1: Path and movement edge cases
+crystal spec spec/navigation/pathfinding_integration_spec.cr
+crystal spec spec/navigation/same_cell_movement_spec.cr
 
-# Level 2: Movement without constraints
-make test-simple
+# Level 2: Movement controller behavior
+crystal spec spec/characters/movement_controller_spec.cr
 
 # Level 3: Full system
-make test-comprehensive
+./run_specs_safely.sh
 ```
 
 ### 2. Add Custom Debug Output
