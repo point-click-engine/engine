@@ -581,28 +581,28 @@ module PointClickEngine
       end
 
       # ===================
-      # Cutscene Events
+      # Action Sequence Events
       # ===================
 
-      # Fired when a cutscene starts
-      class CutsceneStartedEvent < GameEvent
-        define_event_type "cutscene:started"
+      # Fired when an action sequence starts
+      class SequenceStartedEvent < GameEvent
+        define_event_type "sequence:started"
 
-        getter cutscene_id : String
+        getter sequence_id : String
 
-        def initialize(@cutscene_id : String)
+        def initialize(@sequence_id : String)
           super()
         end
       end
 
-      # Fired when a cutscene ends
-      class CutsceneEndedEvent < GameEvent
-        define_event_type "cutscene:ended"
+      # Fired when an action sequence ends
+      class SequenceEndedEvent < GameEvent
+        define_event_type "sequence:ended"
 
-        getter cutscene_id : String
+        getter sequence_id : String
         getter skipped : Bool
 
-        def initialize(@cutscene_id : String, @skipped : Bool = false)
+        def initialize(@sequence_id : String, @skipped : Bool = false)
           super()
         end
       end

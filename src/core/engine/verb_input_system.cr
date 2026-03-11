@@ -63,6 +63,9 @@ module PointClickEngine
           # Get engine's input manager for consistent consumption checking
           input_manager = @engine.input_manager
 
+          # Skip input processing if player control is disabled (during action sequences)
+          return unless @engine.player_control_enabled
+
           # Handle left click - execute current verb
           if input_manager.mouse_button_pressed?(Raylib::MouseButton::Left)
             if !input_manager.mouse_consumed?

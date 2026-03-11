@@ -250,6 +250,10 @@ module PointClickEngine
           scene.script_path = script_path.as_s
         end
 
+        if actions_path = scene_data["actions_path"]?
+          scene.actions_path = actions_path.as_s
+        end
+
         # Load scene effects using YAML serialization
         if effects = scene_data["effects"]?
           effects.as_a.each do |effect_data|

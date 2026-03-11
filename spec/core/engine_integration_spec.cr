@@ -116,8 +116,7 @@ describe "Engine Integration with YAML Configuration" do
     scene.hotspots.first.name.should eq("test_object")
 
     # Trigger game start
-    engine.event_system.trigger("game:new")
-    engine.event_system.process_events
+    engine.event_bus.publish_sync(PointClickEngine::Core::Events::GameStartedEvent.new(new_game: true))
 
     # Verify start scene is set
     # engine.current_scene_name.should eq("test_room")
@@ -342,7 +341,7 @@ describe "Engine Integration with YAML Configuration" do
     engine = config.create_engine
 
     # Trigger game start
-    engine.event_system.trigger("game:new")
+    engine.event_bus.publish_sync(PointClickEngine::Core::Events::GameStartedEvent.new(new_game: true))
 
     # Verify state was set up correctly
     gsm = engine.game_state_manager.not_nil!

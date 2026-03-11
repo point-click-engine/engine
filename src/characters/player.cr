@@ -101,7 +101,7 @@ module PointClickEngine
     # # - 8-directional walking animations
     # # - Context-specific action animations (pick up, use, examine)
     # # - Inventory system integration
-    # # - Movement enable/disable for cutscenes
+    # # - Movement enable/disable for scripted sequences
     # # - Special idle and personality animations
     # # - Interaction callbacks for game logic
     ##
@@ -125,10 +125,10 @@ module PointClickEngine
     # # # Player automatically handles click-to-walk
     # # player.handle_click(mouse_pos, scene)
     ##
-    # # # Disable during cutscenes
+    # # # Disable during sequences
     # # player.movement_enabled = false
-    # # cutscene.play
-    # # cutscene.on_complete = -> { player.movement_enabled = true }
+    # # sequence.play
+    # # sequence.on_complete = -> { player.movement_enabled = true }
     # # ```
     ##
     # # ## Item Interactions
@@ -240,13 +240,13 @@ module PointClickEngine
 
       # # Whether the player can open their inventory.
       ##
-      # # Disable during conversations, cutscenes, or puzzles to prevent
+      # # Disable during conversations, scripted sequences, or puzzles to prevent
       # # players from accessing items at inappropriate times.
       property inventory_access : Bool = true
 
       # # Whether the player can move via mouse clicks.
       ##
-      # # Disable during dialogs, cutscenes, or scripted sequences to
+      # # Disable during dialogs or scripted sequences to
       # # prevent unwanted movement.
       property movement_enabled : Bool = true
 

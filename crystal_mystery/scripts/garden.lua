@@ -363,7 +363,7 @@ function check_victory()
         show_message("But as the light fades, you wonder... what lies beyond that veil?")
 
         -- Trigger ending
-        start_cutscene("ending_sequence")
+        start_sequence("ending_sequence")
     end
 end
 

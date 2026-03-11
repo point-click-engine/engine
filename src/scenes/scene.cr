@@ -15,6 +15,10 @@ require "../core/game_object"
 require "../graphics/graphics"
 require "../graphics/effects/scene_effects/base_scene_effect"
 require "../graphics/effects/shader_effect"
+require "../actions/action"
+require "../actions/action_runner"
+require "../actions/action_executor"
+require "../actions/action_loader"
 
 module PointClickEngine
   module Scenes
@@ -56,6 +60,10 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property walkable_area : WalkableArea?
 
+      # Script runner for action sequences
+      @[YAML::Field(ignore: true)]
+      property script_runner : Actions::ActionRunner?
+
       # Callbacks
       @[YAML::Field(ignore: true)]
       property on_enter : Proc(Nil)?
@@ -69,6 +77,7 @@ module PointClickEngine
       property player_name_for_serialization : String?
       property navigation_cell_size : Int32 = 16
       property script_path : String?
+      property actions_path : String?
 
       # Base directory for resolving relative paths (set by SceneLoader)
       @[YAML::Field(ignore: true)]
@@ -349,6 +358,16 @@ module PointClickEngine
 
       # Update scene
       def update(dt : Float32)
+        # Update script runner (action sequences) first
+        @script_runner.try(&.update(dt))
+
+        # Clear completed script runner
+        if runner = @script_runner
+          if runner.completed
+            @script_runner = nil
+          end
+        end
+
         # Update player
         @player.try(&.update(dt))
 
@@ -357,7 +376,7 @@ module PointClickEngine
 
         # Update all objects
         @objects.each(&.update(dt))
-        
+
         # Update scene effects
         @scene_effects.each(&.update(dt))
         @scene_effects.reject!(&.finished?)
@@ -465,6 +484,8 @@ module PointClickEngine
           end
         end
 
+        # Draw script runner overlays (text, custom visuals from actions)
+        @script_runner.try(&.draw)
       end
 
       # Enhanced rain effect drawn directly on screen
@@ -562,7 +583,7 @@ module PointClickEngine
         @on_exit.try &.call
       end
 
-      # Script loading
+      # Script loading (Lua scripts)
       def load_script(engine : Core::Engine)
         return unless script_path = @script_path
 
@@ -576,6 +597,59 @@ module PointClickEngine
         puts "[Scene] Loading script: #{full_path}"
         result = engine.system_manager.script_engine.try &.execute_script_file(full_path)
         puts "[Scene] Script load result: #{result}"
+      end
+
+      # ============================================================
+      # ACTION SEQUENCE METHODS
+      # ============================================================
+
+      # Run an action sequence from an ActionRunner
+      def run_script(runner : Actions::ActionRunner)
+        @script_runner = runner
+        runner.play
+      end
+
+      # Run actions from YAML file
+      def run_script_file(path : String)
+        runner = Actions::ActionLoader.load(path)
+        run_script(runner)
+      end
+
+      # Load and play scene's actions if actions_path is set
+      def load_actions
+        return unless path = @actions_path
+
+        # Resolve path relative to base_dir if set
+        full_path = if @base_dir.empty?
+                      path
+                    else
+                      File.join(@base_dir, path)
+                    end
+
+        puts "[Scene] Loading actions: #{full_path}"
+        begin
+          runner = Actions::ActionLoader.load(full_path)
+          run_script(runner)
+          puts "[Scene] Actions started"
+        rescue ex
+          puts "[Scene] Failed to load actions: #{ex.message}"
+        end
+      end
+
+      # Check if an action sequence is running
+      def script_running? : Bool
+        @script_runner.try(&.running) || false
+      end
+
+      # Stop current action sequence
+      def stop_script
+        @script_runner.try(&.stop)
+        @script_runner = nil
+      end
+
+      # Skip current action sequence (if skippable)
+      def skip_script
+        @script_runner.try(&.skip)
       end
 
       # Toggle hotspot highlighting

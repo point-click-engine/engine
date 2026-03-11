@@ -68,7 +68,7 @@ describe "Renderer Registration Fixes Documentation" do
 
   it "documents the render layer structure and registration pattern" do
     # PATTERN: Components with draw methods must be registered in render layers
-    # LAYERS: background, scene_objects, dialogs, cutscenes, transitions, ui, debug
+    # LAYERS: background, scene_objects, dialogs, overlays, transitions, ui, debug
     # UI LAYER: Contains inventory, menu_system, achievement_manager, verb_input_cursor
     # VALIDATION: All components with draw methods should be in appropriate layers
 
@@ -76,7 +76,7 @@ describe "Renderer Registration Fixes Documentation" do
       "background"    => ["scene backgrounds"],
       "scene_objects" => ["current scene content"],
       "dialogs"       => ["@dialogs array"],
-      "cutscenes"     => ["cutscene_manager"],
+      "overlays"      => ["action_overlay_manager"],
       "transitions"   => ["transition_manager"],
       "ui"            => ["inventory", "menu_system", "achievement_manager", "verb_input_cursor"],
       "debug"         => ["debug overlays"],
@@ -103,7 +103,7 @@ describe "Renderer Registration Fixes Documentation" do
       "total_draw_methods_found"    => "> 20",
       "missing_registrations_found" => 3,
       "components_fixed"            => ["DialogManager", "VerbInputSystem", "AchievementManager"],
-      "components_verified_working" => ["Inventory", "MenuSystem", "TransitionManager", "CutsceneManager"],
+      "components_verified_working" => ["Inventory", "MenuSystem", "TransitionManager", "ActionOverlayManager"],
       "audit_status"                => "complete",
     }
 

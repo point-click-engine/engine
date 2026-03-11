@@ -202,6 +202,10 @@ module PointClickEngine
               effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
             when SceneEffects::UnderwaterEffect
               effect.draw_overlay(renderer)
+            when SceneEffects::SparkleEffect
+              effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+            when SceneEffects::SmokeEffect
+              effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
             end
           end
         end

@@ -199,7 +199,7 @@ module PointClickEngine
 
       # Block all input for a specified number of frames
       #
-      # Useful for preventing input during scene transitions or cutscenes.
+      # Useful for preventing input during scene transitions or scripted sequences.
       #
       # - *frames* : Number of frames to block input
       # - *source* : Description of what is blocking input

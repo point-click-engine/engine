@@ -249,8 +249,8 @@ describe "Input Handling Comprehensive Edge Case Tests" do
       manager = PointClickEngine::Core::InputManager.new
 
       # Test different blocking sources
-      manager.block_input(2, "cutscene")
-      manager.input_block_source.should eq("cutscene")
+      manager.block_input(2, "sequence")
+      manager.input_block_source.should eq("sequence")
 
       # Blocking again should override previous
       manager.block_input(1, "dialog")

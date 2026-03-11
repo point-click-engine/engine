@@ -753,38 +753,38 @@ module PointClickEngine
       end
     end
 
-    describe "cutscene API" do
-      it "has start_cutscene function defined" do
+    describe "sequence API" do
+      it "has start_sequence function defined" do
         engine = Scripting::ScriptEngine.new
-        engine.execute_script("return type(start_cutscene) == 'function'").should be_true
+        engine.execute_script("return type(start_sequence) == 'function'").should be_true
       end
 
-      it "has is_cutscene_playing function defined" do
+      it "has is_sequence_playing function defined" do
         engine = Scripting::ScriptEngine.new
-        engine.execute_script("return type(is_cutscene_playing) == 'function'").should be_true
+        engine.execute_script("return type(is_sequence_playing) == 'function'").should be_true
       end
 
-      it "has skip_cutscene function defined" do
+      it "has skip_sequence function defined" do
         engine = Scripting::ScriptEngine.new
-        engine.execute_script("return type(skip_cutscene) == 'function'").should be_true
+        engine.execute_script("return type(skip_sequence) == 'function'").should be_true
       end
 
-      it "has _cutscene_callbacks table for storing callbacks" do
+      it "has _sequence_callbacks table for storing callbacks" do
         engine = Scripting::ScriptEngine.new
-        engine.execute_script("return type(_cutscene_callbacks) == 'table'").should be_true
+        engine.execute_script("return type(_sequence_callbacks) == 'table'").should be_true
       end
 
-      it "start_cutscene stores callback" do
+      it "start_sequence stores callback" do
         engine = Scripting::ScriptEngine.new
 
         # Just test that callback is stored in Lua - the engine call may fail
         # without a real Engine instance, but the callback storage should work
         engine.execute_script(<<-LUA)
           -- Store callback first
-          _cutscene_callbacks["intro"] = function(event_type, skipped)
-            set_game_state("cutscene_event", event_type)
+          _sequence_callbacks["intro"] = function(event_type, skipped)
+            set_game_state("sequence_event", event_type)
           end
-          set_game_state("callback_stored", tostring(_cutscene_callbacks["intro"] ~= nil))
+          set_game_state("callback_stored", tostring(_sequence_callbacks["intro"] ~= nil))
         LUA
 
         engine.game_state["callback_stored"].should eq("true")

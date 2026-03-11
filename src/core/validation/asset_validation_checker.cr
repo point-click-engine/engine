@@ -240,19 +240,17 @@ module PointClickEngine
         # Validates shader assets
         private def validate_shader_assets(config : GameConfig, context : ValidationContext, result : ValidationResult)
           if config.features.includes?("shaders")
-            # Check for shader files
+            # Check for custom shader files (optional - engine has built-in shaders)
             shader_dir = File.join(context.base_dir, "shaders")
             if Dir.exists?(shader_dir)
               shader_files = Dir.glob(File.join(shader_dir, "*.{vert,frag,glsl}"))
-              if shader_files.empty?
-                result.add_warning("Shaders enabled but no shader files found in #{shader_dir}")
-              else
-                result.add_info("✓ Found #{shader_files.size} shader file(s)")
+              if !shader_files.empty?
+                result.add_info("✓ Found #{shader_files.size} custom shader file(s)")
                 validate_shader_files(shader_files, result)
               end
-            else
-              result.add_warning("Shaders enabled but shader files not found")
             end
+            # Note: No warning if shaders dir doesn't exist - engine has built-in shaders
+            result.add_info("✓ Shaders enabled (using built-in shaders)")
           end
         end
 

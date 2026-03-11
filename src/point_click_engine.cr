@@ -3,7 +3,7 @@
 # A Crystal shard for creating pixel art point-and-click adventure games using raylib-cr.
 # This library provides a comprehensive framework for building traditional adventure games
 # with features like scene management, inventory systems, dialog trees, character AI,
-# pathfinding, cutscenes, and more.
+# pathfinding, action sequences, and more.
 #
 # ## Quick Start
 #
@@ -35,7 +35,7 @@
 # - `Inventory` - Item management and inventory systems
 # - `Scripting` - Lua scripting integration for game logic
 # - `Navigation` - Pathfinding and movement systems
-# - `Cutscenes` - Cinematic sequences and scripted events
+# - `Actions` - Action sequences and scripted events
 
 require "raylib-cr"
 require "luajit"
@@ -121,10 +121,12 @@ require "./assets/asset_loader"
 # Navigation modules
 require "./navigation/pathfinding"
 
-# Cutscene modules
-require "./cutscenes/cutscene_action"
-require "./cutscenes/cutscene"
-require "./cutscenes/cutscene_manager"
+# Action system modules
+require "./actions/action"
+require "./actions/action_loader"
+require "./actions/action_runner"
+require "./actions/action_executor"
+require "./actions/action_overlay_manager"
 
 # Localization modules
 require "./localization/locale"
@@ -221,20 +223,13 @@ module PointClickEngine
   alias Pathfinding = Navigation::Pathfinding
   alias NavigationGrid = Navigation::NavigationGrid
 
-  # Cutscene aliases
-  alias Cutscene = Cutscenes::Cutscene
-  alias CutsceneManager = Cutscenes::CutsceneManager
-  alias CutsceneAction = Cutscenes::CutsceneAction
-  alias MoveCharacterAction = Cutscenes::MoveCharacterAction
-  alias DialogAction = Cutscenes::DialogAction
-  alias WaitAction = Cutscenes::WaitAction
-  alias FadeAction = Cutscenes::FadeAction
-  alias ChangeSceneAction = Cutscenes::ChangeSceneAction
-  alias PlayAnimationAction = Cutscenes::PlayAnimationAction
-  alias CameraAction = Cutscenes::CameraAction
-  alias CallbackAction = Cutscenes::CallbackAction
-  alias UIVisibilityAction = Cutscenes::UIVisibilityAction
-  alias ParallelAction = Cutscenes::ParallelAction
+  # Action system aliases
+  alias ActionRunner = Actions::ActionRunner
+  alias ActionExecutor = Actions::ActionExecutor
+  alias ActionLoader = Actions::ActionLoader
+  alias ActionOverlayManager = Actions::ActionOverlayManager
+  alias ActionData = Actions::ActionData
+  alias ActionInstance = Actions::ActionInstance
 
   # Localization aliases
   alias Locale = Localization::Locale

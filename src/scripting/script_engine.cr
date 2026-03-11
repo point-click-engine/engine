@@ -29,7 +29,7 @@ module PointClickEngine
     # - CharacterScriptAPI: Character-related Lua API
     # - InventoryScriptAPI: Inventory management Lua API
     # - DialogScriptAPI: Dialog system Lua API
-    # - UtilityScriptAPI: Game state, timers, cutscenes, quests Lua API
+    # - UtilityScriptAPI: Game state, timers, sequences, quests Lua API
     # - CameraScriptAPI: Camera control Lua API
     # - AudioScriptAPI: Audio control Lua API
     # - HotspotScriptAPI: Hotspot interaction Lua API
@@ -117,9 +117,9 @@ module PointClickEngine
           dispatch_timer_event(event.timer_id, event.callback_code)
         end
 
-        # Cutscene events
-        @subscription_ids << event_bus.subscribe(Core::Events::CutsceneEndedEvent) do |event|
-          dispatch_cutscene_event("ended", event.cutscene_id, event.skipped)
+        # Sequence events
+        @subscription_ids << event_bus.subscribe(Core::Events::SequenceEndedEvent) do |event|
+          dispatch_sequence_event("ended", event.sequence_id, event.skipped)
         end
 
         puts "[ScriptEngine] Subscribed to EventBus events"
@@ -133,7 +133,10 @@ module PointClickEngine
 
       # Execute a script string
       def execute_script(script_content : String) : Bool
-        @environment.execute(script_content)
+        puts "[ScriptEngine] Executing script (#{script_content.size} chars)"
+        result = @environment.execute(script_content)
+        puts "[ScriptEngine] Script execution result: #{result}"
+        result
       end
 
       # Execute a script file
@@ -168,10 +171,12 @@ module PointClickEngine
       end
 
       private def setup_engine
+        puts "[ScriptEngine] setup_engine starting..."
         # Setup Lua environment
         @environment.setup
 
         # Register all API modules
+        puts "[ScriptEngine] Registering scene API..."
         @scene_api.register
         @character_api.register
         @inventory_api.register
@@ -192,6 +197,16 @@ module PointClickEngine
       private def dispatch_scene_event(event_type : String, scene_name : String, extra : String? = nil)
         puts "[ScriptEngine] Dispatching scene event: #{event_type} (scene: #{scene_name})"
 
+        # Debug: check if handler is registered
+        begin
+          scene_exists = @lua.execute!("return type(scene)")
+          handlers_exist = @lua.execute!("return type(scene._event_handlers)")
+          handler_check = @lua.execute!("return scene._event_handlers and scene._event_handlers['#{event_type}'] and 'registered' or 'not registered'")
+          puts "[ScriptEngine] scene type: #{scene_exists}, handlers type: #{handlers_exist}, handler: #{handler_check}"
+        rescue ex
+          puts "[ScriptEngine] Handler check error: #{ex.message}"
+        end
+
         # Call scene._handle_event(event_type, scene_name, extra)
         lua_code = if extra
                      "return scene._handle_event('#{event_type}', '#{scene_name}', '#{extra}')"
@@ -200,7 +215,8 @@ module PointClickEngine
                    end
 
         begin
-          @lua.execute!(lua_code)
+          result = @lua.execute!(lua_code)
+          puts "[ScriptEngine] scene._handle_event result: #{result}"
         rescue ex
           puts "[ScriptEngine] Scene event dispatch error: #{ex.message}"
         end
@@ -256,11 +272,11 @@ module PointClickEngine
         end
       end
 
-      # Dispatch cutscene events to Lua handlers
-      private def dispatch_cutscene_event(event_type : String, cutscene_id : String, skipped : Bool)
-        puts "[ScriptEngine] Cutscene event: #{event_type} (id: #{cutscene_id}, skipped: #{skipped})"
+      # Dispatch sequence events to Lua handlers
+      private def dispatch_sequence_event(event_type : String, sequence_id : String, skipped : Bool)
+        puts "[ScriptEngine] Sequence event: #{event_type} (id: #{sequence_id}, skipped: #{skipped})"
 
-        lua_code = "if _cutscene_callbacks and _cutscene_callbacks['#{cutscene_id}'] then _cutscene_callbacks['#{cutscene_id}']('#{event_type}', #{skipped}) end"
+        lua_code = "if _sequence_callbacks and _sequence_callbacks['#{sequence_id}'] then _sequence_callbacks['#{sequence_id}']('#{event_type}', #{skipped}) end"
         begin
           @lua.execute!(lua_code)
         rescue ex

@@ -19,7 +19,8 @@ require "../inventory/item_registry"
 require "./game_state_manager"
 require "./quest_system"
 require "./timer_manager"
-require "../cutscenes/cutscene_manager"
+require "../actions/action_runner"
+require "../actions/action_overlay_manager"
 
 module PointClickEngine
   module Core
@@ -37,7 +38,7 @@ module PointClickEngine
 
       # Component managers - direct access for users
       property system_manager : EngineComponents::SystemManager = EngineComponents::SystemManager.new
-      getter scene_manager : SceneManager { SceneManager.new(self) }
+      getter scene_manager : SceneManager { SceneManager.new(self, @system_manager.event_bus) }
       property input_manager : InputManager = InputManager.new
       property render_manager : RenderManager = RenderManager.new
       property resource_manager : ResourceManager = ResourceManager.new
@@ -46,7 +47,7 @@ module PointClickEngine
       property game_state_manager : GameStateManager?
       property quest_manager : QuestManager?
       property timer_manager : TimerManager = TimerManager.new
-      property cutscene_manager : Cutscenes::CutsceneManager = Cutscenes::CutsceneManager.new
+      property action_overlay_manager : Actions::ActionOverlayManager = Actions::ActionOverlayManager.new
 
       # Core components
       @input_handler : EngineComponents::InputHandler?
@@ -59,7 +60,7 @@ module PointClickEngine
       property auto_save_interval : Float32 = 0.0_f32
       property auto_save_timer : Float32 = 0.0_f32
 
-      # Player control (disabled during cutscenes)
+      # Player control (disabled during action sequences)
       property player_control_enabled : Bool = true
 
       # Fullscreen state
@@ -228,10 +229,7 @@ module PointClickEngine
         # Update timer manager
         @timer_manager.update(dt)
 
-        # Update cutscene manager
-        @cutscene_manager.update(dt)
-
-        # Update scene
+        # Update scene (includes action sequence updates via script_runner)
         @current_scene.try(&.update(dt))
 
         # Update inventory
@@ -329,14 +327,14 @@ module PointClickEngine
           end
         end
         
-        # Draw scene effect overlays (like transition fade)
+        # Draw action overlay visuals (sprites, backgrounds for sequences)
+        @action_overlay_manager.draw
+
+        # Draw scene effect overlays (like transition fade, sparkles)
         # Skip overlays when rendering to texture for shader transitions
         unless skip_overlays
           @effect_manager.draw_scene_overlays(renderer)
         end
-
-        # Draw cutscene visuals (sprites, backgrounds, text overlays)
-        @cutscene_manager.draw
 
         # Render highlighted hotspots if enabled
         if @render_coordinator.hotspot_highlight_enabled && @current_scene
@@ -492,6 +490,19 @@ module PointClickEngine
         puts "Game started"
       end
 
+      def return_to_menu
+        # Return to main menu
+        puts "[Engine] Returning to main menu"
+        @system_manager.menu_system.try(&.show)
+        @game_started = false
+        # Clear current scene and action overlays
+        @current_scene.try(&.stop_script)
+        @action_overlay_manager.clear_all
+        @effect_manager.clear_scene_effects
+        # Stop music
+        @system_manager.audio_manager.try(&.stop_music)
+      end
+
       def dialog_manager
         @system_manager.dialog_manager
       end
@@ -562,11 +573,7 @@ module PointClickEngine
 
           puts "[Engine] Current scene player: #{@current_scene.try(&.player) ? "exists" : "nil"}"
 
-          # Load scene script if it has one
-          if scene = @current_scene
-            scene.load_script(self)
-          end
-
+          # Script loading and event publishing is handled by SceneManager
           @current_scene.try(&.on_enter)
         when .failure?
           raise "Failed to change scene: #{result.error.message}"
@@ -579,10 +586,39 @@ module PointClickEngine
       end
 
       # Convenience method for scene transitions
-      def change_scene_with_transition(scene_name : String, transition_type : String = "fade", 
-                                     duration : Float32 = 1.0f32, 
+      def change_scene_with_transition(scene_name : String, transition_type : String = "fade",
+                                     duration : Float32 = 1.0f32,
                                      player_position : RL::Vector2? = nil)
         scene_manager.change_scene_with_transition(scene_name, transition_type, duration, player_position)
+      end
+
+      # ============================================================
+      # ACTION SEQUENCE METHODS
+      # ============================================================
+
+      # Run an action sequence from YAML file
+      def run_script(path : String)
+        @current_scene.try(&.run_script_file(path))
+      end
+
+      # Run an action sequence from an ActionRunner
+      def run_script(runner : Actions::ActionRunner)
+        @current_scene.try(&.run_script(runner))
+      end
+
+      # Check if an action sequence is running
+      def script_running? : Bool
+        @current_scene.try(&.script_running?) || false
+      end
+
+      # Stop current action sequence
+      def stop_script
+        @current_scene.try(&.stop_script)
+      end
+
+      # Skip current action sequence
+      def skip_script
+        @current_scene.try(&.skip_script)
       end
 
       # Window management
@@ -623,7 +659,7 @@ module PointClickEngine
 
         # Trigger the game started event
         # Scene loading is handled by GameStartedEvent subscribers (game_config.cr)
-        # which may play an intro cutscene first
+        # which may play an intro sequence first
         puts "[Engine] Triggering GameStartedEvent"
         @system_manager.event_bus.publish_sync(Events::GameStartedEvent.new(new_game: true))
         puts "[Engine] Event triggered"

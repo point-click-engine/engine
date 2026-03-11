@@ -312,7 +312,12 @@ module PointClickEngine
         private def validate_animation_sequences(sprite_config : GameConfig::SpriteInfo, result : ValidationResult)
           if animations = sprite_config.animations
             if animations.empty?
-              result.add_warning("No animations defined for player sprite")
+              # Only warn about missing animations if sprite has multiple frames (indicating a spritesheet)
+              # A single-frame sprite or static sprite doesn't need animations defined
+              total_frames = (sprite_config.rows || 1) * (sprite_config.columns || 1)
+              if total_frames > 1
+                result.add_info("Player sprite has #{total_frames} frames but no named animations (using default behavior)")
+              end
             else
               animations.each do |name, anim_config|
                 validate_single_animation(name, anim_config, sprite_config, result)

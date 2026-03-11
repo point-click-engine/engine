@@ -2,17 +2,8 @@
 -- The Scientist's Laboratory: Where brilliant discoveries and dark secrets intertwine
 -- This is where the crystal was stolen from
 
--- Scene enter handler
-function on_enter()
+scene.on_enter(function()
     print("Entering laboratory...")
-
-    -- Play intro cutscene on first game start
-    if not get_game_state("intro_completed") then
-        print("Starting intro cutscene...")
-        set_game_state("intro_completed", true)
-        start_cutscene("intro_sequence")
-        return  -- Cutscene will handle everything
-    end
 
     set_game_state("visited_laboratory", true)
 
@@ -41,7 +32,7 @@ function on_enter()
             show_message("The open cabinet reminds you of the grandfather's secrets still to uncover.")
         end
     end
-end
+end)
 
 -- Workbench - main discovery point
 function examine_workbench()

@@ -206,8 +206,7 @@ describe "Engine GameStateManager Integration" do
       engine = config.create_engine
 
       # Trigger game:new to set up UI
-      engine.event_system.trigger("game:new")
-      engine.event_system.process_events
+      engine.event_bus.publish_sync(PointClickEngine::Core::Events::GameStartedEvent.new(new_game: true))
 
       gui = engine.gui
       gui.should_not be_nil

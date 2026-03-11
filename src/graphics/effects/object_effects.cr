@@ -6,6 +6,7 @@ require "./object_effects/shake"
 require "./object_effects/pulse"
 require "./object_effects/color_shift"
 require "./object_effects/float"
+require "./object_effects/glow"
 require "./particle_effect"
 require "./object_effects/shader_object_factory"
 

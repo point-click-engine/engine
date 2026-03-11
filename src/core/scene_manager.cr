@@ -54,6 +54,9 @@ module PointClickEngine
       # Scene exit callbacks (called when scene becomes inactive)
       getter scene_exit_callbacks : Hash(String, Array(Proc(Nil))) = {} of String => Array(Proc(Nil))
 
+      # Action sequence registry (for global sequences loaded from game config)
+      getter sequences : Hash(String, Actions::ActionRunner) = {} of String => Actions::ActionRunner
+
       # Cache for preloaded scenes
       @scene_cache : Hash(String, Scenes::Scene) = {} of String => Scenes::Scene
 
@@ -175,6 +178,14 @@ module PointClickEngine
 
         # Execute enter callbacks
         execute_scene_enter_callbacks(target_scene)
+
+        # Load scene script BEFORE publishing event (so handlers are registered)
+        if engine = @engine
+          target_scene.load_script(engine)
+        end
+
+        # Auto-play scene actions if defined
+        target_scene.load_actions
 
         # Publish scene entered event
         if bus = @event_bus
@@ -404,6 +415,28 @@ module PointClickEngine
       def max_cache_size=(size : Int32)
         @max_cache_size = size
         trim_cache_if_needed
+      end
+
+      # Register an action sequence (for global sequences)
+      #
+      # - *name* : Name of the sequence
+      # - *runner* : The ActionRunner instance
+      def register_sequence(name : String, runner : Actions::ActionRunner)
+        @sequences[name] = runner
+      end
+
+      # Get a registered action sequence
+      #
+      # - *name* : Name of the sequence to retrieve
+      def get_sequence(name : String) : Actions::ActionRunner?
+        @sequences[name]?
+      end
+
+      # Check if a sequence exists
+      #
+      # - *name* : Name of the sequence to check
+      def has_sequence?(name : String) : Bool
+        @sequences.has_key?(name)
       end
 
       # Validate a scene before adding

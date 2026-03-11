@@ -1,0 +1,5 @@
+game:
+  title: "No FPS Test"
+
+settings:
+  debug_mode: false

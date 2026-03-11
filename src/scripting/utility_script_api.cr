@@ -3,7 +3,7 @@
 # Provides utility and game management functions to Lua scripts:
 # - Game state management (save/load, variables)
 # - Timers and delays
-# - Cutscenes
+# - Action sequences
 # - Quest system
 # - Player functions
 # - Achievement triggers
@@ -139,24 +139,24 @@ module PointClickEngine
             _engine_trigger_achievement(achievement_id)
           end
 
-          -- Cutscene functions with callback support
-          _cutscene_callbacks = {}
+          -- Sequence functions with callback support
+          _sequence_callbacks = {}
 
-          function start_cutscene(cutscene_id, on_complete)
+          function start_sequence(sequence_id, on_complete)
             -- Store callback if provided
             if type(on_complete) == "function" then
-              _cutscene_callbacks[cutscene_id] = on_complete
+              _sequence_callbacks[sequence_id] = on_complete
             end
 
-            return _engine_start_cutscene(cutscene_id)
+            return _engine_start_sequence(sequence_id)
           end
 
-          function is_cutscene_playing()
-            return _engine_is_cutscene_playing()
+          function is_sequence_playing()
+            return _engine_is_sequence_playing()
           end
 
-          function skip_cutscene()
-            _engine_skip_cutscene()
+          function skip_sequence()
+            _engine_skip_sequence()
           end
 
           -- Player functions
@@ -384,18 +384,19 @@ module PointClickEngine
           end
         end
 
-        # Cutscene callback - uses CutsceneManager
-        @registry.register_value_function("_engine_start_cutscene", 1) do |state|
+        # Sequence callback - uses scene's action runner
+        @registry.register_value_function("_engine_start_sequence", 1) do |state|
           if state.size >= 1
-            cutscene_id = state.to_string(1)
+            sequence_id = state.to_string(1)
 
             if engine = Core::Engine.instance
-              result = engine.cutscene_manager.play_cutscene(cutscene_id)
-              state.push(result)
-
-              # Publish event
-              if result
-                engine.event_bus.publish(Core::Events::CutsceneStartedEvent.new(cutscene_id))
+              if runner = engine.scene_manager.get_sequence(sequence_id)
+                runner.play
+                state.push(true)
+                # Publish event
+                engine.event_bus.publish(Core::Events::SequenceStartedEvent.new(sequence_id))
+              else
+                state.push(false)
               end
             else
               state.push(false)
@@ -405,23 +406,29 @@ module PointClickEngine
           end
         end
 
-        # Check if cutscene is playing
-        @registry.register_value_function("_engine_is_cutscene_playing", 1) do |state|
+        # Check if sequence is playing
+        @registry.register_value_function("_engine_is_sequence_playing", 1) do |state|
           if engine = Core::Engine.instance
-            state.push(engine.cutscene_manager.is_playing?)
+            if scene = engine.current_scene
+              state.push(scene.script_running?)
+            else
+              state.push(false)
+            end
           else
             state.push(false)
           end
         end
 
-        # Skip current cutscene
-        @registry.register_void_function("_engine_skip_cutscene") do |state|
+        # Skip current sequence
+        @registry.register_void_function("_engine_skip_sequence") do |state|
           if engine = Core::Engine.instance
-            if engine.cutscene_manager.is_playing?
-              if cutscene = engine.cutscene_manager.current_cutscene
-                cutscene_id = cutscene.name
-                engine.cutscene_manager.skip_current
-                engine.event_bus.publish(Core::Events::CutsceneEndedEvent.new(cutscene_id, skipped: true))
+            if scene = engine.current_scene
+              if runner = scene.script_runner
+                if runner.running
+                  sequence_id = runner.name
+                  scene.skip_script
+                  engine.event_bus.publish(Core::Events::SequenceEndedEvent.new(sequence_id, skipped: true))
+                end
               end
             end
           end
