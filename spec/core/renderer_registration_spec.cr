@@ -1,6 +1,12 @@
 require "../spec_helper"
 
+RENDERER_ACHIEVEMENT_SAVE_FILE = "tmp/renderer_registration_achievements.yaml"
+
 describe "Renderer Registration System" do
+  after_each do
+    File.delete(RENDERER_ACHIEVEMENT_SAVE_FILE) if File.exists?(RENDERER_ACHIEVEMENT_SAVE_FILE)
+  end
+
   it "registers dialog manager in render pipeline" do
     RaylibContext.ensure_window(800, 600, "Dialog Manager Renderer Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Renderer Test")
@@ -25,7 +31,6 @@ describe "Renderer Registration System" do
     if engine_instance = PointClickEngine::Core::Engine.instance
       engine_instance.system_manager.dialog_manager.should_not be_nil
     end
-
   end
 
   it "registers verb input system cursor in UI layer" do
@@ -56,7 +61,6 @@ describe "Renderer Registration System" do
     # Test that render manager has UI layer where cursor should be rendered
     render_manager = engine.render_manager
     render_manager.should_not be_nil
-
   end
 
   it "registers achievement manager in UI layer" do
@@ -71,6 +75,7 @@ describe "Renderer Registration System" do
     if am = achievement_manager
       # Test that achievement manager has draw method
       am.responds_to?(:draw).should be_true
+      am.save_file = RENDERER_ACHIEVEMENT_SAVE_FILE
 
       # Test achievement notification functionality
       am.unlock("test_achievement")
@@ -79,7 +84,6 @@ describe "Renderer Registration System" do
       # (The draw method should handle rendering notifications when active)
       am.responds_to?(:update).should be_true
     end
-
   end
 
   it "validates render layer structure and component registration" do
@@ -101,7 +105,6 @@ describe "Renderer Registration System" do
     # Test that inventory is available (already registered in UI layer)
     engine.inventory.should_not be_nil
     engine.inventory.responds_to?(:draw).should be_true
-
   end
 
   it "ensures UI components are properly layered for rendering order" do
@@ -155,7 +158,6 @@ describe "Renderer Registration System" do
 
     # Should have at least 5 UI components with draw methods
     components_with_draw.size.should be >= 5
-
   end
 
   it "validates floating dialog rendering integration" do
@@ -185,7 +187,6 @@ describe "Renderer Registration System" do
       # Test that dialog manager draw method includes floating manager
       dm.responds_to?(:draw).should be_true
     end
-
   end
 
   it "tests cursor visual feedback rendering system" do
@@ -221,7 +222,6 @@ describe "Renderer Registration System" do
       display_manager = engine.system_manager.display_manager
       display_manager.should_not be_nil
     end
-
   end
 
   it "validates achievement notification rendering" do
@@ -237,6 +237,7 @@ describe "Renderer Registration System" do
       # Test achievement manager rendering capability
       am.responds_to?(:draw).should be_true
       am.responds_to?(:update).should be_true
+      am.save_file = RENDERER_ACHIEVEMENT_SAVE_FILE
 
       # Test achievement unlock (should trigger notification)
       am.unlock("test_achievement_render")
@@ -245,7 +246,6 @@ describe "Renderer Registration System" do
       # The draw method should handle active notifications
       am.responds_to?(:unlock).should be_true
     end
-
   end
 
   it "ensures render pipeline completeness" do
@@ -309,6 +309,5 @@ describe "Renderer Registration System" do
 
     # Should have at least 7 rendering systems (transitions now handled by effect system)
     render_systems.size.should be >= 7
-
   end
 end

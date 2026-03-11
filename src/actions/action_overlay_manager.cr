@@ -54,24 +54,49 @@ module PointClickEngine
       end
 
       # Remove a sprite
-      def remove_sprite(path : String)
-        @sprites.delete(path)
+      def remove_sprite(identifier : String)
+        if key = resolve_sprite_key(identifier)
+          @sprites.delete(key)
+        end
         check_active_state
       end
 
       # Move a sprite (interpolate position)
-      def move_sprite(path : String, target : Raylib::Vector2, progress : Float32)
-        if sprite = @sprites[path]?
-          if start = sprite.start_position
-            new_pos = Raylib::Vector2.new(
-              x: start.x + (target.x - start.x) * progress,
-              y: start.y + (target.y - start.y) * progress
-            )
-            updated = OverlaySprite.new(sprite.path, new_pos, sprite.scale, sprite.glow, sprite.glow_color)
-            updated.start_position = start
-            @sprites[path] = updated
+      def move_sprite(identifier : String, target : Raylib::Vector2, progress : Float32)
+        if key = resolve_sprite_key(identifier)
+          if sprite = @sprites[key]?
+            if start = sprite.start_position
+              new_pos = Raylib::Vector2.new(
+                x: start.x + (target.x - start.x) * progress,
+                y: start.y + (target.y - start.y) * progress
+              )
+              updated = OverlaySprite.new(sprite.path, new_pos, sprite.scale, sprite.glow, sprite.glow_color)
+              updated.start_position = start
+              @sprites[key] = updated
+            end
           end
         end
+      end
+
+      # Check whether a sprite is currently registered.
+      def has_sprite?(identifier : String) : Bool
+        !resolve_sprite_key(identifier).nil?
+      end
+
+      # Resolve a sprite identifier to the canonical stored key.
+      def resolve_sprite_key(identifier : String) : String?
+        return identifier if @sprites.has_key?(identifier)
+
+        basename = File.basename(identifier)
+        stem = File.basename(identifier, File.extname(identifier))
+
+        @sprites.each_key do |key|
+          key_basename = File.basename(key)
+          return key if key_basename == basename
+          return key if File.basename(key, File.extname(key)) == stem
+        end
+
+        nil
       end
 
       # Clear all sprites

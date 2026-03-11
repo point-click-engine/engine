@@ -50,7 +50,7 @@ describe PointClickEngine::Actions::ActionRunner do
       runner = PointClickEngine::Actions::ActionRunner.new("test")
       called = false
 
-      runner.add_callback(->{ called = true; nil })
+      runner.add_callback(-> { called = true; nil })
 
       runner.action_count.should eq(1)
       # Callback is stored in the action instance
@@ -125,7 +125,7 @@ describe PointClickEngine::Actions::ActionRunner do
       runner = PointClickEngine::Actions::ActionRunner.new("test")
       completed = false
 
-      runner.on_complete = ->{ completed = true; nil }
+      runner.on_complete = -> { completed = true; nil }
 
       runner.on_complete.should_not be_nil
     end
@@ -144,6 +144,46 @@ describe PointClickEngine::Actions::ActionRunner do
       runner.on_action_complete = ->(action : PointClickEngine::Actions::ActionInstance) { nil }
 
       runner.on_action_complete.should_not be_nil
+    end
+  end
+
+  describe "start conditions" do
+    it "evaluates skip conditions when playback begins" do
+      with_test_window do
+        engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
+        scene = PointClickEngine::Scenes::Scene.new("test")
+        engine.current_scene = scene
+        engine.game_state_manager = PointClickEngine::Core::GameStateManager.new(engine.event_bus)
+        engine.game_state_manager.not_nil!.set_flag("skip_intro", true)
+
+        yaml_content = <<-YAML
+          name: conditional_sequence
+          checkpoints:
+            - name: mid_point
+              time: 1.0
+          conditions:
+            - name: skip_intro
+              check: "skip_intro"
+              skip_to: "mid_point"
+          actions:
+            - type: wait
+              duration: 1.0
+            - type: wait
+              duration: 1.0
+          YAML
+
+        temp_path = File.tempname("conditional_sequence", ".yaml")
+        File.write(temp_path, yaml_content)
+
+        begin
+          runner = PointClickEngine::Actions::ActionLoader.load(temp_path)
+          scene.run_script(runner)
+
+          runner.current_index.should eq(1)
+        ensure
+          File.delete(temp_path) if File.exists?(temp_path)
+        end
+      end
     end
   end
 end

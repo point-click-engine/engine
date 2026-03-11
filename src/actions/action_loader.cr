@@ -226,9 +226,36 @@ module PointClickEngine
 
       # Update checkpoint action indices after actions are parsed
       private def self.update_checkpoint_indices(runner : ActionRunner)
-        # This is a placeholder - checkpoints need to be matched with
-        # actual action indices based on cumulative timing or markers
-        # For now, we leave indices at 0 (beginning)
+        return if runner.checkpoints.empty?
+
+        sorted_checkpoint_indices = (0...runner.checkpoints.size).to_a.sort_by do |idx|
+          runner.checkpoints[idx].time
+        end
+
+        next_checkpoint = 0
+        elapsed = 0.0f32
+
+        runner.actions.each_with_index do |action, action_index|
+          while next_checkpoint < sorted_checkpoint_indices.size
+            checkpoint_index = sorted_checkpoint_indices[next_checkpoint]
+            checkpoint = runner.checkpoints[checkpoint_index]
+            break if checkpoint.time > elapsed
+
+            checkpoint.action_index = action_index
+            runner.checkpoints[checkpoint_index] = checkpoint
+            next_checkpoint += 1
+          end
+
+          elapsed += action.data.duration
+        end
+
+        while next_checkpoint < sorted_checkpoint_indices.size
+          checkpoint_index = sorted_checkpoint_indices[next_checkpoint]
+          checkpoint = runner.checkpoints[checkpoint_index]
+          checkpoint.action_index = runner.actions.size
+          runner.checkpoints[checkpoint_index] = checkpoint
+          next_checkpoint += 1
+        end
       end
 
       # Helper to get float value from YAML::Any
@@ -237,7 +264,7 @@ module PointClickEngine
           case val.raw
           when Int64   then val.as_i.to_f32
           when Float64 then val.as_f.to_f32
-          else default
+          else              default
           end
         else
           default
@@ -250,7 +277,7 @@ module PointClickEngine
           case val.raw
           when Int64   then val.as_i.to_i32
           when Float64 then val.as_f.to_i32
-          else default
+          else              default
           end
         else
           default

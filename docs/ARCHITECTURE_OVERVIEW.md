@@ -196,13 +196,13 @@ Item management:
 - **InventoryItem**: Item representation
 - **ItemCombinations**: Item interaction logic
 
-### 10. Cutscenes Module (`src/cutscenes/`)
+### 10. Action Sequence Module (`src/actions/`)
 
 Cinematic sequences:
 
-- **CutsceneManager**: Playback control
-- **Cutscene**: Action sequences
-- **CutsceneAction**: Individual actions
+- **ActionRunner**: Sequence playback control
+- **ActionExecutor**: Action execution logic
+- **ActionLoader**: YAML sequence loading
 
 ## Component Relationships
 

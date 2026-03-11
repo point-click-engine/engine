@@ -106,6 +106,9 @@ module PointClickEngine
         # Disable player control
         engine.player_control_enabled = false
 
+        # Apply any startup skip/branch conditions before the first update tick.
+        evaluate_start_conditions
+
         # Publish start event
         publish_start_event
       end

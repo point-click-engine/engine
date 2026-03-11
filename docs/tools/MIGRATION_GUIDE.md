@@ -34,7 +34,7 @@ src/
 ├── ui/                     # User interface
 ├── audio/                  # Sound management
 ├── navigation/             # Pathfinding
-├── cutscenes/             # Cutscene system
+├── actions/               # Scripted action sequences
 ├── localization/          # Multi-language support
 ├── scripting/             # Lua integration
 └── assets/                # Asset management
@@ -131,12 +131,11 @@ nav_grid = PointClickEngine::NavigationGrid.new(25, 19, 32)
 pathfinder = PointClickEngine::Pathfinding.new(nav_grid)
 ```
 
-### Cutscenes
+### Action Sequences
 ```crystal
-# Works with both APIs
-cutscene = PointClickEngine::Cutscene.new("intro")
-cutscene.fade_in(1.0)
-cutscene.move_character(hero, target_pos)
+runner = PointClickEngine::ActionRunner.new("intro")
+runner.add(PointClickEngine::ActionData.create("fade_in", duration: 1.0f32))
+runner.add(PointClickEngine::ActionData.create("move_character", character: "hero", target: {"x" => 100, "y" => 200}))
 ```
 
 ### Save System

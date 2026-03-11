@@ -66,145 +66,108 @@ module PointClickEngine
         end
 
         case type_lower
-
         # === TIMING ===
         when "wait"
           # No-op, just waits for duration
 
-        # === CHARACTER MOVEMENT ===
+          # === CHARACTER MOVEMENT ===
         when "character_move", "move_character"
           start_character_move(action, scene)
-
         when "character_enter"
           start_character_enter(action, scene)
-
         when "character_exit"
           start_character_exit(action, scene)
-
         when "character_face"
           start_character_face(action, scene)
-
         when "character_animation"
           start_character_animation(action, scene)
-
-        # === DIALOG ===
+          # === DIALOG ===
         when "dialog", "floating_dialog"
           start_dialog(action, scene)
-
-        # === CAMERA ===
+          # === CAMERA ===
         when "camera_shake"
           start_camera_shake(action)
-
         when "camera_pan"
           start_camera_pan(action)
-
         when "camera_zoom"
           start_camera_zoom(action)
-
         when "camera_follow"
           start_camera_follow(action, scene)
-
         when "camera_focus"
           start_camera_focus(action, scene)
-
-        # === VISUAL EFFECTS ===
+          # === VISUAL EFFECTS ===
         when "fade_in"
           start_fade(action, direction: "in")
-
         when "fade_out", "fade_to_color", "fade_to_black"
           start_fade(action, direction: "out")
-
         when "screen_flash"
           start_screen_flash(action)
-
         when "screen_effect"
           start_screen_effect(action)
-
         when "particle_effect", "weather_effect"
           start_particle_effect(action)
-
         when "stop_particle_effect"
           @engine.effect_manager.clear_scene_effects
-
         when "letterbox", "set_letterbox"
           start_letterbox(action)
-
-        # === SPRITES (for sequence visuals) ===
+          # === SPRITES (for sequence visuals) ===
         when "show_sprite"
           start_show_sprite(action)
-
         when "hide_sprite"
           start_hide_sprite(action)
-
         when "move_sprite"
           # Movement handled in update
 
         when "show_background"
           start_show_background(action)
-
-        # === AUDIO ===
+          # === AUDIO ===
         when "play_music"
           start_play_music(action)
-
         when "stop_music"
           start_stop_music(action)
-
         when "play_ambient"
           start_play_ambient(action)
-
         when "stop_ambient"
           # Ambient stop handled by audio manager
 
         when "sound_effect", "play_sound"
           start_sound_effect(action)
-
-        # === UI ===
+          # === UI ===
         when "hide_ui"
           @engine.render_manager.hide_ui
-
         when "show_ui"
           @engine.render_manager.show_ui
-
         when "show_text"
           start_show_text(action)
-
-        # === GAME STATE ===
+          # === GAME STATE ===
         when "set_game_state", "set_flag", "set_variable"
           start_set_game_state(action)
-
-        # === SCENE ===
+          # === SCENE ===
         when "change_scene"
           start_change_scene(action)
-
-        # === CONTROL ===
+          # === CONTROL ===
         when "enable_player_control"
           @engine.player_control_enabled = true
-
         when "disable_player_control"
           @engine.player_control_enabled = false
-
         when "hide_player"
           if player = @engine.player
             player.visible = false
           end
-
         when "show_player"
           if player = @engine.player
             player.visible = true
           end
-
-        # === CALLBACK ===
+          # === CALLBACK ===
         when "callback", "run"
           action.callback.try(&.call)
-
-        # === CREDITS/MENU ===
+          # === CREDITS/MENU ===
         when "show_credits"
           start_show_credits(action)
-
         when "return_to_menu"
           # Handled in finish
 
-        # === INTERNAL ===
+          # === INTERNAL ===
         when "_parallel_marker"
           # Handled by ActionRunner
 
@@ -228,27 +191,36 @@ module PointClickEngine
         end
 
         case type_lower
-
         when "character_move", "move_character", "character_enter"
           char_name = get_string(action, "character")
           if char = scene.get_character(char_name)
             return char.state != Characters::CharacterState::Walking
           end
           return true
-
         when "character_exit"
           char_name = get_string(action, "character")
           if char = scene.get_character(char_name)
             return char.state != Characters::CharacterState::Walking
           end
           return true
-
         when "dialog", "floating_dialog"
           if action.get_custom("dialog_complete").try(&.as_bool)
             return true
           end
           return action.data.duration > 0 && progress >= 1.0
+        when "sound_effect", "play_sound"
+          delay = get_float(action, "delay", 0.0f32)
+          if delay > 0
+            unless action.get_custom("sound_played").try(&.as_bool)
+              if action.elapsed < delay
+                return false
+              end
 
+              play_sound_effect_now(action)
+              action.set_custom("sound_played", true)
+            end
+          end
+          return true
         when "stop_music"
           if action.data.duration > 0
             if audio = @engine.system_manager.audio_manager
@@ -257,18 +229,17 @@ module PointClickEngine
             end
           end
           return progress >= 1.0
-
         when "show_text"
           update_show_text(action)
           return progress >= 1.0
-
         when "move_sprite"
           update_move_sprite(action, progress)
           return progress >= 1.0
-
         when "show_credits"
           return update_show_credits(action, dt)
-
+        when "return_to_menu"
+          delay = get_float(action, "delay", 0.0f32)
+          return action.elapsed >= delay
         else
           # Most actions complete based on duration
           return action.data.duration <= 0 || progress >= 1.0
@@ -287,20 +258,17 @@ module PointClickEngine
         end
 
         case type_lower
-
         when "character_exit"
           char_name = get_string(action, "character")
           if char = scene.get_character(char_name)
             char.visible = false
           end
-
         when "stop_music"
           if audio = @engine.system_manager.audio_manager
             audio.stop_music
             start_vol = action.get_custom("start_volume").try(&.as_f.to_f32) || 1.0f32
             audio.set_music_volume(start_vol)
           end
-
         when "hide_sprite"
           sprite_path = get_string(action, "sprite")
           if overlay_mgr = @engine.action_overlay_manager
@@ -313,10 +281,8 @@ module PointClickEngine
                         end
             overlay_mgr.remove_sprite(full_path)
           end
-
         when "return_to_menu"
           @engine.return_to_menu
-
         end
 
         action.complete!
@@ -455,7 +421,7 @@ module PointClickEngine
       end
 
       private def start_camera_zoom(action : ActionInstance)
-        target_zoom = get_float(action, "target", 1.0f32)
+        target_zoom = action.data.params["target_zoom"]?.try(&.as_f.to_f32) || get_float(action, "target", 1.0f32)
         easing = get_string(action, "easing", "ease_in_out")
         @engine.effect_manager.add_camera_effect("zoom",
           target: target_zoom,
@@ -472,7 +438,27 @@ module PointClickEngine
 
       private def start_camera_focus(action : ActionInstance, scene : Scenes::Scene)
         target = get_string(action, "target")
-        # Focus on a named target (character, object, or hotspot)
+        return if target.empty?
+
+        focus_point = if character = scene.get_character(target)
+                        character.position
+                      elsif hotspot = scene.hotspot_manager.try(&.get_hotspot_by_name(target))
+                        Raylib::Vector2.new(
+                          x: hotspot.position.x + hotspot.size.x / 2.0f32,
+                          y: hotspot.position.y + hotspot.size.y / 2.0f32
+                        )
+                      else
+                        nil
+                      end
+
+        return unless focus_point
+
+        easing = get_string(action, "easing", "ease_in_out")
+        @engine.effect_manager.add_camera_effect("pan",
+          target: [focus_point.x, focus_point.y],
+          duration: action.data.duration,
+          easing: easing
+        )
       end
 
       private def start_fade(action : ActionInstance, direction : String)
@@ -529,7 +515,7 @@ module PointClickEngine
         color = get_color(action, "color")
 
         case effect_type.downcase
-        when "sparkles", "magic"
+        when "sparkles", "magic", "crystal_energy", "magical_sparkles"
           count = (intensity * 50).to_i
           if c = color
             @engine.effect_manager.add_scene_effect("sparkles", count: count, duration: duration,
@@ -645,9 +631,11 @@ module PointClickEngine
       end
 
       private def start_sound_effect(action : ActionInstance)
-        sound = get_string(action, "sound")
-        if audio = @engine.system_manager.audio_manager
-          audio.play_sound_effect(sound)
+        delay = get_float(action, "delay", 0.0f32)
+        if delay > 0
+          action.set_custom("sound_played", false)
+        else
+          play_sound_effect_now(action)
         end
       end
 
@@ -688,10 +676,10 @@ module PointClickEngine
             vars.each do |k, v|
               key = k.to_s
               case v.raw
-              when Bool then state.set_flag(key, v.as_bool)
-              when Int64 then state.set_variable(key, v.as_i.to_i32)
+              when Bool    then state.set_flag(key, v.as_bool)
+              when Int64   then state.set_variable(key, v.as_i.to_i32)
               when Float64 then state.set_variable(key, v.as_f.to_f32)
-              when String then state.set_variable(key, v.as_s)
+              when String  then state.set_variable(key, v.as_s)
               end
             end
           end
@@ -741,6 +729,13 @@ module PointClickEngine
         action.set_custom("credits_text", credits_text.join("\n"))
       end
 
+      private def play_sound_effect_now(action : ActionInstance)
+        sound = get_string(action, "sound")
+        if audio = @engine.system_manager.audio_manager
+          audio.play_sound_effect(sound)
+        end
+      end
+
       # ============================================================
       # ACTION UPDATE HELPERS
       # ============================================================
@@ -751,12 +746,12 @@ module PointClickEngine
         total = action.data.duration
 
         alpha = if action.elapsed < fade_in
-          action.elapsed / fade_in
-        elsif action.elapsed > total - fade_out
-          (total - action.elapsed) / fade_out
-        else
-          1.0f32
-        end
+                  action.elapsed / fade_in
+                elsif action.elapsed > total - fade_out
+                  (total - action.elapsed) / fade_out
+                else
+                  1.0f32
+                end
 
         action.set_custom("alpha", alpha.clamp(0.0f32, 1.0f32))
       end
@@ -817,15 +812,15 @@ module PointClickEngine
         text_width = Raylib.measure_text(text, font_size)
 
         x, y = case position
-        when "center"
-          {(screen_width - text_width) // 2, screen_height // 2}
-        when "top"
-          {(screen_width - text_width) // 2, screen_height // 6}
-        when "bottom"
-          {(screen_width - text_width) // 2, (screen_height * 5) // 6}
-        else
-          {(screen_width - text_width) // 2, screen_height // 2}
-        end
+               when "center"
+                 {(screen_width - text_width) // 2, screen_height // 2}
+               when "top"
+                 {(screen_width - text_width) // 2, screen_height // 6}
+               when "bottom"
+                 {(screen_width - text_width) // 2, (screen_height * 5) // 6}
+               else
+                 {(screen_width - text_width) // 2, screen_height // 2}
+               end
 
         if glow
           glow_r = action.get_custom("glow_color_r").try(&.as_i.to_u8) || 255u8
@@ -867,9 +862,9 @@ module PointClickEngine
       private def get_float(action : ActionInstance, key : String, default : Float32 = 0.0f32) : Float32
         if val = action.data.params[key]?
           case val.raw
-          when Int64 then val.as_i.to_f32
+          when Int64   then val.as_i.to_f32
           when Float64 then val.as_f.to_f32
-          else default
+          else              default
           end
         else
           default
@@ -879,9 +874,9 @@ module PointClickEngine
       private def get_int(action : ActionInstance, key : String, default : Int32 = 0) : Int32
         if val = action.data.params[key]?
           case val.raw
-          when Int64 then val.as_i.to_i32
+          when Int64   then val.as_i.to_i32
           when Float64 then val.as_f.to_i32
-          else default
+          else              default
           end
         else
           default
@@ -919,32 +914,32 @@ module PointClickEngine
 
       private def parse_direction(dir : String) : Characters::Direction
         case dir.downcase
-        when "left" then Characters::Direction::Left
+        when "left"  then Characters::Direction::Left
         when "right" then Characters::Direction::Right
-        when "up" then Characters::Direction::Up
-        when "down" then Characters::Direction::Down
-        else Characters::Direction::Right
+        when "up"    then Characters::Direction::Up
+        when "down"  then Characters::Direction::Down
+        else              Characters::Direction::Right
         end
       end
 
       private def calculate_entry_position(from : String, to : Raylib::Vector2?, scene : Scenes::Scene) : Raylib::Vector2
         target_y = to.try(&.y) || 300f32
         case from.downcase
-        when "left" then Raylib::Vector2.new(x: -50f32, y: target_y)
-        when "right" then Raylib::Vector2.new(x: scene.logical_width.to_f32 + 50, y: target_y)
-        when "top" then Raylib::Vector2.new(x: to.try(&.x) || 400f32, y: -50f32)
+        when "left"   then Raylib::Vector2.new(x: -50f32, y: target_y)
+        when "right"  then Raylib::Vector2.new(x: scene.logical_width.to_f32 + 50, y: target_y)
+        when "top"    then Raylib::Vector2.new(x: to.try(&.x) || 400f32, y: -50f32)
         when "bottom" then Raylib::Vector2.new(x: to.try(&.x) || 400f32, y: scene.logical_height.to_f32 + 50)
-        else Raylib::Vector2.new(x: -50f32, y: target_y)
+        else               Raylib::Vector2.new(x: -50f32, y: target_y)
         end
       end
 
       private def calculate_exit_position(direction : String, current : Raylib::Vector2, scene : Scenes::Scene) : Raylib::Vector2
         case direction.downcase
-        when "left" then Raylib::Vector2.new(x: -50f32, y: current.y)
-        when "right" then Raylib::Vector2.new(x: scene.logical_width.to_f32 + 50, y: current.y)
-        when "top" then Raylib::Vector2.new(x: current.x, y: -50f32)
+        when "left"   then Raylib::Vector2.new(x: -50f32, y: current.y)
+        when "right"  then Raylib::Vector2.new(x: scene.logical_width.to_f32 + 50, y: current.y)
+        when "top"    then Raylib::Vector2.new(x: current.x, y: -50f32)
         when "bottom" then Raylib::Vector2.new(x: current.x, y: scene.logical_height.to_f32 + 50)
-        else Raylib::Vector2.new(x: -50f32, y: current.y)
+        else               Raylib::Vector2.new(x: -50f32, y: current.y)
         end
       end
     end

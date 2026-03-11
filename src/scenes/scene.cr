@@ -53,7 +53,7 @@ module PointClickEngine
 
       @[YAML::Field(ignore: true)]
       property player : Characters::Character?
-      
+
       @[YAML::Field(ignore: true)]
       property scene_effects : Array(Graphics::Effects::SceneEffects::BaseSceneEffect) = [] of Graphics::Effects::SceneEffects::BaseSceneEffect
 
@@ -491,56 +491,56 @@ module PointClickEngine
       # Enhanced rain effect drawn directly on screen
       private def draw_simple_rain
         time = Time.utc.to_unix_f
-        
+
         # Draw rain drops with multiple layers for depth
         200.times do |i|
           # Create layers with different speeds and sizes
           layer = i % 3
-          layer_speed = 300 + (layer * 100)  # Background layers move slower
-          layer_alpha = 120 + (layer * 40)   # Foreground layers more opaque
+          layer_speed = 300 + (layer * 100) # Background layers move slower
+          layer_alpha = 120 + (layer * 40)  # Foreground layers more opaque
           layer_width = 1.0f32 + (layer * 0.5f32)
-          
+
           # Add wind effect
           wind_offset = Math.sin(time * 0.5 + i * 0.1) * 30
-          
+
           # Calculate animated position with wrapping
           base_x = (i * 8 + wind_offset).to_f32
           base_y = (time * layer_speed + i * 13) % (768 + 50)
-          
+
           x = (base_x % 1024).to_f32
-          y = (base_y - 50).to_f32  # Start above screen
-          
+          y = (base_y - 50).to_f32 # Start above screen
+
           # Skip if above screen
           next if y < -30
-          
+
           # Draw rain drop with angle and varying length
           drop_length = 15 + (layer * 5)
-          wind_angle = 0.2f32  # Slight diagonal
-          
+          wind_angle = 0.2f32 # Slight diagonal
+
           start_pos = RL::Vector2.new(x: x, y: y)
           end_pos = RL::Vector2.new(
-            x: x + (wind_angle * drop_length), 
+            x: x + (wind_angle * drop_length),
             y: y + drop_length
           )
-          
+
           # More realistic rain color (greyish blue)
           color = RL::Color.new(
-            r: 180, 
-            g: 200, 
-            b: 220, 
+            r: 180,
+            g: 200,
+            b: 220,
             a: layer_alpha.to_u8
           )
-          
+
           RL.draw_line_ex(start_pos, end_pos, layer_width, color)
         end
-        
+
         # Add some splash effects at the bottom
-        if Random.rand < 0.3  # 30% chance per frame
+        if Random.rand < 0.3 # 30% chance per frame
           splash_x = Random.rand(1024).to_f32
           splash_y = 750.0f32
-          
+
           # Small splash circle
-          RL.draw_circle(splash_x.to_i, splash_y.to_i, 2.0f32, 
+          RL.draw_circle(splash_x.to_i, splash_y.to_i, 2.0f32,
             RL::Color.new(r: 180, g: 200, b: 220, a: 100))
         end
       end
@@ -605,6 +605,15 @@ module PointClickEngine
 
       # Run an action sequence from an ActionRunner
       def run_script(runner : Actions::ActionRunner)
+        if current_runner = @script_runner
+          return if current_runner == runner && current_runner.running
+          current_runner.stop if current_runner.running
+        end
+
+        if engine = Core::Engine.instance?
+          runner.engine = engine
+        end
+
         @script_runner = runner
         runner.play
       end

@@ -1,5 +1,16 @@
 require "../../spec_helper"
 
+private def with_state_change_test_dir(&)
+  test_dir = File.tempname("game_state_integration", "")
+  Dir.mkdir_p(test_dir)
+
+  begin
+    yield test_dir
+  ensure
+    FileUtils.rm_rf(test_dir) if Dir.exists?(test_dir)
+  end
+end
+
 describe "Engine GameStateManager Integration" do
   describe "engine properties" do
     it "can set and get game_state_manager" do
@@ -71,7 +82,8 @@ describe "Engine GameStateManager Integration" do
 
   describe "config integration" do
     it "creates and connects managers from config" do
-      config_yaml = <<-YAML
+      with_state_change_test_dir do |test_dir|
+        config_yaml = <<-YAML
       game:
         title: "Manager Test"
       
@@ -83,35 +95,31 @@ describe "Engine GameStateManager Integration" do
           game_time: 0.0
       YAML
 
-      File.write("manager_config.yaml", config_yaml)
-      config = PointClickEngine::Core::GameConfig.from_file("manager_config.yaml")
+        config_path = File.join(test_dir, "manager_config.yaml")
+        File.write(config_path, config_yaml)
+        config = PointClickEngine::Core::GameConfig.from_file(config_path, skip_preflight: true)
 
-      RaylibContext.ensure_window(800, 600, "Manager Test")
-      engine = config.create_engine
+        RaylibContext.ensure_window(800, 600, "Manager Test")
+        engine = config.create_engine
 
-      # Managers should be created
-      engine.game_state_manager.should_not be_nil
-      engine.quest_manager.should_not be_nil
+        engine.game_state_manager.should_not be_nil
+        engine.quest_manager.should_not be_nil
 
-      gsm = engine.game_state_manager.not_nil!
+        gsm = engine.game_state_manager.not_nil!
 
-      # Initial state should be set
-      gsm.get_flag("test_flag").should be_true
-      gsm.get_variable("test_var").should eq(42)
+        gsm.get_flag("test_flag").should be_true
+        gsm.get_variable("test_var").should eq(42)
 
-      # Update callback should be set
-      engine.on_update.should_not be_nil
+        engine.on_update.should_not be_nil
 
-      # Test update works
-      engine.update(1.0f32)
-      gsm.game_time.should be_close(1.0, 0.01)
-
-      # Cleanup
-      File.delete("manager_config.yaml")
+        engine.update(1.0f32)
+        gsm.game_time.should be_close(1.0, 0.01)
+      end
     end
 
     it "handles state change events for quest updates" do
-      config_yaml = <<-YAML
+      with_state_change_test_dir do |test_dir|
+        config_yaml = <<-YAML
       game:
         title: "State Change Test"
       
@@ -126,10 +134,9 @@ describe "Engine GameStateManager Integration" do
           game_started: true
       YAML
 
-      # Create directories and files
-      Dir.mkdir_p("test_quests")
-      Dir.mkdir_p("test_scenes")
-      quest_yaml = <<-YAML
+        Dir.mkdir_p(File.join(test_dir, "test_quests"))
+        Dir.mkdir_p(File.join(test_dir, "test_scenes"))
+        quest_yaml = <<-YAML
       - id: test_quest
         name: "Test Quest"
         description: "A test quest"
@@ -142,47 +149,37 @@ describe "Engine GameStateManager Integration" do
             condition: "objective_done"
       YAML
 
-      File.write("test_quests/quest.yaml", quest_yaml)
+        File.write(File.join(test_dir, "test_quests", "quest.yaml"), quest_yaml)
 
-      # Create minimal scene
-      scene_yaml = <<-YAML
+        scene_yaml = <<-YAML
       name: test_scene
+      background_path: bg.png
       YAML
-      File.write("test_scenes/test_scene.yaml", scene_yaml)
+        File.write(File.join(test_dir, "test_scenes", "test_scene.yaml"), scene_yaml)
 
-      File.write("state_change_config.yaml", config_yaml)
+        config_path = File.join(test_dir, "state_change_config.yaml")
+        File.write(config_path, config_yaml)
 
-      config = PointClickEngine::Core::GameConfig.from_file("state_change_config.yaml")
+        config = PointClickEngine::Core::GameConfig.from_file(config_path, skip_preflight: true)
 
-      RaylibContext.ensure_window(800, 600, "State Change Test")
-      engine = config.create_engine
+        RaylibContext.ensure_window(800, 600, "State Change Test")
+        engine = config.create_engine
 
-      gsm = engine.game_state_manager.not_nil!
-      qm = engine.quest_manager.not_nil!
+        gsm = engine.game_state_manager.not_nil!
+        qm = engine.quest_manager.not_nil!
 
-      # Quest should be loaded
-      quest = qm.get_quest("test_quest")
-      quest.should_not be_nil
+        quest = qm.get_quest("test_quest")
+        quest.should_not be_nil
 
-      # The quest needs an update cycle to auto-start
-      qm.update_all_quests(gsm, 0.0f32)
+        qm.update_all_quests(gsm, 0.0f32)
 
-      # Quest should be active (not completed yet)
-      quest.try(&.active).should be_true
-      quest.try(&.completed).should be_false
+        quest.try(&.active).should be_true
+        quest.try(&.completed).should be_false
 
-      # Setting flag should trigger quest update through state change handler
-      gsm.set_flag("objective_done", true)
+        gsm.set_flag("objective_done", true)
 
-      # Quest should complete
-      quest.try(&.objectives.first.completed).should be_true
-
-      # Cleanup
-      File.delete("state_change_config.yaml")
-      File.delete("test_quests/quest.yaml")
-      File.delete("test_scenes/test_scene.yaml")
-      Dir.delete("test_quests")
-      Dir.delete("test_scenes")
+        quest.try(&.objectives.first.completed).should be_true
+      end
     end
   end
 

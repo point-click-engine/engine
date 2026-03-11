@@ -789,6 +789,24 @@ module PointClickEngine
 
         engine.game_state["callback_stored"].should eq("true")
       end
+
+      it "start_sequence runs the registered sequence through the current scene" do
+        with_test_window do
+          engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
+          scene = PointClickEngine::Scenes::Scene.new("test")
+          engine.current_scene = scene
+
+          runner = PointClickEngine::Actions::ActionRunner.new("intro")
+          runner.add(PointClickEngine::Actions::ActionData.new("wait", duration: 1.0f32))
+          engine.scene_manager.register_sequence("intro", runner)
+
+          script_engine = Scripting::ScriptEngine.new
+          script_engine.execute_script("return start_sequence('intro')").should be_true
+
+          scene.script_runner.should eq(runner)
+          scene.script_running?.should be_true
+        end
+      end
     end
 
     describe "input dialog API" do

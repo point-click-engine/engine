@@ -391,10 +391,12 @@ module PointClickEngine
 
             if engine = Core::Engine.instance
               if runner = engine.scene_manager.get_sequence(sequence_id)
-                runner.play
-                state.push(true)
-                # Publish event
-                engine.event_bus.publish(Core::Events::SequenceStartedEvent.new(sequence_id))
+                if engine.current_scene
+                  engine.run_script(runner)
+                  state.push(true)
+                else
+                  state.push(false)
+                end
               else
                 state.push(false)
               end
@@ -425,9 +427,7 @@ module PointClickEngine
             if scene = engine.current_scene
               if runner = scene.script_runner
                 if runner.running
-                  sequence_id = runner.name
                   scene.skip_script
-                  engine.event_bus.publish(Core::Events::SequenceEndedEvent.new(sequence_id, skipped: true))
                 end
               end
             end

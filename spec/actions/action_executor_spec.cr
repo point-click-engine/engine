@@ -1,6 +1,7 @@
 require "../spec_helper"
 require "../../src/actions/action"
 require "../../src/actions/action_executor"
+require "../../src/actions/action_overlay_manager"
 
 describe PointClickEngine::Actions::ActionExecutor do
   describe "#initialize" do
@@ -200,6 +201,56 @@ describe PointClickEngine::Actions::ActionExecutor do
     end
   end
 
+  describe "camera actions" do
+    it "accepts target_zoom as an alias for zoom target" do
+      with_test_window do
+        engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
+        scene = PointClickEngine::Scenes::Scene.new("test")
+        executor = PointClickEngine::Actions::ActionExecutor.new(engine)
+
+        data = PointClickEngine::Actions::ActionData.create("camera_zoom",
+          duration: 1.0f32,
+          target_zoom: 1.5
+        )
+        action = PointClickEngine::Actions::ActionInstance.new(data)
+
+        executor.start(action, scene)
+
+        engine.effect_manager.stats[:camera_effects].should eq(1)
+      end
+    end
+  end
+
+  describe "timed control actions" do
+    it "waits for return_to_menu delay before completing" do
+      with_test_window do
+        engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
+        scene = PointClickEngine::Scenes::Scene.new("test")
+        executor = PointClickEngine::Actions::ActionExecutor.new(engine)
+
+        data = PointClickEngine::Actions::ActionData.create("return_to_menu", delay: 1.0)
+        action = PointClickEngine::Actions::ActionInstance.new(data)
+
+        executor.start(action, scene)
+        executor.update(action, scene, 0.5f32).should be_false
+        executor.update(action, scene, 0.6f32).should be_true
+      end
+    end
+  end
+
+  describe PointClickEngine::Actions::ActionOverlayManager do
+    it "resolves sprites by basename or stem" do
+      manager = PointClickEngine::Actions::ActionOverlayManager.new
+      manager.add_sprite("assets/items/crystal.png", Raylib::Vector2.new(x: 0, y: 0))
+
+      manager.has_sprite?("crystal").should be_true
+      manager.has_sprite?("crystal.png").should be_true
+
+      manager.remove_sprite("crystal")
+      manager.has_sprite?("assets/items/crystal.png").should be_false
+    end
+  end
+
   describe "callback action" do
     it "executes callback on start" do
       with_test_window do
@@ -208,7 +259,7 @@ describe PointClickEngine::Actions::ActionExecutor do
         executor = PointClickEngine::Actions::ActionExecutor.new(engine)
 
         called = false
-        callback = ->{ called = true; nil }
+        callback = -> { called = true; nil }
 
         data = PointClickEngine::Actions::ActionData.new("callback")
         action = PointClickEngine::Actions::ActionInstance.new(data, callback)

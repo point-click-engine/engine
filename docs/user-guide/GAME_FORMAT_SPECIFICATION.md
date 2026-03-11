@@ -28,7 +28,7 @@ Complete specification for all YAML configuration files:
 - Dialog Trees (`dialogs/*.yaml`)
 - Quest System (`quests/*.yaml`)
 - Item Definitions (`items/*.yaml`)
-- Cutscenes (`cutscenes/*.yaml`)
+- Action Sequences (`sequences/*.yaml`)
 
 ### 📜 [Lua Scripting Guide](LUA_SCRIPTING.md)
 Complete Lua scripting reference:
@@ -72,8 +72,8 @@ my_adventure_game/
 │   ├── key_items.yaml
 │   ├── consumables.yaml
 │   └── ...
-├── cutscenes/               # Cutscene definitions
-│   ├── intro_cutscene.yaml
+├── sequences/               # Scripted action sequences
+│   ├── intro_sequence.yaml
 │   └── ...
 ├── assets/                  # Game assets
 │   ├── sprites/            # Character sprites

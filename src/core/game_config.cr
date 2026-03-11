@@ -502,9 +502,26 @@ module PointClickEngine
           next unless event.new_game
           puts "[DEBUG] GameStartedEvent triggered!"
 
-          # Load the start scene - the scene's Lua script handles any intro sequences
+          should_skip_intro = false
+          if skip_flag = skip_intro_flag
+            if gsm = engine.game_state_manager
+              should_skip_intro = gsm.get_flag(skip_flag)
+            end
+          end
+
+          # Load the start scene first so scene-level actions and scripts can initialize.
           if scene_name = start_scene_name
             engine.change_scene_with_transition(scene_name, "fade", 1.0f32)
+          end
+
+          # If a startup sequence is configured and the scene did not already start one,
+          # run it now.
+          if !should_skip_intro && (sequence_name = intro_sequence_name)
+            if !engine.script_running?
+              if runner = engine.scene_manager.get_sequence(sequence_name)
+                engine.run_script(runner)
+              end
+            end
           end
 
           # Play start music
