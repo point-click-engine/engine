@@ -81,6 +81,27 @@ describe PointClickEngine::Core::GameConfig do
 
       File.delete("invalid_config.yaml")
     end
+
+    it "loads the generic startup sequence fields" do
+      yaml_content = <<-YAML
+      game:
+        title: "Startup Sequence Test"
+
+      startup:
+        sequence: "opening_sequence"
+        skip_sequence_if: "already_seen_opening"
+      YAML
+
+      File.write("startup_sequence_config.yaml", yaml_content)
+
+      config = PointClickEngine::Core::GameConfig.from_file("startup_sequence_config.yaml", skip_preflight: true)
+
+      config.startup.should_not be_nil
+      config.startup.not_nil!.sequence.should eq("opening_sequence")
+      config.startup.not_nil!.skip_sequence_if.should eq("already_seen_opening")
+
+      File.delete("startup_sequence_config.yaml")
+    end
   end
 
   describe "#create_engine" do
@@ -162,6 +183,8 @@ describe PointClickEngine::Core::GameConfig do
       dm = engine.display_manager
       dm.should_not be_nil
       dm.try(&.scaling_mode).should eq(PointClickEngine::Graphics::Display::ScalingMode::PixelPerfect)
+      dm.try(&.reference_width).should eq(640)
+      dm.try(&.reference_height).should eq(480)
 
       # Check audio settings were applied
       if audio = engine.system_manager.audio_manager
@@ -172,6 +195,29 @@ describe PointClickEngine::Core::GameConfig do
 
       File.delete("engine_test_config.yaml")
       FileUtils.rm_rf("assets")
+    end
+
+    it "defaults the reference resolution to the window size when no display target is provided" do
+      yaml_content = <<-YAML
+      game:
+        title: "Window Reference Test"
+
+      window:
+        width: 960
+        height: 540
+      YAML
+
+      File.write("window_reference_config.yaml", yaml_content)
+      config = PointClickEngine::Core::GameConfig.from_file("window_reference_config.yaml", skip_preflight: true)
+
+      RaylibContext.ensure_window(960, 540, "Window Reference Test")
+      engine = config.create_engine
+
+      engine.reference_resolution.should eq({960, 540})
+      engine.display_manager.not_nil!.reference_width.should eq(960)
+      engine.display_manager.not_nil!.reference_height.should eq(540)
+
+      File.delete("window_reference_config.yaml")
     end
 
     it "loads assets from glob patterns" do

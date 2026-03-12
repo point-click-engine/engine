@@ -83,13 +83,18 @@ module PointClickEngine
         end
 
         # Draw cursor with verb indicator
-        def draw(display_manager : Graphics::Display?)
+        def draw(display_manager : Graphics::Display?, suppressed : Bool = false)
           return unless display_manager
+          if suppressed
+            RL.show_cursor
+            return
+          end
 
           raw_mouse = RL.get_mouse_position
           if display_manager.in_game_area?(raw_mouse)
-            game_mouse = display_manager.screen_to_game(raw_mouse)
-            @cursor_manager.draw(game_mouse)
+            @cursor_manager.draw(raw_mouse)
+          else
+            RL.show_cursor
           end
         end
 

@@ -41,8 +41,8 @@ module PointClickEngine
             target_y = target_pos.y + @offset.y
 
             # Calculate distance from camera center using Display reference dimensions
-            viewport_width = Core::Display::REFERENCE_WIDTH
-            viewport_height = Core::Display::REFERENCE_HEIGHT
+            viewport_width = Core::Display.reference_width
+            viewport_height = Core::Display.reference_height
             cam_center_x = camera.position.x + viewport_width / 2
             cam_center_y = camera.position.y + viewport_height / 2
 
@@ -191,8 +191,8 @@ module PointClickEngine
                 zoom_ratio = new_zoom / camera.zoom
 
                 # Adjust camera to keep center point in same screen position
-                cam_center_x = camera.position.x + Core::Display::REFERENCE_WIDTH / 2
-                cam_center_y = camera.position.y + Core::Display::REFERENCE_HEIGHT / 2
+                cam_center_x = camera.position.x + Core::Display.reference_width / 2
+                cam_center_y = camera.position.y + Core::Display.reference_height / 2
 
                 offset_x = center.x - cam_center_x
                 offset_y = center.y - cam_center_y

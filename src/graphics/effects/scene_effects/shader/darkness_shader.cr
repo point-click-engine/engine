@@ -49,7 +49,7 @@ module PointClickEngine
             super(duration)
 
             if ShaderEffect.gl_context_available?
-              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              @render_texture = RL.load_render_texture(Display.reference_width, Display.reference_height)
             end
           end
           
@@ -182,7 +182,7 @@ module PointClickEngine
             @light_sources.clear
           end
           
-          def render_scene_with_darkness(&block : -> Nil)
+          def render_scene_with_darkness(display : PointClickEngine::Graphics::Display? = nil, &block : -> Nil)
             return yield unless shader = @shader
             return yield unless render_texture = @render_texture
             
@@ -203,7 +203,10 @@ module PointClickEngine
             set_shader_value("innerRadius", @inner_radius)
             set_shader_value("outerRadius", @outer_radius)
             set_shader_value("gradientAngle", @gradient_angle)
-            set_shader_value("resolution", RL::Vector2.new(x: Display::REFERENCE_WIDTH.to_f32, y: Display::REFERENCE_HEIGHT.to_f32))
+            set_shader_value("resolution", RL::Vector2.new(
+              x: render_texture.texture.width.to_f32,
+              y: render_texture.texture.height.to_f32
+            ))
             
             # Set light sources for multi-light mode
             if @darkness_type.multi_light?
@@ -237,10 +240,24 @@ module PointClickEngine
             end
             
             # Draw the scene with darkness
-            RL.draw_texture_rec(
+            source_rect = RL::Rectangle.new(
+              x: 0,
+              y: 0,
+              width: render_texture.texture.width.to_f32,
+              height: -render_texture.texture.height.to_f32
+            )
+            destination_rect = display ? display.logical_rect : RL::Rectangle.new(
+              x: 0.0f32,
+              y: 0.0f32,
+              width: render_texture.texture.width.to_f32,
+              height: render_texture.texture.height.to_f32
+            )
+            RL.draw_texture_pro(
               render_texture.texture,
-              RL::Rectangle.new(x: 0, y: 0, width: render_texture.texture.width.to_f32, height: -render_texture.texture.height.to_f32),
-              RL::Vector2.new(x: 0, y: 0),
+              source_rect,
+              destination_rect,
+              RL::Vector2.new(x: 0.0f32, y: 0.0f32),
+              0.0f32,
               RL::WHITE
             )
             

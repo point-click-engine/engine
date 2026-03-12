@@ -45,8 +45,8 @@ module PointClickEngine
 
         # Set camera bounds based on scene size
         def set_bounds(scene_width : Int32, scene_height : Int32,
-                       viewport_width : Int32 = Display::REFERENCE_WIDTH,
-                       viewport_height : Int32 = Display::REFERENCE_HEIGHT)
+                       viewport_width : Int32 = Display.reference_width,
+                       viewport_height : Int32 = Display.reference_height)
           @max_x = Math.max(0.0f32, (scene_width - viewport_width).to_f32)
           @max_y = Math.max(0.0f32, (scene_height - viewport_height).to_f32)
           @min_x = 0.0f32
@@ -88,8 +88,8 @@ module PointClickEngine
 
         # Center camera on a world position
         def center_on(x : Float32, y : Float32,
-                      viewport_width : Int32 = Display::REFERENCE_WIDTH,
-                      viewport_height : Int32 = Display::REFERENCE_HEIGHT)
+                      viewport_width : Int32 = Display.reference_width,
+                      viewport_height : Int32 = Display.reference_height)
           move_to(
             x - viewport_width / 2,
             y - viewport_height / 2
@@ -123,8 +123,8 @@ module PointClickEngine
         end
 
         # Get the visible area in world coordinates
-        def visible_area(viewport_width : Int32 = Display::REFERENCE_WIDTH,
-                         viewport_height : Int32 = Display::REFERENCE_HEIGHT) : RL::Rectangle
+        def visible_area(viewport_width : Int32 = Display.reference_width,
+                         viewport_height : Int32 = Display.reference_height) : RL::Rectangle
           RL::Rectangle.new(
             x: @position.x,
             y: @position.y,
@@ -135,8 +135,8 @@ module PointClickEngine
 
         # Check if a world position is visible
         def visible?(world_x : Float32, world_y : Float32, margin : Float32 = 0.0f32,
-                     viewport_width : Int32 = Display::REFERENCE_WIDTH,
-                     viewport_height : Int32 = Display::REFERENCE_HEIGHT) : Bool
+                     viewport_width : Int32 = Display.reference_width,
+                     viewport_height : Int32 = Display.reference_height) : Bool
           world_x >= @position.x - margin &&
             world_x <= @position.x + viewport_width + margin &&
             world_y >= @position.y - margin &&

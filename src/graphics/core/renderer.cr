@@ -50,12 +50,38 @@ module PointClickEngine
 
         def initialize(@display : Display)
           @camera = Camera.new
-          @viewport = Viewport.new(0.0f32, 0.0f32, Display::REFERENCE_WIDTH.to_f32, Display::REFERENCE_HEIGHT.to_f32)
+          @viewport = Viewport.new(0.0f32, 0.0f32, @display.reference_width.to_f32, @display.reference_height.to_f32)
           setup_render_textures
         end
 
+        def logical_width : Int32
+          @display.reference_width
+        end
+
+        def logical_height : Int32
+          @display.reference_height
+        end
+
+        def logical_rect : RL::Rectangle
+          @display.logical_rect
+        end
+
+        def build_frame_context(scene_width : Int32? = nil, scene_height : Int32? = nil,
+                                cinematic_width : Int32? = nil, cinematic_height : Int32? = nil) : FrameContext
+          FrameContext.new(
+            @display,
+            @camera,
+            logical_width,
+            logical_height,
+            scene_width || logical_width,
+            scene_height || logical_height,
+            cinematic_width,
+            cinematic_height
+          )
+        end
+
         # Main render method with context
-        def render(&block : RenderContext ->)
+        def render(apply_display_transform : Bool = true, &block : RenderContext ->)
           @render_calls = 0
 
           # Start rendering to game texture if post-processing is enabled
@@ -65,7 +91,25 @@ module PointClickEngine
           end
 
           # Apply display scaling and camera transformation
-          @display.with_game_coordinates do
+          if apply_display_transform
+            @display.with_game_coordinates do
+              # Apply camera transformation using Camera2D
+              camera2d = RL::Camera2D.new(
+                offset: RL::Vector2.new(x: 0, y: 0),
+                target: RL::Vector2.new(x: -@camera.position.x, y: -@camera.position.y),
+                rotation: 0.0f32,
+                zoom: 1.0f32
+              )
+
+              RL.begin_mode_2d(camera2d)
+
+              # Create render context and yield to caller
+              context = RenderContext.new(self, @camera, @viewport)
+              yield context
+
+              RL.end_mode_2d
+            end
+          else
             # Apply camera transformation using Camera2D
             camera2d = RL::Camera2D.new(
               offset: RL::Vector2.new(x: 0, y: 0),
@@ -152,9 +196,9 @@ module PointClickEngine
           screen_y = world_y - @camera.position.y
 
           screen_x >= -margin &&
-            screen_x <= Display::REFERENCE_WIDTH + margin &&
+            screen_x <= @display.reference_width + margin &&
             screen_y >= -margin &&
-            screen_y <= Display::REFERENCE_HEIGHT + margin
+            screen_y <= @display.reference_height + margin
         end
 
         # Cleanup render textures
@@ -172,13 +216,13 @@ module PointClickEngine
 
         private def setup_render_textures
           @game_render_texture = RL.load_render_texture(
-            Display::REFERENCE_WIDTH,
-            Display::REFERENCE_HEIGHT
+            logical_width,
+            logical_height
           )
 
           @effect_render_texture = RL.load_render_texture(
-            Display::REFERENCE_WIDTH,
-            Display::REFERENCE_HEIGHT
+            logical_width,
+            logical_height
           )
         end
 
@@ -188,15 +232,15 @@ module PointClickEngine
           source_rect = RL::Rectangle.new(
             x: 0,
             y: 0,
-            width: Display::REFERENCE_WIDTH.to_f32,
-            height: -Display::REFERENCE_HEIGHT.to_f32 # Flip Y
+            width: @display.reference_width.to_f32,
+            height: -@display.reference_height.to_f32 # Flip Y
           )
 
           dest_rect = RL::Rectangle.new(
             x: 0,
             y: 0,
-            width: Display::REFERENCE_WIDTH.to_f32,
-            height: Display::REFERENCE_HEIGHT.to_f32
+            width: @display.reference_width.to_f32,
+            height: @display.reference_height.to_f32
           )
 
           RL.draw_texture_pro(

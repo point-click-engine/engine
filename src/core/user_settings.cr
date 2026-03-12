@@ -112,6 +112,7 @@ module PointClickEngine
 
         # Apply gameplay settings
         Engine.debug_mode = gameplay.debug_mode
+        ErrorLogger.set_log_level(gameplay.debug_mode ? ErrorLogger::LogLevel::Debug : ErrorLogger::LogLevel::Info)
         if gameplay.auto_save_interval > 0
           engine.enable_auto_save(gameplay.auto_save_interval.to_f32)
         end

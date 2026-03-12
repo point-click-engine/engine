@@ -256,6 +256,8 @@ Spec.after_each do
     PointClickEngine::Core::Engine.reset_instance
   end
 
+  PointClickEngine::Graphics::Display.reset_reference_resolution
+
   # Force garbage collection to clean up finalized objects
   GC.collect
 

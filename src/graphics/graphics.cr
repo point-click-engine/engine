@@ -17,6 +17,7 @@ require "./core/display"
 require "./core/renderer"
 require "./core/camera"
 require "./core/viewport"
+require "./core/frame_context"
 
 # Sprite system
 require "./sprites/sprite"
@@ -67,6 +68,7 @@ module PointClickEngine
     alias Renderer = Core::Renderer
     alias Camera = Core::Camera
     alias Viewport = Core::Viewport
+    alias FrameContext = Core::FrameContext
     alias RenderContext = Core::RenderContext
     alias Layer = Layers::Layer
     alias LayerManager = Layers::LayerManager

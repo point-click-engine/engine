@@ -2,6 +2,7 @@ name: garden
 display_name: "The Moonlit Garden"
 description: "An overgrown Victorian garden where ancient secrets lie hidden beneath the fog."
 background_path: assets/backgrounds/garden.png
+background_scaling_mode: stretch
 logical_width: 1024
 logical_height: 768
 enable_pathfinding: true

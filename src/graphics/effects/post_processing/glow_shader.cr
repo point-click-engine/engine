@@ -45,12 +45,12 @@ module PointClickEngine
             super(duration)
 
             if ShaderEffect.gl_context_available?
-              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
-              @blur_texture = RL.load_render_texture(Display::REFERENCE_WIDTH // 2, Display::REFERENCE_HEIGHT // 2)
+              @render_texture = RL.load_render_texture(Display.reference_width, Display.reference_height)
+              @blur_texture = RL.load_render_texture(Display.reference_width // 2, Display.reference_height // 2)
 
               # Create downsample chain for efficient blur
-              width = Display::REFERENCE_WIDTH // 2
-              height = Display::REFERENCE_HEIGHT // 2
+              width = Display.reference_width // 2
+              height = Display.reference_height // 2
 
               3.times do
                 @downsample_textures << RL.load_render_texture(width, height)

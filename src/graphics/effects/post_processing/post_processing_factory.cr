@@ -208,8 +208,8 @@ module PointClickEngine
             if vec.x > 1.0f32 || vec.y > 1.0f32
               # Assume pixel coordinates, normalize
               RL::Vector2.new(
-                x: vec.x / Display::REFERENCE_WIDTH.to_f32,
-                y: vec.y / Display::REFERENCE_HEIGHT.to_f32
+                x: vec.x / Display.reference_width.to_f32,
+                y: vec.y / Display.reference_height.to_f32
               )
             else
               # Already normalized

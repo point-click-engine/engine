@@ -328,17 +328,10 @@ module PointClickEngine
             hide
           end
         else
-          raw_mouse = RL.get_mouse_position
-
-          # Convert screen coordinates to game coordinates if display manager exists
-          mouse_pos = if engine = Core::Engine.instance
-                        if dm = engine.display_manager
-                          dm.screen_to_game(raw_mouse)
-                        else
-                          raw_mouse
-                        end
+          mouse_pos = if engine = Core::Engine.instance?
+                        engine.transformed_mouse_position
                       else
-                        raw_mouse
+                        RL.get_mouse_position
                       end
 
           if Core::InputState.consume_mouse_click
@@ -375,15 +368,10 @@ module PointClickEngine
           base_choice_y = @position.y + @size.y - (@choices.size * 30) - @padding
 
           # Convert screen coordinates to game coordinates for hover detection
-          raw_mouse = RL.get_mouse_position
-          mouse_pos = if engine = Core::Engine.instance
-                        if dm = engine.display_manager
-                          dm.screen_to_game(raw_mouse)
-                        else
-                          raw_mouse
-                        end
+          mouse_pos = if engine = Core::Engine.instance?
+                        engine.transformed_mouse_position
                       else
-                        raw_mouse
+                        RL.get_mouse_position
                       end
 
           @choices.each_with_index do |choice, index|

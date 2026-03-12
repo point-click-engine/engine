@@ -407,8 +407,8 @@ module PointClickEngine
         return unless portrait = @portraits[current_name]?
 
         # Use game dimensions for portrait positioning
-        game_width = 1024
-        game_height = 768
+        game_width = PointClickEngine::Graphics::Display.reference_width
+        game_height = PointClickEngine::Graphics::Display.reference_height
         screen_pos = portrait.get_screen_position(game_width, game_height)
         portrait.draw(screen_pos)
       end

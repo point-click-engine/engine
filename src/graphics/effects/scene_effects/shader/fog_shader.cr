@@ -36,7 +36,7 @@ module PointClickEngine
 
             # Scene effects need a fullscreen render texture
             if ShaderEffect.gl_context_available?
-              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              @render_texture = RL.load_render_texture(Display.reference_width, Display.reference_height)
             end
           end
           
@@ -163,7 +163,7 @@ module PointClickEngine
             context.active_shader = shader
           end
           
-          def render_scene_with_fog(&block : -> Nil)
+          def render_scene_with_fog(display : PointClickEngine::Graphics::Display? = nil, &block : -> Nil)
             return yield unless shader = @shader
             return yield unless render_texture = @render_texture
             
@@ -186,10 +186,24 @@ module PointClickEngine
             set_shader_value("heightFalloff", @height_falloff)
             
             # Draw the scene with fog
-            RL.draw_texture_rec(
+            source_rect = RL::Rectangle.new(
+              x: 0,
+              y: 0,
+              width: render_texture.texture.width.to_f32,
+              height: -render_texture.texture.height.to_f32
+            )
+            destination_rect = display ? display.logical_rect : RL::Rectangle.new(
+              x: 0.0f32,
+              y: 0.0f32,
+              width: render_texture.texture.width.to_f32,
+              height: render_texture.texture.height.to_f32
+            )
+            RL.draw_texture_pro(
               render_texture.texture,
-              RL::Rectangle.new(x: 0, y: 0, width: render_texture.texture.width.to_f32, height: -render_texture.texture.height.to_f32),
-              RL::Vector2.new(x: 0, y: 0),
+              source_rect,
+              destination_rect,
+              RL::Vector2.new(x: 0.0f32, y: 0.0f32),
+              0.0f32,
               RL::WHITE
             )
             

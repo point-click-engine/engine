@@ -25,6 +25,7 @@ module PointClickEngine
 
       # Current input state
       property mouse_position : RL::Vector2 = RL::Vector2.new(x: 0, y: 0)
+      getter mouse_clicked_this_frame : Bool = false
       property last_input_time : Float64 = 0.0
       property input_repeat_delay : Float64 = 0.15
       @time_origin : Time::Instant = Time.instant
@@ -53,6 +54,7 @@ module PointClickEngine
 
         # Update mouse position
         @mouse_position = RL.get_mouse_position
+        @mouse_clicked_this_frame = RL.mouse_button_released?(RL::MouseButton::Left)
 
         # Process keyboard input
         if @keyboard_navigation_enabled
@@ -111,7 +113,7 @@ module PointClickEngine
       # Processes mouse input and interaction
       private def process_mouse_input : InputAction
         # Check for mouse click
-        if RL::MouseButton::Left.pressed?
+        if @mouse_clicked_this_frame
           return InputAction::MouseClick
         end
 
@@ -149,7 +151,7 @@ module PointClickEngine
         if is_hovering
           @on_mouse_hover.try(&.call(item_index))
 
-          if RL::MouseButton::Left.pressed?
+          if @mouse_clicked_this_frame
             @on_select.try(&.call(item_index))
             return true
           end
@@ -221,6 +223,7 @@ module PointClickEngine
       def reset_input_state
         @last_input_time = 0.0
         @mouse_position = RL::Vector2.new(x: 0, y: 0)
+        @mouse_clicked_this_frame = false
       end
 
       private def elapsed_time_seconds : Float64

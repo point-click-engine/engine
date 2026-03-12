@@ -19,6 +19,28 @@ class MockScene < PointClickEngine::Scenes::Scene
   end
 end
 
+class TrackingScene < PointClickEngine::Scenes::Scene
+  property enter_calls : Int32 = 0
+  property script_load_calls : Int32 = 0
+  property action_load_calls : Int32 = 0
+
+  def initialize(name : String)
+    super(name)
+  end
+
+  def enter
+    @enter_calls += 1
+  end
+
+  def load_script(engine : PointClickEngine::Core::Engine)
+    @script_load_calls += 1
+  end
+
+  def load_actions
+    @action_load_calls += 1
+  end
+end
+
 describe PointClickEngine::Core::SceneManager do
   describe "#initialize" do
     it "creates a new SceneManager instance" do
@@ -190,6 +212,44 @@ describe PointClickEngine::Core::SceneManager do
       manager.change_scene("test_scene")
 
       callback_called.should be_true
+    end
+  end
+
+  describe "activation options" do
+    it "can stage a scene without calling enter hooks or loading scene runtime state" do
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
+      manager = PointClickEngine::Core::SceneManager.new(engine)
+      scene = TrackingScene.new("staged_scene")
+
+      manager.add_scene(scene)
+      result = manager.change_scene("staged_scene",
+        PointClickEngine::Core::SceneManager::ActivationOptions.new(
+          call_enter: false,
+          load_script: false,
+          load_actions: false,
+          publish_events: false
+        ))
+
+      result.success?.should be_true
+      activated = result.value.as(TrackingScene)
+      activated.enter_calls.should eq(0)
+      activated.script_load_calls.should eq(0)
+      activated.action_load_calls.should eq(0)
+    end
+
+    it "keeps the default playable activation behavior when staging flags are not used" do
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
+      manager = PointClickEngine::Core::SceneManager.new(engine)
+      scene = TrackingScene.new("playable_scene")
+
+      manager.add_scene(scene)
+      result = manager.change_scene("playable_scene")
+
+      result.success?.should be_true
+      activated = result.value.as(TrackingScene)
+      activated.enter_calls.should eq(1)
+      activated.script_load_calls.should eq(1)
+      activated.action_load_calls.should eq(1)
     end
   end
 end

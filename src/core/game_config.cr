@@ -115,14 +115,33 @@ module PointClickEngine
         property duration : Float32 = 5.0
       end
 
+      class CursorConfig
+        include YAML::Serializable
+        property root : String?
+        property default : String?
+        property walk : String?
+        property look : String?
+        property talk : String?
+        property use : String?
+        property take : String?
+        property open : String?
+        property close : String?
+        property push : String?
+        property pull : String?
+        property give : String?
+      end
+
       class UIConfig
         include YAML::Serializable
         property hints : Array(UIHint) = [] of UIHint
         property opening_message : String?
+        property cursors : CursorConfig?
       end
 
       class StartupConfig
         include YAML::Serializable
+        property sequence : String?
+        property skip_sequence_if : String?
         property intro_sequence : String?
         property skip_intro_if : String?
       end
@@ -190,6 +209,10 @@ module PointClickEngine
         h = window.try(&.height) || 768
 
         engine = Engine.new(w, h, game.title)
+        reference_width = display.try(&.target_width) || w
+        reference_height = display.try(&.target_height) || h
+        engine.reference_width = reference_width
+        engine.reference_height = reference_height
         user_settings_path = File.join(config_base_dir, "user_settings.yaml")
         user_settings = UserSettings.load(user_settings_path)
 
@@ -254,10 +277,6 @@ module PointClickEngine
                               else
                                 Graphics::Display::ScalingMode::FitWithBars
                               end
-            # Note: The new Display class uses fixed reference resolution of 1024x768
-            # If custom resolutions are needed, the Display class would need to be updated
-            # dm.target_width = disp.target_width
-            # dm.target_height = disp.target_height
           end
         end
 
@@ -267,8 +286,8 @@ module PointClickEngine
           player_obj = Characters::Player.new(
             player_config.name,
             Raylib::Vector2.new(
-              x: player_config.start_position.try(&.x) || (window.try(&.width) || 1024) / 2,
-              y: player_config.start_position.try(&.y) || (window.try(&.height) || 768) - 150
+              x: player_config.start_position.try(&.x) || engine.reference_width / 2,
+              y: player_config.start_position.try(&.y) || engine.reference_height - 150
             ),
             Raylib::Vector2.new(
               x: player_config.sprite.try(&.frame_width).try(&.to_f32) || 64.0f32,
@@ -326,6 +345,7 @@ module PointClickEngine
         # Apply game config settings AFTER user settings (game config takes precedence)
         if s = settings
           Engine.debug_mode = s.debug_mode
+          ErrorLogger.set_log_level(s.debug_mode ? ErrorLogger::LogLevel::Debug : ErrorLogger::LogLevel::Info)
           engine.show_fps = s.show_fps
         end
 
@@ -500,13 +520,15 @@ module PointClickEngine
       end
 
       private def setup_ui(engine : Engine)
+        configure_cursor_theme(engine)
+
         # Set up game start handler
         ui_config = self.ui
         startup_config = self.startup
         start_scene_name = self.start_scene
         start_music_name = self.start_music
-        intro_sequence_name = startup_config.try(&.intro_sequence)
-        skip_intro_flag = startup_config.try(&.skip_intro_if)
+        startup_sequence_name = startup_config.try(&.sequence) || startup_config.try(&.intro_sequence)
+        skip_sequence_flag = startup_config.try(&.skip_sequence_if) || startup_config.try(&.skip_intro_if)
 
         puts "[DEBUG] Setting up GameStartedEvent handler"
         engine.event_bus.subscribe(Events::GameStartedEvent) do |event|
@@ -514,26 +536,25 @@ module PointClickEngine
           puts "[DEBUG] GameStartedEvent triggered!"
 
           should_skip_intro = false
-          if skip_flag = skip_intro_flag
+          if skip_flag = skip_sequence_flag
             if gsm = engine.game_state_manager
               should_skip_intro = gsm.get_flag(skip_flag)
             end
           end
 
-          playing_intro = !should_skip_intro && !intro_sequence_name.to_s.empty?
+          playing_startup_sequence = !should_skip_intro && !startup_sequence_name.to_s.empty?
 
-          # Startup cinematics need to survive scene changes, so load the starting scene
-          # immediately and run the sequence on the engine-level runner instead of the scene.
+          # Startup sequences that must survive scene changes run on the engine-level runner.
           if scene_name = start_scene_name
-            if playing_intro
+            if playing_startup_sequence
               engine.change_scene(scene_name)
             else
               engine.change_scene_with_transition(scene_name, "fade", 1.0f32)
             end
           end
 
-          if playing_intro
-            if sequence_name = intro_sequence_name
+          if playing_startup_sequence
+            if sequence_name = startup_sequence_name
               if runner = engine.scene_manager.get_sequence(sequence_name)
                 engine.run_script(runner)
               end
@@ -548,13 +569,45 @@ module PointClickEngine
               end
             end
 
-            # Show opening message and hints only when not handing off to the intro cinematic.
+            # Show opening message and hints only when not handing off to a startup sequence.
             setup_ui_hints(engine, ui_config)
           end
 
           # Start the game
           engine.start_game
         end
+      end
+
+      private def configure_cursor_theme(engine : Engine)
+        return unless verb_system = engine.verb_input_system
+
+        cursor_config = ui.try(&.cursors)
+        cursor_root = cursor_config.try(&.root)
+
+        cursor_paths = {} of UI::VerbType => String
+        if config = cursor_config
+          {
+            UI::VerbType::Walk  => config.walk,
+            UI::VerbType::Look  => config.look,
+            UI::VerbType::Talk  => config.talk,
+            UI::VerbType::Use   => config.use,
+            UI::VerbType::Take  => config.take,
+            UI::VerbType::Open  => config.open,
+            UI::VerbType::Close => config.close,
+            UI::VerbType::Push  => config.push,
+            UI::VerbType::Pull  => config.pull,
+            UI::VerbType::Give  => config.give,
+          }.each do |verb, path|
+            cursor_paths[verb] = path.not_nil! if path
+          end
+        end
+
+        verb_system.cursor_manager.configure(
+          asset_base_dir: config_base_dir,
+          cursor_root: cursor_root,
+          cursor_paths: cursor_paths,
+          default_cursor_path: cursor_config.try(&.default)
+        )
       end
 
       private def setup_ui_hints(engine : Engine, ui_config : UIConfig?)

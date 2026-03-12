@@ -189,25 +189,29 @@ module PointClickEngine
         end
 
         # Draw scene effect overlays (for effects that need to draw)
-        def draw_scene_overlays(renderer : PointClickEngine::Graphics::Renderer)
+        def draw_scene_overlays(renderer : PointClickEngine::Graphics::Renderer, skip_transitions : Bool = false)
+          logical_width = renderer.logical_width
+          logical_height = renderer.logical_height
+
           @scene_effects.active_effects.each do |effect|
             case effect
             when SceneEffects::TransitionEffect
-              effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              next if skip_transitions
+              effect.draw_overlay(renderer, logical_width, logical_height)
             when SceneEffects::FogEffect
-              effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              effect.draw_overlay(renderer, logical_width, logical_height)
             when SceneEffects::RainEffect
               effect.draw_overlay(renderer)
             when SceneEffects::DarknessEffect
-              effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              effect.draw_overlay(renderer, logical_width, logical_height)
             when SceneEffects::FlickerEffect
-              effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              effect.draw_overlay(renderer, logical_width, logical_height)
             when SceneEffects::UnderwaterEffect
               effect.draw_overlay(renderer)
             when SceneEffects::SparkleEffect
-              effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              effect.draw_overlay(renderer, logical_width, logical_height)
             when SceneEffects::SmokeEffect
-              effect.draw_overlay(renderer, Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              effect.draw_overlay(renderer, logical_width, logical_height)
             end
           end
         end

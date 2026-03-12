@@ -54,7 +54,11 @@ describe PointClickEngine::UI::ConfigurationManager do
 
     it "sets resolution by index" do
       manager = PointClickEngine::UI::ConfigurationManager.new
-      manager.set_resolution_by_index(1) # Should be 1024x768
+      target_index = manager.available_resolutions.index do |resolution|
+        resolution.width == 1024 && resolution.height == 768
+      end
+      target_index.should_not be_nil
+      manager.set_resolution_by_index(target_index.not_nil!)
 
       manager.config.resolution.width.should eq(1024)
       manager.config.resolution.height.should eq(768)

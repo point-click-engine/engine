@@ -29,13 +29,17 @@ module PointClickEngine
       # ```
       class Display
         # Reference resolution (design/logical resolution)
-        REFERENCE_WIDTH        = 1024
-        REFERENCE_HEIGHT       =  768
-        REFERENCE_ASPECT_RATIO = REFERENCE_WIDTH.to_f / REFERENCE_HEIGHT
+        DEFAULT_REFERENCE_WIDTH  = 1024
+        DEFAULT_REFERENCE_HEIGHT =  768
+
+        @@reference_width = DEFAULT_REFERENCE_WIDTH
+        @@reference_height = DEFAULT_REFERENCE_HEIGHT
 
         # Display properties
         getter window_width : Int32
         getter window_height : Int32
+        getter reference_width : Int32
+        getter reference_height : Int32
         getter scale_factor : Float32 = 1.0f32
         getter offset_x : Float32 = 0.0f32
         getter offset_y : Float32 = 0.0f32
@@ -52,10 +56,41 @@ module PointClickEngine
           PixelPerfect # Integer scaling only for pixel art
         end
 
-        def initialize(@window_width : Int32, @window_height : Int32)
+        def self.reference_width : Int32
+          @@reference_width
+        end
+
+        def self.reference_height : Int32
+          @@reference_height
+        end
+
+        def self.reference_aspect_ratio : Float64
+          @@reference_width.to_f / @@reference_height
+        end
+
+        def self.configure_reference_resolution(width : Int32, height : Int32)
+          return if width <= 0 || height <= 0
+
+          @@reference_width = width
+          @@reference_height = height
+        end
+
+        def self.reset_reference_resolution
+          @@reference_width = DEFAULT_REFERENCE_WIDTH
+          @@reference_height = DEFAULT_REFERENCE_HEIGHT
+        end
+
+        def initialize(@window_width : Int32, @window_height : Int32,
+                       @reference_width : Int32 = self.class.reference_width,
+                       @reference_height : Int32 = self.class.reference_height)
+          self.class.configure_reference_resolution(@reference_width, @reference_height)
           @windowed_width = @window_width
           @windowed_height = @window_height
           calculate_scaling
+        end
+
+        def reference_aspect_ratio : Float64
+          @reference_width.to_f / @reference_height
         end
 
         def refresh_from_window
@@ -128,8 +163,8 @@ module PointClickEngine
         # Check if screen position is within game area
         def in_game_area?(screen_x : Number, screen_y : Number) : Bool
           game_pos = screen_to_game(screen_x, screen_y)
-          game_pos.x >= 0 && game_pos.x <= REFERENCE_WIDTH &&
-            game_pos.y >= 0 && game_pos.y <= REFERENCE_HEIGHT
+          game_pos.x >= 0 && game_pos.x <= @reference_width &&
+            game_pos.y >= 0 && game_pos.y <= @reference_height
         end
 
         # Check if screen vector is within game area
@@ -142,9 +177,22 @@ module PointClickEngine
           RL::Rectangle.new(
             x: @offset_x,
             y: @offset_y,
-            width: REFERENCE_WIDTH * @scale_factor,
-            height: REFERENCE_HEIGHT * @scale_factor
+            width: @reference_width * @scale_factor,
+            height: @reference_height * @scale_factor
           )
+        end
+
+        def logical_rect : RL::Rectangle
+          RL::Rectangle.new(
+            x: 0.0f32,
+            y: 0.0f32,
+            width: @reference_width.to_f32,
+            height: @reference_height.to_f32
+          )
+        end
+
+        def active_game_area_rect : RL::Rectangle
+          game_area_screen_rect
         end
 
         # Clear the screen with letterbox/pillarbox bars
@@ -182,6 +230,26 @@ module PointClickEngine
           RL.end_mode_2d
         end
 
+        def draw_logical_texture(texture : RL::Texture2D, source_width : Int32? = nil, source_height : Int32? = nil, tint : RL::Color = RL::WHITE)
+          src_width = (source_width || texture.width).to_f32
+          src_height = (source_height || texture.height).to_f32
+          source_rect = RL::Rectangle.new(
+            x: 0.0f32,
+            y: 0.0f32,
+            width: src_width,
+            height: -src_height
+          )
+
+          RL.draw_texture_pro(
+            texture,
+            source_rect,
+            game_area_screen_rect,
+            RL::Vector2.new(x: 0.0f32, y: 0.0f32),
+            0.0f32,
+            tint
+          )
+        end
+
         # Draw debug information
         def draw_debug_info
           info = "Display: #{@window_width}x#{@window_height} | " \
@@ -209,37 +277,38 @@ module PointClickEngine
           end
         end
 
+
         private def calculate_fit_scaling(window_aspect : Float64)
-          if window_aspect > REFERENCE_ASPECT_RATIO
+          if window_aspect > reference_aspect_ratio
             # Window is wider than game - add vertical bars
-            @scale_factor = (@window_height.to_f / REFERENCE_HEIGHT).to_f32
-            scaled_width = REFERENCE_WIDTH * @scale_factor
+            @scale_factor = (@window_height.to_f / @reference_height).to_f32
+            scaled_width = @reference_width * @scale_factor
             @offset_x = ((@window_width - scaled_width) / 2.0).to_f32
             @offset_y = 0.0f32
           else
             # Window is taller than game - add horizontal bars
-            @scale_factor = (@window_width.to_f / REFERENCE_WIDTH).to_f32
-            scaled_height = REFERENCE_HEIGHT * @scale_factor
+            @scale_factor = (@window_width.to_f / @reference_width).to_f32
+            scaled_height = @reference_height * @scale_factor
             @offset_x = 0.0f32
             @offset_y = ((@window_height - scaled_height) / 2.0).to_f32
           end
         end
 
         private def calculate_stretch_scaling
-          @scale_factor = (@window_width.to_f / REFERENCE_WIDTH).to_f32
+          @scale_factor = (@window_width.to_f / @reference_width).to_f32
           @offset_x = 0.0f32
           @offset_y = 0.0f32
           # Note: This will distort if aspect ratios don't match
         end
 
         private def calculate_pixel_perfect_scaling
-          scale_x = (@window_width / REFERENCE_WIDTH).to_i
-          scale_y = (@window_height / REFERENCE_HEIGHT).to_i
+          scale_x = (@window_width / @reference_width).to_i
+          scale_y = (@window_height / @reference_height).to_i
 
           @scale_factor = Math.max(1, Math.min(scale_x, scale_y)).to_f32
 
-          scaled_width = REFERENCE_WIDTH * @scale_factor
-          scaled_height = REFERENCE_HEIGHT * @scale_factor
+          scaled_width = @reference_width * @scale_factor
+          scaled_height = @reference_height * @scale_factor
 
           @offset_x = ((@window_width - scaled_width) / 2.0).to_f32
           @offset_y = ((@window_height - scaled_height) / 2.0).to_f32

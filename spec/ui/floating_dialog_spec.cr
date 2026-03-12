@@ -159,6 +159,25 @@ describe PointClickEngine::UI::FloatingDialog do
       dialog.style.should eq style
     end
   end
+
+  it "projects world-anchored dialog positions through the frame context camera" do
+    display = PointClickEngine::Graphics::Display.new(1024, 768, 1024, 768)
+    camera = PointClickEngine::Graphics::Camera.new(200.0f32, 150.0f32)
+    context = PointClickEngine::Graphics::FrameContext.new(display, camera, 1024, 768, 2048, 1536)
+
+    dialog = PointClickEngine::UI::FloatingDialog.new(
+      "Look here",
+      "Player",
+      RL::Vector2.new(x: 500.0f32, y: 450.0f32),
+      3.0f32
+    )
+    dialog.frame_context = context
+    dialog.update(0.1f32)
+
+    anchor = dialog.screen_anchor_position
+    anchor.x.should eq(300.0f32)
+    anchor.y.should eq(300.0f32)
+  end
 end
 
 describe PointClickEngine::UI::FloatingDialogManager do

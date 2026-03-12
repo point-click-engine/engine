@@ -98,8 +98,8 @@ module PointClickEngine
             # Resolution
             if @resolution_loc >= 0
               resolution = RL::Vector2.new(
-                x: Core::Display::REFERENCE_WIDTH.to_f32,
-                y: Core::Display::REFERENCE_HEIGHT.to_f32
+                x: Core::Display.reference_width.to_f32,
+                y: Core::Display.reference_height.to_f32
               )
               RL.set_shader_value(shader, @resolution_loc, pointerof(resolution), RL::ShaderUniformDataType::Vec2)
             end

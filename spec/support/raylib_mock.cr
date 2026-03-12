@@ -133,6 +133,10 @@ module RaylibMock
       @@mouse_states[button]? || false
     end
 
+    def self.mouse_button_released?(button : Int32) : Bool
+      @@mouse_states[button]? || false
+    end
+
     def self.set_mouse_button_pressed(button : Int32, pressed : Bool)
       @@mouse_states[button] = pressed
     end
@@ -213,6 +217,7 @@ module RaylibMock
     def self.get_screen_height : Int32
       @@window_height
     end
+
 
     def self.toggle_fullscreen
       if @@fullscreen

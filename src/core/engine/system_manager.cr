@@ -35,9 +35,11 @@ module PointClickEngine
         end
 
         # Initialize all engine systems
-        def initialize_systems(width : Int32, height : Int32)
+        def initialize_systems(width : Int32, height : Int32,
+                               reference_width : Int32 = width,
+                               reference_height : Int32 = height)
           # Initialize display manager first
-          @display_manager = Graphics::Display.new(width, height)
+          @display_manager = Graphics::Display.new(width, height, reference_width, reference_height)
 
           # Initialize renderer with display
           @renderer = Graphics::Renderer.new(@display_manager.not_nil!)
@@ -108,13 +110,19 @@ module PointClickEngine
 
           # Resume callback
           @menu_system.not_nil!.on_resume = -> {
-            @menu_system.not_nil!.hide
+            engine.resume_game
           }
 
           # Quit callback
           @menu_system.not_nil!.on_quit = -> {
             engine.stop
           }
+        end
+
+        def update_menu_only(dt : Float32)
+          @audio_manager.try(&.update)
+          @menu_system.try(&.update(dt))
+          @event_bus.process
         end
 
         # Update all systems

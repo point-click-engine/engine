@@ -312,12 +312,26 @@ describe PointClickEngine::Actions::ActionExecutor do
       manager = PointClickEngine::Actions::ActionOverlayManager.new
       manager.set_canvas(320, 180)
 
-      position = manager.render_position_for(Raylib::Vector2.new(x: 160, y: 90), 1024, 768)
-      scale = manager.render_scale_for(2.0f32, 1024, 768)
+      position = manager.render_position_for(Raylib::Vector2.new(x: 160, y: 90))
+      scale = manager.render_scale_for(2.0f32)
 
       position.x.should be_close(512.0f32, 0.01f32)
       position.y.should be_close(384.0f32, 0.01f32)
       scale.should be_close(6.4f32, 0.01f32)
+    end
+
+    it "maps cinematic canvas coordinates to the active logical target size" do
+      manager = PointClickEngine::Actions::ActionOverlayManager.new
+      manager.set_canvas(320, 180)
+      manager.target_width = 1280
+      manager.target_height = 720
+
+      position = manager.render_position_for(Raylib::Vector2.new(x: 160, y: 90))
+      scale = manager.render_scale_for(2.0f32)
+
+      position.x.should be_close(640.0f32, 0.01f32)
+      position.y.should be_close(360.0f32, 0.01f32)
+      scale.should be_close(8.0f32, 0.01f32)
     end
 
     it "supports fade-out removal without deleting the sprite immediately" do

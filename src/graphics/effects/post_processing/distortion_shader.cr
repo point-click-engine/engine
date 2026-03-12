@@ -59,7 +59,7 @@ module PointClickEngine
             super(duration)
 
             if ShaderEffect.gl_context_available?
-              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              @render_texture = RL.load_render_texture(Display.reference_width, Display.reference_height)
             end
           end
           

@@ -2,6 +2,7 @@ name: library
 display_name: "The Grand Library"
 description: "A magnificent Victorian library filled with ancient tomes and the whisper of secrets long forgotten."
 background_path: assets/backgrounds/library.png
+background_scaling_mode: stretch
 logical_width: 1024
 logical_height: 768
 enable_pathfinding: true

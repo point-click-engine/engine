@@ -16,6 +16,8 @@ module PointClickEngine
         property border_color : RL::Color = RL::WHITE
         property text_color : RL::Color = RL::WHITE
         property highlight_color : RL::Color = RL::YELLOW
+        property selected_text_color : RL::Color = RL::Color.new(r: 20, g: 20, b: 20, a: 255)
+        property selection_background_color : RL::Color = RL::Color.new(r: 255, g: 215, b: 0, a: 110)
         property disabled_color : RL::Color = RL::GRAY
         property title_color : RL::Color = RL::YELLOW
 
@@ -139,7 +141,7 @@ module PointClickEngine
         color = if !is_enabled
                   apply_fade(@theme.disabled_color)
                 elsif is_selected
-                  apply_highlight(@theme.highlight_color)
+                  apply_fade(@theme.selected_text_color)
                 else
                   apply_fade(@theme.text_color)
                 end
@@ -176,14 +178,7 @@ module PointClickEngine
           height: height + padding
         )
 
-        highlight_bg = RL::Color.new(
-          r: @theme.highlight_color.r,
-          g: @theme.highlight_color.g,
-          b: @theme.highlight_color.b,
-          a: 30
-        )
-
-        RL.draw_rectangle_rec(bg_rect, apply_fade(highlight_bg))
+        RL.draw_rectangle_rec(bg_rect, apply_fade(@theme.selection_background_color))
       end
 
       # Calculates content area within menu bounds

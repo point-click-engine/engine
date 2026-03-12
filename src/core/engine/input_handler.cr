@@ -79,15 +79,6 @@ module PointClickEngine
 
         # Process keyboard input
         def handle_keyboard_input
-          # Handle common keyboard shortcuts
-          if RL.key_pressed?(RL::KeyboardKey::Escape)
-            handle_escape_key
-          end
-
-          if RL.key_pressed?(RL::KeyboardKey::F11)
-            handle_fullscreen_toggle
-          end
-
           if RL.key_pressed?(RL::KeyboardKey::F1)
             handle_debug_toggle
           end
@@ -99,6 +90,13 @@ module PointClickEngine
           # Camera edge scrolling toggle (F5)
           if RL.key_pressed?(RL::KeyboardKey::F5)
             handle_edge_scroll_toggle
+          end
+        end
+
+        # Handle shortcuts that should work regardless of gameplay/input mode.
+        def handle_global_keyboard_input
+          if RL.key_pressed?(RL::KeyboardKey::F11)
+            handle_fullscreen_toggle
           end
         end
 
@@ -129,13 +127,6 @@ module PointClickEngine
           handle_keyboard_input
           handle_click(scene, player, camera)
           handle_right_click(scene, camera)
-        end
-
-        private def handle_escape_key
-          # Toggle pause menu instead of exiting
-          if menu_system = Engine.instance.menu_system
-            menu_system.toggle_pause_menu
-          end
         end
 
         private def handle_fullscreen_toggle

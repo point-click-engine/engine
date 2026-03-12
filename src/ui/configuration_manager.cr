@@ -38,7 +38,10 @@ module PointClickEngine
       # Configuration data structure
       struct ConfigData
         # Display settings
-        property resolution : Resolution = Resolution.new(1024, 768, "1024x768")
+        property resolution : Resolution = Resolution.new(
+          PointClickEngine::Graphics::Display.reference_width,
+          PointClickEngine::Graphics::Display.reference_height
+        )
         property fullscreen : Bool = false
         property vsync : Bool = true
         property scaling_mode : String = "maintain_aspect"
@@ -337,7 +340,10 @@ module PointClickEngine
       def reset_category_to_defaults(category : ConfigCategory)
         case category
         when ConfigCategory::Display
-          @config.resolution = Resolution.new(1024, 768)
+          @config.resolution = Resolution.new(
+            PointClickEngine::Graphics::Display.reference_width,
+            PointClickEngine::Graphics::Display.reference_height
+          )
           @config.fullscreen = false
           @config.vsync = true
         when ConfigCategory::Audio
@@ -409,7 +415,7 @@ module PointClickEngine
 
       # Sets up default resolution options
       private def setup_default_resolutions
-        @available_resolutions = [
+        base_resolutions = [
           Resolution.new(800, 600, "800x600"),
           Resolution.new(1024, 768, "1024x768"),
           Resolution.new(1280, 720, "1280x720 (HD)"),
@@ -419,6 +425,18 @@ module PointClickEngine
           Resolution.new(2560, 1440, "2560x1440 (2K)"),
           Resolution.new(3840, 2160, "3840x2160 (4K)"),
         ]
+
+        current = Resolution.new(
+          PointClickEngine::Graphics::Display.reference_width,
+          PointClickEngine::Graphics::Display.reference_height,
+          "Current Game Resolution"
+        )
+
+        @available_resolutions = [current]
+        base_resolutions.each do |resolution|
+          next if resolution.width == current.width && resolution.height == current.height
+          @available_resolutions << resolution
+        end
       end
 
       # Loads display settings from hash

@@ -96,8 +96,10 @@ module PointClickEngine
       property base_dir : String = ""
 
       # Canvas size used for authored sequence coordinates.
-      property canvas_width : Int32 = Graphics::Display::REFERENCE_WIDTH
-      property canvas_height : Int32 = Graphics::Display::REFERENCE_HEIGHT
+      property canvas_width : Int32 = Graphics::Display.reference_width
+      property canvas_height : Int32 = Graphics::Display.reference_height
+      property target_width : Int32 = Graphics::Display.reference_width
+      property target_height : Int32 = Graphics::Display.reference_height
 
       # Whether overlays are currently active
       property active : Bool = false
@@ -257,16 +259,16 @@ module PointClickEngine
         @canvas_height = height
       end
 
-      def render_position_for(position : Raylib::Vector2, screen_width : Int32, screen_height : Int32) : Raylib::Vector2
-        scale_x = screen_width.to_f32 / @canvas_width.to_f32
-        scale_y = screen_height.to_f32 / @canvas_height.to_f32
+      def render_position_for(position : Raylib::Vector2) : Raylib::Vector2
+        scale_x = @target_width.to_f32 / @canvas_width.to_f32
+        scale_y = @target_height.to_f32 / @canvas_height.to_f32
         Raylib::Vector2.new(x: position.x * scale_x, y: position.y * scale_y)
       end
 
-      def render_scale_for(scale : Float32, screen_width : Int32, screen_height : Int32) : Float32
+      def render_scale_for(scale : Float32) : Float32
         scale_factor = Math.min(
-          screen_width.to_f32 / @canvas_width.to_f32,
-          screen_height.to_f32 / @canvas_height.to_f32
+          @target_width.to_f32 / @canvas_width.to_f32,
+          @target_height.to_f32 / @canvas_height.to_f32
         ).to_f32
         scale * scale_factor
       end
@@ -320,17 +322,18 @@ module PointClickEngine
       # ============================================================
 
       private def draw_background(bg_tex : Raylib::Texture2D)
-        # Scale background to fill screen
-        screen_width = Raylib.get_screen_width.to_f32
-        screen_height = Raylib.get_screen_height.to_f32
-        scale_x = screen_width / bg_tex.width.to_f32
-        scale_y = screen_height / bg_tex.height.to_f32
+        # Scale background to fill the logical game canvas. The display manager
+        # handles placement into the active game area on screen.
+        target_width = @target_width.to_f32
+        target_height = @target_height.to_f32
+        scale_x = target_width / bg_tex.width.to_f32
+        scale_y = target_height / bg_tex.height.to_f32
         scale = Math.max(scale_x, scale_y)
 
         dest_width = bg_tex.width.to_f32 * scale
         dest_height = bg_tex.height.to_f32 * scale
-        dest_x = (screen_width - dest_width) / 2
-        dest_y = (screen_height - dest_height) / 2
+        dest_x = (target_width - dest_width) / 2
+        dest_y = (target_height - dest_height) / 2
 
         source = Raylib::Rectangle.new(
           x: 0, y: 0,
@@ -345,10 +348,8 @@ module PointClickEngine
       end
 
       private def draw_sprite(texture : Raylib::Texture2D, sprite : OverlaySprite)
-        screen_width = Raylib.get_screen_width
-        screen_height = Raylib.get_screen_height
-        render_pos = render_position_for(sprite.position, screen_width, screen_height)
-        render_scale = render_scale_for(sprite.scale, screen_width, screen_height)
+        render_pos = render_position_for(sprite.position)
+        render_scale = render_scale_for(sprite.scale)
         draw_x = render_pos.x - (texture.width.to_f32 * render_scale) / 2.0f32
         draw_y = render_pos.y - (texture.height.to_f32 * render_scale) / 2.0f32
 
@@ -385,10 +386,8 @@ module PointClickEngine
           a: (glow_color.a.to_f32 * sprite.alpha * glow_alpha).clamp(0.0f32, 255.0f32).to_u8
         )
         glow_effect = Graphics::Effects::ObjectEffects::GlowEffect.new(glow_color, radius: 10.0f32)
-        screen_width = Raylib.get_screen_width
-        screen_height = Raylib.get_screen_height
-        render_pos = render_position_for(sprite.position, screen_width, screen_height)
-        render_scale = render_scale_for(sprite.scale, screen_width, screen_height)
+        render_pos = render_position_for(sprite.position)
+        render_scale = render_scale_for(sprite.scale)
         draw_pos = Raylib::Vector2.new(
           x: render_pos.x - (texture.width.to_f32 * render_scale) / 2.0f32,
           y: render_pos.y - (texture.height.to_f32 * render_scale) / 2.0f32
@@ -411,10 +410,8 @@ module PointClickEngine
       end
 
       private def draw_shadow_figure(sprite : OverlaySprite)
-        screen_width = Raylib.get_screen_width
-        screen_height = Raylib.get_screen_height
-        render_pos = render_position_for(sprite.position, screen_width, screen_height)
-        render_scale = render_scale_for(sprite.scale, screen_width, screen_height)
+        render_pos = render_position_for(sprite.position)
+        render_scale = render_scale_for(sprite.scale)
         tint = compose_tint(sprite)
 
         body_height = 22.0f32 * render_scale
@@ -441,10 +438,8 @@ module PointClickEngine
       end
 
       private def draw_dust_cloud(sprite : OverlaySprite)
-        screen_width = Raylib.get_screen_width
-        screen_height = Raylib.get_screen_height
-        render_pos = render_position_for(sprite.position, screen_width, screen_height)
-        render_scale = render_scale_for(sprite.scale, screen_width, screen_height)
+        render_pos = render_position_for(sprite.position)
+        render_scale = render_scale_for(sprite.scale)
         tint = compose_tint(sprite)
 
         offsets = [

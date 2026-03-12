@@ -2,6 +2,7 @@ name: laboratory
 display_name: "The Scientist's Laboratory"
 description: "A cluttered workspace where brilliant discoveries and dark secrets intertwine."
 background_path: assets/backgrounds/laboratory.png
+background_scaling_mode: stretch
 logical_width: 1024
 logical_height: 768
 enable_pathfinding: true

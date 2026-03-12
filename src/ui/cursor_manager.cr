@@ -39,40 +39,54 @@ module PointClickEngine
       property show_tooltip : Bool = true
       property tooltip_offset : RL::Vector2 = RL::Vector2.new(x: 20, y: 20)
       property manual_verb_mode : Bool = false
+      property asset_base_dir : String = ""
 
       @default_cursor : RL::Texture2D?
-      @cursor_hotspot : RL::Vector2 = RL::Vector2.new(x: 0, y: 0)
+      @default_cursor_hotspot : RL::Vector2 = RL::Vector2.new(x: 0, y: 0)
+      @cursor_hotspots : Hash(VerbType, RL::Vector2) = {} of VerbType => RL::Vector2
       @available_verbs = [VerbType::Walk, VerbType::Look, VerbType::Talk, VerbType::Use, VerbType::Take, VerbType::Open]
+      @cursor_root : String? = nil
+      @custom_cursor_paths : Hash(VerbType, String) = {} of VerbType => String
+      @custom_default_cursor_path : String? = nil
 
       def initialize
         @cursors = {} of VerbType => RL::Texture2D
         load_cursors
       end
 
+      def configure(asset_base_dir : String = "", cursor_root : String? = nil,
+                    cursor_paths : Hash(VerbType, String)? = nil,
+                    default_cursor_path : String? = nil)
+        cleanup
+        @asset_base_dir = asset_base_dir
+        @cursor_root = cursor_root
+        @custom_cursor_paths = cursor_paths ? cursor_paths.dup : {} of VerbType => String
+        @custom_default_cursor_path = default_cursor_path
+        load_cursors
+      end
+
+      def custom_cursor_available? : Bool
+        !@cursors.empty? || !@default_cursor.nil?
+      end
+
       # Load cursor textures from assets
       private def load_cursors
-        cursor_paths = {
-          VerbType::Walk  => "assets/cursors/walk.png",
-          VerbType::Look  => "assets/cursors/look.png",
-          VerbType::Talk  => "assets/cursors/talk.png",
-          VerbType::Use   => "assets/cursors/use.png",
-          VerbType::Take  => "assets/cursors/take.png",
-          VerbType::Open  => "assets/cursors/open.png",
-          VerbType::Close => "assets/cursors/close.png",
-          VerbType::Push  => "assets/cursors/push.png",
-          VerbType::Pull  => "assets/cursors/pull.png",
-          VerbType::Give  => "assets/cursors/give.png",
-        }
+        @cursors.clear
+        @cursor_hotspots.clear
+        @default_cursor = nil
 
-        cursor_paths.each do |verb, path|
-          if File.exists?(path)
-            @cursors[verb] = RL.load_texture(path)
+        VerbType.each do |verb|
+          if path = resolve_cursor_path(verb)
+            texture, hotspot = load_cursor_texture(path)
+            @cursors[verb] = texture
+            @cursor_hotspots[verb] = hotspot
           end
         end
 
-        # Load default cursor as fallback
-        if File.exists?("assets/cursors/default.png")
-          @default_cursor = RL.load_texture("assets/cursors/default.png")
+        if path = resolve_default_cursor_path
+          texture, hotspot = load_cursor_texture(path)
+          @default_cursor = texture
+          @default_cursor_hotspot = hotspot
         end
       end
 
@@ -157,25 +171,23 @@ module PointClickEngine
 
       # Draw the current cursor
       def draw(mouse_pos : RL::Vector2)
-        # Hide system cursor
-        RL.hide_cursor
-
         # Get current cursor texture
         cursor_texture = @cursors[@current_verb]? || @default_cursor
+        cursor_hotspot = @cursors[@current_verb]? ? (@cursor_hotspots[@current_verb]? || @default_cursor_hotspot) : @default_cursor_hotspot
 
         if cursor_texture
-          # Draw cursor centered on hotspot
+          RL.hide_cursor
+          # Draw the custom cursor so its configured hotspot matches the real mouse point.
           RL.draw_texture_v(
             cursor_texture,
             RL::Vector2.new(
-              x: mouse_pos.x - @cursor_hotspot.x,
-              y: mouse_pos.y - @cursor_hotspot.y
+              x: mouse_pos.x - cursor_hotspot.x,
+              y: mouse_pos.y - cursor_hotspot.y
             ),
             RL::WHITE
           )
         else
-          # Fallback: draw simple crosshair
-          draw_fallback_cursor(mouse_pos)
+          RL.show_cursor
         end
 
         # Draw tooltip if enabled
@@ -192,35 +204,6 @@ module PointClickEngine
           verb_text = @current_verb.to_s.capitalize
           RL.draw_text(verb_text, 10, RL.get_screen_height - 30, 20, RL::YELLOW)
         end
-      end
-
-      # Draw simple cursor when textures aren't loaded
-      private def draw_fallback_cursor(pos : RL::Vector2)
-        color = case @current_verb
-                when .walk? then RL::GREEN
-                when .look? then RL::BLUE
-                when .talk? then RL::YELLOW
-                when .take? then RL::ORANGE
-                when .use?  then RL::PURPLE
-                else             RL::WHITE
-                end
-
-        # Draw crosshair
-        RL.draw_line(pos.x - 10, pos.y, pos.x + 10, pos.y, color)
-        RL.draw_line(pos.x, pos.y - 10, pos.x, pos.y + 10, color)
-
-        # Draw verb indicator
-        verb_char = case @current_verb
-                    when .walk? then "W"
-                    when .look? then "L"
-                    when .talk? then "T"
-                    when .take? then "G"
-                    when .use?  then "U"
-                    when .open? then "O"
-                    else             "?"
-                    end
-
-        RL.draw_text(verb_char, pos.x + 15, pos.y - 10, 20, color)
       end
 
       # Draw tooltip showing verb and object
@@ -305,6 +288,109 @@ module PointClickEngine
         if cursor = @default_cursor
           RL.unload_texture(cursor)
         end
+        @default_cursor = nil
+      end
+
+      private def resolve_cursor_path(verb : VerbType) : String?
+        if custom_path = @custom_cursor_paths[verb]?
+          return resolve_asset_path(custom_path)
+        end
+
+        cursor_candidates_for(verb).each do |candidate|
+          if path = resolve_in_search_roots(candidate)
+            return path
+          end
+        end
+
+        nil
+      end
+
+      private def resolve_default_cursor_path : String?
+        if path = @custom_default_cursor_path
+          return resolve_asset_path(path)
+        end
+
+        default_cursor_candidates.each do |candidate|
+          if path = resolve_in_search_roots(candidate)
+            return path
+          end
+        end
+
+        nil
+      end
+
+      private def resolve_in_search_roots(candidate : String) : String?
+        search_roots.each do |root|
+          path = root.empty? ? resolve_asset_path(candidate) : resolve_asset_path(File.join(root, candidate))
+          return path if File.exists?(path)
+        end
+
+        nil
+      end
+
+      private def resolve_asset_path(path : String) : String
+        return path if path.starts_with?("/")
+        return path if @asset_base_dir.empty?
+        File.join(@asset_base_dir, path)
+      end
+
+      private def load_cursor_texture(path : String) : Tuple(RL::Texture2D, RL::Vector2)
+        image = RL.load_image(path)
+        hotspot = detect_cursor_hotspot(image, path)
+        texture = RL.load_texture_from_image(image)
+        RL.unload_image(image)
+        {texture, hotspot}
+      end
+
+      private def detect_cursor_hotspot(image : RL::Image, path : String) : RL::Vector2
+        border = RL.get_image_alpha_border(image, 0.1f32)
+        basename = File.basename(path).downcase
+
+        if basename.includes?("default") || basename.includes?("walk") || basename.includes?("arrow")
+          RL::Vector2.new(x: border.x, y: border.y)
+        else
+          RL::Vector2.new(
+            x: border.x + border.width / 2.0f32,
+            y: border.y + border.height / 2.0f32
+          )
+        end
+      end
+
+      private def search_roots : Array(String)
+        roots = [] of String
+        roots << @cursor_root.not_nil! if @cursor_root
+        roots << "assets/cursors"
+        roots << "assets/ui/cursors"
+        roots << "assets/ui"
+        roots.uniq
+      end
+
+      private def default_cursor_candidates : Array(String)
+        ["default.png", "cursor_default.png", "cursor.png"]
+      end
+
+      private def cursor_candidates_for(verb : VerbType) : Array(String)
+        candidates = [] of String
+
+        case verb
+        when .walk?
+          candidates.concat(["walk.png", "cursor_walk.png", "cursor_default.png", "cursor.png"])
+        when .look?
+          candidates.concat(["look.png", "cursor_look.png", "cursor_default.png", "cursor.png"])
+        when .talk?
+          candidates.concat(["talk.png", "cursor_talk.png", "cursor_hand.png", "cursor_default.png", "cursor.png"])
+        when .use?, .take?, .open?, .close?, .push?, .pull?, .give?
+          verb_name = verb.to_s.downcase
+          candidates.concat([
+            "#{verb_name}.png",
+            "cursor_#{verb_name}.png",
+            "cursor_hand.png",
+            "cursor_default.png",
+            "cursor.png",
+          ])
+        end
+
+        candidates
       end
     end
   end

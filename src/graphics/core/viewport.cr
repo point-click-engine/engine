@@ -39,7 +39,7 @@ module PointClickEngine
 
         # Create a fullscreen viewport
         def self.fullscreen : Viewport
-          new(0, 0, Display::REFERENCE_WIDTH.to_f32, Display::REFERENCE_HEIGHT.to_f32)
+          new(0, 0, Display.reference_width.to_f32, Display.reference_height.to_f32)
         end
 
         # Create viewport from rectangle
@@ -140,26 +140,26 @@ module PointClickEngine
 
         # Create split-screen viewports
         def self.split_horizontal(count : Int32) : Array(Viewport)
-          height = Display::REFERENCE_HEIGHT.to_f32 / count
+          height = Display.reference_height.to_f32 / count
 
           Array(Viewport).new(count) do |i|
-            new(0, i * height, Display::REFERENCE_WIDTH.to_f32, height)
+            new(0, i * height, Display.reference_width.to_f32, height)
           end
         end
 
         # Create split-screen viewports (vertical split)
         def self.split_vertical(count : Int32) : Array(Viewport)
-          width = Display::REFERENCE_WIDTH.to_f32 / count
+          width = Display.reference_width.to_f32 / count
 
           Array(Viewport).new(count) do |i|
-            new(i * width, 0, width, Display::REFERENCE_HEIGHT.to_f32)
+            new(i * width, 0, width, Display.reference_height.to_f32)
           end
         end
 
         # Create 4-way split (2x2 grid)
         def self.split_quad : Array(Viewport)
-          half_width = Display::REFERENCE_WIDTH.to_f32 / 2
-          half_height = Display::REFERENCE_HEIGHT.to_f32 / 2
+          half_width = Display.reference_width.to_f32 / 2
+          half_height = Display.reference_height.to_f32 / 2
 
           [
             new(0, 0, half_width, half_height),                    # Top-left

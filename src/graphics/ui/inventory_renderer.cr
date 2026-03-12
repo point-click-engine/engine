@@ -171,8 +171,8 @@ module PointClickEngine
         end
 
         # Draw centered on screen
-        def draw_centered(screen_width : Float32 = Display::REFERENCE_WIDTH.to_f32,
-                          screen_height : Float32 = Display::REFERENCE_HEIGHT.to_f32)
+        def draw_centered(screen_width : Float32 = Display.reference_width.to_f32,
+                          screen_height : Float32 = Display.reference_height.to_f32)
           x = (screen_width - total_width) / 2
           y = (screen_height - total_height) / 2
           draw(x, y)
@@ -260,8 +260,8 @@ module PointClickEngine
         end
 
         # Draw at bottom center of screen
-        def draw_bottom_center(screen_width : Float32 = Display::REFERENCE_WIDTH.to_f32,
-                               screen_height : Float32 = Display::REFERENCE_HEIGHT.to_f32,
+        def draw_bottom_center(screen_width : Float32 = Display.reference_width.to_f32,
+                               screen_height : Float32 = Display.reference_height.to_f32,
                                margin : Float32 = 20.0f32)
           x = (screen_width - total_width) / 2
           y = screen_height - total_height - margin

@@ -126,7 +126,7 @@ module PointClickEngine
 
             # Pre-populate some drops
             @max_drops.times do
-              @rain_drops << create_random_drop(Random.rand(Display::REFERENCE_HEIGHT))
+              @rain_drops << create_random_drop(Random.rand(Display.reference_height))
             end
           end
 
@@ -139,7 +139,7 @@ module PointClickEngine
             end
 
             # Remove drops that have fallen off screen
-            @rain_drops.reject! { |drop| drop.position.y > Display::REFERENCE_HEIGHT + 10 }
+            @rain_drops.reject! { |drop| drop.position.y > Display.reference_height + 10 }
 
             # Spawn new drops
             drops_to_spawn = (@max_drops - @rain_drops.size)
@@ -174,7 +174,7 @@ module PointClickEngine
           private def create_random_drop(y : Number) : RainDrop
             RainDrop.new(
               RL::Vector2.new(
-                x: Random.rand(Display::REFERENCE_WIDTH + 200) - 100, # Account for wind
+                x: Random.rand(Display.reference_width + 200) - 100, # Account for wind
                 y: y.to_f32
               ),
               Random.rand(0.5f32..1.0f32), # Size variation
@@ -434,8 +434,8 @@ module PointClickEngine
           private def create_random_bubble : Bubble
             Bubble.new(
               RL::Vector2.new(
-                x: Random.rand(Display::REFERENCE_WIDTH),
-                y: Display::REFERENCE_HEIGHT + 20
+                x: Random.rand(Display.reference_width),
+                y: Display.reference_height + 20
               ),
               Random.rand(3.0f32..8.0f32),  # Size
               Random.rand(30.0f32..80.0f32) # Speed
@@ -624,8 +624,8 @@ module PointClickEngine
             else
               Sparkle.new(
                 RL::Vector2.new(
-                  x: Random.rand(Display::REFERENCE_WIDTH).to_f32,
-                  y: Random.rand(Display::REFERENCE_HEIGHT).to_f32
+                  x: Random.rand(Display.reference_width).to_f32,
+                  y: Random.rand(Display.reference_height).to_f32
                 )
               )
             end
@@ -736,8 +736,8 @@ module PointClickEngine
 
           private def create_random_particle : SmokeParticle
             base_pos = @spawn_position || RL::Vector2.new(
-              x: Display::REFERENCE_WIDTH / 2.0f32,
-              y: Display::REFERENCE_HEIGHT.to_f32
+              x: Display.reference_width / 2.0f32,
+              y: Display.reference_height.to_f32
             )
 
             SmokeParticle.new(

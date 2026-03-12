@@ -58,7 +58,7 @@ module PointClickEngine
 
             # Initialize render texture for shader-based effects only if GL context available
             if ShaderEffect.gl_context_available?
-              @render_texture = RL.load_render_texture(Display::REFERENCE_WIDTH, Display::REFERENCE_HEIGHT)
+              @render_texture = RL.load_render_texture(Display.reference_width, Display.reference_height)
 
               # Load shader if this is a shader-based transition
               load_shader_for_transition
@@ -109,7 +109,7 @@ module PointClickEngine
           private def apply_slide(layer : Layers::Layer, context : Effects::EffectContext)
             # Slide based on direction
             # Use a default viewport width for now
-            viewport_width = 1024.0f32
+            viewport_width = PointClickEngine::Graphics::Display.reference_width.to_f32
             offset = @phase * viewport_width
             
             case @transition_type
@@ -131,7 +131,11 @@ module PointClickEngine
           end
 
           # Draw overlay for transition effects
-          def draw_overlay(renderer : PointClickEngine::Graphics::Renderer, width : Int32 = 1024, height : Int32 = 768)
+          def draw_overlay(
+            renderer : PointClickEngine::Graphics::Renderer,
+            width : Int32 = PointClickEngine::Graphics::Display.reference_width,
+            height : Int32 = PointClickEngine::Graphics::Display.reference_height
+          )
             # For shader-based transitions, we need special handling
             # The shader effects work by modifying how the scene is displayed
             # For now, we'll render non-shader versions (fallback implementations)
@@ -420,7 +424,7 @@ module PointClickEngine
           end
           
           # Render scene with transition shader
-          def render_with_shader(&block : -> Nil)
+          def render_with_shader(display : PointClickEngine::Graphics::Display? = nil, &block : -> Nil)
             return yield unless shader = @shader
             return yield unless render_texture = @render_texture
             
@@ -438,10 +442,24 @@ module PointClickEngine
             RL.set_shader_value(shader, progress_loc, pointerof(@phase), RL::ShaderUniformDataType::Float)
             
             # Draw the render texture with shader applied
-            RL.draw_texture_rec(
+            source_rect = RL::Rectangle.new(
+              x: 0,
+              y: 0,
+              width: render_texture.texture.width.to_f32,
+              height: -render_texture.texture.height.to_f32
+            )
+            destination_rect = display ? display.logical_rect : RL::Rectangle.new(
+              x: 0.0f32,
+              y: 0.0f32,
+              width: render_texture.texture.width.to_f32,
+              height: render_texture.texture.height.to_f32
+            )
+            RL.draw_texture_pro(
               render_texture.texture,
-              RL::Rectangle.new(x: 0, y: 0, width: render_texture.texture.width.to_f32, height: -render_texture.texture.height.to_f32),
-              RL::Vector2.new(x: 0, y: 0),
+              source_rect,
+              destination_rect,
+              RL::Vector2.new(x: 0.0f32, y: 0.0f32),
+              0.0f32,
               RL::WHITE
             )
             

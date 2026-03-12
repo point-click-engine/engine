@@ -14,6 +14,7 @@ module PointClickEngine
       property portrait_manager : PortraitManager
       property floating_manager : FloatingDialogManager
       property input_dialog : InputDialog?
+      property frame_context : PointClickEngine::Graphics::FrameContext?
       property enable_portraits : Bool = false
       property enable_floating : Bool = true
       property dialog_trees : Hash(String, Characters::Dialogue::DialogTree) = {} of String => Characters::Dialogue::DialogTree
@@ -29,8 +30,14 @@ module PointClickEngine
       end
 
       def show_dialog(character_name : String, text : String, choices : Array(DialogChoice)? = nil, expression : PortraitExpression = PortraitExpression::Neutral)
-        pos = Raylib::Vector2.new(x: 100f32, y: 400f32)
-        size = Raylib::Vector2.new(x: 824f32, y: 200f32)
+        logical_width, logical_height = active_logical_dimensions
+        width = Math.max(360.0f32, logical_width - 200.0f32)
+        height = Math.min(220.0f32, logical_height * 0.28f32)
+        pos = Raylib::Vector2.new(
+          x: (logical_width - width) / 2.0f32,
+          y: logical_height - height - 40.0f32
+        )
+        size = Raylib::Vector2.new(x: width, y: height)
 
         dialog = Dialog.new(text, pos, size)
         dialog.character_name = character_name
@@ -153,10 +160,7 @@ module PointClickEngine
       # )
       # ```
       def show_dialog_choices(prompt : String, choices : Array(String), &callback : Int32 ->)
-        # Use game reference dimensions, not screen dimensions
-        # Dialogs are rendered in game space which uses reference resolution
-        window_width = 1024f32 # Reference width
-        window_height = 768f32 # Reference height
+        window_width, window_height = active_logical_dimensions
 
         # Create dialog at bottom of screen
         dialog_height = 150f32 + (choices.size * 30f32)
@@ -236,6 +240,7 @@ module PointClickEngine
       end
 
       def draw
+        @floating_manager.frame_context = @frame_context
         @current_dialog.try &.draw
         @portrait_manager.draw if @enable_portraits
         @floating_manager.draw if @enable_floating
@@ -316,6 +321,20 @@ module PointClickEngine
       # Get a dialog tree by name
       def get_dialog_tree(name : String) : Characters::Dialogue::DialogTree?
         @dialog_trees[name]?
+      end
+
+      private def active_logical_dimensions : Tuple(Float32, Float32)
+        if context = @frame_context
+          {context.logical_width.to_f32, context.logical_height.to_f32}
+        elsif engine = Core::Engine.instance?
+          if dm = engine.display_manager
+            {dm.reference_width.to_f32, dm.reference_height.to_f32}
+          else
+            {PointClickEngine::Graphics::Display.reference_width.to_f32, PointClickEngine::Graphics::Display.reference_height.to_f32}
+          end
+        else
+          {PointClickEngine::Graphics::Display.reference_width.to_f32, PointClickEngine::Graphics::Display.reference_height.to_f32}
+        end
       end
 
       # Start a conversation with a dialog tree

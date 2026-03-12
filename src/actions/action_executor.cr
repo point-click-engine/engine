@@ -715,8 +715,38 @@ module PointClickEngine
           duration = @engine.current_scene.try(&.default_transition_duration) || 1.0f32
         end
 
+        scene_mode = get_string(action, "scene_mode")
+        activation_options = Core::SceneManager::ActivationOptions.new
+
+        case scene_mode.downcase
+        when "staging"
+          activation_options.call_enter = false
+          activation_options.load_script = false
+          activation_options.load_actions = false
+        when "playable"
+          # Defaults are already correct.
+        end
+
+        if action.data.params.has_key?("call_enter")
+          activation_options.call_enter = get_bool(action, "call_enter", activation_options.call_enter)
+        end
+
+        if action.data.params.has_key?("load_script")
+          activation_options.load_script = get_bool(action, "load_script", activation_options.load_script)
+        end
+
+        if action.data.params.has_key?("load_actions")
+          activation_options.load_actions = get_bool(action, "load_actions", activation_options.load_actions)
+        end
+
+        if action.data.params.has_key?("publish_events")
+          activation_options.publish_events = get_bool(action, "publish_events", activation_options.publish_events)
+        end
+
+        activation_options.force_reload = get_bool(action, "force_reload", false)
+
         @engine.action_overlay_manager.clear_all
-        @engine.change_scene_with_transition(target, transition, duration)
+        @engine.change_scene_with_transition(target, transition, duration, nil, activation_options)
       end
 
       private def start_show_credits(action : ActionInstance)
@@ -752,7 +782,7 @@ module PointClickEngine
         ]
 
         action.set_custom("scroll_speed", scroll_speed)
-        action.set_custom("credits_y", Raylib.get_screen_height.to_f32)
+        action.set_custom("credits_y", active_reference_height.to_f32)
         action.set_custom("credits_text", credits_text.join("\n"))
       end
 
@@ -828,8 +858,8 @@ module PointClickEngine
 
         color = Raylib::Color.new(r: color_r, g: color_g, b: color_b, a: (alpha * 255).to_u8)
 
-        screen_width = Raylib.get_screen_width
-        screen_height = Raylib.get_screen_height
+        screen_width = active_reference_width
+        screen_height = active_reference_height
         text_width = Raylib.measure_text(text, font_size)
 
         x, y = case position
@@ -860,7 +890,7 @@ module PointClickEngine
         credits_text = action.get_custom("credits_text").try(&.as_s) || ""
         lines = credits_text.split('\n')
 
-        screen_width = Raylib.get_screen_width
+        screen_width = active_reference_width
         y = credits_y.to_i
 
         lines.each_with_index do |line, i|
@@ -979,9 +1009,12 @@ module PointClickEngine
             overlay_mgr.set_canvas(canvas[0], canvas[1])
             return
           end
+
+          overlay_mgr.set_canvas(scene.logical_width, scene.logical_height)
+          return
         end
 
-        overlay_mgr.set_canvas(Raylib.get_screen_width, Raylib.get_screen_height)
+        overlay_mgr.set_canvas(active_reference_width, active_reference_height)
       end
 
       private def resolve_scene_path(path : String) : String
@@ -1047,6 +1080,14 @@ module PointClickEngine
             y: hotspot.position.y + hotspot.size.y / 2.0f32
           )
         end
+      end
+
+      private def active_reference_width : Int32
+        @engine.display_manager.try(&.reference_width) || @engine.reference_width
+      end
+
+      private def active_reference_height : Int32
+        @engine.display_manager.try(&.reference_height) || @engine.reference_height
       end
     end
   end

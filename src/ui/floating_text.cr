@@ -8,6 +8,7 @@ module PointClickEngine
       property text : String
       property character_name : String
       property target_position : RL::Vector2
+      property frame_context : PointClickEngine::Graphics::FrameContext?
       property choices : Array(DialogChoice) = [] of DialogChoice
       property visible : Bool = true
       property fade_alpha : Float32 = 255.0f32
@@ -66,6 +67,7 @@ module PointClickEngine
       # Update the floating text
       def update(dt : Float32) : Bool
         @elapsed_time += dt
+        @choice_rects = nil
 
         # Handle fade in
         if @is_fading_in
@@ -153,7 +155,11 @@ module PointClickEngine
       private def handle_choice_input
         return if @choices.empty?
 
-        mouse_pos = RL.get_mouse_position
+        mouse_pos = if engine = PointClickEngine::Core::Engine.instance?
+                      engine.transformed_mouse_position
+                    else
+                      RL.get_mouse_position
+                    end
         choice_rects = get_choice_rects
 
         # Check for hover
@@ -177,7 +183,11 @@ module PointClickEngine
 
       private def draw_choices(base_pos : RL::Vector2, text_color : RL::Color)
         choice_rects = get_choice_rects
-        mouse_pos = RL.get_mouse_position
+        mouse_pos = if engine = PointClickEngine::Core::Engine.instance?
+                      engine.transformed_mouse_position
+                    else
+                      RL.get_mouse_position
+                    end
 
         @choices.each_with_index do |choice, index|
           rect = choice_rects[index]
@@ -202,28 +212,29 @@ module PointClickEngine
         tail_size = 12
         tail_x = bubble_rect.x + bubble_rect.width / 2
         tail_y = bubble_rect.y + bubble_rect.height
+        anchor_position = resolve_anchor_position
 
         # Triangle pointing down to character
         RL.draw_triangle(
           RL::Vector2.new(x: tail_x - tail_size, y: tail_y),
           RL::Vector2.new(x: tail_x + tail_size, y: tail_y),
-          RL::Vector2.new(x: @target_position.x, y: @target_position.y - 20),
+          RL::Vector2.new(x: anchor_position.x, y: anchor_position.y - 20),
           fill_color
         )
       end
 
       private def calculate_screen_position(float_offset : Float32) : RL::Vector2
         bounds = get_text_bounds
+        anchor_position = resolve_anchor_position
 
         # Position above character's head
-        x = @target_position.x - (bounds.width / 2)
-        y = @target_position.y - 80 - bounds.height + float_offset
+        x = anchor_position.x - (bounds.width / 2)
+        y = anchor_position.y - 80 - bounds.height + float_offset
 
         # Keep within game bounds (not screen bounds)
         # FloatingText renders in game coordinate space
         margin = 10
-        game_width = 1024f32 # Game reference width
-        game_height = 768f32 # Game reference height
+        game_width, game_height = logical_dimensions
 
         x = Math.max(margin, Math.min(x, game_width - bounds.width - margin))
         y = Math.max(margin, Math.min(y, game_height - bounds.height - margin))
@@ -342,6 +353,30 @@ module PointClickEngine
         end
       end
 
+      private def logical_dimensions : Tuple(Float32, Float32)
+        if context = @frame_context
+          {context.logical_width.to_f32, context.logical_height.to_f32}
+        elsif engine = PointClickEngine::Core::Engine.instance?
+          if dm = engine.display_manager
+            {dm.reference_width.to_f32, dm.reference_height.to_f32}
+          else
+            {PointClickEngine::Graphics::Display.reference_width.to_f32, PointClickEngine::Graphics::Display.reference_height.to_f32}
+          end
+        else
+          {PointClickEngine::Graphics::Display.reference_width.to_f32, PointClickEngine::Graphics::Display.reference_height.to_f32}
+        end
+      end
+
+      private def resolve_anchor_position : RL::Vector2
+        if context = @frame_context
+          context.world_to_ui(@target_position)
+        elsif engine = PointClickEngine::Core::Engine.instance?
+          engine.camera.world_to_screen(@target_position.x, @target_position.y)
+        else
+          @target_position
+        end
+      end
+
     end
 
     # Manager for floating text instances
@@ -349,6 +384,7 @@ module PointClickEngine
       property active_texts : Array(FloatingText) = [] of FloatingText
       property default_duration : Float32 = 4.0f32
       property auto_dismiss : Bool = true
+      property frame_context : PointClickEngine::Graphics::FrameContext?
 
       def initialize
       end
@@ -356,6 +392,7 @@ module PointClickEngine
       # Show floating text for a character
       def show_text(character_name : String, text : String, position : RL::Vector2, duration : Float32? = nil) : FloatingText
         floating_text = FloatingText.new(text, character_name, position)
+        floating_text.frame_context = @frame_context
 
         if @auto_dismiss && duration
           # Set up auto-dismiss timer
@@ -373,6 +410,7 @@ module PointClickEngine
       def show_choice(character_name : String, prompt : String, choices : Array(String),
                       position : RL::Vector2, callback : Proc(Int32, Nil)) : FloatingText
         floating_text = FloatingText.new(prompt, character_name, position)
+        floating_text.frame_context = @frame_context
 
         choices.each_with_index do |choice_text, index|
           floating_text.add_choice(choice_text) do
@@ -418,6 +456,11 @@ module PointClickEngine
       # Clear texts for specific character
       def clear_character_texts(character_name : String)
         @active_texts.reject! { |text| text.character_name == character_name }
+      end
+
+      def frame_context=(context : PointClickEngine::Graphics::FrameContext?)
+        @frame_context = context
+        @active_texts.each(&.frame_context=(context))
       end
 
       # Check if character has active text

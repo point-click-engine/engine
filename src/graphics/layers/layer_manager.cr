@@ -108,8 +108,8 @@ module PointClickEngine
             # Special handling for background layer
             if layer.is_a?(BackgroundLayer)
               layer.draw_background(
-                PointClickEngine::Graphics::Display::REFERENCE_WIDTH,
-                PointClickEngine::Graphics::Display::REFERENCE_HEIGHT
+                PointClickEngine::Graphics::Display.reference_width,
+                PointClickEngine::Graphics::Display.reference_height
               )
             end
 

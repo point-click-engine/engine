@@ -31,8 +31,9 @@ module PointClickEngine
       property enable_pathfinding : Bool = true
       property enable_camera_scrolling : Bool = true
       property default_transition_duration : Float32 = 1.0f32
-      property logical_width : Int32 = 1024
-      property logical_height : Int32 = 768
+      property logical_width : Int32 = Graphics::Display.reference_width
+      property logical_height : Int32 = Graphics::Display.reference_height
+      property background_scaling_mode : String = "stretch"
 
       # Scene components
       @[YAML::Field(ignore: true)]
@@ -112,6 +113,21 @@ module PointClickEngine
         initialize_collections
       end
 
+      def logical_width=(value : Int32)
+        @logical_width = value
+        sync_background_renderer_size
+      end
+
+      def logical_height=(value : Int32)
+        @logical_height = value
+        sync_background_renderer_size
+      end
+
+      def background_scaling_mode=(value : String)
+        @background_scaling_mode = value
+        apply_background_scaling_mode
+      end
+
       private def initialize_collections
         @objects = [] of Core::GameObject
         @characters = [] of Characters::Character
@@ -151,10 +167,7 @@ module PointClickEngine
         @background_path = path
         @scale = scale
         @background_renderer.not_nil!.load_background(path)
-        # Use Fit mode to maintain aspect ratio with letterboxing
-        if bg = @background_renderer
-          bg.set_scaling_mode(BackgroundRenderer::ScalingMode::Fit)
-        end
+        apply_background_scaling_mode
         # Legacy support
         @background = @background_renderer.try(&.background_texture)
       end
@@ -163,10 +176,7 @@ module PointClickEngine
         @background_path = original_path
         @scale = scale
         @background_renderer.not_nil!.load_background(path)
-        # Use Fit mode to maintain aspect ratio with letterboxing
-        if bg = @background_renderer
-          bg.set_scaling_mode(BackgroundRenderer::ScalingMode::Fit)
-        end
+        apply_background_scaling_mode
         # Legacy support
         @background = @background_renderer.try(&.background_texture)
       end
@@ -508,9 +518,9 @@ module PointClickEngine
 
           # Calculate animated position with wrapping
           base_x = (i * 8 + wind_offset).to_f32
-          base_y = (time * layer_speed + i * 13) % (768 + 50)
+          base_y = (time * layer_speed + i * 13) % (@logical_height + 50)
 
-          x = (base_x % 1024).to_f32
+          x = (base_x % @logical_width).to_f32
           y = (base_y - 50).to_f32 # Start above screen
 
           # Skip if above screen
@@ -539,8 +549,8 @@ module PointClickEngine
 
         # Add some splash effects at the bottom
         if Random.rand < 0.3 # 30% chance per frame
-          splash_x = Random.rand(1024).to_f32
-          splash_y = 750.0f32
+          splash_x = Random.rand(@logical_width).to_f32
+          splash_y = (@logical_height - 18).to_f32
 
           # Small splash circle
           RL.draw_circle(splash_x.to_i, splash_y.to_i, 2.0f32,
@@ -584,6 +594,22 @@ module PointClickEngine
 
       def exit
         @on_exit.try &.call
+      end
+
+      private def apply_background_scaling_mode
+        return unless bg = @background_renderer
+
+        mode = case @background_scaling_mode.downcase
+               when "fit"     then BackgroundRenderer::ScalingMode::Fit
+               when "fill"    then BackgroundRenderer::ScalingMode::Fill
+               when "none"    then BackgroundRenderer::ScalingMode::None
+               else                BackgroundRenderer::ScalingMode::Stretch
+               end
+        bg.set_scaling_mode(mode)
+      end
+
+      private def sync_background_renderer_size
+        @background_renderer.try(&.update_scene_size(@logical_width, @logical_height))
       end
 
       # Script loading (Lua scripts)

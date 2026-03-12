@@ -91,7 +91,17 @@ module PointClickEngine
           
           # Update resolution if used
           if @resolution_loc >= 0
-            resolution = RL::Vector2.new(x: Display::REFERENCE_WIDTH.to_f32, y: Display::REFERENCE_HEIGHT.to_f32)
+            resolution = if render_texture = @render_texture
+                           RL::Vector2.new(
+                             x: render_texture.texture.width.to_f32,
+                             y: render_texture.texture.height.to_f32
+                           )
+                         else
+                           RL::Vector2.new(
+                             x: Display.reference_width.to_f32,
+                             y: Display.reference_height.to_f32
+                           )
+                         end
             RL.set_shader_value(shader, @resolution_loc, pointerof(resolution), RL::ShaderUniformDataType::Vec2)
           end
         end

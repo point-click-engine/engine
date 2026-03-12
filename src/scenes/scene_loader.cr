@@ -39,13 +39,6 @@ module PointClickEngine
           scene.scale = scale.as_f.to_f32
         end
 
-        if background_path = scene_data["background_path"]?
-          # Resolve asset path relative to scene directory
-          original_path = background_path.as_s
-          full_background_path = File.join(File.dirname(scene_dir), original_path)
-          scene.load_background(full_background_path, original_path, scene.scale)
-        end
-
         if enable_pathfinding = scene_data["enable_pathfinding"]?
           scene.enable_pathfinding = enable_pathfinding.as_bool
         end
@@ -54,13 +47,25 @@ module PointClickEngine
           scene.navigation_cell_size = navigation_cell_size.as_i
         end
 
-        # Load logical dimensions (default to 1024x768 if not specified)
+        # Load logical dimensions (default to the configured global reference resolution if not specified)
         if logical_width = scene_data["logical_width"]?
           scene.logical_width = logical_width.as_i
         end
 
         if logical_height = scene_data["logical_height"]?
           scene.logical_height = logical_height.as_i
+        end
+
+        if background_scaling_mode = scene_data["background_scaling_mode"]?
+          scene.background_scaling_mode = background_scaling_mode.as_s
+        end
+
+        if background_path = scene_data["background_path"]?
+          # Resolve asset path relative to scene directory after scene dimensions and
+          # background scaling mode are known, so the renderer uses the intended contract.
+          original_path = background_path.as_s
+          full_background_path = File.join(File.dirname(scene_dir), original_path)
+          scene.load_background(full_background_path, original_path, scene.scale)
         end
 
         if hotspots = scene_data["hotspots"]?

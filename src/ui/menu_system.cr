@@ -25,7 +25,6 @@ module PointClickEngine
       property current_menu : String = "main"
       property visible : Bool = false
       property in_game : Bool = false
-      property game_paused : Bool = false
 
       # Menu definitions
       property menu_items : Hash(String, Array(String)) = {} of String => Array(String)
@@ -46,6 +45,7 @@ module PointClickEngine
       property on_options : Proc(Nil)?
       property on_quit : Proc(Nil)?
       property on_resume : Proc(Nil)?
+      @last_hovered_index : Int32? = nil
 
       def initialize(@engine : Core::Engine? = nil)
         @input_handler = MenuInputHandler.new
@@ -65,6 +65,7 @@ module PointClickEngine
       def show(menu_name : String = "main")
         @current_menu = menu_name
         @visible = true
+        @input_handler.reset_input_state
 
         # Setup navigator for current menu
         if items = @menu_items[@current_menu]?
@@ -76,22 +77,13 @@ module PointClickEngine
         end
 
         update_layout if @auto_layout
+        @last_hovered_index = nil
       end
 
       # Hides the menu system
       def hide
         @visible = false
-      end
-
-      # Toggles the pause menu
-      def toggle_pause_menu
-        if @visible && @current_menu == "pause"
-          @game_paused = false
-          hide
-        else
-          @game_paused = true
-          show("pause")
-        end
+        @input_handler.reset_input_state
       end
 
       # Enters game mode (hides menu and sets in_game flag)
@@ -108,7 +100,13 @@ module PointClickEngine
 
       # Shows the main menu
       def show_main_menu
+        @in_game = false
         show("main")
+      end
+
+      def show_pause_menu
+        @in_game = true
+        show("pause")
       end
 
       # Updates the menu system (input and animations)
@@ -117,6 +115,7 @@ module PointClickEngine
 
         # Process input
         action = @input_handler.process_input(dt)
+        normalize_mouse_to_menu_space(action)
 
         # Handle navigation based on input
         case action
@@ -209,6 +208,7 @@ module PointClickEngine
         return unless @menu_items.has_key?(menu_name)
 
         @current_menu = menu_name
+        @input_handler.reset_input_state
 
         # Setup navigator for new menu
         if items = @menu_items[menu_name]?
@@ -220,6 +220,7 @@ module PointClickEngine
         end
 
         update_layout if @auto_layout
+        @last_hovered_index = nil
       end
 
       # Updates layout based on current menu content
@@ -231,13 +232,12 @@ module PointClickEngine
         size = @renderer.calculate_menu_size(title, items)
 
         screen_rect = if engine = @engine
-                        engine.display_manager.try(&.game_area_screen_rect) ||
-                          RL::Rectangle.new(
-                            x: 0,
-                            y: 0,
-                            width: RL.get_screen_width.to_f32,
-                            height: RL.get_screen_height.to_f32
-                          )
+                        RL::Rectangle.new(
+                          x: 0,
+                          y: 0,
+                          width: engine.reference_width.to_f32,
+                          height: engine.reference_height.to_f32
+                        )
                       else
                         RL::Rectangle.new(
                           x: 0,
@@ -253,22 +253,41 @@ module PointClickEngine
           width: size.x,
           height: size.y
         )
+
+        log_menu_debug("layout",
+          "menu=#{@current_menu} screen_rect=#{format_rect(screen_rect)} " \
+          "menu_bounds=#{format_rect(@menu_bounds)} size=(#{size.x.round(2)},#{size.y.round(2)})")
       end
 
       # Handles mouse hover interactions
       private def handle_mouse_hover
         items = @menu_items[@current_menu]? || [] of String
         title = @menu_titles[@current_menu]? || ""
+        hovered_index : Int32? = nil
 
         items.each_with_index do |item, index|
           item_bounds = @renderer.get_item_bounds(@menu_bounds, title, index)
           if @input_handler.mouse_over_item?(item_bounds)
             enabled = @menu_enabled_items[@current_menu]?.try(&.[index]?) || true
+            hovered_index = index
             if enabled && @navigator.get_selected_index != index
               @navigator.navigate_to(index)
             end
             break
           end
+        end
+
+        if hovered_index != @last_hovered_index
+          if index = hovered_index
+            item_bounds = @renderer.get_item_bounds(@menu_bounds, title, index)
+            log_menu_debug("hover",
+              "menu=#{@current_menu} mouse=#{format_vec(@input_handler.mouse_position)} " \
+              "index=#{index} item_bounds=#{format_rect(item_bounds)}")
+          else
+            log_menu_debug("hover",
+              "menu=#{@current_menu} mouse=#{format_vec(@input_handler.mouse_position)} index=none")
+          end
+          @last_hovered_index = hovered_index
         end
       end
 
@@ -276,18 +295,32 @@ module PointClickEngine
       private def handle_mouse_click
         items = @menu_items[@current_menu]? || [] of String
         title = @menu_titles[@current_menu]? || ""
+        clicked_index : Int32? = nil
 
         items.each_with_index do |item, index|
           item_bounds = @renderer.get_item_bounds(@menu_bounds, title, index)
           enabled = @menu_enabled_items[@current_menu]?.try(&.[index]?) || true
 
           if @input_handler.process_item_interaction(index, item_bounds, enabled)
+            clicked_index = index
             @navigator.navigate_to(index)
             execute_current_action
             break
           end
         end
+
+        if index = clicked_index
+          item_bounds = @renderer.get_item_bounds(@menu_bounds, title, index)
+          log_menu_debug("click",
+            "menu=#{@current_menu} mouse=#{format_vec(@input_handler.mouse_position)} " \
+            "index=#{index} item_bounds=#{format_rect(item_bounds)} menu_bounds=#{format_rect(@menu_bounds)}")
+        else
+          log_menu_debug("click_miss",
+            "menu=#{@current_menu} mouse=#{format_vec(@input_handler.mouse_position)} " \
+            "menu_bounds=#{format_rect(@menu_bounds)}")
+        end
       end
+
 
       # Handles cancel action (ESC key or back button)
       private def handle_cancel_action
@@ -299,6 +332,27 @@ module PointClickEngine
         when "options", "save", "load"
           switch_to_menu(@in_game ? "pause" : "main")
         end
+      end
+
+      private def normalize_mouse_to_menu_space(action : MenuInputHandler::InputAction)
+        return unless action.mouse_hover? || action.mouse_click?
+        return unless engine = @engine
+        return unless display = engine.display_manager
+
+        @input_handler.mouse_position = display.screen_to_game(@input_handler.mouse_position)
+      end
+
+      private def log_menu_debug(tag : String, message : String)
+        return unless Core::Engine.debug_mode
+        Core::ErrorLogger.debug("[MenuSystem] #{tag} #{message}")
+      end
+
+      private def format_rect(rect : RL::Rectangle) : String
+        "(x=#{rect.x.round(2)},y=#{rect.y.round(2)},w=#{rect.width.round(2)},h=#{rect.height.round(2)})"
+      end
+
+      private def format_vec(vec : RL::Vector2) : String
+        "(x=#{vec.x.round(2)},y=#{vec.y.round(2)})"
       end
 
       # Sets up default menu configurations
@@ -407,8 +461,8 @@ module PointClickEngine
         when "Options"
           switch_to_menu("options")
         when "Main Menu"
-          switch_to_menu("main")
           @in_game = false
+          switch_to_menu("main")
         when "Quit"
           @on_quit.try(&.call)
         end
@@ -418,11 +472,11 @@ module PointClickEngine
       private def handle_options_menu_action(item : String)
         case item
         when "Display Settings"
-          # Could open display settings submenu
+          show_menu_feedback("Display settings are not available yet.")
         when "Audio Settings"
-          # Could open audio settings submenu
+          show_menu_feedback("Audio settings are not available yet.")
         when "Controls"
-          # Could open controls configuration
+          show_menu_feedback("Controls reference is not available yet.")
         when "Back"
           switch_to_menu(@in_game ? "pause" : "main")
         end
@@ -476,6 +530,10 @@ module PointClickEngine
         issues.concat(@config_manager.validate_configuration)
 
         issues
+      end
+
+      private def show_menu_feedback(text : String)
+        @engine.try(&.dialog_manager).try(&.show_message(text, 2.0f32))
       end
     end
   end
