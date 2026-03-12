@@ -190,10 +190,20 @@ module PointClickEngine
         h = window.try(&.height) || 768
 
         engine = Engine.new(w, h, game.title)
+        user_settings_path = File.join(config_base_dir, "user_settings.yaml")
+        user_settings = UserSettings.load(user_settings_path)
+
+        # Apply startup fullscreen preference before init so the display and renderer
+        # are initialized against the intended window mode.
+        engine.fullscreen = user_settings.display.fullscreen
+        if window_config = window
+          engine.fullscreen = window_config.fullscreen
+        end
+
         engine.init
 
         # Configure engine from settings
-        configure_engine(engine)
+        configure_engine(engine, user_settings)
 
         # Load all assets
         load_assets(engine)
@@ -207,7 +217,7 @@ module PointClickEngine
         engine
       end
 
-      private def configure_engine(engine : Engine)
+      private def configure_engine(engine : Engine, user_settings : UserSettings)
         # Create and assign managers
         engine.game_state_manager = Core::GameStateManager.new
         engine.quest_manager = QuestManager.new
@@ -297,10 +307,6 @@ module PointClickEngine
           puts "[DEBUG] No player config found" if Engine.debug_mode
         end
 
-        # Load and apply user settings (creates default file if none exists)
-        user_settings_path = File.join(config_base_dir, "user_settings.yaml")
-        user_settings = UserSettings.load(user_settings_path)
-
         # Validate user settings and warn about issues
         validation_errors = user_settings.validate
         unless validation_errors.empty?
@@ -311,6 +317,11 @@ module PointClickEngine
 
         # Apply user settings to engine
         user_settings.apply_to_engine(engine)
+
+        # Apply game config display settings after user settings so project defaults win.
+        if window_config = window
+          engine.fullscreen = window_config.fullscreen
+        end
 
         # Apply game config settings AFTER user settings (game config takes precedence)
         if s = settings

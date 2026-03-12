@@ -139,8 +139,8 @@ module PointClickEngine
         end
 
         private def handle_fullscreen_toggle
-          # Toggle fullscreen mode
-          puts "F11 - Fullscreen toggle requested"
+          Engine.instance.toggle_fullscreen
+          puts "F11 pressed - Fullscreen: #{Engine.instance.fullscreen}"
         end
 
         private def handle_debug_toggle

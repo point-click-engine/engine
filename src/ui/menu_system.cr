@@ -230,13 +230,26 @@ module PointClickEngine
         # Calculate required size
         size = @renderer.calculate_menu_size(title, items)
 
-        # Center on screen (assuming 1024x768 default)
-        screen_width = 1024
-        screen_height = 768
+        screen_rect = if engine = @engine
+                        engine.display_manager.try(&.game_area_screen_rect) ||
+                          RL::Rectangle.new(
+                            x: 0,
+                            y: 0,
+                            width: RL.get_screen_width.to_f32,
+                            height: RL.get_screen_height.to_f32
+                          )
+                      else
+                        RL::Rectangle.new(
+                          x: 0,
+                          y: 0,
+                          width: RL.get_screen_width.to_f32,
+                          height: RL.get_screen_height.to_f32
+                        )
+                      end
 
         @menu_bounds = RL::Rectangle.new(
-          x: (screen_width - size.x) / 2,
-          y: (screen_height - size.y) / 2,
+          x: screen_rect.x + (screen_rect.width - size.x) / 2,
+          y: screen_rect.y + (screen_rect.height - size.y) / 2,
           width: size.x,
           height: size.y
         )

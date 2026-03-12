@@ -43,6 +43,8 @@ module PointClickEngine
 
         # Fullscreen state
         getter? fullscreen : Bool = false
+        @windowed_width : Int32
+        @windowed_height : Int32
 
         enum ScalingMode
           FitWithBars  # Maintains aspect ratio with black bars
@@ -51,7 +53,19 @@ module PointClickEngine
         end
 
         def initialize(@window_width : Int32, @window_height : Int32)
+          @windowed_width = @window_width
+          @windowed_height = @window_height
           calculate_scaling
+        end
+
+        def refresh_from_window
+          if RL.window_ready?
+            RL.poll_input_events
+            @fullscreen = RL.window_fullscreen?
+            @window_width = RL.get_screen_width
+            @window_height = RL.get_screen_height
+            calculate_scaling
+          end
         end
 
         # Update window dimensions (e.g., after resize)
@@ -69,21 +83,22 @@ module PointClickEngine
 
         # Toggle fullscreen mode
         def toggle_fullscreen
-          if @fullscreen
-            # Return to windowed mode
+          set_fullscreen(!@fullscreen)
+        end
+
+        def set_fullscreen(value : Bool)
+          return if @fullscreen == value
+
+          if value
+            @windowed_width = @window_width
+            @windowed_height = @window_height
             RL.toggle_fullscreen
-            @fullscreen = false
-            # Get actual window size after fullscreen exit
-            @window_width = RL.get_screen_width
-            @window_height = RL.get_screen_height
+            refresh_from_window
           else
-            # Enter fullscreen
             RL.toggle_fullscreen
-            @fullscreen = true
-            @window_width = RL.get_monitor_width(RL.get_current_monitor)
-            @window_height = RL.get_monitor_height(RL.get_current_monitor)
+            RL.set_window_size(@windowed_width, @windowed_height)
+            refresh_from_window
           end
-          calculate_scaling
         end
 
         # Convert screen coordinates to game coordinates
@@ -229,6 +244,7 @@ module PointClickEngine
           @offset_x = ((@window_width - scaled_width) / 2.0).to_f32
           @offset_y = ((@window_height - scaled_height) / 2.0).to_f32
         end
+
       end
     end
   end

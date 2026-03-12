@@ -84,6 +84,8 @@ module PointClickEngine
         def setup_menu_callbacks(engine)
           return unless @menu_system
 
+          @menu_system.not_nil!.engine = engine
+
           # New Game callback
           @menu_system.not_nil!.on_new_game = -> {
             engine.start_new_game

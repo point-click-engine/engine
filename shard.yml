@@ -10,7 +10,8 @@ license: MIT
 
 dependencies:
   raylib-cr:
-    github: sol-vin/raylib-cr
+    github: rmarronnier/raylib-cr
+    branch: master
   luajit:
     github: mdwagner/luajit.cr
     version: ~> 0.4.0

@@ -151,12 +151,17 @@ module PointClickEngine
       def init
         # Initialize Raylib window only if not already open (for tests using RaylibContext)
         unless RL.window_ready?
+          RL.set_config_flags(RL::ConfigFlags::FullscreenMode) if @fullscreen
           RL.init_window(@window_width, @window_height, @window_title)
         end
         RL.set_target_fps(@target_fps)
 
         # Initialize subsystems
         @system_manager.initialize_systems(@window_width, @window_height)
+        if dm = display_manager
+          dm.refresh_from_window
+          sync_display_state(dm)
+        end
 
         # Wire up timer manager with EventBus
         @timer_manager.event_bus = @system_manager.event_bus
@@ -652,29 +657,32 @@ module PointClickEngine
 
       # Window management
       def toggle_fullscreen
-        @fullscreen = !@fullscreen
-        # TODO: Actually implement fullscreen toggle with Raylib
-        # RL.toggle_fullscreen
+        if dm = display_manager
+          dm.toggle_fullscreen
+          sync_display_state(dm)
+        else
+          @fullscreen = !@fullscreen
+        end
       end
 
       def fullscreen : Bool
-        @fullscreen
+        display_manager.try(&.fullscreen?) || @fullscreen
       end
 
       def fullscreen=(value : Bool)
-        @fullscreen = value
-        # TODO: Actually implement fullscreen setting with Raylib
-        # if value
-        #   RL.set_window_flag(RL::FLAG_FULLSCREEN_MODE)
-        # else
-        #   RL.clear_window_flag(RL::FLAG_FULLSCREEN_MODE)
-        # end
+        if dm = display_manager
+          dm.set_fullscreen(value)
+          sync_display_state(dm)
+        else
+          @fullscreen = value
+        end
       end
 
       def set_window_size(width : Int32, height : Int32)
         @window_width = width
         @window_height = height
         RL.set_window_size(width, height)
+        display_manager.try(&.resize(width, height))
         # Update camera bounds if needed
         camera.set_bounds(width, height)
       end
@@ -709,6 +717,10 @@ module PointClickEngine
           # Reset timer
           @auto_save_timer = 0.0_f32
         end
+      end
+
+      private def sync_display_state(display : Graphics::Display)
+        @fullscreen = display.fullscreen?
       end
 
       private def clear_completed_script_runners

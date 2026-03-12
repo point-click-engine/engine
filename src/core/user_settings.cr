@@ -108,7 +108,7 @@ module PointClickEngine
 
         # Apply display settings
         engine.show_fps = display.show_fps
-        # Note: fullscreen and vsync would need to be applied differently depending on the graphics library
+        engine.fullscreen = display.fullscreen
 
         # Apply gameplay settings
         Engine.debug_mode = gameplay.debug_mode
