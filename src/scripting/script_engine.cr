@@ -1,11 +1,22 @@
 # Lua scripting engine for runtime game scripting - Refactored with components
+#
+# Uses EventBus pattern: Crystal publishes events, ScriptEngine subscribes and
+# dispatches to Lua handlers registered via the Lua API.
 
 require "luajit"
 require "./lua_environment"
 require "./script_api_registry"
 require "./scene_script_api"
 require "./character_script_api"
-require "./game_state_manager"
+require "./inventory_script_api"
+require "./dialog_script_api"
+require "./utility_script_api"
+require "./camera_script_api"
+require "./audio_script_api"
+require "./hotspot_script_api"
+require "./lua_state_manager"
+require "../core/events/event_bus"
+require "../core/events/game_events"
 
 module PointClickEngine
   module Scripting
@@ -16,7 +27,17 @@ module PointClickEngine
     # - ScriptAPIRegistry: Crystal function registration
     # - SceneScriptAPI: Scene-related Lua API
     # - CharacterScriptAPI: Character-related Lua API
-    # - GameStateManager: Script-accessible game state
+    # - InventoryScriptAPI: Inventory management Lua API
+    # - DialogScriptAPI: Dialog system Lua API
+    # - UtilityScriptAPI: Game state, timers, sequences, quests Lua API
+    # - CameraScriptAPI: Camera control Lua API
+    # - AudioScriptAPI: Audio control Lua API
+    # - HotspotScriptAPI: Hotspot interaction Lua API
+    # - LuaStateManager: Script-accessible Lua state
+    #
+    # EventBus Integration:
+    # Scripts register Lua handlers (e.g., scene.on_enter, hotspot.on_click)
+    # ScriptEngine subscribes to EventBus events and calls the Lua handlers
     class ScriptEngine
       getter lua : Luajit::LuaState
 
@@ -25,7 +46,16 @@ module PointClickEngine
       @registry : ScriptAPIRegistry
       @scene_api : SceneScriptAPI
       @character_api : CharacterScriptAPI
-      @state_manager : GameStateManager
+      @inventory_api : InventoryScriptAPI
+      @dialog_api : DialogScriptAPI
+      @utility_api : UtilityScriptAPI
+      @camera_api : CameraScriptAPI
+      @audio_api : AudioScriptAPI
+      @hotspot_api : HotspotScriptAPI
+      @state_manager : LuaStateManager
+
+      # EventBus subscription IDs for cleanup
+      @subscription_ids : Array(UInt64) = [] of UInt64
 
       # Legacy property for compatibility
       def game_state : Hash(String, Luajit::LuaAny)
@@ -38,17 +68,75 @@ module PointClickEngine
         # Initialize components
         @environment = LuaEnvironment.new(@lua)
         @registry = ScriptAPIRegistry.new(@lua)
+        @state_manager = LuaStateManager.new
+
+        # Initialize API components
         @scene_api = SceneScriptAPI.new(@lua, @registry)
         @character_api = CharacterScriptAPI.new(@lua, @registry)
-        @state_manager = GameStateManager.new
+        @inventory_api = InventoryScriptAPI.new(@lua, @registry)
+        @dialog_api = DialogScriptAPI.new(@lua, @registry)
+        @utility_api = UtilityScriptAPI.new(@lua, @registry, @state_manager)
+        @camera_api = CameraScriptAPI.new(@lua, @registry)
+        @audio_api = AudioScriptAPI.new(@lua, @registry)
+        @hotspot_api = HotspotScriptAPI.new(@lua, @registry)
 
         # Setup environment and register APIs
         setup_engine
       end
 
+      # Subscribe to EventBus events - call this after engine is initialized
+      def subscribe_to_events(event_bus : Core::Events::EventBus)
+        # Scene events
+        @subscription_ids << event_bus.subscribe(Core::Events::SceneEnteredEvent) do |event|
+          dispatch_scene_event("enter", event.scene_name, event.previous_scene)
+        end
+
+        @subscription_ids << event_bus.subscribe(Core::Events::SceneExitedEvent) do |event|
+          dispatch_scene_event("exit", event.scene_name)
+        end
+
+        # Hotspot events
+        @subscription_ids << event_bus.subscribe(Core::Events::HotspotClickedEvent) do |event|
+          dispatch_hotspot_event(event.hotspot_name, event.verb)
+        end
+
+        # Character interaction events
+        @subscription_ids << event_bus.subscribe(Core::Events::CharacterInteractEvent) do |event|
+          dispatch_character_event("interact", event.character_name, event.target, event.verb)
+        end
+
+        # Item use events (for scene.on_item_use)
+        @subscription_ids << event_bus.subscribe(Core::Events::ItemUsedEvent) do |event|
+          if target = event.target
+            dispatch_scene_event("item_use", event.item_id, target)
+          end
+        end
+
+        # Timer events - execute Lua callback when timer fires
+        @subscription_ids << event_bus.subscribe(Core::Events::TimerFiredEvent) do |event|
+          dispatch_timer_event(event.timer_id, event.callback_code)
+        end
+
+        # Sequence events
+        @subscription_ids << event_bus.subscribe(Core::Events::SequenceEndedEvent) do |event|
+          dispatch_sequence_event("ended", event.sequence_id, event.skipped)
+        end
+
+        puts "[ScriptEngine] Subscribed to EventBus events"
+      end
+
+      # Unsubscribe from all events
+      def unsubscribe_from_events(event_bus : Core::Events::EventBus)
+        @subscription_ids.each { |id| event_bus.unsubscribe(id) }
+        @subscription_ids.clear
+      end
+
       # Execute a script string
       def execute_script(script_content : String) : Bool
-        @environment.execute(script_content)
+        puts "[ScriptEngine] Executing script (#{script_content.size} chars)"
+        result = @environment.execute(script_content)
+        puts "[ScriptEngine] Script execution result: #{result}"
+        result
       end
 
       # Execute a script file
@@ -83,487 +171,116 @@ module PointClickEngine
       end
 
       private def setup_engine
+        puts "[ScriptEngine] setup_engine starting..."
         # Setup Lua environment
         @environment.setup
 
         # Register all API modules
+        puts "[ScriptEngine] Registering scene API..."
         @scene_api.register
         @character_api.register
-        register_inventory_api
-        register_dialog_api
-        register_utility_api
-        register_camera_api
+        @inventory_api.register
+        @dialog_api.register
+        @utility_api.register
+        @camera_api.register
+        @audio_api.register
+        @hotspot_api.register
       end
 
-      # Inventory API (keeping in main class for now as it's smaller)
-      private def register_inventory_api
-        @lua.execute! <<-LUA
-          -- Inventory management API
-          inventory = {}
-          
-          function inventory.add_item(item_name, description)
-            _engine_inventory_add_item(item_name, description)
-          end
-          
-          function inventory.remove_item(item_name)
-            _engine_inventory_remove_item(item_name)
-          end
-          
-          function inventory.has_item(item_name)
-            return _engine_inventory_has_item(item_name)
-          end
-          
-          function inventory.get_selected()
-            return _engine_inventory_get_selected()
-          end
+      # ================================
+      # EventBus Dispatch Methods
+      # These call Lua handlers when events arrive from EventBus
+      # ================================
 
-          function inventory.select_item(item_name)
-            _engine_inventory_select_item(item_name)
-          end
+      # Dispatch scene events to Lua handlers
+      # event_type: "enter", "exit", "item_use"
+      private def dispatch_scene_event(event_type : String, scene_name : String, extra : String? = nil)
+        puts "[ScriptEngine] Dispatching scene event: #{event_type} (scene: #{scene_name})"
 
-          function inventory.clear_selection()
-            _engine_inventory_clear_selection()
-          end
-
-          function inventory.get_all_items()
-            return _engine_inventory_get_all_items()
-          end
-        LUA
-
-        register_inventory_callbacks
-      end
-
-      private def register_inventory_callbacks
-        @registry.register_void_function("_engine_inventory_add_item") do |state|
-          if state.size >= 2
-            name = state.to_string(1)
-            desc = state.to_string(2)
-
-            item = Inventory::InventoryItem.new(name, desc)
-            Core::Engine.instance.inventory.add_item(item)
-          end
+        # Debug: check if handler is registered
+        begin
+          scene_exists = @lua.execute!("return type(scene)")
+          handlers_exist = @lua.execute!("return type(scene._event_handlers)")
+          handler_check = @lua.execute!("return scene._event_handlers and scene._event_handlers['#{event_type}'] and 'registered' or 'not registered'")
+          puts "[ScriptEngine] scene type: #{scene_exists}, handlers type: #{handlers_exist}, handler: #{handler_check}"
+        rescue ex
+          puts "[ScriptEngine] Handler check error: #{ex.message}"
         end
 
-        @registry.register_void_function("_engine_inventory_remove_item") do |state|
-          if state.size >= 1
-            name = state.to_string(1)
-            Core::Engine.instance.inventory.remove_item(name)
-          end
-        end
+        # Call scene._handle_event(event_type, scene_name, extra)
+        lua_code = if extra
+                     "return scene._handle_event('#{event_type}', '#{scene_name}', '#{extra}')"
+                   else
+                     "return scene._handle_event('#{event_type}', '#{scene_name}')"
+                   end
 
-        @registry.register_value_function("_engine_inventory_has_item", 1) do |state|
-          if state.size >= 1
-            name = state.to_string(1)
-            has_item = Core::Engine.instance.inventory.has_item?(name)
-            state.push(has_item)
-          else
-            state.push(false)
-          end
-        end
-
-        @registry.register_value_function("_engine_inventory_get_selected", 1) do |state|
-          selected_name = Core::Engine.instance.inventory.selected_item.try(&.name) || ""
-          state.push(selected_name)
-        end
-
-        @registry.register_void_function("_engine_inventory_select_item") do |state|
-          if state.size >= 1
-            name = state.to_string(1)
-            Core::Engine.instance.inventory.select_item(name)
-          end
-        end
-
-        @registry.register_void_function("_engine_inventory_clear_selection") do |state|
-          Core::Engine.instance.inventory.deselect_item
-        end
-
-        @registry.register_value_function("_engine_inventory_get_all_items", 1) do |state|
-          items = Core::Engine.instance.inventory.items
-
-          state.new_table
-          items.each_with_index do |item, i|
-            state.push(i + 1) # Lua arrays are 1-indexed
-
-            state.new_table
-            state.push("name")
-            state.push(item.name)
-            state.set_table(-3)
-
-            state.push("description")
-            state.push(item.description)
-            state.set_table(-3)
-
-            state.set_table(-3)
-          end
+        begin
+          result = @lua.execute!(lua_code)
+          puts "[ScriptEngine] scene._handle_event result: #{result}"
+        rescue ex
+          puts "[ScriptEngine] Scene event dispatch error: #{ex.message}"
         end
       end
 
-      # Dialog API (keeping in main class due to complexity)
-      private def register_dialog_api
-        @lua.execute! <<-LUA
-          -- Dialog system API
-          dialog = {}
-          
-          function dialog.show(text, character_name)
-            _engine_dialog_show(text, character_name or "")
-          end
-          
-          function dialog.show_choices(question, choices, character_name)
-            _engine_dialog_show_choices(question, choices, character_name or "")
-          end
+      # Dispatch hotspot events to Lua handlers
+      private def dispatch_hotspot_event(hotspot_name : String, verb : String)
+        puts "[ScriptEngine] Dispatching hotspot event: #{hotspot_name} (verb: #{verb})"
 
-          function dialog.hide()
-            _engine_dialog_hide()
-          end
+        # Call hotspot._handle_event(hotspot_name, verb)
+        lua_code = "return hotspot._handle_event('#{hotspot_name}', '#{verb}')"
 
-          function dialog.is_showing()
-            return _engine_dialog_is_showing()
-          end
-          
-          -- Start a dialog tree conversation
-          function start_dialog(tree_name, starting_node)
-            _engine_start_dialog_tree(tree_name, starting_node or "greeting")
-          end
-        LUA
-
-        register_dialog_callbacks
-      end
-
-      private def register_dialog_callbacks
-        @registry.register_void_function("_engine_dialog_show") do |state|
-          if state.size >= 1
-            text = state.to_string(1)
-            char_name = state.size >= 2 ? state.to_string(2) : ""
-
-            if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
-              dialog_manager.show_dialog(char_name.empty? ? "Character" : char_name, text)
-            end
-          end
-        end
-
-        @registry.register_void_function("_engine_dialog_show_choices") do |state|
-          if state.size >= 2
-            question = state.to_string(1)
-            char_name = state.size >= 3 ? state.to_string(3) : ""
-
-            # Parse choices table
-            choices = [] of {text: String, action: String?}
-
-            if state.is_table?(2)
-              state.push_value(2)
-              state.push(nil)
-
-              while state.next(-2)
-                if state.is_table?(-1)
-                  choice_text = ""
-                  choice_action = nil
-
-                  state.get_field(-1, "text")
-                  if state.is_string?(-1)
-                    choice_text = state.to_string(-1)
-                  end
-                  state.pop(1)
-
-                  state.get_field(-1, "action")
-                  if state.is_string?(-1)
-                    choice_action = state.to_string(-1)
-                  end
-                  state.pop(1)
-
-                  choices << {text: choice_text, action: choice_action}
-                elsif state.is_string?(-1)
-                  choices << {text: state.to_string(-1), action: nil}
-                end
-
-                state.pop(1)
-              end
-              state.pop(1)
-            end
-
-            if engine = Core::Engine.instance
-              if dialog_manager = engine.system_manager.dialog_manager
-                choice_texts = choices.map { |c| c[:text] }
-
-                callback = ->(choice_index : Int32) {
-                  actual_index = choice_index - 1
-                  if actual_index >= 0 && actual_index < choices.size
-                    if action = choices[actual_index][:action]
-                      engine.system_manager.script_engine.try(&.execute_script(action))
-                    end
-                  end
-                }
-
-                dialog_manager.show_choice(question, choice_texts, callback)
-              end
-            end
-          end
-        end
-
-        @registry.register_void_function("_engine_dialog_hide") do |state|
-          if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
-            dialog_manager.close_current_dialog
-          end
-        end
-
-        @registry.register_value_function("_engine_dialog_is_showing", 1) do |state|
-          if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
-            state.push(!!dialog_manager.current_dialog)
-          else
-            state.push(false)
-          end
-        end
-
-        @registry.register_void_function("_engine_start_dialog_tree") do |state|
-          if state.size >= 1
-            tree_name = state.to_string(1)
-            starting_node = state.size >= 2 ? state.to_string(2) : "greeting"
-
-            if dialog_manager = Core::Engine.instance.system_manager.dialog_manager
-              dialog_manager.start_dialog_tree(tree_name, starting_node)
-            end
-          end
+        begin
+          @lua.execute!(lua_code)
+        rescue ex
+          puts "[ScriptEngine] Hotspot event dispatch error: #{ex.message}"
         end
       end
 
-      # Utility API
-      private def register_utility_api
-        @lua.execute! <<-LUA
-          -- Utility functions API
-          game = {}
-          
-          function game.save(filename)
-            _engine_save_game(filename)
-          end
-          
-          function game.load(filename)
-            _engine_load_game(filename)
-          end
-          
-          function game.debug_log(message)
-            _engine_debug_log(message)
-          end
-          
-          function game.get_time()
-            return _engine_get_time()
-          end
+      # Dispatch character events to Lua handlers
+      # event_type: "interact"
+      private def dispatch_character_event(event_type : String, character_name : String, target : String, verb : String)
+        puts "[ScriptEngine] Dispatching character event: #{event_type} (character: #{character_name}, target: #{target})"
 
-          function game.wait(seconds)
-            _engine_wait(seconds)
-          end
+        # Call character._handle_event(event_type, character_name, target, verb)
+        lua_code = "return character._handle_event('#{event_type}', '#{character_name}', '#{target}', '#{verb}')"
 
-          function game.random(min, max)
-            return _engine_random(min, max)
-          end
-          
-          -- Game state management
-          function set_game_state(key, value)
-            _engine_set_game_state(key, value)
-          end
-          
-          function get_game_state(key)
-            return _engine_get_game_state(key)
-          end
-
-          function has_game_state(key)
-            return _engine_has_game_state(key)
-          end
-
-          function remove_game_state(key)
-            _engine_remove_game_state(key)
-          end
-        LUA
-
-        register_utility_callbacks
-      end
-
-      private def register_utility_callbacks
-        @registry.register_void_function("_engine_save_game") do |state|
-          if state.size >= 1
-            filename = state.to_string(1)
-            Core::Engine.instance.save_game(filename)
-          end
-        end
-
-        @registry.register_void_function("_engine_load_game") do |state|
-          if state.size >= 1
-            filename = state.to_string(1)
-            puts "Load game requested: #{filename}"
-          end
-        end
-
-        @registry.register_void_function("_engine_debug_log") do |state|
-          if state.size >= 1
-            message = state.to_string(1)
-            puts "[Script Debug] #{message}"
-          end
-        end
-
-        @registry.register_value_function("_engine_get_time", 1) do |state|
-          current_time = Time.utc.to_unix_f
-          state.push(current_time)
-        end
-
-        @registry.register_void_function("_engine_wait") do |state|
-          if state.size >= 1
-            seconds = state.to_f64(1)
-            # Note: This would need to be handled differently in a real game loop
-            sleep seconds.seconds
-          end
-        end
-
-        @registry.register_value_function("_engine_random", 1) do |state|
-          if state.size >= 2
-            min = state.to_f64(1)
-            max = state.to_f64(2)
-            value = min + (max - min) * rand
-            state.push(value)
-          else
-            state.push(rand)
-          end
-        end
-
-        # Game state callbacks
-        @registry.register_void_function("_engine_set_game_state") do |state|
-          if state.size >= 2
-            key = state.to_string(1)
-            value = state.to_any?(2)
-            @state_manager.set_state(key, value)
-          end
-        end
-
-        @registry.register_value_function("_engine_get_game_state", 1) do |state|
-          if state.size >= 1
-            key = state.to_string(1)
-            if value = @state_manager.get_state(key)
-              push_lua_value(state, value)
-            else
-              state.push(nil)
-            end
-          else
-            state.push(nil)
-          end
-        end
-
-        @registry.register_value_function("_engine_has_game_state", 1) do |state|
-          if state.size >= 1
-            key = state.to_string(1)
-            state.push(@state_manager.has_state?(key))
-          else
-            state.push(false)
-          end
-        end
-
-        @registry.register_void_function("_engine_remove_game_state") do |state|
-          if state.size >= 1
-            key = state.to_string(1)
-            @state_manager.remove_state(key)
-          end
+        begin
+          @lua.execute!(lua_code)
+        rescue ex
+          puts "[ScriptEngine] Character event dispatch error: #{ex.message}"
         end
       end
 
-      # Camera API
-      private def register_camera_api
-        @lua.execute! <<-LUA
-          -- Camera system API
-          camera = {}
-          
-          function camera.shake(intensity, duration)
-            _engine_camera_shake(intensity or 1.0, duration or 1.0)
-          end
-          
-          function camera.zoom(factor, duration)
-            _engine_camera_zoom(factor or 1.0, duration or 1.0)
-          end
-          
-          function camera.pan(x, y, duration)
-            _engine_camera_pan(x, y, duration or 1.0)
-          end
-          
-          function camera.sway(amplitude, frequency, duration)
-            _engine_camera_sway(amplitude or 10.0, frequency or 1.0, duration or 0.0)
-          end
-          
-          function camera.reset(duration)
-            _engine_camera_reset(duration or 1.0)
-          end
-        LUA
+      # Dispatch timer events to execute Lua callback code
+      private def dispatch_timer_event(timer_id : String, callback_code : String?)
+        puts "[ScriptEngine] Timer fired: #{timer_id}"
 
-        register_camera_callbacks
-      end
-
-      private def register_camera_callbacks
-        @registry.register_void_function("_engine_camera_shake") do |state|
-          if state.size >= 2
-            intensity = state.to_f64(1).to_f32
-            duration = state.to_f64(2).to_f32
-
-            if engine = Core::Engine.instance
-              engine.camera_manager.apply_effect(:shake, intensity: intensity, duration: duration)
-            end
+        if code = callback_code
+          begin
+            @lua.execute!(code)
+          rescue ex
+            puts "[ScriptEngine] Timer callback error: #{ex.message}"
           end
         end
 
-        @registry.register_void_function("_engine_camera_zoom") do |state|
-          if state.size >= 2
-            factor = state.to_f64(1).to_f32
-            duration = state.to_f64(2).to_f32
-
-            if engine = Core::Engine.instance
-              engine.camera_manager.apply_effect(:zoom, factor: factor, duration: duration)
-            end
-          end
-        end
-
-        @registry.register_void_function("_engine_camera_pan") do |state|
-          if state.size >= 3
-            x = state.to_f64(1).to_f32
-            y = state.to_f64(2).to_f32
-            duration = state.to_f64(3).to_f32
-
-            if engine = Core::Engine.instance
-              engine.camera_manager.apply_effect(:pan, target_x: x, target_y: y, duration: duration)
-            end
-          end
-        end
-
-        @registry.register_void_function("_engine_camera_sway") do |state|
-          if state.size >= 3
-            amplitude = state.to_f64(1).to_f32
-            frequency = state.to_f64(2).to_f32
-            duration = state.to_f64(3).to_f32
-
-            if engine = Core::Engine.instance
-              engine.camera_manager.apply_effect(:sway, amplitude: amplitude, frequency: frequency, duration: duration)
-            end
-          end
-        end
-
-        @registry.register_void_function("_engine_camera_reset") do |state|
-          duration = state.size >= 1 ? state.to_f64(1).to_f32 : 1.0f32
-
-          if engine = Core::Engine.instance
-            engine.camera_manager.reset_effects(duration)
-          end
+        # Also call any registered Lua handler
+        lua_code = "if _timer_callbacks and _timer_callbacks['#{timer_id}'] then _timer_callbacks['#{timer_id}']() end"
+        begin
+          @lua.execute!(lua_code)
+        rescue ex
+          # Ignore if no handler registered
         end
       end
 
-      # Helper to push LuaAny values back to Lua
-      private def push_lua_value(state : Luajit::LuaState, value : Luajit::LuaAny)
-        case value
-        when String
-          state.push(value.as(String))
-        when Float64
-          state.push(value.as(Float64))
-        when Bool
-          state.push(value.as(Bool))
-        when Int32
-          state.push(value.as(Int32))
-        when Int64
-          state.push(value.as(Int64))
-        when Nil
-          state.push(nil)
-        else
-          state.push(nil)
+      # Dispatch sequence events to Lua handlers
+      private def dispatch_sequence_event(event_type : String, sequence_id : String, skipped : Bool)
+        puts "[ScriptEngine] Sequence event: #{event_type} (id: #{sequence_id}, skipped: #{skipped})"
+
+        lua_code = "if _sequence_callbacks and _sequence_callbacks['#{sequence_id}'] then _sequence_callbacks['#{sequence_id}']('#{event_type}', #{skipped}) end"
+        begin
+          @lua.execute!(lua_code)
+        rescue ex
+          # Ignore if no handler registered
         end
       end
     end

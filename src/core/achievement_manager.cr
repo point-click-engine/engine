@@ -19,14 +19,14 @@ module PointClickEngine
       end
 
       property achievements : Hash(String, Achievement) = {} of String => Achievement
-      property save_file : String = "achievements.yaml"
+      property save_file : String
       property notification_duration : Float32 = 3.0f32
 
       @notification_queue : Array(Achievement) = [] of Achievement
       @current_notification : Achievement?
       @notification_timer : Float32 = 0.0f32
 
-      def initialize
+      def initialize(@save_file : String = "achievements.yaml")
         register_default_achievements
         load_progress
       end
@@ -52,7 +52,7 @@ module PointClickEngine
         # Trigger event
         begin
           engine = Engine.instance
-          engine.event_system.trigger_event("achievement_unlocked", {"id" => id, "name" => achievement.name})
+          engine.event_bus.publish(Events::AchievementUnlockedEvent.new(id, achievement.name))
         rescue
           # Engine not initialized yet
         end

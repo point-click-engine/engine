@@ -169,6 +169,23 @@ Rendering and visual effects:
 - **DisplayManager**: Resolution handling
 - **RenderContext**: Camera-aware rendering
 
+Runtime render contract:
+
+1. `WorldSpace`
+   Scene/background/characters render into a logical world render target with camera applied.
+2. `Scene Effect Chain`
+   Shader scene effects consume and produce logical render textures only.
+3. `CinematicSpace`
+   Action overlays and authored sequence presentation are composited after the world/effect pass.
+4. `UIScreenSpace`
+   Menus, dialogs, inventory, and other UI render in logical UI space with no camera transform.
+5. `ScreenComposite`
+   `Display` presents the final logical frame once into the active window/fullscreen game area.
+
+Key rule:
+
+- display scaling is part of final presentation, not scene rendering
+
 ### 7. Audio Module (`src/audio/`)
 
 Sound and music management:
@@ -196,13 +213,13 @@ Item management:
 - **InventoryItem**: Item representation
 - **ItemCombinations**: Item interaction logic
 
-### 10. Cutscenes Module (`src/cutscenes/`)
+### 10. Action Sequence Module (`src/actions/`)
 
 Cinematic sequences:
 
-- **CutsceneManager**: Playback control
-- **Cutscene**: Action sequences
-- **CutsceneAction**: Individual actions
+- **ActionRunner**: Sequence playback control
+- **ActionExecutor**: Action execution logic
+- **ActionLoader**: YAML sequence loading
 
 ## Component Relationships
 

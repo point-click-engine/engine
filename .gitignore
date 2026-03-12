@@ -1,6 +1,7 @@
 /docs/archive
 /lib/
 /bin/
+/tmp/
 /crystal_mystery/assets
 /assets
 /.shards/
@@ -23,6 +24,9 @@ main
 crystal_mystery*
 crystal_mystery/main
 /main
+/point_click_engine
+/spec_runner
+/modular_example
 
 # macOS
 .DS_Store
@@ -54,6 +58,29 @@ crystal_mystery_game.dwarf
 # Test outputs
 test_results_summary.md
 test_results_*.md
+/test_game.yaml
+/test_scene.yaml
+/test_music.ogg
+/test_sound.wav
+/test_game_dir/
+/test_audio/
+/test_saves/
+/test_locales/
+/test_dialogs/
+/test_shaders/
+/test_scenes/
+/test_quests/
+/test_sprites/
+/format_test/
+/autosave_config.yaml
+/fps_config.yaml
+/no_fps_config.yaml
+/scene_load_config.yaml
+/state_change_config.yaml
+/manager_config.yaml
+/simple_test.yaml
+/test_simple_config.yaml
+/invalid.yaml
 
 # Libraries don't need dependency lock
 # Dependencies will be locked in applications that use them

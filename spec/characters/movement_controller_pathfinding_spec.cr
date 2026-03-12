@@ -31,6 +31,17 @@ end
 
 describe PointClickEngine::Characters::MovementController do
   describe "immediate pathfinding behavior" do
+    # Initialize Engine before each test
+    before_each do
+      PointClickEngine::Core::Engine.reset_instance
+      RaylibContext.ensure_window(800, 600, "Test")
+      PointClickEngine::Core::Engine.new(800, 600, "Test")
+    end
+
+    after_each do
+      PointClickEngine::Core::Engine.reset_instance
+    end
+
     it "uses pathfinding immediately when enabled" do
       # Create test character
       character = TestCharacterWithPath.new("TestChar", RL::Vector2.new(100, 100), RL::Vector2.new(32, 32))

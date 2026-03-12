@@ -390,7 +390,7 @@ describe "Configuration Validation Fuzzing" do
 
   describe "performance under fuzzing" do
     it "maintains performance with complex configurations" do
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       # Test many configurations rapidly
       50.times do |i|
@@ -432,7 +432,7 @@ describe "Configuration Validation Fuzzing" do
         end
       end
 
-      total_time = Time.monotonic - start_time
+      total_time = Time.instant - start_time
       time_per_config = total_time.total_milliseconds / 50
 
       puts "Configuration parsing performance:"

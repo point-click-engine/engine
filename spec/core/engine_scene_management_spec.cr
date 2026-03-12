@@ -19,7 +19,7 @@ end
 describe "Engine Scene Management" do
   describe "scene loading and initialization" do
     it "loads scenes from YAML configuration" do
-      RL.init_window(800, 600, "Scene Management Test")
+      RaylibContext.ensure_window(800, 600, "Scene Management Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
@@ -32,12 +32,10 @@ describe "Engine Scene Management" do
       # Verify scene was added
       engine.scenes.has_key?("test_room").should be_true
       engine.scenes["test_room"].name.should eq("test_room")
-
-      RL.close_window
     end
 
     it "handles scene transitions" do
-      RL.init_window(800, 600, "Scene Transition Test")
+      RaylibContext.ensure_window(800, 600, "Scene Transition Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
@@ -58,29 +56,22 @@ describe "Engine Scene Management" do
       # engine.current_scene_name = "room2"
       # engine.current_scene_name.should eq("room2")
 
-      RL.close_window
     end
 
     it "handles invalid scene transitions gracefully" do
-      RL.init_window(800, 600, "Invalid Scene Test")
+      RaylibContext.ensure_window(800, 600, "Invalid Scene Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
-      # initial_scene = engine.current_scene_name
-
-      # Try to change to non-existent scene
-      engine.change_scene("nonexistent_scene")
-
-      # Should remain in same scene
-      # engine.current_scene_name.should eq(initial_scene)
-
-      RL.close_window
+      expect_raises(Exception, /Failed to change scene/) do
+        engine.change_scene("nonexistent_scene")
+      end
     end
   end
 
   describe "scene content management" do
     it "manages hotspots within scenes" do
-      RL.init_window(800, 600, "Hotspot Management Test")
+      RaylibContext.ensure_window(800, 600, "Hotspot Management Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
@@ -99,12 +90,10 @@ describe "Engine Scene Management" do
       current_scene = engine.current_scene
       current_scene.should_not be_nil
       current_scene.try(&.hotspots.size).should eq(2)
-
-      RL.close_window
     end
 
     it "manages characters within scenes" do
-      RL.init_window(800, 600, "Character Management Test")
+      RaylibContext.ensure_window(800, 600, "Character Management Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
@@ -122,12 +111,10 @@ describe "Engine Scene Management" do
       current_scene.should_not be_nil
       current_scene.try(&.characters.size).should eq(1)
       current_scene.try(&.characters.first.name).should eq("npc")
-
-      RL.close_window
     end
 
     it "handles player character positioning across scenes" do
-      RL.init_window(800, 600, "Player Positioning Test")
+      RaylibContext.ensure_window(800, 600, "Player Positioning Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
@@ -153,14 +140,12 @@ describe "Engine Scene Management" do
       # engine.current_scene_name = "room2"
       scene2.player = player
       scene2.player.should eq(player)
-
-      RL.close_window
     end
   end
 
   describe "scene state management" do
     it "preserves scene state when switching" do
-      RL.init_window(800, 600, "Scene State Test")
+      RaylibContext.ensure_window(800, 600, "Scene State Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
@@ -196,12 +181,10 @@ describe "Engine Scene Management" do
       current = engine.current_scene.not_nil!
       current.scale.should eq(1.5f32)
       current.enable_pathfinding.should be_false
-
-      RL.close_window
     end
 
     it "handles scene callback execution" do
-      RL.init_window(800, 600, "Scene Callbacks Test")
+      RaylibContext.ensure_window(800, 600, "Scene Callbacks Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
@@ -228,14 +211,12 @@ describe "Engine Scene Management" do
       engine.current_scene = scene2
       # engine.current_scene_name = "room2"
       exit_called.should be_true
-
-      RL.close_window
     end
   end
 
   describe "scene scripting integration" do
     it "loads and associates scripts with scenes" do
-      RL.init_window(800, 600, "Scene Scripting Test")
+      RaylibContext.ensure_window(800, 600, "Scene Scripting Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
@@ -246,12 +227,10 @@ describe "Engine Scene Management" do
 
       # Verify script path is set
       scene.script_path.should eq("test_script.lua")
-
-      RL.close_window
     end
 
     it "handles walkable area configuration" do
-      RL.init_window(800, 600, "Walkable Area Test")
+      RaylibContext.ensure_window(800, 600, "Walkable Area Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
@@ -264,14 +243,12 @@ describe "Engine Scene Management" do
       # Verify pathfinding configuration
       scene.enable_pathfinding.should be_true
       scene.navigation_cell_size.should eq(8)
-
-      RL.close_window
     end
   end
 
   describe "scene rendering and camera" do
     it "handles scene scaling and camera integration" do
-      RL.init_window(800, 600, "Scene Rendering Test")
+      RaylibContext.ensure_window(800, 600, "Scene Rendering Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Scene Test Game")
       engine.init
 
@@ -287,8 +264,6 @@ describe "Engine Scene Management" do
       current_scene = engine.current_scene.not_nil!
       current_scene.scale.should eq(0.75f32)
       current_scene.enable_camera_scrolling.should be_true
-
-      RL.close_window
     end
   end
 end

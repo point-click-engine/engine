@@ -1,4 +1,4 @@
-require "../graphics/animated_sprite"
+require "../graphics/graphics"
 require "../core/game_object"
 
 module PointClickEngine
@@ -12,7 +12,7 @@ module PointClickEngine
     # - Rendering coordination
     class SpriteController
       # The animated sprite data
-      property sprite : Graphics::AnimatedSprite?
+      property sprite : Graphics::Sprites::AnimatedSprite?
 
       # Path to the sprite/spritesheet file
       property sprite_path : String?
@@ -38,10 +38,9 @@ module PointClickEngine
       # Loads a spritesheet for character animation
       def load_spritesheet(path : String, frame_width : Int32, frame_height : Int32)
         @sprite_path = path
-        @sprite = Graphics::AnimatedSprite.new(@position, frame_width, frame_height, 1)
+        @sprite = Graphics::Sprites::AnimatedSprite.new(@position.x, @position.y, path, frame_width, frame_height, 1)
 
         if sprite = @sprite
-          sprite.load_texture(path)
           sprite.scale = calculate_scale(frame_width, frame_height)
           sprite.visible = @visible
 
@@ -50,7 +49,6 @@ module PointClickEngine
             x: frame_width * sprite.scale,
             y: frame_height * sprite.scale
           )
-          sprite.size = @size
         end
       end
 
@@ -164,7 +162,8 @@ module PointClickEngine
 
       # Called after YAML deserialization to restore sprite state
       def after_yaml_deserialize(ctx : YAML::ParseContext)
-        @sprite.try(&.after_yaml_deserialize(ctx))
+        # New AnimatedSprite doesn't use after_yaml_deserialize
+        # @sprite.try(&.after_yaml_deserialize(ctx))
 
         # Restore sprite position
         @sprite.try(&.position = @position)
@@ -178,7 +177,7 @@ module PointClickEngine
           x: sprite.frame_width * effective_scale,
           y: sprite.frame_height * effective_scale
         )
-        sprite.size = @size
+        # AnimatedSprite doesn't have a size property in the new graphics system
       end
 
       # Gets sprite visibility

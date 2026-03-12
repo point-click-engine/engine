@@ -229,8 +229,8 @@ move_player(x, y)                    -- Move player to position
 player_walk_to(x, y)                 -- Pathfind player to position
 set_player_controllable(enabled)     -- Enable/disable player control
 
--- Example: Cutscene with player movement
-function start_cutscene()
+-- Example: Scripted sequence with player movement
+function start_sequence_demo()
     set_player_controllable(false)
     player_walk_to(200, 300)
     add_timer(3.0, function()
@@ -437,8 +437,8 @@ The engine automatically triggers these events:
 - `item:used` - Item was used (data: {item_name, target})
 - `dialog:started` - Dialog tree started (data: {dialog_file})
 - `dialog:ended` - Dialog tree ended (data: {dialog_file})
-- `cutscene:started` - Cutscene started (data: {cutscene_id})
-- `cutscene:ended` - Cutscene ended (data: {cutscene_id})
+- `sequence:started` - Sequence started (data: {sequence_id})
+- `sequence:ended` - Sequence ended (data: {sequence_id})
 - `game:saved` - Game was saved (data: {save_file})
 - `game:loaded` - Game was loaded (data: {save_file})
 - `player_moved` - Player moved (data: {x, y})

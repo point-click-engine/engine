@@ -1,113 +1,91 @@
-# Helper module for parsing and executing scene transitions
-require "../graphics/transitions/transition_effect"
+# Helper module for parsing and handling transition commands
+#
+# Transition command format: "transition:scene_name:effect_type:duration:x,y"
+# Example: "transition:garden:swirl:1.5:100,300"
+
+require "../graphics/effects/scene_effects/transition_effect"
 
 module PointClickEngine
   module Scenes
     module TransitionHelper
-      # Parse transition command from action string
-      # Format: "transition:scene_name:effect:duration:x,y"
-      # Example: "transition:garden:swirl:4.5:300,400"
-      # If duration is omitted or "default", it will return -1.0 to signal use of scene's default
-      def self.parse_transition_command(command : String) : NamedTuple(scene: String, effect: Graphics::TransitionEffect?, duration: Float32, position: RL::Vector2?)?
+      # Result of parsing a transition command
+      alias TransitionResult = NamedTuple(
+        scene: String,
+        effect: Graphics::Effects::SceneEffects::TransitionType,
+        duration: Float32,
+        position: RL::Vector2?
+      )
+
+      # Parse a transition command string into its components
+      # Returns nil if the command is not a valid transition command
+      def self.parse_transition_command(command : String) : TransitionResult?
         return nil unless command.starts_with?("transition:")
 
         parts = command.split(":")
         return nil if parts.size < 2
 
         scene_name = parts[1]
+        effect_name = parts.size > 2 ? parts[2] : "fade"
+        duration = parts.size > 3 ? (parts[3].to_f32? || 1.0f32) : 1.0f32
 
-        # Parse optional effect (default to fade)
-        effect = if parts.size > 2 && !parts[2].empty?
-                   parse_effect(parts[2])
-                 else
-                   Graphics::TransitionEffect::Fade
-                 end
-
-        # Parse optional duration
-        # If omitted, empty, or "default", return -1.0 to signal scene default should be used
-        duration = if parts.size > 3 && !parts[3].empty?
-                     if parts[3] == "default"
-                       -1.0f32
-                     else
-                       parts[3].to_f32? || -1.0f32
-                     end
-                   else
-                     -1.0f32
-                   end
-
-        # Parse optional position
-        position = if parts.size > 4 && !parts[4].empty?
-                     if coords = parts[4].split(",")
-                       if coords.size == 2
-                         x = coords[0].to_f32?
-                         y = coords[1].to_f32?
-                         if x && y
-                           RL::Vector2.new(x: x, y: y)
-                         end
-                       end
-                     end
-                   end
-
-        {scene: scene_name, effect: effect, duration: duration, position: position}
-      end
-
-      # Execute a transition command
-      def self.execute_transition(command : String, engine : Core::Engine) : Bool
-        puts "[TransitionHelper] Executing command: #{command}"
-        if data = parse_transition_command(command)
-          puts "[TransitionHelper] Parsed: scene=#{data[:scene]}, effect=#{data[:effect]}, duration=#{data[:duration]}, position=#{data[:position]}"
-          duration = data[:duration]
-
-          # If duration is -1.0, use the current scene's default duration
-          if duration < 0 && (scene = engine.current_scene)
-            duration = scene.default_transition_duration
-            puts "[TransitionHelper] Using scene default duration: #{duration}"
-          elsif duration < 0
-            duration = 1.0f32 # Fallback if no scene
-            puts "[TransitionHelper] Using fallback duration: #{duration}"
+        # Parse position if provided
+        position = if parts.size > 4
+          coords = parts[4].split(",")
+          if coords.size == 2
+            x = coords[0].to_f32?
+            y = coords[1].to_f32?
+            RL::Vector2.new(x: x || 0, y: y || 0) if x && y
           end
+        end
 
-          puts "[TransitionHelper] Calling engine.change_scene_with_transition"
-          engine.change_scene_with_transition(data[:scene], data[:effect], duration, data[:position])
-          true
-        else
-          puts "[TransitionHelper] Failed to parse command"
-          false
+        # Parse effect type
+        effect = parse_effect_type(effect_name)
+
+        {
+          scene: scene_name,
+          effect: effect,
+          duration: duration,
+          position: position
+        }
+      end
+
+      # Check if a command is a transition command
+      def self.transition_command?(command : String) : Bool
+        command.starts_with?("transition:")
+      end
+
+      # Parse effect type name to enum
+      def self.parse_effect_type(effect_name : String) : Graphics::Effects::SceneEffects::TransitionType
+        case effect_name.downcase
+        when "fade"         then Graphics::Effects::SceneEffects::TransitionType::Fade
+        when "dissolve"     then Graphics::Effects::SceneEffects::TransitionType::Dissolve
+        when "slide_left"   then Graphics::Effects::SceneEffects::TransitionType::SlideLeft
+        when "slide_right"  then Graphics::Effects::SceneEffects::TransitionType::SlideRight
+        when "slide_up"     then Graphics::Effects::SceneEffects::TransitionType::SlideUp
+        when "slide_down"   then Graphics::Effects::SceneEffects::TransitionType::SlideDown
+        when "iris"         then Graphics::Effects::SceneEffects::TransitionType::Iris
+        when "swirl"        then Graphics::Effects::SceneEffects::TransitionType::Swirl
+        when "star_wipe"    then Graphics::Effects::SceneEffects::TransitionType::StarWipe
+        when "heart_wipe"   then Graphics::Effects::SceneEffects::TransitionType::HeartWipe
+        when "curtain"      then Graphics::Effects::SceneEffects::TransitionType::Curtain
+        when "checkerboard" then Graphics::Effects::SceneEffects::TransitionType::Checkerboard
+        when "clock_wipe"   then Graphics::Effects::SceneEffects::TransitionType::ClockWipe
+        when "barn_door"    then Graphics::Effects::SceneEffects::TransitionType::BarnDoor
+        else Graphics::Effects::SceneEffects::TransitionType::Fade
         end
       end
 
-      private def self.parse_effect(effect_name : String) : Graphics::TransitionEffect?
-        case effect_name.downcase
-        when "fade"         then Graphics::TransitionEffect::Fade
-        when "dissolve"     then Graphics::TransitionEffect::Dissolve
-        when "slide_left"   then Graphics::TransitionEffect::SlideLeft
-        when "slide_right"  then Graphics::TransitionEffect::SlideRight
-        when "slide_up"     then Graphics::TransitionEffect::SlideUp
-        when "slide_down"   then Graphics::TransitionEffect::SlideDown
-        when "iris"         then Graphics::TransitionEffect::Iris
-        when "swirl"        then Graphics::TransitionEffect::Swirl
-        when "star_wipe"    then Graphics::TransitionEffect::StarWipe
-        when "heart_wipe"   then Graphics::TransitionEffect::HeartWipe
-        when "curtain"      then Graphics::TransitionEffect::Curtain
-        when "ripple"       then Graphics::TransitionEffect::Ripple
-        when "checkerboard" then Graphics::TransitionEffect::Checkerboard
-        when "pixelate"     then Graphics::TransitionEffect::Pixelate
-        when "warp"         then Graphics::TransitionEffect::Warp
-        when "wave"         then Graphics::TransitionEffect::Wave
-        when "glitch"       then Graphics::TransitionEffect::Glitch
-        when "film_burn"    then Graphics::TransitionEffect::FilmBurn
-        when "static"       then Graphics::TransitionEffect::Static
-        when "matrix_rain"  then Graphics::TransitionEffect::MatrixRain
-        when "zoom_blur"    then Graphics::TransitionEffect::ZoomBlur
-        when "clock_wipe"   then Graphics::TransitionEffect::ClockWipe
-        when "barn_door"    then Graphics::TransitionEffect::BarnDoor
-        when "page_turn"    then Graphics::TransitionEffect::PageTurn
-        when "shatter"      then Graphics::TransitionEffect::Shatter
-        when "vortex"       then Graphics::TransitionEffect::Vortex
-        when "fire"         then Graphics::TransitionEffect::Fire
-        else
-          nil
+      # Build a transition command string from components
+      def self.build_command(scene : String,
+                            effect : Graphics::Effects::SceneEffects::TransitionType = Graphics::Effects::SceneEffects::TransitionType::Fade,
+                            duration : Float32 = 1.0f32,
+                            position : RL::Vector2? = nil) : String
+        effect_name = effect.to_s.downcase
+        cmd = "transition:#{scene}:#{effect_name}:#{duration}"
+        if pos = position
+          cmd += ":#{pos.x.to_i},#{pos.y.to_i}"
         end
+        cmd
       end
     end
   end

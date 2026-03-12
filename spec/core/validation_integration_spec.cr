@@ -169,6 +169,16 @@ describe "Validation System Integration" do
       File.write("#{temp_dir}/assets/intro_bg.png", "fake background")
       File.write("#{temp_dir}/assets/sprites/guard.png", "fake guard sprite")
 
+      # Create the hallway scene referenced by the exit
+      hallway_yaml = <<-YAML
+      name: hallway
+      background_path: assets/hallway_bg.png
+      scale: 1.0
+      YAML
+
+      File.write("#{temp_dir}/scenes/hallway.yaml", hallway_yaml)
+      File.write("#{temp_dir}/assets/hallway_bg.png", "fake hallway background")
+
       # Create a dialog file
       dialog_yaml = <<-YAML
       name: guard_dialog

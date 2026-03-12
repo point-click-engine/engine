@@ -60,7 +60,8 @@ describe PointClickEngine::Core::GameConfig do
 
       File.write("minimal_config.yaml", yaml_content)
 
-      config = PointClickEngine::Core::GameConfig.from_file("minimal_config.yaml")
+      # Skip preflight since this test is for optional field defaults
+      config = PointClickEngine::Core::GameConfig.from_file("minimal_config.yaml", skip_preflight: true)
 
       # Window should be nil and engine should use defaults
       config.window.should be_nil
@@ -79,6 +80,27 @@ describe PointClickEngine::Core::GameConfig do
       end
 
       File.delete("invalid_config.yaml")
+    end
+
+    it "loads the generic startup sequence fields" do
+      yaml_content = <<-YAML
+      game:
+        title: "Startup Sequence Test"
+
+      startup:
+        sequence: "opening_sequence"
+        skip_sequence_if: "already_seen_opening"
+      YAML
+
+      File.write("startup_sequence_config.yaml", yaml_content)
+
+      config = PointClickEngine::Core::GameConfig.from_file("startup_sequence_config.yaml", skip_preflight: true)
+
+      config.startup.should_not be_nil
+      config.startup.not_nil!.sequence.should eq("opening_sequence")
+      config.startup.not_nil!.skip_sequence_if.should eq("already_seen_opening")
+
+      File.delete("startup_sequence_config.yaml")
     end
   end
 
@@ -133,7 +155,7 @@ describe PointClickEngine::Core::GameConfig do
       config = PointClickEngine::Core::GameConfig.from_file("engine_test_config.yaml")
 
       # Mock window creation for testing
-      RL.init_window(1280, 720, "Engine Test")
+      RaylibContext.ensure_window(1280, 720, "Engine Test")
 
       engine = config.create_engine
 
@@ -160,7 +182,9 @@ describe PointClickEngine::Core::GameConfig do
       # Check display manager configuration
       dm = engine.display_manager
       dm.should_not be_nil
-      dm.try(&.scaling_mode).should eq(PointClickEngine::Graphics::DisplayManager::ScalingMode::PixelPerfect)
+      dm.try(&.scaling_mode).should eq(PointClickEngine::Graphics::Display::ScalingMode::PixelPerfect)
+      dm.try(&.reference_width).should eq(640)
+      dm.try(&.reference_height).should eq(480)
 
       # Check audio settings were applied
       if audio = engine.system_manager.audio_manager
@@ -169,9 +193,31 @@ describe PointClickEngine::Core::GameConfig do
         audio.sfx_volume.should eq(0.9f32)
       end
 
-      RL.close_window
       File.delete("engine_test_config.yaml")
       FileUtils.rm_rf("assets")
+    end
+
+    it "defaults the reference resolution to the window size when no display target is provided" do
+      yaml_content = <<-YAML
+      game:
+        title: "Window Reference Test"
+
+      window:
+        width: 960
+        height: 540
+      YAML
+
+      File.write("window_reference_config.yaml", yaml_content)
+      config = PointClickEngine::Core::GameConfig.from_file("window_reference_config.yaml", skip_preflight: true)
+
+      RaylibContext.ensure_window(960, 540, "Window Reference Test")
+      engine = config.create_engine
+
+      engine.reference_resolution.should eq({960, 540})
+      engine.display_manager.not_nil!.reference_width.should eq(960)
+      engine.display_manager.not_nil!.reference_height.should eq(540)
+
+      File.delete("window_reference_config.yaml")
     end
 
     it "loads assets from glob patterns" do
@@ -226,7 +272,7 @@ describe PointClickEngine::Core::GameConfig do
       File.write("asset_test_config.yaml", config_yaml)
       config = PointClickEngine::Core::GameConfig.from_file("asset_test_config.yaml", skip_preflight: true)
 
-      RL.init_window(800, 600, "Asset Test")
+      RaylibContext.ensure_window(800, 600, "Asset Test")
       engine = config.create_engine
 
       # Check scenes were loaded
@@ -241,7 +287,6 @@ describe PointClickEngine::Core::GameConfig do
       qm.get_quest("test_quest").should_not be_nil
 
       # Cleanup
-      RL.close_window
       File.delete("asset_test_config.yaml")
       File.delete("test_game/bg1.png")
       File.delete("test_game/bg2.png")
@@ -257,7 +302,7 @@ describe PointClickEngine::Core::GameConfig do
       yaml_content = <<-YAML
       game:
         title: "State Test"
-      
+
       initial_state:
         flags:
           game_started: true
@@ -269,9 +314,9 @@ describe PointClickEngine::Core::GameConfig do
       YAML
 
       File.write("state_test_config.yaml", yaml_content)
-      config = PointClickEngine::Core::GameConfig.from_file("state_test_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("state_test_config.yaml", skip_preflight: true)
 
-      RL.init_window(800, 600, "State Test")
+      RaylibContext.ensure_window(800, 600, "State Test")
       engine = config.create_engine
 
       gsm = engine.game_state_manager
@@ -284,7 +329,6 @@ describe PointClickEngine::Core::GameConfig do
       game_state.get_variable("score").should eq(0)
       game_state.get_variable("player_name").should eq("John")
 
-      RL.close_window
       File.delete("state_test_config.yaml")
     end
 
@@ -305,9 +349,9 @@ describe PointClickEngine::Core::GameConfig do
       YAML
 
       File.write("ui_test_config.yaml", yaml_content)
-      config = PointClickEngine::Core::GameConfig.from_file("ui_test_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("ui_test_config.yaml", skip_preflight: true)
 
-      RL.init_window(800, 600, "UI Test")
+      RaylibContext.ensure_window(800, 600, "UI Test")
 
       # Create a dummy intro scene since start_scene references it
       Dir.mkdir_p("scenes")
@@ -323,11 +367,8 @@ describe PointClickEngine::Core::GameConfig do
       intro_scene = PointClickEngine::Scenes::Scene.new("intro")
       engine.add_scene(intro_scene)
 
-      # Trigger game:new event to test UI setup
-      engine.event_system.trigger("game:new")
-
-      # Process the event queue
-      engine.event_system.process_events
+      # Trigger GameStartedEvent to test UI setup
+      engine.event_bus.publish_sync(PointClickEngine::Core::Events::GameStartedEvent.new(new_game: true))
 
       # Check GUI has hints
       gui = engine.gui
@@ -340,7 +381,6 @@ describe PointClickEngine::Core::GameConfig do
       # Note: Timer functionality for auto-hiding hints is not implemented
       # This would need GUI system support for timed element removal
 
-      RL.close_window
       File.delete("ui_test_config.yaml")
       File.delete("scenes/intro.yaml")
       Dir.delete("scenes")
@@ -380,7 +420,7 @@ describe PointClickEngine::Core::GameConfig do
       File.write("assets/sounds/click.ogg", "dummy")
       File.write("assets/sounds/boom.ogg", "dummy")
 
-      RL.init_window(800, 600, "Audio Test")
+      RaylibContext.ensure_window(800, 600, "Audio Test")
 
       engine = config.create_engine
 
@@ -400,7 +440,6 @@ describe PointClickEngine::Core::GameConfig do
       end
 
       # Cleanup
-      RL.close_window
 
       File.delete("audio_test_config.yaml")
       File.delete("assets/music/theme.ogg")
@@ -418,21 +457,20 @@ describe PointClickEngine::Core::GameConfig do
       yaml_content = <<-YAML
       game:
         title: "Auto-save Test"
-      
+
       features:
         - auto_save
       YAML
 
       File.write("autosave_test_config.yaml", yaml_content)
-      config = PointClickEngine::Core::GameConfig.from_file("autosave_test_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("autosave_test_config.yaml", skip_preflight: true)
 
-      RL.init_window(800, 600, "Auto-save Test")
+      RaylibContext.ensure_window(800, 600, "Auto-save Test")
       engine = config.create_engine
 
       # Auto-save should be enabled with 5 minute interval
       # engine.auto_save_interval.should eq(300.0f32) # Property not implemented yet
 
-      RL.close_window
       File.delete("autosave_test_config.yaml")
     end
 
@@ -440,15 +478,15 @@ describe PointClickEngine::Core::GameConfig do
       yaml_content = <<-YAML
       game:
         title: "Shader Test"
-      
+
       features:
         - shaders
       YAML
 
       File.write("shader_test_config.yaml", yaml_content)
-      config = PointClickEngine::Core::GameConfig.from_file("shader_test_config.yaml")
+      config = PointClickEngine::Core::GameConfig.from_file("shader_test_config.yaml", skip_preflight: true)
 
-      RL.init_window(800, 600, "Shader Test")
+      RaylibContext.ensure_window(800, 600, "Shader Test")
       engine = config.create_engine
 
       shader_system = engine.shader_system
@@ -458,7 +496,6 @@ describe PointClickEngine::Core::GameConfig do
       shader_system.try(&.get_shader(:vignette)).should_not be_nil
       shader_system.try(&.get_shader(:bloom)).should_not be_nil
 
-      RL.close_window
       File.delete("shader_test_config.yaml")
     end
   end

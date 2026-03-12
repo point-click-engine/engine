@@ -13,6 +13,7 @@ describe PointClickEngine::Core::EngineComponents::VerbInputSystem do
 
   describe "#process_input" do
     it "handles left click with current verb" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
       verb_system = PointClickEngine::Core::EngineComponents::VerbInputSystem.new(engine)
@@ -40,6 +41,20 @@ describe PointClickEngine::Core::EngineComponents::VerbInputSystem do
       verb_system = PointClickEngine::Core::EngineComponents::VerbInputSystem.new(engine)
 
       verb_system.right_click_verb.should eq(PointClickEngine::UI::VerbType::Look)
+    end
+  end
+
+  describe "modal menu ownership" do
+    it "suppresses gameplay input and cursor rendering while a menu is visible" do
+      RaylibContext.ensure_window(800, 600, "Test")
+      engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
+      engine.init
+      engine.enable_verb_input
+      engine.menu_system.not_nil!.show("main")
+
+      engine.modal_ui_active?.should be_true
+      engine.gameplay_input_active?.should be_false
+      engine.gameplay_cursor_active?.should be_false
     end
   end
 
@@ -101,6 +116,7 @@ describe PointClickEngine::Core::EngineComponents::VerbInputSystem do
 
   describe "action-based transitions" do
     it "triggers transitions through hotspot actions" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
       verb_system = PointClickEngine::Core::EngineComponents::VerbInputSystem.new(engine)

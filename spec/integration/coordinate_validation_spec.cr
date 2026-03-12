@@ -82,7 +82,7 @@ describe "Coordinate validation integration" do
       RL::Vector2.new(x: 1000, y: 600), # Center
       RL::Vector2.new(x: 200, y: 100)   # Size
     )
-    scene.hotspots << hotspot
+    scene.add_hotspot(hotspot)
 
     # Hotspot bounds should use logical coordinates
     bounds = hotspot.bounds

@@ -107,6 +107,7 @@ describe PointClickEngine::UI::DialogManager do
   end
 
   it "properly converts screen coordinates to game coordinates" do
+    RaylibContext.ensure_window(800, 600, "Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
     engine.init
 
@@ -117,8 +118,8 @@ describe PointClickEngine::UI::DialogManager do
 
     dialog = dm.current_dialog.not_nil!
 
-    # Dialog should be positioned in game space (1024x768)
-    dialog.position.y.should be < 768
-    dialog.size.x.should eq(984) # 1024 - 40 (margins)
+    # Dialog should be positioned in the engine's logical space
+    dialog.position.y.should be < engine.reference_height
+    dialog.size.x.should eq(engine.reference_width - 40)
   end
 end

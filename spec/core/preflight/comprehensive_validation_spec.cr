@@ -101,8 +101,7 @@ describe "PreflightCheck Comprehensive Validation" do
 
       # Should have multiple issue types
       result.errors.size.should be > 0
-      result.warnings.size.should be > 0
-      # Note: security_issues is not available in regular PreflightCheck
+      result.info.should_not be_empty
     end
   end
 
@@ -121,7 +120,7 @@ describe "PreflightCheck Comprehensive Validation" do
         fullscreen: false
       player:
         name: "Hero"
-        sprite_path: "test_sprites/player.png"
+        sprite_path: "spec/fixtures/assets/player.png"
       assets:
         scenes:
           - "test_scenes/*.yaml"
@@ -138,7 +137,6 @@ describe "PreflightCheck Comprehensive Validation" do
       File.write("test_game.yaml", config_yaml)
 
       # Create minimal required files
-      File.write("test_sprites/player.png", "fake_png")
       File.write("test_audio/theme.ogg", "fake_ogg")
       File.write("test_scenes/intro.yaml", create_test_scene("intro"))
 

@@ -249,8 +249,8 @@ describe "Input Handling Comprehensive Edge Case Tests" do
       manager = PointClickEngine::Core::InputManager.new
 
       # Test different blocking sources
-      manager.block_input(2, "cutscene")
-      manager.input_block_source.should eq("cutscene")
+      manager.block_input(2, "sequence")
+      manager.input_block_source.should eq("sequence")
 
       # Blocking again should override previous
       manager.block_input(1, "dialog")
@@ -463,11 +463,11 @@ describe "Input Handling Comprehensive Edge Case Tests" do
       end
 
       # Test processing performance
-      start_time = Time.monotonic
+      start_time = Time.instant
       10.times do
         manager.process_input(0.016_f32)
       end
-      process_time = Time.monotonic - start_time
+      process_time = Time.instant - start_time
 
       puts "Input handler performance:"
       puts "  Handlers: #{handler_count}"
@@ -494,7 +494,7 @@ describe "Input Handling Comprehensive Edge Case Tests" do
       end
 
       # Test rapid processing
-      start_time = Time.monotonic
+      start_time = Time.instant
       process_count.times do |i|
         manager.process_input(0.001_f32) # 1ms frames (1000 FPS)
 
@@ -503,7 +503,7 @@ describe "Input Handling Comprehensive Edge Case Tests" do
           manager.block_input(1, "rapid_test")
         end
       end
-      rapid_time = Time.monotonic - start_time
+      rapid_time = Time.instant - start_time
 
       puts "Rapid input processing performance:"
       puts "  Processes: #{process_count}"

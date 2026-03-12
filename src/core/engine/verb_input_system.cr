@@ -3,12 +3,12 @@
 require "../../ui/cursor_manager"
 require "../../scenes/scene"
 require "../../scenes/hotspot"
-require "../../scenes/transition_helper"
 require "../../characters/character"
 require "../../inventory/inventory_system"
 require "../../ui/dialog_manager"
 require "../../audio/audio_manager"
-require "../../graphics/camera"
+require "../../graphics/graphics"
+require "../events/game_events"
 
 module PointClickEngine
   module Core
@@ -32,7 +32,7 @@ module PointClickEngine
         end
 
         # Process verb-based input
-        def process_input(scene : Scenes::Scene?, player : Characters::Character?, display_manager : Graphics::DisplayManager?, camera : Graphics::Camera? = nil)
+        def process_input(scene : Scenes::Scene?, player : Characters::Character?, display_manager : Graphics::Display?, camera : Graphics::Camera? = nil)
           return unless @enabled
           return unless scene
           return unless display_manager
@@ -40,13 +40,13 @@ module PointClickEngine
           # Always handle keyboard input for verb selection (this should work even during dialogs)
           handle_keyboard_input
 
-          # Additional safety check: ensure no dialog is consuming mouse input
+          # Block mouse input if a dialog is active - let the dialog handle clicks
           if dm = @engine.dialog_manager
-            return if dm.dialog_consumed_input?
+            return if dm.is_dialog_active?
           end
 
           raw_mouse = RL.get_mouse_position
-          return unless display_manager.is_in_game_area(raw_mouse)
+          return unless display_manager.in_game_area?(raw_mouse)
 
           game_mouse = display_manager.screen_to_game(raw_mouse)
 
@@ -62,6 +62,9 @@ module PointClickEngine
 
           # Get engine's input manager for consistent consumption checking
           input_manager = @engine.input_manager
+
+          # Skip input processing if player control is disabled (during action sequences)
+          return unless @engine.player_control_enabled
 
           # Handle left click - execute current verb
           if input_manager.mouse_button_pressed?(Raylib::MouseButton::Left)
@@ -80,13 +83,18 @@ module PointClickEngine
         end
 
         # Draw cursor with verb indicator
-        def draw(display_manager : Graphics::DisplayManager?)
+        def draw(display_manager : Graphics::Display?, suppressed : Bool = false)
           return unless display_manager
+          if suppressed
+            RL.show_cursor
+            return
+          end
 
           raw_mouse = RL.get_mouse_position
-          if display_manager.is_in_game_area(raw_mouse)
-            game_mouse = display_manager.screen_to_game(raw_mouse)
-            @cursor_manager.draw(game_mouse)
+          if display_manager.in_game_area?(raw_mouse)
+            @cursor_manager.draw(raw_mouse)
+          else
+            RL.show_cursor
           end
         end
 
@@ -137,16 +145,53 @@ module PointClickEngine
         end
 
         private def execute_verb_on_hotspot(verb : UI::VerbType, hotspot : Scenes::Hotspot, pos : RL::Vector2, player : Characters::Character?)
-          # Check for action commands first (like scene transitions)
           verb_name = verb.to_s.downcase
+
+          # Publish HotspotClickedEvent to EventBus for script handlers
+          @engine.event_bus.publish(Events::HotspotClickedEvent.new(hotspot.name, verb_name, pos))
+
+          # Check for action commands first (like scene transitions)
           puts "[VerbInput] Checking action for verb: #{verb_name} on hotspot: #{hotspot.name}"
           if command = hotspot.action_commands[verb_name]?
             puts "[VerbInput] Found action command: #{command}"
-            if Scenes::TransitionHelper.execute_transition(command, @engine)
-              puts "[VerbInput] Transition executed successfully"
-              return
+            
+            # Parse command based on prefix
+            # Supported prefixes:
+            #   transition:scene:type:duration:x,y - Scene transition
+            #   script: or lua: - Execute as Lua code
+            #   (no prefix) - Display as plain text message
+            if command.starts_with?("transition:")
+              parts = command.split(":")
+              if parts.size >= 2
+                scene_name = parts[1]
+                transition_type = parts.size > 2 ? parts[2] : "fade"
+                duration = parts.size > 3 ? (parts[3].to_f32? || 1.0f32) : 1.0f32
+
+                # Parse position if provided
+                position = if parts.size > 4
+                  coords = parts[4].split(",")
+                  if coords.size == 2
+                    x = coords[0].to_f32?
+                    y = coords[1].to_f32?
+                    RL::Vector2.new(x: x || 0, y: y || 0) if x && y
+                  end
+                end
+
+                # Use the scene manager's transition method
+                @engine.scene_manager.change_scene_with_transition(scene_name, transition_type, duration, position)
+
+                puts "[VerbInput] Transition executed successfully"
+                return
+              end
+            elsif command.starts_with?("script:") || command.starts_with?("lua:")
+              # Extract script code after prefix
+              script_code = command.sub(/^(script|lua):/, "").strip
+              puts "[VerbInput] Executing script: #{script_code}"
+              @engine.system_manager.script_engine.try(&.execute_script(script_code))
             else
-              puts "[VerbInput] Not a transition command"
+              # Plain text - display as message
+              puts "[VerbInput] Displaying message: #{command}"
+              show_message(command)
             end
           else
             puts "[VerbInput] No action command for verb #{verb_name}"
@@ -178,6 +223,12 @@ module PointClickEngine
         end
 
         private def execute_verb_on_character(verb : UI::VerbType, character : Characters::Character, player : Characters::Character?)
+          verb_name = verb.to_s.downcase
+
+          # Publish CharacterInteractEvent to EventBus for script handlers
+          target = player.try(&.name) || "player"
+          @engine.event_bus.publish(Events::CharacterInteractEvent.new(character.name, target, verb_name))
+
           # Check for custom handler first
           if handler = @character_verb_handlers[verb]?
             handler.call(character)
@@ -300,6 +351,7 @@ module PointClickEngine
 
           if input_manager.key_pressed?(Raylib::KeyboardKey::I)
             @engine.inventory.toggle_visibility
+            puts "[VerbInput] Inventory toggled, visible: #{@engine.inventory.visible}, items: #{@engine.inventory.items.size}"
           end
 
           # Tab to highlight hotspots

@@ -212,8 +212,17 @@ module PointClickEngine
           puts "\n3. Checking scene files..."
           scene_count = 0
           scene_errors = [] of String
+          scene_names = [] of String
 
           if assets = config.assets
+            # First pass: collect all scene names
+            assets.scenes.each do |pattern|
+              Dir.glob(File.join(File.dirname(config_path), pattern)).each do |scene_path|
+                scene_names << File.basename(scene_path, ".yaml")
+              end
+            end
+
+            # Second pass: validate scenes and check references
             assets.scenes.each do |pattern|
               Dir.glob(File.join(File.dirname(config_path), pattern)).each do |scene_path|
                 scene_count += 1
@@ -222,6 +231,10 @@ module PointClickEngine
                   scene_errors << "Scene '#{File.basename(scene_path)}':"
                   errors.each { |e| scene_errors << "  - #{e}" }
                 end
+
+                # Check scene references
+                reference_errors = validate_scene_references(scene_path, scene_names)
+                scene_errors.concat(reference_errors)
               end
             end
           end
@@ -231,6 +244,235 @@ module PointClickEngine
           else
             result.add_errors(scene_errors)
           end
+
+          # Validate player spawn position against start scene
+          validate_player_spawn_position(config, config_path, result)
+        end
+
+        private def validate_scene_references(scene_path : String, scene_names : Array(String)) : Array(String)
+          errors = [] of String
+          scene_name = File.basename(scene_path, ".yaml")
+
+          begin
+            yaml_content = File.read(scene_path)
+            scene_data = YAML.parse(yaml_content)
+
+            # Check hotspots with target_scene (exit type)
+            if hotspots = scene_data["hotspots"]?
+              hotspots.as_a.each_with_index do |hotspot, idx|
+                if target_scene = hotspot["target_scene"]?
+                  target = target_scene.as_s
+                  unless scene_names.includes?(target)
+                    errors << "Scene '#{scene_name}' hotspot ##{idx + 1} references non-existent scene '#{target}'"
+                  end
+                end
+              end
+            end
+
+            # Check exits with target_scene
+            if exits = scene_data["exits"]?
+              exits.as_a.each_with_index do |exit, idx|
+                if target_scene = exit["target_scene"]?
+                  target = target_scene.as_s
+                  unless scene_names.includes?(target)
+                    errors << "Scene '#{scene_name}' exit ##{idx + 1} references non-existent scene '#{target}'"
+                  end
+                end
+              end
+            end
+          rescue ex
+            # Ignore parse errors, those are handled elsewhere
+          end
+
+          errors
+        end
+
+        # Validates player spawn position against start scene walkable areas
+        private def validate_player_spawn_position(config : GameConfig, config_path : String, result : ValidationResult)
+          player = config.player
+          return unless player
+
+          start_pos = player.start_position
+          return unless start_pos
+
+          start_scene = config.start_scene
+          return unless start_scene && !start_scene.empty?
+
+          # Find start scene file
+          base_dir = File.dirname(config_path)
+          scene_path : String? = nil
+
+          if assets = config.assets
+            assets.scenes.each do |pattern|
+              Dir.glob(File.join(base_dir, pattern)).each do |path|
+                if File.basename(path, ".yaml") == start_scene
+                  scene_path = path
+                  break
+                end
+              end
+              break if scene_path
+            end
+          end
+
+          return unless scene_path && File.exists?(scene_path)
+
+          begin
+            yaml_content = File.read(scene_path)
+            scene_data = YAML.parse(yaml_content)
+
+            # Get walkable areas
+            if walkable_areas = scene_data["walkable_areas"]?
+              if regions = walkable_areas["regions"]?
+                walkable_regions = [] of Array({x: Float64, y: Float64})
+                non_walkable_regions = [] of Array({x: Float64, y: Float64})
+
+                regions.as_a.each do |region|
+                  vertices = [] of {x: Float64, y: Float64}
+                  if region_vertices = region["vertices"]?
+                    region_vertices.as_a.each do |v|
+                      x = v["x"]?.try(&.as_f) || v["x"]?.try(&.as_i.to_f64) || 0.0
+                      y = v["y"]?.try(&.as_f) || v["y"]?.try(&.as_i.to_f64) || 0.0
+                      vertices << {x: x, y: y}
+                    end
+                  end
+
+                  is_walkable = region["walkable"]?.try(&.as_bool) != false
+
+                  if is_walkable
+                    walkable_regions << vertices
+                  else
+                    non_walkable_regions << vertices
+                  end
+                end
+
+                spawn_x = start_pos.x.to_f64
+                spawn_y = start_pos.y.to_f64
+
+                # Check if spawn is in a walkable region
+                in_walkable = walkable_regions.any? { |r| point_in_polygon?(spawn_x, spawn_y, r) }
+
+                # Check if spawn is in a non-walkable region
+                in_non_walkable = non_walkable_regions.any? { |r| point_in_polygon?(spawn_x, spawn_y, r) }
+
+                if in_non_walkable
+                  # Find nearest walkable position
+                  suggested = find_nearest_walkable_position(spawn_x, spawn_y, walkable_regions, non_walkable_regions)
+                  result.add_error("Player starting position (#{spawn_x.to_i}, #{spawn_y.to_i}) is in a non-walkable area. Consider moving to (#{suggested[:x].to_i}, #{suggested[:y].to_i})")
+                elsif !in_walkable && walkable_regions.any?
+                  result.add_error("Player starting position (#{spawn_x.to_i}, #{spawn_y.to_i}) is outside walkable areas. Consider moving the spawn position.")
+                else
+                  # Check clearance from non-walkable areas
+                  radius = calculate_player_radius(player)
+                  too_close = non_walkable_regions.any? { |r| point_too_close_to_polygon?(spawn_x, spawn_y, radius, r) }
+
+                  if too_close
+                    result.add_error("Player starting position is too close to non-walkable areas (character radius: #{radius.to_i}). Consider moving the spawn position further away.")
+                  else
+                    result.add_info("Player starting position is in walkable area with adequate clearance")
+                  end
+                end
+              end
+            end
+          rescue ex
+            # Silently handle parse errors
+          end
+        end
+
+        # Calculate player radius based on sprite dimensions
+        private def calculate_player_radius(player : GameConfig::PlayerConfig) : Float64
+          if sprite = player.sprite
+            frame_width = (sprite.frame_width || 32).to_f64
+            frame_height = (sprite.frame_height || 32).to_f64
+            scale = player.scale || 1.0
+            Math.min(frame_width, frame_height) * scale / 2.0
+          else
+            16.0 # Default radius
+          end
+        end
+
+        # Point in polygon using ray casting
+        private def point_in_polygon?(x : Float64, y : Float64, polygon : Array({x: Float64, y: Float64})) : Bool
+          return false if polygon.size < 3
+
+          inside = false
+          j = polygon.size - 1
+
+          polygon.size.times do |i|
+            xi, yi = polygon[i][:x], polygon[i][:y]
+            xj, yj = polygon[j][:x], polygon[j][:y]
+
+            if ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)
+              inside = !inside
+            end
+            j = i
+          end
+
+          inside
+        end
+
+        # Check if a point is too close to polygon edges
+        private def point_too_close_to_polygon?(x : Float64, y : Float64, radius : Float64, polygon : Array({x: Float64, y: Float64})) : Bool
+          return false if polygon.size < 3
+
+          # Check distance to each edge
+          j = polygon.size - 1
+          polygon.size.times do |i|
+            x1, y1 = polygon[i][:x], polygon[i][:y]
+            x2, y2 = polygon[j][:x], polygon[j][:y]
+
+            dist = point_to_line_distance(x, y, x1, y1, x2, y2)
+            return true if dist < radius
+
+            j = i
+          end
+
+          false
+        end
+
+        # Distance from point to line segment
+        private def point_to_line_distance(px : Float64, py : Float64, x1 : Float64, y1 : Float64, x2 : Float64, y2 : Float64) : Float64
+          dx = x2 - x1
+          dy = y2 - y1
+          length_sq = dx * dx + dy * dy
+
+          if length_sq == 0
+            # Line segment is a point
+            return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2)
+          end
+
+          t = Math.max(0.0, Math.min(1.0, ((px - x1) * dx + (py - y1) * dy) / length_sq))
+
+          proj_x = x1 + t * dx
+          proj_y = y1 + t * dy
+
+          Math.sqrt((px - proj_x) ** 2 + (py - proj_y) ** 2)
+        end
+
+        # Find nearest walkable position from a given point
+        private def find_nearest_walkable_position(x : Float64, y : Float64, walkable : Array(Array({x: Float64, y: Float64})), non_walkable : Array(Array({x: Float64, y: Float64}))) : {x: Float64, y: Float64}
+          best_pos = {x: x, y: y}
+          best_dist = Float64::MAX
+
+          # Try points in a grid around the spawn
+          (-200..200).step(20) do |dx|
+            (-200..200).step(20) do |dy|
+              test_x = x + dx
+              test_y = y + dy
+
+              in_walkable = walkable.any? { |r| point_in_polygon?(test_x, test_y, r) }
+              in_non_walkable = non_walkable.any? { |r| point_in_polygon?(test_x, test_y, r) }
+
+              if in_walkable && !in_non_walkable
+                dist = Math.sqrt(dx.to_f64 ** 2 + dy.to_f64 ** 2)
+                if dist < best_dist
+                  best_dist = dist
+                  best_pos = {x: test_x, y: test_y}
+                end
+              end
+            end
+          end
+
+          best_pos
         end
 
         private def validate_scene_coordinates(config : GameConfig, result : ValidationResult)

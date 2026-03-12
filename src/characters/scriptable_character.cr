@@ -8,8 +8,6 @@ module PointClickEngine
     class ScriptableCharacter < Character
       property script_file : String?
       property script_content : String?
-      @[YAML::Field(ignore: true)]
-      property event_handlers : Array(Scripting::EventHandler) = [] of Scripting::EventHandler
       property custom_properties : Hash(String, String) = {} of String => String
 
       # Script-driven behavior properties
@@ -17,14 +15,17 @@ module PointClickEngine
       property update_interval : Float32 = 1.0_f32
       property last_update : Float32 = 0.0_f32
 
+      # Event subscriptions for cleanup
+      @subscription_ids : Array(UInt64) = [] of UInt64
+
       def initialize
         super()
-        setup_default_event_handlers
+        setup_event_handlers
       end
 
       def initialize(name : String, position : RL::Vector2, size : RL::Vector2)
         super(name, position, size)
-        setup_default_event_handlers
+        setup_event_handlers
       end
 
       def load_script(file_path : String)
@@ -33,7 +34,7 @@ module PointClickEngine
           @script_content = AssetLoader.read_script(file_path)
           initialize_script
         rescue ex
-          puts "Failed to load script #{file_path}: #{ex.message}"
+          Core::ErrorLogger.error("Failed to load script #{file_path}: #{ex.message}")
         end
       end
 
@@ -42,22 +43,12 @@ module PointClickEngine
         initialize_script
       end
 
-      def add_event_handler(handler : Scripting::EventHandler)
-        @event_handlers << handler
-        Core::Engine.instance.system_manager.event_system.add_handler(handler)
-      end
-
       def set_property(key : String, value : String)
         @custom_properties[key] = value
 
         # Trigger property changed event
-        Core::Engine.instance.system_manager.event_system.trigger_event(
-          "character_property_changed",
-          {
-            "character" => @name,
-            "property"  => key,
-            "value"     => value,
-          }
+        Core::Engine.instance.event_bus.publish(
+          Core::Events::CharacterPropertyChangedEvent.new(@name, key, value)
         )
       end
 
@@ -102,6 +93,15 @@ module PointClickEngine
         end
       end
 
+      # Cleanup event subscriptions
+      def cleanup
+        event_bus = Core::Engine.instance.event_bus
+        @subscription_ids.each do |id|
+          event_bus.unsubscribe(id)
+        end
+        @subscription_ids.clear
+      end
+
       private def initialize_script
         return unless @script_content
 
@@ -133,43 +133,33 @@ module PointClickEngine
         execute_script_function("on_talk")
       end
 
-      private def setup_default_event_handlers
+      private def setup_event_handlers
+        event_bus = Core::Engine.instance.event_bus
+        char_name = @name
+
         # Add handler for when character reaches movement target
-        movement_handler = Scripting::FunctionEventHandler.new(
-          ->(event : Scripting::Event) {
-            if event.get_string("character") == @name
-              execute_script_function("on_movement_complete")
-            end
-            true
-          },
-          [Scripting::Events::CHARACTER_REACHED_TARGET]
-        )
-        @event_handlers << movement_handler
+        id = event_bus.subscribe(Core::Events::CharacterReachedTargetEvent) do |event|
+          if event.character_name == char_name
+            execute_script_function("on_movement_complete")
+          end
+        end
+        @subscription_ids << id
 
         # Add handler for animation completion
-        animation_handler = Scripting::FunctionEventHandler.new(
-          ->(event : Scripting::Event) {
-            if event.get_string("character") == @name
-              execute_script_function("on_animation_complete", event.get_string("animation"))
-            end
-            true
-          },
-          [Scripting::Events::CHARACTER_ANIMATION_COMPLETE]
-        )
-        @event_handlers << animation_handler
+        id = event_bus.subscribe(Core::Events::AnimationCompleteEvent) do |event|
+          if event.character_name == char_name
+            execute_script_function("on_animation_complete", event.animation_name)
+          end
+        end
+        @subscription_ids << id
       end
 
       # Override movement to trigger events
       def walk_to(target : RL::Vector2)
         super(target)
 
-        Core::Engine.instance.system_manager.event_system.trigger_event(
-          Scripting::Events::PLAYER_MOVED,
-          {
-            "character" => @name,
-            "target_x"  => target.x.to_s,
-            "target_y"  => target.y.to_s,
-          }
+        Core::Engine.instance.event_bus.publish(
+          Core::Events::CharacterMoveStartEvent.new(@name, @position, target)
         )
       end
 
@@ -178,25 +168,16 @@ module PointClickEngine
         super()
 
         if was_walking
-          Core::Engine.instance.system_manager.event_system.trigger_event(
-            Scripting::Events::CHARACTER_REACHED_TARGET,
-            {
-              "character"  => @name,
-              "position_x" => @position.x.to_s,
-              "position_y" => @position.y.to_s,
-            }
+          Core::Engine.instance.event_bus.publish(
+            Core::Events::CharacterReachedTargetEvent.new(@name, @position)
           )
         end
       end
 
       # Override say to trigger events
       def say(text : String, &block : -> Nil)
-        Core::Engine.instance.system_manager.event_system.trigger_event(
-          Scripting::Events::CHARACTER_SPEAK,
-          {
-            "character" => @name,
-            "text"      => text,
-          }
+        Core::Engine.instance.event_bus.publish(
+          Core::Events::CharacterSpeakEvent.new(@name, text)
         )
 
         super(text, &block)

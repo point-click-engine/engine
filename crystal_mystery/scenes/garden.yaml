@@ -1,40 +1,76 @@
 name: garden
+display_name: "The Moonlit Garden"
+description: "An overgrown Victorian garden where ancient secrets lie hidden beneath the fog."
 background_path: assets/backgrounds/garden.png
+background_scaling_mode: stretch
 logical_width: 1024
 logical_height: 768
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/garden.lua
-default_transition_duration: 3.0  # Medium duration for outdoor transitions
+default_transition_duration: 2.0
+ambient_track: garden_theme
+
+# Mysterious fog effect
+effects:
+  - type: fog
+    fog_type: volumetric
+    density: 0.035
+    color: [180, 180, 210, 140]
+    start: 0.15
+    end: 0.85
+    height_falloff: 0.3
+
+on_enter_text: "You step into the garden, where tendrils of fog curl between overgrown hedges. The moonlight casts long shadows across the cobblestone paths, and somewhere in the mist, water trickles from an unseen fountain. The air is thick with the scent of night-blooming jasmine."
+
 walkable_areas:
   regions:
     - name: main_garden
       walkable: true
       vertices:
-        - {x: 50, y: 250}
-        - {x: 950, y: 250}
+        - {x: 50, y: 300}
+        - {x: 950, y: 300}
         - {x: 950, y: 700}
         - {x: 50, y: 700}
+    - name: fountain_area
+      walkable: false
+      vertices:
+        - {x: 380, y: 280}
+        - {x: 620, y: 280}
+        - {x: 620, y: 450}
+        - {x: 380, y: 450}
   scale_zones:
-    - min_y: 250
-      max_y: 450
+    - min_y: 300
+      max_y: 480
       min_scale: 0.7
       max_scale: 0.9
-    - min_y: 450
+    - min_y: 480
       max_y: 700
       min_scale: 0.9
       max_scale: 1.1
+
+# Action prefixes:
+#   (no prefix) = plain text message to display
+#   script: = execute as Lua code
+#   transition: = scene change
+
 hotspots:
+  # Main interactive elements - puzzle locations
   - name: fountain
     x: 400
-    y: 300
+    y: 280
     width: 200
-    height: 200
+    height: 180
+    description: "Ancient stone fountain"
+    default_verb: look
+    highlight_on_hover: true
     actions:
-      look: "An ornate fountain with crystal-clear water"
-      use: "examine_fountain"
+      look: "A beautiful marble fountain, its basin carved with symbols that mirror those on the mysterious note. Clear water bubbles up from a central spout shaped like a lotus flower. The moonlight reflects off the surface in mesmerizing patterns. This feels like a place of power."
+      use: "script:examine_fountain()"
+
   - name: statue
     type: polygon
+    description: "Weathered garden statue"
     points:
       - x: 740
         y: 200
@@ -52,26 +88,143 @@ hotspots:
         y: 260
       - x: 700
         y: 220
+    highlight_on_hover: true
     actions:
-      look: "A weathered statue holding something..."
-      use: "examine_statue"
+      look: "A life-sized statue of a robed figure, arms outstretched as if offering something to the heavens. The features have been worn smooth by time, but the hands are cupped, as if holding something precious. And there, barely visible in the moonlight - is that a faint glow between the fingers?"
+      use: "script:examine_statue()"
+      take: "script:examine_statue()"
+
   - name: flowerbed
-    x: 150
+    x: 120
     y: 450
-    width: 250
-    height: 100
+    width: 200
+    height: 120
+    description: "Bed of luminous night flowers"
+    default_verb: look
+    highlight_on_hover: true
     actions:
-      look: "Beautiful roses in full bloom"
-      use: "examine_flowerbed"
+      look: "A carefully tended bed of rare moonflowers, their pale petals seeming to glow in the darkness. According to legend, these flowers only bloom in the presence of crystalline energy. Tonight, they are in full bloom."
+      use: "script:examine_flowerbed()"
+      take: "These flowers are too beautiful to pick. Besides, they might be evidence."
+
+  - name: garden_shed
+    x: 850
+    y: 450
+    width: 100
+    height: 150
+    description: "Old gardening shed"
+    default_verb: look
+    actions:
+      look: "A weathered wooden shed, its door secured with a rusty padlock. Through a grimy window, you can make out gardening tools and... is that a lantern still burning inside? Someone was here recently."
+      use: "script:examine_garden_shed()"
+      open: "script:examine_garden_shed()"
+
+  - name: bench
+    x: 100
+    y: 550
+    width: 150
+    height: 80
+    description: "Weathered stone bench"
+    default_verb: look
+    actions:
+      look: "A moss-covered stone bench beneath an ancient oak tree. Carved into the seat is an inscription, barely legible: Where light meets water, truth shall emerge. Someone has scratched a date below: 1847 - the year the mansion was built."
+      use: "script:examine_bench()"
+
+  - name: lamp_post
+    x: 250
+    y: 320
+    width: 60
+    height: 180
+    description: "Victorian gas lamp post"
+    default_verb: look
+    highlight_on_hover: true
+    actions:
+      look: "A tall iron lamp post, its gas flame sputtering weakly. An oil lamp hangs from a hook at shoulder height - it looks portable and still has fuel."
+      use: "script:examine_lamp_post()"
+      take: "script:examine_lamp_post()"
+
+  # Door transition
   - name: door_to_lab
     x: 50
-    y: 300
-    width: 100
-    height: 200
-    description: "Back to the laboratory"
+    y: 350
+    width: 80
+    height: 180
+    description: "Glass door to the laboratory"
     default_verb: open
     object_type: door
     actions:
-      look: "Back to the laboratory"
-      open: "transition:laboratory:star_wipe:4.5:800,400"
-      use: "transition:laboratory:star_wipe:4.5:800,400"
+      look: "The glass door leading back to the laboratory. The warm glow of equipment lights spills out into the foggy garden."
+      open: "transition:laboratory:star_wipe:2.0:800,400"
+      use: "transition:laboratory:star_wipe:2.0:800,400"
+
+  # Atmospheric elements
+  - name: hedge_maze_entrance
+    x: 700
+    y: 600
+    width: 120
+    height: 80
+    description: "Entrance to the hedge maze"
+    default_verb: look
+    actions:
+      look: "The dark entrance to what appears to be an elaborate hedge maze. The fog is even thicker beyond the archway. You can hear something rustling in the hedges - probably just the wind."
+      use: "script:examine_hedge_maze()"
+
+  - name: sundial
+    x: 550
+    y: 500
+    width: 80
+    height: 80
+    description: "Ancient brass sundial"
+    default_verb: look
+    highlight_on_hover: true
+    actions:
+      look: "A brass sundial on a marble pedestal. The gnomon casts no shadow in the moonlight, but the dial face is inscribed with astronomical symbols. One marking - the position for 11:47 - is worn smooth, as if someone has traced it repeatedly."
+      use: "script:examine_sundial()"
+
+  - name: rose_bush
+    x: 600
+    y: 380
+    width: 80
+    height: 100
+    description: "Ancient rose bush"
+    default_verb: look
+    actions:
+      look: "A massive rose bush, easily a hundred years old. Its thorns are fierce, but among the blood-red blooms, you notice something odd - some petals have a faint crystalline shimmer."
+      use: "script:examine_rose_bush()"
+
+  - name: well
+    x: 180
+    y: 380
+    width: 70
+    height: 90
+    description: "Old stone well"
+    default_verb: look
+    actions:
+      look: "An old well, its stones covered in lichen. A wooden cover has been placed over the opening, but it has been moved recently - you can see fresh scratches on the stone. Something glints deep within when you peer through the gap."
+      use: "script:examine_well()"
+
+  - name: bird_bath
+    x: 320
+    y: 550
+    width: 60
+    height: 70
+    description: "Cracked stone bird bath"
+    default_verb: look
+    actions:
+      look: "A bird bath with a crack running down its basin. The water inside is still and black, reflecting the moon like a dark mirror. Small ripples occasionally disturb the surface, though there is no wind."
+      use: "script:examine_bird_bath()"
+
+  - name: greenhouse
+    x: 920
+    y: 250
+    width: 80
+    height: 200
+    description: "Dilapidated greenhouse"
+    default_verb: look
+    actions:
+      look: "A Victorian greenhouse, its glass panels cracked and clouded with age. Through the dirty panes, you can see exotic plants have run wild. A faint blue light pulses inside - but the door is secured with the same type of padlock as the shed."
+      use: "script:examine_greenhouse()"
+      open: "script:examine_greenhouse()"
+
+# No characters in the garden - just atmosphere and puzzles
+characters: []

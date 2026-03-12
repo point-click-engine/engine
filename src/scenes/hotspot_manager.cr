@@ -263,14 +263,14 @@ module PointClickEngine
       private def get_hotspot_at_linear(position : RL::Vector2) : Hotspot?
         # Search in reverse order to get topmost hotspot
         @hotspots.reverse_each do |hotspot|
-          return hotspot if hotspot.visible && hotspot.contains_point?(position)
+          return hotspot if hotspot.visible && hotspot.active && hotspot.contains_point?(position)
         end
         nil
       end
 
       # Linear search for all hotspots at position
       private def get_hotspots_at_linear(position : RL::Vector2) : Array(Hotspot)
-        @hotspots.select { |hotspot| hotspot.visible && hotspot.contains_point?(position) }
+        @hotspots.select { |hotspot| hotspot.visible && hotspot.active && hotspot.contains_point?(position) }
       end
 
       # Optimized search using spatial partitioning
@@ -302,7 +302,7 @@ module PointClickEngine
               next if checked_hotspots.includes?(hotspot)
               checked_hotspots << hotspot
 
-              if hotspot.visible && hotspot.contains_point?(position)
+              if hotspot.visible && hotspot.active && hotspot.contains_point?(position)
                 # Keep the topmost (highest z-order or last added if same z-order)
                 if result.nil? || hotspot.z_order > result.z_order
                   result = hotspot
@@ -341,7 +341,7 @@ module PointClickEngine
               next if checked_hotspots.includes?(hotspot)
               checked_hotspots << hotspot
 
-              if hotspot.visible && hotspot.contains_point?(position)
+              if hotspot.visible && hotspot.active && hotspot.contains_point?(position)
                 results << hotspot
               end
             end

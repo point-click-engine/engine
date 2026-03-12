@@ -4,13 +4,14 @@ version: 0.2.0
 authors:
   - Remy Marronnier <remy@marronnier.dev>
 
-crystal: ">= 1.16.3"
+crystal: "1.19.1"
 
 license: MIT
 
 dependencies:
   raylib-cr:
-    github: sol-vin/raylib-cr
+    github: rmarronnier/raylib-cr
+    branch: master
   luajit:
     github: mdwagner/luajit.cr
     version: ~> 0.4.0

@@ -1,3 +1,5 @@
+require "../core/events/events"
+
 module PointClickEngine
   module Localization
     # Manages translations and localization
@@ -9,14 +11,14 @@ module PointClickEngine
       property current_locale : Locale
       property fallback_locale : Locale
 
-      # Singleton instance
-      @@instance : LocalizationManager?
-
-      def self.instance : LocalizationManager
-        @@instance ||= new
-      end
+      @[YAML::Field(ignore: true)]
+      property event_bus : Core::Events::EventBus?
 
       def initialize(@current_locale : Locale = Locale::En_US, @fallback_locale : Locale = Locale::En_US)
+        @translations = {} of String => Translation
+      end
+
+      def initialize(@event_bus : Core::Events::EventBus, @current_locale : Locale = Locale::En_US, @fallback_locale : Locale = Locale::En_US)
         @translations = {} of String => Translation
       end
 
@@ -124,7 +126,15 @@ module PointClickEngine
 
       # Set current locale
       def set_locale(locale : Locale)
-        @current_locale = locale if locale_available?(locale)
+        return unless locale_available?(locale)
+        return if locale == @current_locale
+
+        old_locale = @current_locale
+        @current_locale = locale
+
+        if bus = @event_bus
+          bus.publish(Core::Events::LocaleChangedEvent.new(old_locale.to_s, locale.to_s))
+        end
       end
 
       # Clear all translations
@@ -147,11 +157,4 @@ module PointClickEngine
       end
     end
   end
-end
-
-# Global helper function
-def t(key : String, count : Int32? = nil, default : String? = nil, **params) : String
-  result = PointClickEngine::Localization::LocalizationManager.instance.translate(key, count, **params)
-  # Return default if translation is the same as key (not found)
-  result == key && default ? default : result
 end

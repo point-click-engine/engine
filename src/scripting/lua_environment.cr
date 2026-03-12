@@ -179,7 +179,8 @@ module PointClickEngine
           args.each { |arg| @lua.push(arg) }
 
           # Use pcall and check for errors
-          if @lua.pcall(args.size, 1, 0) != 0
+          status = @lua.pcall(args.size, 1, 0)
+          unless status.ok?
             # Error occurred, get error message and return nil
             error_msg = @lua.to_string(-1)
             @lua.pop(1)

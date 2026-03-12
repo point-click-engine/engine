@@ -1,8 +1,14 @@
 require "../spec_helper"
 
+RENDERER_ACHIEVEMENT_SAVE_FILE = "tmp/renderer_registration_achievements.yaml"
+
 describe "Renderer Registration System" do
+  after_each do
+    File.delete(RENDERER_ACHIEVEMENT_SAVE_FILE) if File.exists?(RENDERER_ACHIEVEMENT_SAVE_FILE)
+  end
+
   it "registers dialog manager in render pipeline" do
-    RL.init_window(800, 600, "Dialog Manager Renderer Test")
+    RaylibContext.ensure_window(800, 600, "Dialog Manager Renderer Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Renderer Test")
     engine.init
 
@@ -25,12 +31,10 @@ describe "Renderer Registration System" do
     if engine_instance = PointClickEngine::Core::Engine.instance
       engine_instance.system_manager.dialog_manager.should_not be_nil
     end
-
-    RL.close_window
   end
 
   it "registers verb input system cursor in UI layer" do
-    RL.init_window(800, 600, "Cursor Renderer Test")
+    RaylibContext.ensure_window(800, 600, "Cursor Renderer Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Cursor Renderer Test")
     engine.init
 
@@ -57,12 +61,10 @@ describe "Renderer Registration System" do
     # Test that render manager has UI layer where cursor should be rendered
     render_manager = engine.render_manager
     render_manager.should_not be_nil
-
-    RL.close_window
   end
 
   it "registers achievement manager in UI layer" do
-    RL.init_window(800, 600, "Achievement Renderer Test")
+    RaylibContext.ensure_window(800, 600, "Achievement Renderer Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Achievement Renderer Test")
     engine.init
 
@@ -73,6 +75,7 @@ describe "Renderer Registration System" do
     if am = achievement_manager
       # Test that achievement manager has draw method
       am.responds_to?(:draw).should be_true
+      am.save_file = RENDERER_ACHIEVEMENT_SAVE_FILE
 
       # Test achievement notification functionality
       am.unlock("test_achievement")
@@ -81,12 +84,10 @@ describe "Renderer Registration System" do
       # (The draw method should handle rendering notifications when active)
       am.responds_to?(:update).should be_true
     end
-
-    RL.close_window
   end
 
   it "validates render layer structure and component registration" do
-    RL.init_window(800, 600, "Render Layer Structure Test")
+    RaylibContext.ensure_window(800, 600, "Render Layer Structure Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Layer Structure Test")
     engine.init
 
@@ -104,12 +105,10 @@ describe "Renderer Registration System" do
     # Test that inventory is available (already registered in UI layer)
     engine.inventory.should_not be_nil
     engine.inventory.responds_to?(:draw).should be_true
-
-    RL.close_window
   end
 
   it "ensures UI components are properly layered for rendering order" do
-    RL.init_window(800, 600, "Render Order Test")
+    RaylibContext.ensure_window(800, 600, "Render Order Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Render Order Test")
     engine.init
     engine.enable_verb_input
@@ -124,7 +123,7 @@ describe "Renderer Registration System" do
 
     # Menu system (already registered)
     if menu = engine.system_manager.menu_system
-      if menu.responds_to?(:draw)
+      if menu.responds_to?(:draw) || menu.responds_to?(:render)
         components_with_draw << "menu_system"
       end
     end
@@ -159,12 +158,10 @@ describe "Renderer Registration System" do
 
     # Should have at least 5 UI components with draw methods
     components_with_draw.size.should be >= 5
-
-    RL.close_window
   end
 
   it "validates floating dialog rendering integration" do
-    RL.init_window(800, 600, "Floating Dialog Renderer Test")
+    RaylibContext.ensure_window(800, 600, "Floating Dialog Renderer Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Floating Dialog Renderer Test")
     engine.init
 
@@ -190,12 +187,10 @@ describe "Renderer Registration System" do
       # Test that dialog manager draw method includes floating manager
       dm.responds_to?(:draw).should be_true
     end
-
-    RL.close_window
   end
 
   it "tests cursor visual feedback rendering system" do
-    RL.init_window(800, 600, "Cursor Visual Feedback Test")
+    RaylibContext.ensure_window(800, 600, "Cursor Visual Feedback Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Cursor Visual Feedback Test")
     engine.init
     engine.enable_verb_input
@@ -227,12 +222,10 @@ describe "Renderer Registration System" do
       display_manager = engine.system_manager.display_manager
       display_manager.should_not be_nil
     end
-
-    RL.close_window
   end
 
   it "validates achievement notification rendering" do
-    RL.init_window(800, 600, "Achievement Notification Test")
+    RaylibContext.ensure_window(800, 600, "Achievement Notification Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Achievement Notification Test")
     engine.init
 
@@ -244,6 +237,7 @@ describe "Renderer Registration System" do
       # Test achievement manager rendering capability
       am.responds_to?(:draw).should be_true
       am.responds_to?(:update).should be_true
+      am.save_file = RENDERER_ACHIEVEMENT_SAVE_FILE
 
       # Test achievement unlock (should trigger notification)
       am.unlock("test_achievement_render")
@@ -252,12 +246,10 @@ describe "Renderer Registration System" do
       # The draw method should handle active notifications
       am.responds_to?(:unlock).should be_true
     end
-
-    RL.close_window
   end
 
   it "ensures render pipeline completeness" do
-    RL.init_window(800, 600, "Render Pipeline Completeness Test")
+    RaylibContext.ensure_window(800, 600, "Render Pipeline Completeness Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Pipeline Completeness Test")
     engine.init
     engine.enable_verb_input
@@ -285,8 +277,10 @@ describe "Renderer Registration System" do
       render_systems << "inventory"
     end
 
-    if engine.system_manager.menu_system.try(&.responds_to?(:draw))
-      render_systems << "menu_system"
+    if menu = engine.system_manager.menu_system
+      if menu.responds_to?(:draw) || menu.responds_to?(:render)
+        render_systems << "menu_system"
+      end
     end
 
     if engine.system_manager.achievement_manager.try(&.responds_to?(:draw))
@@ -301,10 +295,7 @@ describe "Renderer Registration System" do
       render_systems << "dialog_manager"
     end
 
-    # Transition rendering
-    if engine.system_manager.transition_manager.try(&.responds_to?(:draw))
-      render_systems << "transition_manager"
-    end
+    # Transitions are now handled by the effect system
 
     # Should have all major rendering components
     render_systems.includes?("render_manager").should be_true
@@ -314,11 +305,9 @@ describe "Renderer Registration System" do
     render_systems.includes?("achievement_manager").should be_true
     render_systems.includes?("verb_input_cursor").should be_true
     render_systems.includes?("dialog_manager").should be_true
-    render_systems.includes?("transition_manager").should be_true
+    # Transitions are now handled by the effect system
 
-    # Should have at least 8 rendering systems
-    render_systems.size.should be >= 8
-
-    RL.close_window
+    # Should have at least 7 rendering systems (transitions now handled by effect system)
+    render_systems.size.should be >= 7
   end
 end

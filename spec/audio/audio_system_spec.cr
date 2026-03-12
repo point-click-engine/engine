@@ -9,13 +9,9 @@ describe "Audio System Comprehensive Testing" do
       available = PointClickEngine::Audio.available?
       available.should be_a(Bool)
 
-      {% if flag?(:with_audio) %}
-        available.should be_true
-        puts "Audio system: ENABLED"
-      {% else %}
-        available.should be_false
-        puts "Audio system: DISABLED (stub mode)"
-      {% end %}
+      # Audio is always available since we have raylib audio
+      available.should be_true
+      puts "Audio system: ENABLED (raylib audio always available)"
     end
   end
 
@@ -307,7 +303,7 @@ describe "Audio System Comprehensive Testing" do
       operation_count = 1000
 
       # Measure configuration creation performance
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       configs = [] of PointClickEngine::Audio::AmbientSoundConfig
       operation_count.times do |i|
@@ -318,7 +314,7 @@ describe "Audio System Comprehensive Testing" do
         configs << config
       end
 
-      config_time = Time.monotonic - start_time
+      config_time = Time.instant - start_time
       config_time_per_op = config_time.total_milliseconds / operation_count
 
       puts "Audio config creation performance:"
@@ -330,7 +326,7 @@ describe "Audio System Comprehensive Testing" do
       config_time_per_op.should be < 0.01 # 0.01ms per operation
 
       # Test sound effect creation performance (may fail but shouldn't crash)
-      sound_creation_start = Time.monotonic
+      sound_creation_start = Time.instant
       successful_sounds = 0
 
       100.times do |i|
@@ -344,7 +340,7 @@ describe "Audio System Comprehensive Testing" do
         end
       end
 
-      sound_creation_time = Time.monotonic - sound_creation_start
+      sound_creation_time = Time.instant - sound_creation_start
 
       puts "Sound effect performance:"
       puts "  Successful creations: #{successful_sounds}/100"

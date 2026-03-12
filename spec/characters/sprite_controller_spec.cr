@@ -28,11 +28,12 @@ describe PointClickEngine::Characters::SpriteController do
       position = RL::Vector2.new(x: 100.0_f32, y: 200.0_f32)
       size = RL::Vector2.new(x: 32.0_f32, y: 48.0_f32)
       controller = PointClickEngine::Characters::SpriteController.new(position, size)
+      fixture_path = spec_fixture_path("assets", "test_sprite.png")
       # Note: This would normally require actual image file
       # For testing, we mock the sprite creation
-      controller.load_spritesheet("test_sprite.png", 32, 48)
+      controller.load_spritesheet(fixture_path, 32, 48)
 
-      controller.sprite_path.should eq("test_sprite.png")
+      controller.sprite_path.should eq(fixture_path)
       controller.loaded?.should be_true
 
       if sprite = controller.sprite

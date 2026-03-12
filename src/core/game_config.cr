@@ -6,9 +6,9 @@ require "./game_state_manager"
 require "./quest_system"
 require "../characters/player"
 require "../scenes/scene_loader"
-require "../graphics/display_manager"
-require "../graphics/shaders/shader_helpers"
+require "../graphics/graphics"
 require "../characters/dialogue/dialog_tree"
+require "../actions/action_loader"
 require "./exceptions"
 require "./validators/config_validator"
 require "./error_reporter"
@@ -80,7 +80,9 @@ module PointClickEngine
         property scenes : Array(String) = [] of String
         property dialogs : Array(String) = [] of String
         property quests : Array(String) = [] of String
+        property items : Array(String) = [] of String
         property sprites : Array(String) = [] of String
+        property sequences : Array(String) = [] of String
         property audio : AudioConfig?
       end
 
@@ -113,10 +115,35 @@ module PointClickEngine
         property duration : Float32 = 5.0
       end
 
+      class CursorConfig
+        include YAML::Serializable
+        property root : String?
+        property default : String?
+        property walk : String?
+        property look : String?
+        property talk : String?
+        property use : String?
+        property take : String?
+        property open : String?
+        property close : String?
+        property push : String?
+        property pull : String?
+        property give : String?
+      end
+
       class UIConfig
         include YAML::Serializable
         property hints : Array(UIHint) = [] of UIHint
         property opening_message : String?
+        property cursors : CursorConfig?
+      end
+
+      class StartupConfig
+        include YAML::Serializable
+        property sequence : String?
+        property skip_sequence_if : String?
+        property intro_sequence : String?
+        property skip_intro_if : String?
       end
 
       property game : GameInfo
@@ -127,6 +154,7 @@ module PointClickEngine
       property assets : AssetsConfig?
       property settings : SettingsConfig?
       property initial_state : InitialState?
+      property startup : StartupConfig?
       property start_scene : String?
       property start_music : String?
       property ui : UIConfig?
@@ -181,10 +209,24 @@ module PointClickEngine
         h = window.try(&.height) || 768
 
         engine = Engine.new(w, h, game.title)
+        reference_width = display.try(&.target_width) || w
+        reference_height = display.try(&.target_height) || h
+        engine.reference_width = reference_width
+        engine.reference_height = reference_height
+        user_settings_path = File.join(config_base_dir, "user_settings.yaml")
+        user_settings = UserSettings.load(user_settings_path)
+
+        # Apply startup fullscreen preference before init so the display and renderer
+        # are initialized against the intended window mode.
+        engine.fullscreen = user_settings.display.fullscreen
+        if window_config = window
+          engine.fullscreen = window_config.fullscreen
+        end
+
         engine.init
 
         # Configure engine from settings
-        configure_engine(engine)
+        configure_engine(engine, user_settings)
 
         # Load all assets
         load_assets(engine)
@@ -198,7 +240,7 @@ module PointClickEngine
         engine
       end
 
-      private def configure_engine(engine : Engine)
+      private def configure_engine(engine : Engine, user_settings : UserSettings)
         # Create and assign managers
         engine.game_state_manager = Core::GameStateManager.new
         engine.quest_manager = QuestManager.new
@@ -227,16 +269,14 @@ module PointClickEngine
           if disp = display
             dm.scaling_mode = case disp.scaling_mode
                               when "FitWithBars"
-                                Graphics::DisplayManager::ScalingMode::FitWithBars
+                                Graphics::Display::ScalingMode::FitWithBars
                               when "Stretch"
-                                Graphics::DisplayManager::ScalingMode::Stretch
+                                Graphics::Display::ScalingMode::Stretch
                               when "PixelPerfect"
-                                Graphics::DisplayManager::ScalingMode::PixelPerfect
+                                Graphics::Display::ScalingMode::PixelPerfect
                               else
-                                Graphics::DisplayManager::ScalingMode::FitWithBars
+                                Graphics::Display::ScalingMode::FitWithBars
                               end
-            dm.target_width = disp.target_width
-            dm.target_height = disp.target_height
           end
         end
 
@@ -246,8 +286,8 @@ module PointClickEngine
           player_obj = Characters::Player.new(
             player_config.name,
             Raylib::Vector2.new(
-              x: player_config.start_position.try(&.x) || (window.try(&.width) || 1024) / 2,
-              y: player_config.start_position.try(&.y) || (window.try(&.height) || 768) - 150
+              x: player_config.start_position.try(&.x) || engine.reference_width / 2,
+              y: player_config.start_position.try(&.y) || engine.reference_height - 150
             ),
             Raylib::Vector2.new(
               x: player_config.sprite.try(&.frame_width).try(&.to_f32) || 64.0f32,
@@ -286,16 +326,6 @@ module PointClickEngine
           puts "[DEBUG] No player config found" if Engine.debug_mode
         end
 
-        # Apply settings
-        if s = settings
-          Engine.debug_mode = s.debug_mode
-          engine.show_fps = s.show_fps
-        end
-
-        # Load and apply user settings (creates default file if none exists)
-        user_settings_path = File.join(config_base_dir, "user_settings.yaml")
-        user_settings = UserSettings.load(user_settings_path)
-
         # Validate user settings and warn about issues
         validation_errors = user_settings.validate
         unless validation_errors.empty?
@@ -306,6 +336,18 @@ module PointClickEngine
 
         # Apply user settings to engine
         user_settings.apply_to_engine(engine)
+
+        # Apply game config display settings after user settings so project defaults win.
+        if window_config = window
+          engine.fullscreen = window_config.fullscreen
+        end
+
+        # Apply game config settings AFTER user settings (game config takes precedence)
+        if s = settings
+          Engine.debug_mode = s.debug_mode
+          ErrorLogger.set_log_level(s.debug_mode ? ErrorLogger::LogLevel::Debug : ErrorLogger::LogLevel::Info)
+          engine.show_fps = s.show_fps
+        end
 
         # Set target FPS
         engine.target_fps = window.try(&.target_fps) || 60
@@ -382,6 +424,37 @@ module PointClickEngine
           end)
         end
 
+        # Load item definitions
+        engine.item_registry.base_dir = config_base_dir
+        assets.try(&.items.each do |pattern|
+          Dir.glob(File.join(config_base_dir, pattern)).each do |path|
+            if File.exists?(path)
+              ErrorReporter.report_progress("Loading items '#{File.basename(path)}'")
+              success = engine.item_registry.load_from_file(path)
+              ErrorReporter.report_progress_done(success)
+            end
+          end
+        end)
+
+        # Load action sequences
+        assets.try(&.sequences.each do |pattern|
+          Dir.glob(File.join(config_base_dir, pattern)).each do |path|
+            if File.exists?(path)
+              begin
+                ErrorReporter.report_progress("Loading sequence '#{File.basename(path)}'")
+                runner = Actions::ActionLoader.load(path)
+                # Store in scene manager's sequence registry
+                engine.scene_manager.register_sequence(runner.name, runner)
+                puts "[GameConfig] Loaded sequence '#{runner.name}' with #{runner.action_count} actions"
+                ErrorReporter.report_progress_done(true)
+              rescue ex
+                ErrorReporter.report_progress_done(false)
+                ErrorReporter.report_warning("Failed to load sequence from #{path}: #{ex.message}", "Loading sequences")
+              end
+            end
+          end
+        end)
+
         # Load audio
         if audio = engine.system_manager.audio_manager
           assets.try(&.audio).try do |audio_config|
@@ -447,49 +520,57 @@ module PointClickEngine
       end
 
       private def setup_ui(engine : Engine)
+        configure_cursor_theme(engine)
+
         # Set up game start handler
         ui_config = self.ui
+        startup_config = self.startup
         start_scene_name = self.start_scene
         start_music_name = self.start_music
+        startup_sequence_name = startup_config.try(&.sequence) || startup_config.try(&.intro_sequence)
+        skip_sequence_flag = startup_config.try(&.skip_sequence_if) || startup_config.try(&.skip_intro_if)
 
-        puts "[DEBUG] Setting up game:new event handler"
-        engine.system_manager.event_system.on("game:new") do
-          puts "[DEBUG] game:new event triggered!"
-          # Change to start scene
+        puts "[DEBUG] Setting up GameStartedEvent handler"
+        engine.event_bus.subscribe(Events::GameStartedEvent) do |event|
+          next unless event.new_game
+          puts "[DEBUG] GameStartedEvent triggered!"
+
+          should_skip_intro = false
+          if skip_flag = skip_sequence_flag
+            if gsm = engine.game_state_manager
+              should_skip_intro = gsm.get_flag(skip_flag)
+            end
+          end
+
+          playing_startup_sequence = !should_skip_intro && !startup_sequence_name.to_s.empty?
+
+          # Startup sequences that must survive scene changes run on the engine-level runner.
           if scene_name = start_scene_name
-            engine.change_scene(scene_name)
-          end
-
-          # Play start music
-          if music_name = start_music_name
-            puts "[Engine] Playing start music: #{music_name}"
-            engine.system_manager.audio_manager.try do |audio|
-              audio.play_music(music_name, true)
-              puts "[Engine] Music play command sent"
+            if playing_startup_sequence
+              engine.change_scene(scene_name)
+            else
+              engine.change_scene_with_transition(scene_name, "fade", 1.0f32)
             end
           end
 
-          # Show opening message
-          if u = ui_config
-            if msg = u.opening_message
-              engine.system_manager.dialog_manager.try &.show_message(msg)
-            end
-
-            # Show hints
-            if gui = engine.gui
-              y_offset = 10f32
-              u.hints.each_with_index do |hint, i|
-                label_id = "hint_#{i}"
-                gui.add_label(label_id, hint.text,
-                  Raylib::Vector2.new(x: 10f32, y: y_offset),
-                  16, Raylib::WHITE)
-                y_offset += 20f32
-
-                # Auto-hide after duration - using a timer event
-                # For now, we'll just note that hints should be hidden after duration
-                # This would need to be handled by the GUI system itself
+          if playing_startup_sequence
+            if sequence_name = startup_sequence_name
+              if runner = engine.scene_manager.get_sequence(sequence_name)
+                engine.run_script(runner)
               end
             end
+          else
+            # Play start music
+            if music_name = start_music_name
+              puts "[Engine] Playing start music: #{music_name}"
+              engine.system_manager.audio_manager.try do |audio|
+                audio.play_music(music_name, true)
+                puts "[Engine] Music play command sent"
+              end
+            end
+
+            # Show opening message and hints only when not handing off to a startup sequence.
+            setup_ui_hints(engine, ui_config)
           end
 
           # Start the game
@@ -497,12 +578,64 @@ module PointClickEngine
         end
       end
 
+      private def configure_cursor_theme(engine : Engine)
+        return unless verb_system = engine.verb_input_system
+
+        cursor_config = ui.try(&.cursors)
+        cursor_root = cursor_config.try(&.root)
+
+        cursor_paths = {} of UI::VerbType => String
+        if config = cursor_config
+          {
+            UI::VerbType::Walk  => config.walk,
+            UI::VerbType::Look  => config.look,
+            UI::VerbType::Talk  => config.talk,
+            UI::VerbType::Use   => config.use,
+            UI::VerbType::Take  => config.take,
+            UI::VerbType::Open  => config.open,
+            UI::VerbType::Close => config.close,
+            UI::VerbType::Push  => config.push,
+            UI::VerbType::Pull  => config.pull,
+            UI::VerbType::Give  => config.give,
+          }.each do |verb, path|
+            cursor_paths[verb] = path.not_nil! if path
+          end
+        end
+
+        verb_system.cursor_manager.configure(
+          asset_base_dir: config_base_dir,
+          cursor_root: cursor_root,
+          cursor_paths: cursor_paths,
+          default_cursor_path: cursor_config.try(&.default)
+        )
+      end
+
+      private def setup_ui_hints(engine : Engine, ui_config : UIConfig?)
+        if u = ui_config
+          if msg = u.opening_message
+            engine.system_manager.dialog_manager.try &.show_message(msg)
+          end
+
+          # Show hints
+          if gui = engine.gui
+            y_offset = 10f32
+            u.hints.each_with_index do |hint, i|
+              label_id = "hint_#{i}"
+              gui.add_label(label_id, hint.text,
+                Raylib::Vector2.new(x: 10f32, y: y_offset),
+                16, Raylib::WHITE)
+              y_offset += 20f32
+            end
+          end
+        end
+      end
+
       private def setup_shaders(engine : Engine)
         return unless shader_system = engine.shader_system
 
         # Create common shaders
-        Graphics::Shaders::ShaderHelpers.create_vignette_shader(shader_system)
-        Graphics::Shaders::ShaderHelpers.create_bloom_shader(shader_system)
+        Graphics::ShaderHelpers.create_vignette_shader(shader_system)
+        Graphics::ShaderHelpers.create_bloom_shader(shader_system)
       end
     end
   end

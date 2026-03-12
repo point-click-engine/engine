@@ -10,6 +10,8 @@ module PointClickEngine::Scripting
     def initialize
       @window_width = 800
       @window_height = 600
+      @reference_width = 800
+      @reference_height = 600
       @window_title = "Test"
       @target_fps = 60
       @running = false

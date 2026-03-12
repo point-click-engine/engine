@@ -325,7 +325,7 @@ describe PointClickEngine::Utils::VectorMath do
       vector1 = Raylib::Vector2.new(x: 3.0_f32, y: 4.0_f32)
       vector2 = Raylib::Vector2.new(x: 6.0_f32, y: 8.0_f32)
 
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       # Perform many calculations
       1000.times do
@@ -334,7 +334,7 @@ describe PointClickEngine::Utils::VectorMath do
         PointClickEngine::Utils::VectorMath.lerp(vector1, vector2, 0.5_f32)
       end
 
-      end_time = Time.monotonic
+      end_time = Time.instant
       elapsed = (end_time - start_time).total_milliseconds
 
       # Should complete in reasonable time (under 100ms)

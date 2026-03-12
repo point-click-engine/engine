@@ -283,7 +283,7 @@ describe PointClickEngine::Characters::MovementController do
       controller = PointClickEngine::Characters::MovementController.new(character)
       target = Raylib::Vector2.new(x: 100.0_f32, y: 0.0_f32)
 
-      start_time = Time.monotonic
+      start_time = Time.instant
       controller.move_to(target)
 
       # Simulate many updates
@@ -291,7 +291,7 @@ describe PointClickEngine::Characters::MovementController do
         controller.update(0.016_f32)
       end
 
-      end_time = Time.monotonic
+      end_time = Time.instant
       elapsed = (end_time - start_time).total_milliseconds
 
       # Should complete quickly with caching optimizations

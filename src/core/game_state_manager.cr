@@ -3,6 +3,7 @@
 
 require "json"
 require "yaml"
+require "./events/events"
 
 module PointClickEngine
   module Core
@@ -40,12 +41,20 @@ module PointClickEngine
       property game_time : Float32 = 0.0f32
       property day_cycle : Float32 = 0.0f32 # 0.0-1.0 representing 24-hour cycle
 
-      # Event handling
+      # Event handling (legacy callbacks)
       @[JSON::Field(ignore: true)]
       @[YAML::Field(ignore: true)]
       property change_handlers : Array(StateChangeHandler) = [] of StateChangeHandler
 
+      # Optional EventBus for publishing typed events
+      @[JSON::Field(ignore: true)]
+      @[YAML::Field(ignore: true)]
+      property event_bus : Events::EventBus?
+
       def initialize
+      end
+
+      def initialize(@event_bus : Events::EventBus)
       end
 
       # Flag management
@@ -292,11 +301,22 @@ module PointClickEngine
 
       # Private implementation methods
       private def trigger_change_event(name : String, value : GameValue)
+        # Call legacy handlers
         @change_handlers.each do |handler|
           begin
             handler.call(name, value)
           rescue ex
             puts "Error in state change handler: #{ex.message}"
+          end
+        end
+
+        # Publish to EventBus if available
+        if bus = @event_bus
+          case value
+          when Bool
+            bus.publish(Events::GameStateChangedEvent.new(name, value))
+          when Int32
+            bus.publish(Events::GameVariableChangedEvent.new(name, value))
           end
         end
       end

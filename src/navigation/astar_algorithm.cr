@@ -29,7 +29,7 @@ module PointClickEngine
 
       # Finds a path using A* algorithm
       def find_path(start_x : Float32, start_y : Float32, end_x : Float32, end_y : Float32) : Array(RL::Vector2)?
-        start_time = Time.monotonic
+        start_time = Time.instant
 
         # Input validation
         return nil unless @movement_validator.validate_pathfinding_input(@grid, start_x, start_y, end_x, end_y)
@@ -55,7 +55,7 @@ module PointClickEngine
                      [end_pos]
                    end
 
-          @last_search_time = (Time.monotonic - start_time).total_seconds
+          @last_search_time = (Time.instant - start_time).total_seconds
           @last_nodes_searched = 1
           return result
         end
@@ -63,7 +63,7 @@ module PointClickEngine
         # Run A* algorithm
         result = execute_astar(start_grid, end_grid)
 
-        @last_search_time = (Time.monotonic - start_time).total_seconds
+        @last_search_time = (Time.instant - start_time).total_seconds
         result
       end
 

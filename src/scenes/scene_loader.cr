@@ -9,6 +9,8 @@ require "../characters/npc"
 require "../assets/asset_loader"
 require "../ui/cursor_manager"
 require "../core/exceptions"
+require "../graphics/effects/scene_effects/scene_effect_factory"
+require "../graphics/effects/scene_effects/yaml_effect_config"
 
 module PointClickEngine
   module Scenes
@@ -30,15 +32,11 @@ module PointClickEngine
 
         scene = Scene.new(scene_data["name"].as_s)
 
+        # Set base directory for resolving relative paths (parent of scene file directory)
+        scene.base_dir = File.dirname(scene_dir)
+
         if scale = scene_data["scale"]?
           scene.scale = scale.as_f.to_f32
-        end
-
-        if background_path = scene_data["background_path"]?
-          # Resolve asset path relative to scene directory
-          original_path = background_path.as_s
-          full_background_path = File.join(File.dirname(scene_dir), original_path)
-          scene.load_background(full_background_path, original_path, scene.scale)
         end
 
         if enable_pathfinding = scene_data["enable_pathfinding"]?
@@ -49,13 +47,25 @@ module PointClickEngine
           scene.navigation_cell_size = navigation_cell_size.as_i
         end
 
-        # Load logical dimensions (default to 1024x768 if not specified)
+        # Load logical dimensions (default to the configured global reference resolution if not specified)
         if logical_width = scene_data["logical_width"]?
           scene.logical_width = logical_width.as_i
         end
 
         if logical_height = scene_data["logical_height"]?
           scene.logical_height = logical_height.as_i
+        end
+
+        if background_scaling_mode = scene_data["background_scaling_mode"]?
+          scene.background_scaling_mode = background_scaling_mode.as_s
+        end
+
+        if background_path = scene_data["background_path"]?
+          # Resolve asset path relative to scene directory after scene dimensions and
+          # background scaling mode are known, so the renderer uses the intended contract.
+          original_path = background_path.as_s
+          full_background_path = File.join(File.dirname(scene_dir), original_path)
+          scene.load_background(full_background_path, original_path, scene.scale)
         end
 
         if hotspots = scene_data["hotspots"]?
@@ -245,6 +255,30 @@ module PointClickEngine
           scene.script_path = script_path.as_s
         end
 
+        if actions_path = scene_data["actions_path"]?
+          scene.actions_path = actions_path.as_s
+        end
+
+        # Load scene effects using YAML serialization
+        if effects = scene_data["effects"]?
+          effects.as_a.each do |effect_data|
+            begin
+              effect_type = effect_data["type"]?.try(&.as_s) || "unknown"
+
+              # Use the YAML-serializable config approach
+              # Convert YAML::Any to string then parse it back
+              yaml_string = effect_data.to_yaml
+              if config = Graphics::Effects::SceneEffects::EffectConfig.from_yaml(yaml_string)
+                effect = config.create_effect
+                scene.scene_effects << effect
+              end
+            rescue ex
+              effect_type = effect_data["type"]?.try(&.as_s) || "unknown"
+              Core::ErrorLogger.error("[SceneLoader] Error creating effect '#{effect_type}': #{ex.message}")
+            end
+          end
+        end
+
         # Load walkable areas
         if walkable_data = scene_data["walkable_areas"]?
           walkable_area = WalkableArea.new
@@ -382,6 +416,7 @@ module PointClickEngine
           nil
         end
       end
+
 
       def self.save_to_yaml(scene : Scene, path : String)
         yaml_data = {

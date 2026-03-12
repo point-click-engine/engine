@@ -217,12 +217,12 @@ describe "Scene Management Stress Tests" do
       scene_count = 1000
 
       # Create and add many scenes
-      start_time = Time.monotonic
+      start_time = Time.instant
       scene_count.times do |i|
         scene = PointClickEngine::Scenes::Scene.new("stress_scene_#{i}")
         scene_manager.add_scene(scene)
       end
-      addition_time = Time.monotonic - start_time
+      addition_time = Time.instant - start_time
 
       scene_manager.scene_names.size.should eq(scene_count)
 
@@ -250,12 +250,12 @@ describe "Scene Management Stress Tests" do
       end
 
       # Perform rapid transitions
-      start_time = Time.monotonic
+      start_time = Time.instant
       transition_count.times do |i|
         scene_name = scene_names[i % scene_names.size]
         scene_manager.change_scene(scene_name)
       end
-      transition_time = Time.monotonic - start_time
+      transition_time = Time.instant - start_time
 
       puts "Rapid scene transition performance:"
       puts "  Transitions: #{transition_count}"
@@ -283,9 +283,9 @@ describe "Scene Management Stress Tests" do
       scene_manager.add_scene(scene)
 
       # Trigger all callbacks
-      start_time = Time.monotonic
+      start_time = Time.instant
       scene_manager.change_scene("callback_test_scene")
-      callback_time = Time.monotonic - start_time
+      callback_time = Time.instant - start_time
 
       # All callbacks should have executed
       callback_execution_count.should eq(callback_count)
@@ -311,7 +311,7 @@ describe "Scene Management Stress Tests" do
 
       # Perform many lookups
       lookup_count = 10000
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       lookup_count.times do |i|
         scene_name = "lookup_scene_#{rand(lookup_scene_count)}"
@@ -319,7 +319,7 @@ describe "Scene Management Stress Tests" do
         scene.should_not be_nil
       end
 
-      lookup_time = Time.monotonic - start_time
+      lookup_time = Time.instant - start_time
 
       puts "Scene lookup performance:"
       puts "  Scenes: #{lookup_scene_count}"

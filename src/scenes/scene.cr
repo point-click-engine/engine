@@ -12,7 +12,13 @@ require "./hotspot_manager"
 require "./walkable_area"
 require "../characters/character"
 require "../core/game_object"
-require "../graphics/camera"
+require "../graphics/graphics"
+require "../graphics/effects/scene_effects/base_scene_effect"
+require "../graphics/effects/shader_effect"
+require "../actions/action"
+require "../actions/action_runner"
+require "../actions/action_executor"
+require "../actions/action_loader"
 
 module PointClickEngine
   module Scenes
@@ -25,8 +31,9 @@ module PointClickEngine
       property enable_pathfinding : Bool = true
       property enable_camera_scrolling : Bool = true
       property default_transition_duration : Float32 = 1.0f32
-      property logical_width : Int32 = 1024
-      property logical_height : Int32 = 768
+      property logical_width : Int32 = Graphics::Display.reference_width
+      property logical_height : Int32 = Graphics::Display.reference_height
+      property background_scaling_mode : String = "stretch"
 
       # Scene components
       @[YAML::Field(ignore: true)]
@@ -49,7 +56,14 @@ module PointClickEngine
       property player : Characters::Character?
 
       @[YAML::Field(ignore: true)]
+      property scene_effects : Array(Graphics::Effects::SceneEffects::BaseSceneEffect) = [] of Graphics::Effects::SceneEffects::BaseSceneEffect
+
+      @[YAML::Field(ignore: true)]
       property walkable_area : WalkableArea?
+
+      # Script runner for action sequences
+      @[YAML::Field(ignore: true)]
+      property script_runner : Actions::ActionRunner?
 
       # Callbacks
       @[YAML::Field(ignore: true)]
@@ -64,6 +78,11 @@ module PointClickEngine
       property player_name_for_serialization : String?
       property navigation_cell_size : Int32 = 16
       property script_path : String?
+      property actions_path : String?
+
+      # Base directory for resolving relative paths (set by SceneLoader)
+      @[YAML::Field(ignore: true)]
+      property base_dir : String = ""
 
       # Legacy compatibility - will be removed
       @[YAML::Field(ignore: true)]
@@ -92,6 +111,21 @@ module PointClickEngine
         @background_renderer = BackgroundRenderer.new(@logical_width, @logical_height)
         @hotspot_manager = HotspotManager.new
         initialize_collections
+      end
+
+      def logical_width=(value : Int32)
+        @logical_width = value
+        sync_background_renderer_size
+      end
+
+      def logical_height=(value : Int32)
+        @logical_height = value
+        sync_background_renderer_size
+      end
+
+      def background_scaling_mode=(value : String)
+        @background_scaling_mode = value
+        apply_background_scaling_mode
       end
 
       private def initialize_collections
@@ -133,10 +167,7 @@ module PointClickEngine
         @background_path = path
         @scale = scale
         @background_renderer.not_nil!.load_background(path)
-        # Use Fit mode to maintain aspect ratio with letterboxing
-        if bg = @background_renderer
-          bg.set_scaling_mode(BackgroundRenderer::ScalingMode::Fit)
-        end
+        apply_background_scaling_mode
         # Legacy support
         @background = @background_renderer.try(&.background_texture)
       end
@@ -145,10 +176,7 @@ module PointClickEngine
         @background_path = original_path
         @scale = scale
         @background_renderer.not_nil!.load_background(path)
-        # Use Fit mode to maintain aspect ratio with letterboxing
-        if bg = @background_renderer
-          bg.set_scaling_mode(BackgroundRenderer::ScalingMode::Fit)
-        end
+        apply_background_scaling_mode
         # Legacy support
         @background = @background_renderer.try(&.background_texture)
       end
@@ -340,11 +368,28 @@ module PointClickEngine
 
       # Update scene
       def update(dt : Float32)
+        # Update script runner (action sequences) first
+        @script_runner.try(&.update(dt))
+
+        # Clear completed script runner
+        if runner = @script_runner
+          if runner.completed
+            @script_runner = nil
+          end
+        end
+
         # Update player
         @player.try(&.update(dt))
 
+        # Update all characters
+        @characters.each(&.update(dt))
+
         # Update all objects
         @objects.each(&.update(dt))
+
+        # Update scene effects
+        @scene_effects.each(&.update(dt))
+        @scene_effects.reject!(&.finished?)
 
         # Update character scales based on walkable area
         if walkable = @walkable_area
@@ -448,6 +493,69 @@ module PointClickEngine
             @walkable_area.try(&.draw_debug)
           end
         end
+
+      end
+
+      # Draw script runner overlays (text, custom visuals from actions)
+      def draw_script_overlays
+        @script_runner.try(&.draw)
+      end
+
+      # Enhanced rain effect drawn directly on screen
+      private def draw_simple_rain
+        time = Time.utc.to_unix_f
+
+        # Draw rain drops with multiple layers for depth
+        200.times do |i|
+          # Create layers with different speeds and sizes
+          layer = i % 3
+          layer_speed = 300 + (layer * 100) # Background layers move slower
+          layer_alpha = 120 + (layer * 40)  # Foreground layers more opaque
+          layer_width = 1.0f32 + (layer * 0.5f32)
+
+          # Add wind effect
+          wind_offset = Math.sin(time * 0.5 + i * 0.1) * 30
+
+          # Calculate animated position with wrapping
+          base_x = (i * 8 + wind_offset).to_f32
+          base_y = (time * layer_speed + i * 13) % (@logical_height + 50)
+
+          x = (base_x % @logical_width).to_f32
+          y = (base_y - 50).to_f32 # Start above screen
+
+          # Skip if above screen
+          next if y < -30
+
+          # Draw rain drop with angle and varying length
+          drop_length = 15 + (layer * 5)
+          wind_angle = 0.2f32 # Slight diagonal
+
+          start_pos = RL::Vector2.new(x: x, y: y)
+          end_pos = RL::Vector2.new(
+            x: x + (wind_angle * drop_length),
+            y: y + drop_length
+          )
+
+          # More realistic rain color (greyish blue)
+          color = RL::Color.new(
+            r: 180,
+            g: 200,
+            b: 220,
+            a: layer_alpha.to_u8
+          )
+
+          RL.draw_line_ex(start_pos, end_pos, layer_width, color)
+        end
+
+        # Add some splash effects at the bottom
+        if Random.rand < 0.3 # 30% chance per frame
+          splash_x = Random.rand(@logical_width).to_f32
+          splash_y = (@logical_height - 18).to_f32
+
+          # Small splash circle
+          RL.draw_circle(splash_x.to_i, splash_y.to_i, 2.0f32,
+            RL::Color.new(r: 180, g: 200, b: 220, a: 100))
+        end
       end
 
       # Helper to draw objects with camera offset
@@ -488,10 +596,98 @@ module PointClickEngine
         @on_exit.try &.call
       end
 
-      # Script loading
+      private def apply_background_scaling_mode
+        return unless bg = @background_renderer
+
+        mode = case @background_scaling_mode.downcase
+               when "fit"     then BackgroundRenderer::ScalingMode::Fit
+               when "fill"    then BackgroundRenderer::ScalingMode::Fill
+               when "none"    then BackgroundRenderer::ScalingMode::None
+               else                BackgroundRenderer::ScalingMode::Stretch
+               end
+        bg.set_scaling_mode(mode)
+      end
+
+      private def sync_background_renderer_size
+        @background_renderer.try(&.update_scene_size(@logical_width, @logical_height))
+      end
+
+      # Script loading (Lua scripts)
       def load_script(engine : Core::Engine)
         return unless script_path = @script_path
-        engine.system_manager.script_engine.try &.execute_script_file(script_path)
+
+        # Resolve path relative to base_dir if set
+        full_path = if @base_dir.empty?
+                      script_path
+                    else
+                      File.join(@base_dir, script_path)
+                    end
+
+        puts "[Scene] Loading script: #{full_path}"
+        result = engine.system_manager.script_engine.try &.execute_script_file(full_path)
+        puts "[Scene] Script load result: #{result}"
+      end
+
+      # ============================================================
+      # ACTION SEQUENCE METHODS
+      # ============================================================
+
+      # Run an action sequence from an ActionRunner
+      def run_script(runner : Actions::ActionRunner)
+        if current_runner = @script_runner
+          return if current_runner == runner && current_runner.running
+          current_runner.stop if current_runner.running
+        end
+
+        if engine = Core::Engine.instance?
+          runner.engine = engine
+        end
+
+        @script_runner = runner
+        runner.play
+      end
+
+      # Run actions from YAML file
+      def run_script_file(path : String)
+        runner = Actions::ActionLoader.load(path)
+        run_script(runner)
+      end
+
+      # Load and play scene's actions if actions_path is set
+      def load_actions
+        return unless path = @actions_path
+
+        # Resolve path relative to base_dir if set
+        full_path = if @base_dir.empty?
+                      path
+                    else
+                      File.join(@base_dir, path)
+                    end
+
+        puts "[Scene] Loading actions: #{full_path}"
+        begin
+          runner = Actions::ActionLoader.load(full_path)
+          run_script(runner)
+          puts "[Scene] Actions started"
+        rescue ex
+          puts "[Scene] Failed to load actions: #{ex.message}"
+        end
+      end
+
+      # Check if an action sequence is running
+      def script_running? : Bool
+        @script_runner.try(&.running) || false
+      end
+
+      # Stop current action sequence
+      def stop_script
+        @script_runner.try(&.stop)
+        @script_runner = nil
+      end
+
+      # Skip current action sequence (if skippable)
+      def skip_script
+        @script_runner.try(&.skip)
       end
 
       # Toggle hotspot highlighting

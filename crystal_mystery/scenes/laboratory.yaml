@@ -1,84 +1,208 @@
 name: laboratory
+display_name: "The Scientist's Laboratory"
+description: "A cluttered workspace where brilliant discoveries and dark secrets intertwine."
 background_path: assets/backgrounds/laboratory.png
+background_scaling_mode: stretch
 logical_width: 1024
 logical_height: 768
 enable_pathfinding: true
 navigation_cell_size: 16
 script_path: scripts/laboratory.lua
-default_transition_duration: 2.0  # Shorter transitions for this busy scene
+default_transition_duration: 2.0
+ambient_track: castle_ambient
+
+# Dramatic lighting - spotlight effect in darkness
+effects:
+  - type: darkness
+    darkness_type: spotlight
+    intensity: 0.85
+    inner_radius: 0.2
+    outer_radius: 0.6
+    color: [5, 5, 15, 255]
+
+on_enter_text: "You enter the laboratory, where the acrid smell of chemicals mingles with ozone. Banks of equipment hum softly, their displays casting an eerie glow in the dim light. This is where the Crystal of Luminus was kept - and stolen."
+
 walkable_areas:
   regions:
     - name: main_floor
       walkable: true
       vertices:
-        - {x: 50, y: 300}
-        - {x: 950, y: 300}
-        - {x: 950, y: 700}
-        - {x: 50, y: 700}
+        - {x: 80, y: 400}
+        - {x: 900, y: 400}
+        - {x: 900, y: 700}
+        - {x: 80, y: 700}
     - name: workbench_area
       walkable: false
       vertices:
         - {x: 180, y: 350}
-        - {x: 520, y: 350}
-        - {x: 520, y: 550}
-        - {x: 180, y: 550}
+        - {x: 450, y: 350}
+        - {x: 450, y: 520}
+        - {x: 180, y: 520}
   scale_zones:
-    - min_y: 300
-      max_y: 500
-      min_scale: 0.8
+    - min_y: 400
+      max_y: 550
+      min_scale: 0.85
       max_scale: 1.0
-    - min_y: 500
+    - min_y: 550
       max_y: 700
       min_scale: 1.0
-      max_scale: 1.2
+      max_scale: 1.15
+
+# Action prefixes:
+#   (no prefix) = plain text message to display
+#   script: = execute as Lua code
+#   transition: = scene change
+
 hotspots:
+  # Main interactive elements
   - name: workbench
     x: 200
     y: 350
-    width: 300
-    height: 200
+    width: 250
+    height: 180
+    description: "Cluttered workbench with scientific equipment"
+    default_verb: look
+    highlight_on_hover: true
     actions:
-      look: "A cluttered workbench with beakers and tools"
-      use: "examine_workbench"
+      look: "A massive oak workbench covered in beakers, Bunsen burners, and scattered papers. Chemical stains mark the wood, and several experiments seem to be in various stages of completion. Among the clutter, you notice a handwritten note with unusual symbols."
+      use: "script:examine_workbench()"
+
   - name: cabinet
-    x: 600
+    x: 650
     y: 200
     width: 150
-    height: 400
+    height: 350
+    description: "Locked specimen cabinet"
+    default_verb: look
+    highlight_on_hover: true
     actions:
-      look: "A locked cabinet with glass doors"
-      use: "try_cabinet"
+      look: "A tall cabinet with glass doors, secured by an ornate brass lock. Through the glass, you can see various crystal specimens and strange instruments. One shelf is conspicuously empty - the display stand where the Crystal of Luminus once rested."
+      use: "script:examine_cabinet()"
+      open: "script:examine_cabinet()"
+
+  - name: microscope
+    x: 480
+    y: 380
+    width: 80
+    height: 120
+    description: "Powerful research microscope"
+    default_verb: look
+    highlight_on_hover: true
+    actions:
+      look: "A state-of-the-art microscope with multiple lenses and adjustment dials. A slide is still positioned under the objective lens. The eyepiece holds secrets waiting to be discovered."
+      use: "script:examine_microscope()"
+
+  - name: chemical_shelf
+    x: 50
+    y: 200
+    width: 100
+    height: 250
+    description: "Shelf of chemical reagents"
+    default_verb: look
+    actions:
+      look: "Rows of labeled bottles containing various chemicals - some mundane like sodium chloride, others more exotic with names you do not recognize. A warning label reads: CAUTION - Crystalline Reactive Compounds."
+      use: "script:examine_chemical_shelf()"
+      take: "Taking random chemicals seems unwise. You are a detective, not a chemist."
+
+  - name: empty_display
+    x: 700
+    y: 280
+    width: 80
+    height: 80
+    description: "Empty crystal display stand"
+    default_verb: look
+    highlight_on_hover: true
+    actions:
+      look: "The velvet-lined display stand where the Crystal of Luminus once sat. A faint indentation shows its former position. Oddly, there are no fingerprints on the glass - the thief was careful, or wore gloves."
+      use: "script:examine_empty_display()"
+
+  # Door transitions
   - name: door_to_library
     x: 50
-    y: 300
-    width: 100
-    height: 200
-    description: "Back to the library"
+    y: 350
+    width: 80
+    height: 180
+    description: "Door to the library"
     default_verb: open
     object_type: door
     actions:
-      look: "The door leading back to the library"
-      open: "transition:library:heart_wipe:4.5:800,400"
-      use: "transition:library:heart_wipe:4.5:800,400"
+      look: "The door leading back to the library. You can hear the faint patter of rain from beyond."
+      open: "transition:library:heart_wipe:2.0:800,400"
+      use: "transition:library:heart_wipe:2.0:800,400"
+
   - name: door_to_garden
-    x: 850
-    y: 300
-    width: 100
-    height: 200
-    description: "Door to the garden"
+    x: 880
+    y: 350
+    width: 80
+    height: 180
+    description: "Glass door to the garden"
     default_verb: open
     object_type: door
     actions:
-      look: "A glass door leading to the garden"
-      open: "transition:garden:curtain::100,400"  # Uses scene's default (2.0s)
-      use: "transition:garden:curtain"  # Position is also optional
+      look: "A glass-paneled door leading to the garden. Through it, you can see fog swirling among the hedges. A faint luminescence seems to emanate from somewhere in the garden depths."
+      open: "transition:garden:curtain:1.5:100,400"
+      use: "transition:garden:curtain:1.5:100,400"
+
+  # Atmospheric elements
+  - name: tesla_coil
+    x: 820
+    y: 200
+    width: 60
+    height: 150
+    description: "Dormant Tesla coil"
+    default_verb: look
+    actions:
+      look: "A small Tesla coil, currently inactive. Scorch marks on the ceiling suggest it has been used recently. The scientist mentioned using electrical fields to study the crystal's properties."
+      use: "script:examine_tesla_coil()"
+
+  - name: chalkboard
+    x: 500
+    y: 150
+    width: 150
+    height: 120
+    description: "Chalkboard covered in equations"
+    default_verb: look
+    actions:
+      look: "A chalkboard filled with complex mathematical equations and diagrams. You recognize some crystallography notations. In the corner, someone has written CRITICAL: Energy amplification at 11:47 PM - lunar alignment! and circled it multiple times."
+      use: "script:examine_chalkboard()"
+
+  - name: journal
+    x: 350
+    y: 450
+    width: 60
+    height: 40
+    description: "Scientist's research journal"
+    default_verb: look
+    highlight_on_hover: true
+    actions:
+      look: "A leather-bound journal lies open on a stool. The handwriting is frantic, almost illegible in places. The last entry reads: The butler asked again about the crystal's resonance frequency. Why would a servant need to know such things?"
+      use: "script:examine_journal()"
+      take: "This belongs to the scientist. You should ask permission before taking his personal notes."
+
+  - name: safe
+    x: 750
+    y: 500
+    width: 80
+    height: 100
+    description: "Heavy floor safe"
+    default_verb: look
+    actions:
+      look: "A heavy iron safe bolted to the floor. The combination dial shows signs of recent use. This must be where the scientist keeps his most valuable items."
+      use: "script:examine_safe()"
+      open: "script:examine_safe()"
+
 characters:
   - name: scientist
     position:
       x: 400
-      y: 400
+      y: 550
     sprite_path: assets/sprites/scientist.png
     sprite_info:
       frame_width: 100
       frame_height: 100
     scale: 3.0
+    facing: left
+    dialog: scientist_dialog
+    description: "The scientist paces nervously near his workbench"
+    on_look: "A disheveled man in a stained lab coat, his wild grey hair suggesting countless sleepless nights. Dark circles under his eyes speak to recent stress. His hands tremble slightly as he wrings them together."
+    on_talk: "start_dialog:scientist"

@@ -242,12 +242,12 @@ describe "Resource Management Comprehensive Tests" do
       load_count = 100
 
       # Test rapid loading of many resources
-      start_time = Time.monotonic
+      start_time = Time.instant
       load_count.times do |i|
         resource_manager.load_texture("stress_test_#{i}.png")
         resource_manager.load_sound("stress_test_#{i}.wav")
       end
-      load_time = Time.monotonic - start_time
+      load_time = Time.instant - start_time
 
       puts "Simple resource loading performance:"
       puts "  Resources attempted: #{load_count * 2}"
@@ -265,11 +265,11 @@ describe "Resource Management Comprehensive Tests" do
       test_path = "cache_stress_test.png"
 
       # Rapid cache hit testing
-      start_time = Time.monotonic
+      start_time = Time.instant
       cache_ops.times do
         resource_manager.load_texture(test_path)
       end
-      cache_time = Time.monotonic - start_time
+      cache_time = Time.instant - start_time
 
       puts "Simple cache operation performance:"
       puts "  Cache operations: #{cache_ops}"
@@ -286,7 +286,7 @@ describe "Resource Management Comprehensive Tests" do
       # Simulate concurrent operations
       concurrent_ops = 200
 
-      start_time = Time.monotonic
+      start_time = Time.instant
       concurrent_ops.times do |i|
         # Mix different operations
         case i % 3
@@ -298,7 +298,7 @@ describe "Resource Management Comprehensive Tests" do
           resource_manager.load_music("concurrent_#{i}.ogg")
         end
       end
-      concurrent_time = Time.monotonic - start_time
+      concurrent_time = Time.instant - start_time
 
       puts "Simple concurrent operations performance:"
       puts "  Operations: #{concurrent_ops}"
@@ -454,11 +454,11 @@ describe "Resource Management Comprehensive Tests" do
       # Test loading many different resources
       large_count = 500
 
-      start_time = Time.monotonic
+      start_time = Time.instant
       large_count.times do |i|
         resource_manager.load_texture("large_test_#{i}.png")
       end
-      load_time = Time.monotonic - start_time
+      load_time = Time.instant - start_time
 
       puts "Large resource count performance:"
       puts "  Resources: #{large_count}"

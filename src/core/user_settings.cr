@@ -108,10 +108,11 @@ module PointClickEngine
 
         # Apply display settings
         engine.show_fps = display.show_fps
-        # Note: fullscreen and vsync would need to be applied differently depending on the graphics library
+        engine.fullscreen = display.fullscreen
 
         # Apply gameplay settings
         Engine.debug_mode = gameplay.debug_mode
+        ErrorLogger.set_log_level(gameplay.debug_mode ? ErrorLogger::LogLevel::Debug : ErrorLogger::LogLevel::Info)
         if gameplay.auto_save_interval > 0
           engine.enable_auto_save(gameplay.auto_save_interval.to_f32)
         end

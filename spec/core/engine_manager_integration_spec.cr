@@ -14,6 +14,7 @@ describe "Engine-Manager Integration" do
     end
 
     it "managers are ready before engine initialization" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
 
       # Even before init, managers should be available
@@ -34,6 +35,7 @@ describe "Engine-Manager Integration" do
 
   describe "scene management delegation" do
     it "delegates scene operations to SceneManager" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
@@ -59,6 +61,7 @@ describe "Engine-Manager Integration" do
     end
 
     it "handles scene removal correctly" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
@@ -85,25 +88,27 @@ describe "Engine-Manager Integration" do
 
   describe "resource management delegation" do
     it "delegates resource operations to ResourceManager" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
-      # These operations should delegate to ResourceManager
-      # We can't test actual loading without files, but we can verify the methods exist
-      engine.responds_to?(:load_texture).should be_true
-      engine.responds_to?(:load_sound).should be_true
-      engine.responds_to?(:load_music).should be_true
-      engine.responds_to?(:load_font).should be_true
-      engine.responds_to?(:preload_assets).should be_true
-      engine.responds_to?(:get_memory_usage).should be_true
-      engine.responds_to?(:set_memory_limit).should be_true
-      engine.responds_to?(:enable_hot_reload).should be_true
-      engine.responds_to?(:disable_hot_reload).should be_true
+      resource_manager = engine.resource_manager
+      resource_manager.should_not be_nil
+      resource_manager.responds_to?(:load_texture).should be_true
+      resource_manager.responds_to?(:load_sound).should be_true
+      resource_manager.responds_to?(:load_music).should be_true
+      resource_manager.responds_to?(:load_font).should be_true
+      resource_manager.responds_to?(:preload_assets).should be_true
+      resource_manager.responds_to?(:get_memory_usage).should be_true
+      resource_manager.responds_to?(:set_memory_limit).should be_true
+      resource_manager.responds_to?(:enable_hot_reload).should be_true
+      resource_manager.responds_to?(:disable_hot_reload).should be_true
     end
   end
 
   describe "input management delegation" do
     it "delegates input operations to InputManager" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 
@@ -124,6 +129,7 @@ describe "Engine-Manager Integration" do
 
   describe "render management delegation" do
     it "delegates render operations to RenderManager" do
+      RaylibContext.ensure_window(800, 600, "Test")
       engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
       engine.init
 

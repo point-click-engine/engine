@@ -13,7 +13,7 @@ describe "Minimal Game Example" do
     # The minimal game code
     config = PointClickEngine::Core::GameConfig.from_file("minimal_game.yaml", skip_preflight: true)
 
-    RL.init_window(1024, 768, "Minimal Adventure")
+    RaylibContext.ensure_window(1024, 768, "Minimal Adventure")
     engine = config.create_engine
 
     # Engine should be created with defaults
@@ -23,7 +23,6 @@ describe "Minimal Game Example" do
     engine.window_height.should eq(768)
 
     # Cleanup
-    RL.close_window
     File.delete("minimal_game.yaml")
   end
 
@@ -70,7 +69,7 @@ describe "Minimal Game Example" do
     File.write("template_game.yaml", template_config)
     config = PointClickEngine::Core::GameConfig.from_file("template_game.yaml", skip_preflight: true)
 
-    RL.init_window(1280, 720, "My First Adventure")
+    RaylibContext.ensure_window(1280, 720, "My First Adventure")
     engine = config.create_engine
 
     # Verify template configuration
@@ -84,7 +83,6 @@ describe "Minimal Game Example" do
     engine.dialog_manager.try(&.enable_floating).should be_true
 
     # Cleanup
-    RL.close_window
     File.delete("template_game.yaml")
     File.delete("scenes/intro.yaml")
     Dir.delete("scenes")
@@ -170,13 +168,12 @@ describe "Minimal Game Example" do
 
     # Test it works
     config = PointClickEngine::Core::GameConfig.from_file("mini_game.yaml", skip_preflight: true)
-    RL.init_window(1024, 768, "Mini Adventure")
+    RaylibContext.ensure_window(1024, 768, "Mini Adventure")
     engine = config.create_engine
 
     engine.scenes.has_key?("start").should be_true
 
     # Cleanup
-    RL.close_window
     File.delete("mini_game.yaml")
     File.delete("mini_game/scenes/start.yaml")
     File.delete("mini_game/scenes/next_room.yaml")
@@ -205,7 +202,7 @@ describe "Minimal Game Example" do
     File.write("game_v1.yaml", config_v1)
     config = PointClickEngine::Core::GameConfig.from_file("game_v1.yaml", skip_preflight: true)
 
-    RL.init_window(800, 600, "Adventure v1")
+    RaylibContext.ensure_window(800, 600, "Adventure v1")
     engine1 = config.create_engine
 
     engine1.window_width.should eq(800)
@@ -214,7 +211,7 @@ describe "Minimal Game Example" do
     # Audio volumes are now in UserSettings, not in the main config
     config.settings.not_nil!.debug_mode.should eq(false)
 
-    RL.close_window
+    PointClickEngine::Core::Engine.reset_instance
 
     # Now "modify" the game without changing code
     config_v2 = <<-YAML
@@ -237,7 +234,7 @@ describe "Minimal Game Example" do
     File.write("game_v2.yaml", config_v2)
     config2 = PointClickEngine::Core::GameConfig.from_file("game_v2.yaml", skip_preflight: true)
 
-    RL.init_window(1920, 1080, "Adventure v2 Enhanced")
+    RaylibContext.ensure_window(1920, 1080, "Adventure v2 Enhanced")
     engine2 = config2.create_engine
 
     # Everything changed without touching code!
@@ -248,7 +245,7 @@ describe "Minimal Game Example" do
     config2.features.includes?("shaders").should be_true
 
     # Cleanup
-    RL.close_window
+    PointClickEngine::Core::Engine.reset_instance
     File.delete("game_v1.yaml")
     File.delete("game_v2.yaml")
   end

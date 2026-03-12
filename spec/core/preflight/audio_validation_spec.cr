@@ -144,7 +144,6 @@ describe "PreflightCheck Audio System Validation" do
         width: 1024
         height: 768
       assets:
-        scenes: ["*.yaml"]
         audio:
           sounds:
             big: "sounds/big_sound.wav"
@@ -154,7 +153,9 @@ describe "PreflightCheck Audio System Validation" do
 
       result = PointClickEngine::Core::PreflightCheck.run("test_game_dir/game.yaml")
 
-      hint_found = result.performance_hints.any? { |h| h.includes?("Sound effect") && h.includes?("large") }
+      hint_found = result.performance_hints.any? do |hint|
+        hint.includes?("Large WAV") || (hint.includes?("large WAV file") && hint.includes?("'big'"))
+      end
       hint_found.should be_true
     end
 

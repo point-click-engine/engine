@@ -5,6 +5,41 @@ require "yaml"
 module PointClickEngine
   module Characters
     module Dialogue
+      # Validates that a condition string is safe for Lua evaluation
+      # Allows: identifiers, comparisons, boolean ops, function calls, strings, numbers
+      # Blocks: assignments, require, load, os, io, debug, dofile, loadfile
+      module ConditionValidator
+        # Dangerous Lua patterns that could be used for injection
+        DANGEROUS_PATTERNS = [
+          /\bos\s*\./i,           # os.execute, os.remove, etc.
+          /\bio\s*\./i,           # io.open, io.popen, etc.
+          /\bdebug\s*\./i,        # debug library
+          /\brequire\s*[\("]/i,   # require("module")
+          /\bdofile\s*[\("]/i,    # dofile("file")
+          /\bloadfile\s*[\("]/i,  # loadfile("file")
+          /\bload\s*[\("]/i,      # load("code")
+          /\bloadstring\s*[\("]/i, # loadstring (Lua 5.1)
+          /\brawset\s*[\("]/i,    # rawset
+          /\brawget\s*[\("]/i,    # rawget
+          /\bsetfenv\s*[\("]/i,   # setfenv
+          /\bgetfenv\s*[\("]/i,   # getfenv
+          /[^=!<>]=[^=]/,         # Assignment (but not ==, !=, <=, >=)
+          /;/,                    # Statement separator
+          /\bwhile\b/i,           # while loops
+          /\bfor\b/i,             # for loops
+          /\brepeat\b/i,          # repeat loops
+          /\bfunction\b/i,        # function definitions
+        ]
+
+        def self.safe?(condition : String) : Bool
+          DANGEROUS_PATTERNS.none? { |pattern| condition.matches?(pattern) }
+        end
+
+        def self.sanitize(condition : String) : String?
+          safe?(condition) ? condition : nil
+        end
+      end
+
       # Represents a node in a dialog tree
       class DialogNode
         include YAML::Serializable
@@ -58,13 +93,20 @@ module PointClickEngine
               if script = engine.system_manager.script_engine
                 # Check all conditions (AND logic)
                 @conditions.each do |condition|
+                  # Validate condition is safe before evaluation
+                  unless ConditionValidator.safe?(condition)
+                    Core::ErrorLogger.error("Unsafe dialog condition blocked: '#{condition}'")
+                    return false # Block unsafe conditions
+                  end
+
                   begin
                     # Evaluate condition as a Lua expression that returns boolean
-                    result = script.execute_script("return #{condition}")
+                    result = script.execute_script("return (#{condition})")
                     return false unless result == true
                   rescue ex
                     Core::ErrorLogger.error("Failed to evaluate dialog choice condition '#{condition}': #{ex.message}")
-                    # Default to available if script fails
+                    # Default to unavailable if script fails (safer default)
+                    return false
                   end
                 end
               end
@@ -218,6 +260,14 @@ module PointClickEngine
             # Integrate with script engine to execute actions
             if engine = Core::Engine.instance
               if script = engine.system_manager.script_engine
+                # Validate action doesn't contain dangerous patterns
+                # Actions are more permissive than conditions but still block dangerous ops
+                if action.matches?(/\b(os|io|debug)\s*\./) ||
+                   action.matches?(/\b(dofile|loadfile|require)\s*[\("]/)
+                  Core::ErrorLogger.error("Unsafe dialog action blocked: '#{action}'")
+                  next
+                end
+
                 begin
                   script.execute_script(action)
                 rescue ex

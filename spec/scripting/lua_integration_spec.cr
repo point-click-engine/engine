@@ -147,10 +147,10 @@ describe "Lua Scripting Integration Tests" do
       # May return an error message rather than nil
       result.should_not be_nil if result # Allow either nil or error message
 
-      # Call function with wrong arguments
+      # Call function with wrong arguments - arithmetic on nil will error
       engine.execute_script("function needs_two_args(a, b) return a + b end")
-      result = engine.call_function("needs_two_args", 1) # Missing second argument
-      result.should_not be_nil                           # Lua allows this, second arg is nil
+      result = engine.call_function("needs_two_args", 1) # Missing second argument causes nil + 1 error
+      result.should be_nil                               # Returns nil due to runtime error
 
       engine.cleanup
     end
@@ -397,14 +397,14 @@ describe "Lua Scripting Integration Tests" do
 
       # Measure script execution performance
       execution_count = 100
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       execution_count.times do |i|
         script = "local x = #{i}; local y = x * 2; return y + 1"
         engine.execute_script(script)
       end
 
-      execution_time = Time.monotonic - start_time
+      execution_time = Time.instant - start_time
       time_per_execution = execution_time.total_milliseconds / execution_count
 
       puts "Lua script execution performance:"
@@ -418,11 +418,11 @@ describe "Lua Scripting Integration Tests" do
       # Test function call performance
       engine.execute_script("function test_func(x) return x * 2 end")
 
-      call_start = Time.monotonic
+      call_start = Time.instant
       100.times do |i|
         engine.call_function("test_func", i)
       end
-      call_time = Time.monotonic - call_start
+      call_time = Time.instant - call_start
 
       puts "Function call performance:"
       puts "  Time per call: #{(call_time.total_milliseconds / 100).round(4)}ms"

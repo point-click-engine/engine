@@ -1,6 +1,7 @@
 # Player inventory system
 
 require "yaml"
+require "../core/events/events"
 
 module PointClickEngine
   # # Provides inventory management functionality for adventure games.
@@ -184,6 +185,10 @@ module PointClickEngine
       @[YAML::Field(ignore: true)]
       property on_items_combined : Proc(InventoryItem, InventoryItem, String?, Nil)?
 
+      # Optional EventBus for publishing inventory events
+      @[YAML::Field(ignore: true)]
+      property event_bus : Core::Events::EventBus?
+
       # Creates an inventory system with default position
       #
       # The inventory starts hidden and must be made visible to display.
@@ -220,7 +225,13 @@ module PointClickEngine
       #
       # - *item* : The inventory item to add
       def add_item(item : InventoryItem)
-        @items << item unless @items.any? { |existing_item| existing_item.name == item.name }
+        return if @items.any? { |existing_item| existing_item.name == item.name }
+        @items << item
+
+        # Publish event
+        if bus = @event_bus
+          bus.publish(Core::Events::ItemAddedEvent.new(item.name, item.description || item.name))
+        end
       end
 
       # Clears all items from the inventory
@@ -238,10 +249,16 @@ module PointClickEngine
       #
       # - *item_name* : Name of the item to remove
       def remove_item(item_name : String)
+        had_item = @items.any? { |i| i.name == item_name }
         @items.reject! { |i| i.name == item_name }
         if @selected_item.try(&.name) == item_name
           @selected_item = nil
           @selected_item_name = nil
+        end
+
+        # Publish event
+        if had_item && (bus = @event_bus)
+          bus.publish(Core::Events::ItemRemovedEvent.new(item_name))
         end
       end
 
@@ -300,6 +317,11 @@ module PointClickEngine
         if item = get_item(name)
           @selected_item = item
           @selected_item_name = name
+
+          # Publish event
+          if bus = @event_bus
+            bus.publish(Core::Events::ItemSelectedEvent.new(name))
+          end
         end
       end
 
@@ -372,12 +394,20 @@ module PointClickEngine
       # - *item1* : First item in the combination
       # - *item2* : Second item in the combination
       private def try_combine_items(item1 : InventoryItem, item2 : InventoryItem)
+        success = false
         if item1.can_combine_with?(item2)
           action = item1.get_combine_action(item2.name)
           @on_items_combined.try(&.call(item1, item2, action))
+          success = true
         elsif item2.can_combine_with?(item1)
           action = item2.get_combine_action(item1.name)
           @on_items_combined.try(&.call(item2, item1, action))
+          success = true
+        end
+
+        # Publish event
+        if bus = @event_bus
+          bus.publish(Core::Events::ItemCombinedEvent.new(item1.name, item2.name, nil, success))
         end
       end
 
@@ -389,9 +419,15 @@ module PointClickEngine
       # - *target_name* : Name of the target object/character/hotspot
       def use_selected_item_on(target_name : String)
         return unless selected = @selected_item
-        if selected.can_use_on?(target_name)
+        success = selected.can_use_on?(target_name)
+        if success
           @on_item_used.try(&.call(selected, target_name))
           remove_item(selected) if selected.consumable
+        end
+
+        # Publish event
+        if bus = @event_bus
+          bus.publish(Core::Events::ItemUsedEvent.new(selected.name, target_name, success))
         end
       end
 

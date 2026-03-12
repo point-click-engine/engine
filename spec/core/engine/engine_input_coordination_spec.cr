@@ -348,7 +348,7 @@ describe PointClickEngine::Core::Engine do
       #   engine.init
       #
       #   # Simulate high refresh rate input
-      #   start_time = Time.monotonic
+      #   start_time = Time.instant
       #
       #   1000.times do
       #     input_state = PointClickEngine::Core::InputState.new
@@ -357,7 +357,7 @@ describe PointClickEngine::Core::Engine do
       #     engine.update_input(input_state)
       #   end
       #
-      #   duration = Time.monotonic - start_time
+      #   duration = Time.instant - start_time
       #   duration.should be < 1.second
       # end
     end

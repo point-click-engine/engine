@@ -2,7 +2,7 @@
 
 require "../../scenes/scene"
 require "../../characters/character"
-require "../../graphics/camera"
+require "../../graphics/graphics"
 
 module PointClickEngine
   module Core
@@ -79,15 +79,6 @@ module PointClickEngine
 
         # Process keyboard input
         def handle_keyboard_input
-          # Handle common keyboard shortcuts
-          if RL.key_pressed?(RL::KeyboardKey::Escape)
-            handle_escape_key
-          end
-
-          if RL.key_pressed?(RL::KeyboardKey::F11)
-            handle_fullscreen_toggle
-          end
-
           if RL.key_pressed?(RL::KeyboardKey::F1)
             handle_debug_toggle
           end
@@ -99,6 +90,13 @@ module PointClickEngine
           # Camera edge scrolling toggle (F5)
           if RL.key_pressed?(RL::KeyboardKey::F5)
             handle_edge_scroll_toggle
+          end
+        end
+
+        # Handle shortcuts that should work regardless of gameplay/input mode.
+        def handle_global_keyboard_input
+          if RL.key_pressed?(RL::KeyboardKey::F11)
+            handle_fullscreen_toggle
           end
         end
 
@@ -131,16 +129,9 @@ module PointClickEngine
           handle_right_click(scene, camera)
         end
 
-        private def handle_escape_key
-          # Toggle pause menu instead of exiting
-          if menu_system = Engine.instance.menu_system
-            menu_system.toggle_pause_menu
-          end
-        end
-
         private def handle_fullscreen_toggle
-          # Toggle fullscreen mode
-          puts "F11 - Fullscreen toggle requested"
+          Engine.instance.toggle_fullscreen
+          puts "F11 pressed - Fullscreen: #{Engine.instance.fullscreen}"
         end
 
         private def handle_debug_toggle
@@ -161,12 +152,8 @@ module PointClickEngine
         end
 
         private def handle_edge_scroll_toggle
-          if engine = Engine.instance
-            if camera = engine.camera_manager.current_camera
-              camera.edge_scroll_enabled = !camera.edge_scroll_enabled
-              puts "Camera edge scrolling: #{camera.edge_scroll_enabled ? "enabled" : "disabled"}"
-            end
-          end
+          # Edge scrolling not implemented in new camera system yet
+          puts "Camera edge scrolling toggle not available in new graphics system"
         end
       end
     end

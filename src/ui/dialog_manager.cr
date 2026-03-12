@@ -2,6 +2,7 @@ require "./dialog"
 require "./dialog_portrait"
 require "./floating_dialog"
 require "./floating_text"
+require "./input_dialog"
 require "../characters/dialogue/dialog_tree"
 
 module PointClickEngine
@@ -12,6 +13,8 @@ module PointClickEngine
       property message_display_time : Float32 = 3.0f32
       property portrait_manager : PortraitManager
       property floating_manager : FloatingDialogManager
+      property input_dialog : InputDialog?
+      property frame_context : PointClickEngine::Graphics::FrameContext?
       property enable_portraits : Bool = false
       property enable_floating : Bool = true
       property dialog_trees : Hash(String, Characters::Dialogue::DialogTree) = {} of String => Characters::Dialogue::DialogTree
@@ -22,12 +25,19 @@ module PointClickEngine
         @showing_message = false
         @portrait_manager = PortraitManager.new
         @floating_manager = FloatingDialogManager.new
+        @input_dialog = nil
         @consumed_input_this_frame = false
       end
 
       def show_dialog(character_name : String, text : String, choices : Array(DialogChoice)? = nil, expression : PortraitExpression = PortraitExpression::Neutral)
-        pos = Raylib::Vector2.new(x: 100f32, y: 400f32)
-        size = Raylib::Vector2.new(x: 824f32, y: 200f32)
+        logical_width, logical_height = active_logical_dimensions
+        width = Math.max(360.0f32, logical_width - 200.0f32)
+        height = Math.min(220.0f32, logical_height * 0.28f32)
+        pos = Raylib::Vector2.new(
+          x: (logical_width - width) / 2.0f32,
+          y: logical_height - height - 40.0f32
+        )
+        size = Raylib::Vector2.new(x: width, y: height)
 
         dialog = Dialog.new(text, pos, size)
         dialog.character_name = character_name
@@ -92,6 +102,39 @@ module PointClickEngine
         show_dialog("", prompt, choices)
       end
 
+      # Show an input dialog for text entry
+      #
+      # Displays a modal dialog with a text input field.
+      # Used for safe combinations, passwords, character names, etc.
+      #
+      # *prompt* - The prompt text to display above the input field
+      # *max_length* - Maximum characters allowed (default 32)
+      # *callback* - Proc called with the entered text (empty string if cancelled)
+      #
+      # ```
+      # dialog_manager.show_input_dialog("Enter the safe combination:") do |text|
+      #   if text == "1234"
+      #     open_safe
+      #   else
+      #     show_message("Wrong combination!")
+      #   end
+      # end
+      # ```
+      def show_input_dialog(prompt : String, max_length : Int32 = 32, &callback : String ->)
+        dialog = InputDialog.new(prompt)
+        dialog.max_length = max_length
+        dialog.show(&callback)
+        @input_dialog = dialog
+      end
+
+      # Show input dialog with a default value
+      def show_input_dialog_with_default(prompt : String, default_text : String, max_length : Int32 = 32, &callback : String ->)
+        dialog = InputDialog.new(prompt)
+        dialog.max_length = max_length
+        dialog.show_with_default(default_text, &callback)
+        @input_dialog = dialog
+      end
+
       # Show dialog choices at bottom of screen
       #
       # Displays a dialog box with multiple choices at the bottom of the screen.
@@ -117,10 +160,7 @@ module PointClickEngine
       # )
       # ```
       def show_dialog_choices(prompt : String, choices : Array(String), &callback : Int32 ->)
-        # Use game reference dimensions, not screen dimensions
-        # Dialogs are rendered in game space which uses reference resolution
-        window_width = 1024f32 # Reference width
-        window_height = 768f32 # Reference height
+        window_width, window_height = active_logical_dimensions
 
         # Create dialog at bottom of screen
         dialog_height = 150f32 + (choices.size * 30f32)
@@ -168,6 +208,17 @@ module PointClickEngine
         # Reset consumed input flag at start of frame
         @consumed_input_this_frame = false
 
+        # Update input dialog (has priority over other dialogs)
+        if input_dlg = @input_dialog
+          if input_dlg.visible
+            input_dlg.update(dt)
+            @consumed_input_this_frame = true
+            return # Input dialog is modal
+          else
+            @input_dialog = nil
+          end
+        end
+
         if @showing_message && @message_timer > 0
           @message_timer -= dt
           if @message_timer <= 0
@@ -189,9 +240,11 @@ module PointClickEngine
       end
 
       def draw
+        @floating_manager.frame_context = @frame_context
         @current_dialog.try &.draw
         @portrait_manager.draw if @enable_portraits
         @floating_manager.draw if @enable_floating
+        @input_dialog.try &.draw
       end
 
       def close_current_dialog
@@ -237,6 +290,11 @@ module PointClickEngine
       end
 
       def is_dialog_active? : Bool
+        # Check input dialog first
+        if input_dlg = @input_dialog
+          return true if input_dlg.visible
+        end
+
         if dialog = @current_dialog
           return dialog.visible
         end
@@ -263,6 +321,20 @@ module PointClickEngine
       # Get a dialog tree by name
       def get_dialog_tree(name : String) : Characters::Dialogue::DialogTree?
         @dialog_trees[name]?
+      end
+
+      private def active_logical_dimensions : Tuple(Float32, Float32)
+        if context = @frame_context
+          {context.logical_width.to_f32, context.logical_height.to_f32}
+        elsif engine = Core::Engine.instance?
+          if dm = engine.display_manager
+            {dm.reference_width.to_f32, dm.reference_height.to_f32}
+          else
+            {PointClickEngine::Graphics::Display.reference_width.to_f32, PointClickEngine::Graphics::Display.reference_height.to_f32}
+          end
+        else
+          {PointClickEngine::Graphics::Display.reference_width.to_f32, PointClickEngine::Graphics::Display.reference_height.to_f32}
+        end
       end
 
       # Start a conversation with a dialog tree

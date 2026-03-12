@@ -2,7 +2,7 @@ require "../spec_helper"
 
 describe "UI Fixes Integration Tests" do
   it "renders floating dialogs correctly in the UI pipeline" do
-    RL.init_window(800, 600, "Floating Dialog Integration Test")
+    RaylibContext.ensure_window(800, 600, "Floating Dialog Integration Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Dialog Render Test")
     engine.init
 
@@ -22,12 +22,10 @@ describe "UI Fixes Integration Tests" do
       # Verify floating dialog was added
       dm.floating_manager.has_active_dialogs?.should be_true
     end
-
-    RL.close_window
   end
 
   it "renders cursor with verb visual feedback in the UI layer" do
-    RL.init_window(800, 600, "Cursor Visual Feedback Test")
+    RaylibContext.ensure_window(800, 600, "Cursor Visual Feedback Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Cursor Test")
     engine.init
 
@@ -54,12 +52,10 @@ describe "UI Fixes Integration Tests" do
       # This should not crash and should handle drawing
       vs.cursor_manager.draw(mouse_pos)
     end
-
-    RL.close_window
   end
 
   it "properly integrates keyboard shortcuts with dialog input blocking" do
-    RL.init_window(800, 600, "Keyboard Integration Test")
+    RaylibContext.ensure_window(800, 600, "Keyboard Integration Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Keyboard Test")
     engine.init
 
@@ -84,33 +80,29 @@ describe "UI Fixes Integration Tests" do
       # Keyboard shortcuts should work via VerbInputSystem handle_keyboard_input
       # which is called before dialog input blocking check
     end
-
-    RL.close_window
   end
 
   it "maintains hotspot highlighting state correctly" do
-    RL.init_window(800, 600, "Hotspot Highlight Test")
+    RaylibContext.ensure_window(800, 600, "Hotspot Highlight Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Hotspot Test")
     engine.init
 
     # Test initial hotspot highlighting state
-    initial_state = engine.render_manager.hotspot_highlighting_enabled?
+    initial_state = engine.hotspot_highlight_enabled?
 
     # Test toggling hotspot highlighting
     engine.toggle_hotspot_highlight
-    new_state = engine.render_manager.hotspot_highlighting_enabled?
+    new_state = engine.hotspot_highlight_enabled?
     new_state.should_not eq(initial_state)
 
     # Test toggling again
     engine.toggle_hotspot_highlight
-    final_state = engine.render_manager.hotspot_highlighting_enabled?
+    final_state = engine.hotspot_highlight_enabled?
     final_state.should eq(initial_state)
-
-    RL.close_window
   end
 
   it "handles door interactions with proper verb system integration" do
-    RL.init_window(800, 600, "Door Interaction Test")
+    RaylibContext.ensure_window(800, 600, "Door Interaction Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Door Test")
     engine.init
 
@@ -154,12 +146,10 @@ describe "UI Fixes Integration Tests" do
         verb_system.cursor_manager.current_verb.should eq(PointClickEngine::UI::VerbType::Open)
       end
     end
-
-    RL.close_window
   end
 
   it "maintains consistent state across UI system integrations" do
-    RL.init_window(800, 600, "UI System Integration Test")
+    RaylibContext.ensure_window(800, 600, "UI System Integration Test")
     engine = PointClickEngine::Core::Engine.new(800, 600, "Integration Test")
     engine.init
 
@@ -201,7 +191,5 @@ describe "UI Fixes Integration Tests" do
         verb_system.cursor_manager.current_verb.should_not eq(initial_verb)
       end
     end
-
-    RL.close_window
   end
 end

@@ -28,6 +28,7 @@ module PointClickEngine
       property text : String
       property character_name : String
       property character_position : RL::Vector2
+      property frame_context : PointClickEngine::Graphics::FrameContext?
       property color : RL::Color
       property background_color : RL::Color
       property duration : Float32
@@ -66,6 +67,7 @@ module PointClickEngine
       # Update the floating dialog
       def update(dt : Float32) : Bool
         @elapsed += dt
+        @position_cache = nil
 
         # Update floating animation
         @float_offset = Math.sin(@elapsed * @float_speed / 10.0f32) * @float_amplitude
@@ -111,13 +113,15 @@ module PointClickEngine
         # Apply alpha to colors
         text_color = apply_alpha(@color, @fade_alpha)
 
-        # Debug log only when empty
-        if wrapped.lines.empty?
-          puts "WARNING: No lines in wrapped text for: #{@text}"
-        end
+        # Skip rendering if no text to display
+        return if wrapped.lines.empty?
 
         # Simple text rendering like Simon the Sorcerer - no backgrounds or bubbles
         draw_wrapped_text(position, wrapped, text_color)
+      end
+
+      def screen_anchor_position : RL::Vector2
+        resolve_anchor_position
       end
 
       # Calculate screen position above character
@@ -126,15 +130,15 @@ module PointClickEngine
         return @position_cache.not_nil! if @position_cache
 
         wrapped = get_wrapped_text
+        anchor_position = resolve_anchor_position
 
         # Position above character's head
-        x = @character_position.x - (wrapped.total_width / 2)
-        y = @character_position.y - 80 - wrapped.total_height + @float_offset
+        x = anchor_position.x - (wrapped.total_width / 2)
+        y = anchor_position.y - 80 - wrapped.total_height + @float_offset
 
         # Use game dimensions instead of screen dimensions
         # Floating dialogs render in game coordinate space
-        game_width = 1024f32 # Game reference width
-        game_height = 768f32 # Game reference height
+        game_width, game_height = logical_dimensions
 
         # Keep within game bounds
         margin = 10f32
@@ -156,6 +160,9 @@ module PointClickEngine
 
       # Wrap text to fit within max width
       private def wrap_text(text : String, max_width : Int32, font_size : Int32) : WrappedText
+        # Handle empty text
+        return WrappedText.new([] of String, 0, 0) if text.strip.empty?
+        
         words = text.split(' ')
         lines = [] of String
         current_line = ""
@@ -306,8 +313,7 @@ module PointClickEngine
       # Draw narrator text (centered)
       private def draw_narrator_text(pos : RL::Vector2, wrapped : WrappedText, text_color : RL::Color, bg_color : RL::Color)
         # Center in game space
-        game_width = 1024f32
-        game_height = 768f32
+        game_width, game_height = logical_dimensions
         screen_center = RL::Vector2.new(x: game_width / 2, y: game_height / 4)
         centered_pos = RL::Vector2.new(x: screen_center.x - wrapped.total_width / 2, y: screen_center.y)
 
@@ -327,26 +333,54 @@ module PointClickEngine
         tail_size = 15
         tail_x = bubble_rect.x + bubble_rect.width / 2
         tail_y = bubble_rect.y + bubble_rect.height
+        anchor_position = resolve_anchor_position
 
         # Triangle pointing down to character
         RL.draw_triangle(
           RL::Vector2.new(x: tail_x - tail_size, y: tail_y),
           RL::Vector2.new(x: tail_x + tail_size, y: tail_y),
-          RL::Vector2.new(x: tail_x, y: tail_y + tail_size),
+          RL::Vector2.new(x: anchor_position.x, y: anchor_position.y - 20),
           fill_color
         )
       end
 
       # Draw thought bubble trail
       private def draw_thought_bubbles(bubble_rect : RL::Rectangle, color : RL::Color)
+        anchor_position = resolve_anchor_position
         base_x = bubble_rect.x + bubble_rect.width / 2
         base_y = bubble_rect.y + bubble_rect.height
 
         # Draw small circles leading to character
         (1..3).each do |i|
           radius = 8 - i * 2
-          circle_y = base_y + i * 15
-          RL.draw_circle(base_x.to_i, circle_y.to_i, radius.to_f32, color)
+          t = i / 4.0f32
+          circle_x = base_x + (anchor_position.x - base_x) * t
+          circle_y = base_y + (anchor_position.y - 20 - base_y) * t
+          RL.draw_circle(circle_x.to_i, circle_y.to_i, radius.to_f32, color)
+        end
+      end
+
+      private def logical_dimensions : Tuple(Float32, Float32)
+        if context = @frame_context
+          {context.logical_width.to_f32, context.logical_height.to_f32}
+        elsif engine = PointClickEngine::Core::Engine.instance?
+          if dm = engine.display_manager
+            {dm.reference_width.to_f32, dm.reference_height.to_f32}
+          else
+            {PointClickEngine::Graphics::Display.reference_width.to_f32, PointClickEngine::Graphics::Display.reference_height.to_f32}
+          end
+        else
+          {PointClickEngine::Graphics::Display.reference_width.to_f32, PointClickEngine::Graphics::Display.reference_height.to_f32}
+        end
+      end
+
+      private def resolve_anchor_position : RL::Vector2
+        if context = @frame_context
+          context.world_to_ui(@character_position)
+        elsif engine = PointClickEngine::Core::Engine.instance?
+          engine.camera.world_to_screen(@character_position.x, @character_position.y)
+        else
+          @character_position
         end
       end
     end
@@ -357,6 +391,7 @@ module PointClickEngine
       property max_concurrent : Int32 = 3
       property default_duration : Float32 = 4.0f32
       property enable_floating : Bool = true
+      property frame_context : PointClickEngine::Graphics::FrameContext?
 
       def initialize
         @active_dialogs = [] of FloatingDialog
@@ -365,10 +400,6 @@ module PointClickEngine
       # Show floating dialog for character
       def show_dialog(character_name : String, text : String, character_pos : RL::Vector2,
                       duration : Float32? = nil, style : DialogStyle = DialogStyle::Bubble, color : RL::Color? = nil)
-        # Debug output only for non-empty text
-        if !text.empty?
-          puts "FloatingDialogManager.show_dialog called: #{character_name}, #{text}"
-        end
         return unless @enable_floating
 
         # Remove oldest dialog if at max capacity
@@ -379,6 +410,7 @@ module PointClickEngine
         actual_duration = duration || calculate_duration(text)
         dialog = FloatingDialog.new(text, character_name, character_pos, actual_duration, color)
         dialog.style = style
+        dialog.frame_context = @frame_context
 
         @active_dialogs << dialog
         # Debug: Added floating dialog
@@ -405,6 +437,11 @@ module PointClickEngine
       # Clear all dialogs
       def clear_all
         @active_dialogs.clear
+      end
+
+      def frame_context=(context : PointClickEngine::Graphics::FrameContext?)
+        @frame_context = context
+        @active_dialogs.each(&.frame_context=(context))
       end
 
       # Check if any dialogs are active

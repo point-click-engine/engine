@@ -1,6 +1,7 @@
 # Volume control and audio settings component
 
 require "raylib-cr/audio"
+require "../core/events/events"
 
 module PointClickEngine
   module Audio
@@ -18,11 +19,15 @@ module PointClickEngine
       property music_muted : Bool = false
       property sfx_muted : Bool = false
 
-      # Volume change callbacks
-      @on_volume_change = [] of Proc(Symbol, Float32, Nil)
+      # EventBus for publishing volume changes
+      property event_bus : Core::Events::EventBus?
 
       # Initialize volume controller
       def initialize
+        apply_master_volume
+      end
+
+      def initialize(@event_bus : Core::Events::EventBus)
         apply_master_volume
       end
 
@@ -100,11 +105,6 @@ module PointClickEngine
         @voice_volume * @master_volume
       end
 
-      # Register volume change callback
-      def on_volume_change(&block : Symbol, Float32 -> Nil) : Nil
-        @on_volume_change << block
-      end
-
       # Save volume settings
       def to_settings : NamedTuple(
         master: Float32,
@@ -147,8 +147,8 @@ module PointClickEngine
       end
 
       private def notify_change(type : Symbol, volume : Float32) : Nil
-        @on_volume_change.each do |callback|
-          callback.call(type, volume)
+        if bus = @event_bus
+          bus.publish(Core::Events::VolumeChangedEvent.new(type, volume))
         end
       end
     end

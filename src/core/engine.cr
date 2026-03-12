@@ -8,15 +8,19 @@ require "./engine/system_manager"
 require "./engine/input_handler"
 require "./engine/render_coordinator"
 require "./engine/verb_input_system"
-require "../graphics/camera"
+require "../graphics/graphics"
 require "./scene_manager"
 require "./input_manager"
 require "./render_manager"
 require "./resource_manager"
 require "./save_system"
 require "../inventory/inventory_system"
+require "../inventory/item_registry"
 require "./game_state_manager"
 require "./quest_system"
+require "./timer_manager"
+require "../actions/action_runner"
+require "../actions/action_overlay_manager"
 
 module PointClickEngine
   module Core
@@ -28,32 +32,44 @@ module PointClickEngine
       # Core properties
       property window_width : Int32
       property window_height : Int32
+      property reference_width : Int32
+      property reference_height : Int32
       property window_title : String
       property target_fps : Int32 = 60
       property running : Bool = false
 
       # Component managers - direct access for users
       property system_manager : EngineComponents::SystemManager = EngineComponents::SystemManager.new
-      property scene_manager : SceneManager = SceneManager.new
+      getter scene_manager : SceneManager { SceneManager.new(self, @system_manager.event_bus) }
       property input_manager : InputManager = InputManager.new
       property render_manager : RenderManager = RenderManager.new
       property resource_manager : ResourceManager = ResourceManager.new
       property inventory : Inventory::InventorySystem = Inventory::InventorySystem.new
+      property item_registry : Inventory::ItemRegistry = Inventory::ItemRegistry.new
       property game_state_manager : GameStateManager?
       property quest_manager : QuestManager?
+      property timer_manager : TimerManager = TimerManager.new
+      property action_overlay_manager : Actions::ActionOverlayManager = Actions::ActionOverlayManager.new
+      getter global_script_runner : Actions::ActionRunner?
 
       # Core components
       @input_handler : EngineComponents::InputHandler?
       @render_coordinator : EngineComponents::RenderCoordinator = EngineComponents::RenderCoordinator.new
       @verb_input_system : EngineComponents::VerbInputSystem?
       @update_callback : Proc(Float32, Nil)?
+      property effect_manager : Graphics::EffectManager = Graphics::EffectManager.new
 
       # Auto-save functionality
       property auto_save_interval : Float32 = 0.0_f32
       property auto_save_timer : Float32 = 0.0_f32
 
+      # Player control (disabled during action sequences)
+      property player_control_enabled : Bool = true
+
       # Fullscreen state
       @fullscreen : Bool = false
+      @paused : Bool = false
+      @pause_toggled_this_frame : Bool = false
 
       # Initialization state
       @engine_initialized : Bool = false
@@ -61,9 +77,22 @@ module PointClickEngine
       # Current scene reference
       property current_scene : Scenes::Scene?
 
-      # Camera manager reference
-      def camera_manager : Graphics::Cameras::CameraManager
-        @system_manager.camera_manager.not_nil!
+      # Optional custom service overrides (for testing/DI)
+      @custom_resource_manager : IResourceLoader?
+      @custom_input_manager : IInputManager?
+      @custom_render_manager : IRenderManager?
+
+      # Whether to skip singleton registration (for testing)
+      @skip_singleton : Bool = false
+
+      # Get renderer from system manager
+      def renderer : Graphics::Renderer
+        @system_manager.renderer.not_nil!
+      end
+
+      # Get camera from renderer for compatibility
+      def camera : Graphics::Camera
+        renderer.camera
       end
 
       # Temporary player storage until a scene is available
@@ -76,6 +105,10 @@ module PointClickEngine
 
       def self.instance? : Engine?
         @@instance
+      end
+
+      def self.instance=(engine : Engine?)
+        @@instance = engine
       end
 
       # Reset instance for testing purposes
@@ -96,18 +129,61 @@ module PointClickEngine
 
       # Creates a new game engine instance
       def initialize(@window_width : Int32, @window_height : Int32, @window_title : String)
+        @reference_width = @window_width
+        @reference_height = @window_height
         raise "Engine already initialized" if @@instance
         @@instance = self
       end
 
+      # Creates a new game engine instance with optional DI overrides
+      # Use skip_singleton: true for testing to allow multiple engine instances
+      def initialize(
+        @window_width : Int32,
+        @window_height : Int32,
+        @window_title : String,
+        resource_manager : IResourceLoader? = nil,
+        input_manager : IInputManager? = nil,
+        render_manager : IRenderManager? = nil,
+        skip_singleton : Bool = false,
+      )
+        @reference_width = @window_width
+        @reference_height = @window_height
+        @skip_singleton = skip_singleton
+        unless skip_singleton
+          raise "Engine already initialized" if @@instance
+          @@instance = self
+        end
+
+        @custom_resource_manager = resource_manager
+        @custom_input_manager = input_manager
+        @custom_render_manager = render_manager
+      end
+
       # Initializes the engine and all subsystems
       def init
-        # Initialize Raylib window
-        RL.init_window(@window_width, @window_height, @window_title)
+        requested_fullscreen = @fullscreen
+
+        # Initialize Raylib window only if not already open (for tests using RaylibContext)
+        unless RL.window_ready?
+          RL.init_window(@window_width, @window_height, @window_title)
+        end
+        RL.set_exit_key(RL::KeyboardKey::Null.value)
         RL.set_target_fps(@target_fps)
 
         # Initialize subsystems
-        @system_manager.initialize_systems(@window_width, @window_height)
+        @system_manager.initialize_systems(@window_width, @window_height, @reference_width, @reference_height)
+        if dm = display_manager
+          dm.refresh_from_window
+          sync_display_state(dm)
+
+          if requested_fullscreen && !dm.fullscreen?
+            dm.set_fullscreen(true)
+            sync_display_state(dm)
+          end
+        end
+
+        # Wire up timer manager with EventBus
+        @timer_manager.event_bus = @system_manager.event_bus
 
         # Setup menu callbacks via SystemManager
         @system_manager.setup_menu_callbacks(self)
@@ -134,6 +210,9 @@ module PointClickEngine
         while @running && !RL.close_window?
           dt = RL.get_frame_time
 
+          # Reset input state at start of each frame
+          InputState.reset
+
           # Update phase
           update(dt)
 
@@ -156,31 +235,53 @@ module PointClickEngine
 
       # Updates all game systems
       def update(dt : Float32)
+        @pause_toggled_this_frame = false
+
         # Update input manager first
         @input_manager.process_input(dt)
+        process_global_shortcuts
 
-        # Handle input - use verb input if enabled, otherwise standard input
-        if @verb_input_system && @verb_input_system.not_nil!.enabled
-          @verb_input_system.not_nil!.process_input(@current_scene, player, display_manager, camera_manager.current_camera)
-        else
-          @input_handler.try do |handler|
-            handler.handle_click(@current_scene, player, camera_manager.current_camera)
-            handler.handle_keyboard_input
+        if @paused
+          return if @pause_toggled_this_frame
+          @system_manager.update_menu_only(dt)
+          return
+        end
+
+        if gameplay_input_active?
+          # Handle input - use verb input if enabled, otherwise standard input
+          if @verb_input_system && @verb_input_system.not_nil!.enabled
+            @verb_input_system.not_nil!.process_input(@current_scene, player, display_manager, camera)
+          else
+            @input_handler.try do |handler|
+              handler.handle_click(@current_scene, player, camera)
+              handler.handle_keyboard_input
+            end
           end
         end
 
         # Update systems
         @system_manager.update_systems(dt)
 
-        # Update scene
+        # Update timer manager
+        @timer_manager.update(dt)
+
+        # Update scene-local sequences first, then any engine-level sequence
+        # that should survive scene changes (startup cinematics, Lua-triggered sequences).
         @current_scene.try(&.update(dt))
+        @global_script_runner.try(&.update(dt))
+        clear_completed_script_runners
+        @action_overlay_manager.update(dt)
 
         # Update inventory
         @inventory.update(dt)
 
-        # Update camera manager
+        # Update camera and effects
         mouse_pos = RL.get_mouse_position
-        camera_manager.update(dt, mouse_pos.x.to_i, mouse_pos.y.to_i)
+        camera.update(dt)
+
+        # Update all effects (including scene transitions)
+        @effect_manager.update(dt)
+        @effect_manager.update_camera_effects(camera, dt)
 
         # Handle auto-save
         handle_auto_save(dt)
@@ -191,46 +292,186 @@ module PointClickEngine
 
       # Renders the game
       private def render
-        # Check if we're transitioning
-        if (tm = @system_manager.transition_manager) && tm.transitioning?
-          puts "[Engine] Rendering with transition"
-          tm.render_with_transition do
-            render_scene_content
-          end
+        refresh_runtime_render_context
+        renderer.ensure_render_textures
+        frame = current_frame_context
+
+        world_target = renderer.world_render_texture.not_nil!
+        scene_target_a = renderer.scene_render_texture_a.not_nil!
+        scene_target_b = renderer.scene_render_texture_b.not_nil!
+        final_target = renderer.final_render_texture.not_nil!
+
+        log_render_debug(
+          "frame_graph",
+          "scene=#{@current_scene.try(&.name) || "none"} logical=#{frame.logical_width}x#{frame.logical_height} " \
+          "scene_rt=#{world_target.texture.width}x#{world_target.texture.height}"
+        )
+
+        RL.begin_texture_mode(world_target)
+        RL.clear_background(RL::BLANK)
+        render_world_scene
+        RL.end_texture_mode
+
+        scene_result = @effect_manager.apply_scene_shader_chain(world_target, scene_target_a, scene_target_b, frame)
+
+        RL.begin_texture_mode(final_target)
+        RL.clear_background(RL::BLANK)
+        renderer.blit_logical_texture(scene_result.texture, frame.logical_width, frame.logical_height)
+        render_action_and_script_overlays
+        @effect_manager.draw_scene_overlays(renderer)
+        render_ui_layers
+        draw_modal_cursor_to_logical_frame if modal_ui_active?
+        RL.end_texture_mode
+
+        if dm = display_manager
+          dm.present(final_target.texture, frame.logical_width, frame.logical_height)
         else
-          render_scene_content
+          renderer.blit_logical_texture(final_target.texture, frame.logical_width, frame.logical_height)
         end
 
-        # Draw verb cursor (on top of everything)
-        @verb_input_system.try(&.draw(self.display_manager))
+        if gameplay_cursor_active?
+          draw_gameplay_cursor_to_screen
+        elsif !modal_ui_active?
+          RL.show_cursor
+        end
       end
 
-      # Renders the scene content (separated for use with transitions)
-      private def render_scene_content
-        # Render scene with camera
-        @current_scene.try(&.draw(camera_manager.current_camera))
+      private def render_scene_layers(skip_overlays : Bool = false)
+        render_world_scene
+        render_action_and_script_overlays
+        unless skip_overlays
+          @effect_manager.draw_scene_overlays(renderer)
+        end
+      end
 
-        # Render highlighted hotspots if enabled
+      private def render_ui_layers
+        render_hotspots_ui_and_debug(false)
+      end
+
+      private def render_world_scene
+        # Create a temporary layer manager for scene effects
+        # In a full implementation, this would be part of the renderer
+        layers = Graphics::LayerManager.new
+        layers.add_default_layers
+
+        # Apply scene effects (including transitions) to the layers
+        @effect_manager.apply_scene_effects(renderer, layers, RL.get_frame_time)
+
+        # Render scene with camera using the renderer
+        renderer.render(false) do |context|
+          @current_scene.try do |scene|
+            scene.draw(camera)
+          end
+        end
+      end
+
+      private def render_action_and_script_overlays
+        @action_overlay_manager.draw
+        @current_scene.try(&.draw_script_overlays)
+        @global_script_runner.try(&.draw)
+      end
+
+      private def render_hotspots_ui_and_debug(apply_display_transform : Bool = false)
         if @render_coordinator.hotspot_highlight_enabled && @current_scene
           render_hotspot_highlights(@current_scene.not_nil!)
         end
 
-        # Render UI and overlays
         @system_manager.dialog_manager.try(&.draw)
         @inventory.draw
         @system_manager.menu_system.try(&.render)
+        render_debug_info if @@debug_mode
+      end
 
-        # Debug rendering
-        if @@debug_mode
-          render_debug_info
+      private def draw_modal_cursor_to_logical_frame
+        if dm = display_manager
+          game_mouse = dm.screen_to_game(RL.get_mouse_position)
+
+          if cursor_manager = @verb_input_system.try(&.cursor_manager)
+            cursor_manager.draw(game_mouse)
+          else
+            draw_software_cursor(game_mouse)
+          end
+        else
+          RL.show_cursor
         end
+      end
+
+      private def draw_gameplay_cursor_to_screen
+        @verb_input_system.try(&.draw(self.display_manager))
+      end
+
+      private def draw_software_cursor(position : RL::Vector2)
+        RL.hide_cursor
+        color = RL::Color.new(r: 255, g: 240, b: 180, a: 255)
+        shadow = RL::Color.new(r: 0, g: 0, b: 0, a: 180)
+
+        points = [
+          RL::Vector2.new(x: position.x, y: position.y),
+          RL::Vector2.new(x: position.x + 8, y: position.y + 20),
+          RL::Vector2.new(x: position.x + 4, y: position.y + 17),
+          RL::Vector2.new(x: position.x + 2, y: position.y + 24),
+          RL::Vector2.new(x: position.x - 1, y: position.y + 23),
+          RL::Vector2.new(x: position.x + 1, y: position.y + 16),
+          RL::Vector2.new(x: position.x - 4, y: position.y + 18),
+        ]
+
+        shadow_points = points.map do |point|
+          RL::Vector2.new(x: point.x + 1, y: point.y + 1)
+        end
+
+        RL.draw_triangle_fan(shadow_points.to_unsafe, shadow_points.size, shadow)
+        RL.draw_triangle_fan(points.to_unsafe, points.size, color)
+        RL.draw_line_ex(points[0], points[1], 1.5f32, RL::BLACK)
+        RL.draw_line_ex(points[1], points[2], 1.5f32, RL::BLACK)
+        RL.draw_line_ex(points[2], points[3], 1.5f32, RL::BLACK)
+        RL.draw_line_ex(points[3], points[4], 1.5f32, RL::BLACK)
+        RL.draw_line_ex(points[4], points[5], 1.5f32, RL::BLACK)
+        RL.draw_line_ex(points[5], points[6], 1.5f32, RL::BLACK)
+        RL.draw_line_ex(points[6], points[0], 1.5f32, RL::BLACK)
+      end
+
+      private def with_logical_render_space(apply_display_transform : Bool, &)
+        if apply_display_transform
+          if dm = display_manager
+            dm.with_game_coordinates do
+              yield
+            end
+          else
+            yield
+          end
+        else
+          yield
+        end
+      end
+
+      private def log_render_debug(tag : String, message : String)
+        return unless @@debug_mode
+        dm = display_manager
+        display_info = if dm
+                         " display=(window=#{dm.window_width}x#{dm.window_height} " \
+                         "scale=#{dm.scale_factor.round(3)} offset=#{dm.offset_x.round(2)},#{dm.offset_y.round(2)})"
+                       else
+                         ""
+                       end
+        Core::ErrorLogger.debug("[EngineRender] #{tag} #{message}#{display_info}")
+      end
+
+      private def format_vec(vec : RL::Vector2) : String
+        "(x=#{vec.x.round(2)},y=#{vec.y.round(2)})"
+      end
+
+      private def refresh_runtime_render_context
+        context = current_frame_context
+        @action_overlay_manager.target_width = context.logical_width
+        @action_overlay_manager.target_height = context.logical_height
+        dialog_manager.try { |manager| manager.frame_context = context }
       end
 
       # Render hotspot highlights
       private def render_hotspot_highlights(scene : Scenes::Scene)
-        # Get camera offset from camera manager
-        camera = camera_manager.current_camera
-        camera_offset = RL::Vector2.new(x: -camera.position.x, y: -camera.position.y)
+        # Get camera offset from renderer's camera
+        cam = camera
+        camera_offset = RL::Vector2.new(x: -cam.position.x, y: -cam.position.y)
 
         # Calculate pulsing effect
         time = RL.get_time
@@ -273,6 +514,8 @@ module PointClickEngine
 
         mouse_pos = RL.get_mouse_position
         RL.draw_text("Mouse: #{mouse_pos.x.to_i}, #{mouse_pos.y.to_i}", 10, y_offset, 20, RL::WHITE)
+        y_offset += 25
+        RL.draw_text("Reference: #{@reference_width}x#{@reference_height}", 10, y_offset, 20, RL::WHITE)
       end
 
       # Cleans up all resources
@@ -298,7 +541,7 @@ module PointClickEngine
       end
 
       def scenes : Hash(String, Scenes::Scene)
-        @scene_manager.scenes
+        scene_manager.scenes
       end
 
       # Enable verb input system
@@ -331,8 +574,8 @@ module PointClickEngine
         @@debug_mode
       end
 
-      def event_system
-        @system_manager.event_system
+      def event_bus
+        @system_manager.event_bus
       end
 
       def player=(value : Characters::Character?)
@@ -364,6 +607,19 @@ module PointClickEngine
         puts "Game started"
       end
 
+      def return_to_menu
+        # Return to main menu
+        puts "[Engine] Returning to main menu"
+        @system_manager.menu_system.try(&.show)
+        @game_started = false
+        # Clear current scene and action overlays
+        stop_script
+        @action_overlay_manager.clear_all
+        @effect_manager.clear_scene_effects
+        # Stop music
+        @system_manager.audio_manager.try(&.stop_music)
+      end
+
       def dialog_manager
         @system_manager.dialog_manager
       end
@@ -373,11 +629,58 @@ module PointClickEngine
       end
 
       def show_main_menu
+        @paused = false
         @system_manager.menu_system.try(&.show_main_menu)
       end
 
       def menu_system
         @system_manager.menu_system
+      end
+
+      def reference_resolution : Tuple(Int32, Int32)
+        {@reference_width, @reference_height}
+      end
+
+      def active_game_area_rect : RL::Rectangle?
+        display_manager.try(&.active_game_area_rect)
+      end
+
+      def transformed_mouse_position : RL::Vector2
+        if dm = display_manager
+          dm.screen_to_game(RL.get_mouse_position)
+        else
+          RL.get_mouse_position
+        end
+      end
+
+      def modal_ui_active? : Bool
+        menu_system.try(&.visible) || false
+      end
+
+      def current_frame_context : Graphics::FrameContext
+        scene_width = @current_scene.try(&.logical_width) || @reference_width
+        scene_height = @current_scene.try(&.logical_height) || @reference_height
+        canvas_width = @action_overlay_manager.canvas_width
+        canvas_height = @action_overlay_manager.canvas_height
+
+        renderer.build_frame_context(
+          scene_width,
+          scene_height,
+          canvas_width,
+          canvas_height
+        )
+      end
+
+      def gameplay_input_active? : Bool
+        !@paused && !modal_ui_active? && !blocking_dialog_active?
+      end
+
+      def gameplay_cursor_active? : Bool
+        !@paused && !modal_ui_active? && @verb_input_system.try(&.enabled) == true
+      end
+
+      def paused? : Bool
+        @paused
       end
 
       def toggle_hotspot_highlight
@@ -386,25 +689,58 @@ module PointClickEngine
         puts "[Engine] Hotspot highlighting: #{@render_coordinator.hotspot_highlight_enabled ? "ON" : "OFF"}"
       end
 
+      def hotspot_highlight_enabled? : Bool
+        @render_coordinator.hotspot_highlight_enabled
+      end
+
       # Scene management
-      def change_scene(scene_name : String)
+      def change_scene(scene_name : String, activation_options : SceneManager::ActivationOptions = SceneManager::ActivationOptions.new)
         puts "[Engine] Changing scene to: #{scene_name}"
 
         # Save current player before changing scene
         current_player = player
 
-        result = @scene_manager.change_scene(scene_name)
+        result = scene_manager.change_scene(scene_name, activation_options)
         case result
         when .success?
           @current_scene = result.value
           puts "[Engine] Scene changed successfully"
 
+          # Transfer scene effects to the effect manager
+          if scene = @current_scene
+            # Clear existing scene effects
+            @effect_manager.clear_scene_effects
+
+            # Add scene effects to the effect manager
+            scene.scene_effects.each do |effect|
+              @effect_manager.add_scene_effect(effect)
+            end
+
+            puts "[Engine] Transferred #{scene.scene_effects.size} scene effects to effect manager"
+          end
+
           # Update camera bounds for the new scene
           if scene = @current_scene
-            scene_width = scene.background.try(&.width) || @window_width
-            scene_height = scene.background.try(&.height) || @window_height
-            camera_manager.set_scene_bounds(scene_width, scene_height)
-            puts "[Engine] Updated camera bounds to #{scene_width}x#{scene_height}"
+            scene_width = scene.logical_width
+            scene_height = scene.logical_height
+
+            if renderer = @system_manager.renderer
+              active_camera = renderer.camera
+              active_camera.reset
+              active_camera.set_bounds(scene_width, scene_height, @reference_width, @reference_height)
+
+              if scene.enable_camera_scrolling
+                if current_player = scene.player
+                  active_camera.center_on(current_player.position.x, current_player.position.y, @reference_width, @reference_height)
+                end
+              end
+
+              log_render_debug("scene_change",
+                "scene=#{scene.name} logical=#{scene_width}x#{scene_height} " \
+                "camera=#{format_vec(active_camera.position)} bounds=(#{active_camera.min_x.round(2)},#{active_camera.min_y.round(2)},#{active_camera.max_x.round(2)},#{active_camera.max_y.round(2)})")
+            end
+
+            puts "[Engine] Scene dimensions: #{scene_width}x#{scene_height}"
           end
 
           # Always assign player to new scene (either pending or current)
@@ -420,95 +756,150 @@ module PointClickEngine
           end
 
           puts "[Engine] Current scene player: #{@current_scene.try(&.player) ? "exists" : "nil"}"
-          @current_scene.try(&.on_enter)
+
+          # Scene lifecycle, script loading, and event publishing are handled by SceneManager.
         when .failure?
           raise "Failed to change scene: #{result.error.message}"
         end
       end
 
-      def change_scene_with_transition(scene_name : String, effect : Graphics::Transitions::TransitionEffect?, duration : Float32, position : RL::Vector2? = nil)
-        puts "[Engine] change_scene_with_transition: scene=#{scene_name}, effect=#{effect}, duration=#{duration}"
-        # Start transition if effect specified
-        if effect && (tm = @system_manager.transition_manager)
-          puts "[Engine] Starting transition with effect"
-          tm.start_transition(effect, duration) do
-            puts "[Engine] Transition callback - changing scene"
-            # Change scene at halfway point
-            change_scene(scene_name)
+      def add_scene(scene : Scenes::Scene)
+        scene_manager.add_scene(scene)
+      end
 
-            # If position provided, move player
-            if pos = position
-              if player = self.player
-                player.position = pos
-                puts "[Engine] Moved player to #{pos}"
-              end
-            end
-          end
+      # Convenience method for scene transitions
+      def change_scene_with_transition(scene_name : String, transition_type : String = "fade",
+                                       duration : Float32 = 1.0f32,
+                                       player_position : RL::Vector2? = nil,
+                                       activation_options : SceneManager::ActivationOptions = SceneManager::ActivationOptions.new)
+        scene_manager.change_scene_with_transition(scene_name, transition_type, duration, player_position, activation_options)
+      end
+
+      # ============================================================
+      # ACTION SEQUENCE METHODS
+      # ============================================================
+
+      # Run an action sequence from YAML file
+      def run_script(path : String)
+        @current_scene.try(&.run_script_file(path))
+      end
+
+      # Run an action sequence from an ActionRunner
+      def run_script(runner : Actions::ActionRunner)
+        if current_runner = @global_script_runner
+          return if current_runner == runner && current_runner.running
+          current_runner.stop if current_runner.running
+        end
+
+        runner.engine = self
+        @global_script_runner = runner
+        runner.play
+      end
+
+      # Check if an action sequence is running
+      def script_running? : Bool
+        (@global_script_runner.try(&.running) || false) || (@current_scene.try(&.script_running?) || false)
+      end
+
+      # Stop current action sequence
+      def stop_script
+        @global_script_runner.try(&.stop)
+        @global_script_runner = nil
+        @current_scene.try(&.stop_script)
+      end
+
+      # Skip current action sequence
+      def skip_script
+        if runner = @global_script_runner
+          runner.skip if runner.running
         else
-          puts "[Engine] No transition effect or manager - direct scene change"
-          # No transition, just change scene
-          change_scene(scene_name)
-
-          # If position provided, move player
-          if pos = position
-            if player = self.player
-              player.position = pos
-            end
-          end
+          @current_scene.try(&.skip_script)
         end
       end
 
-      def add_scene(scene : Scenes::Scene)
-        @scene_manager.add_scene(scene)
+      def active_script_runner : Actions::ActionRunner?
+        @global_script_runner || @current_scene.try(&.script_runner)
       end
 
       # Window management
+      def pause_game
+        return if @paused
+
+        @paused = true
+        @pause_toggled_this_frame = true
+        @system_manager.audio_manager.try(&.pause_music)
+        @system_manager.menu_system.try(&.show_pause_menu)
+        @system_manager.event_bus.publish_sync(Events::GamePausedEvent.new)
+      end
+
+      def resume_game
+        return unless @paused
+
+        @paused = false
+        @pause_toggled_this_frame = true
+        @system_manager.menu_system.try(&.hide)
+        @system_manager.audio_manager.try(&.resume_music)
+        @system_manager.event_bus.publish_sync(Events::GameResumedEvent.new)
+      end
+
+      def toggle_pause_menu
+        menu = @system_manager.menu_system
+        return unless menu
+        return unless menu.not_nil!.in_game
+
+        if @paused
+          resume_game
+        else
+          pause_game
+        end
+      end
+
       def toggle_fullscreen
-        @fullscreen = !@fullscreen
-        # TODO: Actually implement fullscreen toggle with Raylib
-        # RL.toggle_fullscreen
+        if dm = display_manager
+          dm.toggle_fullscreen
+          sync_display_state(dm)
+        else
+          @fullscreen = !@fullscreen
+        end
       end
 
       def fullscreen : Bool
-        @fullscreen
+        display_manager.try(&.fullscreen?) || @fullscreen
       end
 
       def fullscreen=(value : Bool)
-        @fullscreen = value
-        # TODO: Actually implement fullscreen setting with Raylib
-        # if value
-        #   RL.set_window_flag(RL::FLAG_FULLSCREEN_MODE)
-        # else
-        #   RL.clear_window_flag(RL::FLAG_FULLSCREEN_MODE)
-        # end
+        if dm = display_manager
+          dm.set_fullscreen(value)
+          sync_display_state(dm)
+        else
+          @fullscreen = value
+        end
       end
 
       def set_window_size(width : Int32, height : Int32)
         @window_width = width
         @window_height = height
         RL.set_window_size(width, height)
-        @camera.try(&.set_bounds(0, 0, width, height))
+        display_manager.try(&.resize(width, height))
+        # Update camera bounds if needed
+        camera.set_bounds(width, height)
       end
 
       # Start a new game
       def start_new_game
         puts "[Engine] Starting new game"
+        @paused = false
+        @system_manager.audio_manager.try(&.resume_music)
         # Hide the menu
         @system_manager.menu_system.try(&.hide)
         @system_manager.menu_system.try(&.enter_game)
 
-        # Trigger the game:new event
-        puts "[Engine] Triggering game:new event"
-        @system_manager.event_system.trigger("game:new")
+        # Trigger the game started event
+        # Scene loading is handled by GameStartedEvent subscribers (game_config.cr)
+        # which may play an intro sequence first
+        puts "[Engine] Triggering GameStartedEvent"
+        @system_manager.event_bus.publish_sync(Events::GameStartedEvent.new(new_game: true))
         puts "[Engine] Event triggered"
-
-        # Load the starting scene from scene manager
-        if scene_name = @scene_manager.start_scene
-          puts "[Engine] Changing to start scene: #{scene_name}"
-          change_scene(scene_name)
-        else
-          puts "Warning: No start scene defined in game config"
-        end
       end
 
       # Auto-save handling
@@ -525,6 +916,32 @@ module PointClickEngine
 
           # Reset timer
           @auto_save_timer = 0.0_f32
+        end
+      end
+
+      private def sync_display_state(display : Graphics::Display)
+        @fullscreen = display.fullscreen?
+      end
+
+      private def process_global_shortcuts
+        if @input_manager.key_pressed?(Raylib::KeyboardKey::Escape)
+          toggle_pause_menu
+          @input_manager.consume_keyboard_input
+        end
+
+        if @input_manager.key_pressed?(Raylib::KeyboardKey::F11)
+          toggle_fullscreen
+          @input_manager.consume_keyboard_input
+        end
+      end
+
+      private def blocking_dialog_active? : Bool
+        dialog_manager.try(&.is_dialog_active?) || false
+      end
+
+      private def clear_completed_script_runners
+        if runner = @global_script_runner
+          @global_script_runner = nil if runner.completed
         end
       end
     end

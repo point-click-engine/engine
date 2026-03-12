@@ -1,10 +1,32 @@
 require "../spec_helper"
 require "../../src/core/achievement_manager"
 
+TEST_ACHIEVEMENT_SAVE_FILE        = "tmp/achievement_manager_spec.yaml"
+TEST_ACHIEVEMENT_PERSISTENCE_FILE = "tmp/achievement_manager_persistence.yaml"
+
+private def cleanup_achievement_save_files
+  [TEST_ACHIEVEMENT_SAVE_FILE, TEST_ACHIEVEMENT_PERSISTENCE_FILE].each do |path|
+    File.delete(path) if File.exists?(path)
+  end
+end
+
+private def build_achievement_manager(save_file : String = TEST_ACHIEVEMENT_SAVE_FILE)
+  Dir.mkdir_p(File.dirname(save_file))
+  PointClickEngine::Core::AchievementManager.new(save_file)
+end
+
 describe PointClickEngine::Core::AchievementManager do
+  before_each do
+    cleanup_achievement_save_files
+  end
+
+  after_each do
+    cleanup_achievement_save_files
+  end
+
   describe "#initialize" do
     it "creates manager with default achievements" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       manager.achievements.size.should be > 0
       manager.achievements.has_key?("game_complete").should be_true
       manager.achievements.has_key?("bookworm").should be_true
@@ -13,7 +35,7 @@ describe PointClickEngine::Core::AchievementManager do
 
   describe "#register" do
     it "registers a new achievement" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       manager.register("test_achievement", "Test Name", "Test Description")
 
       achievement = manager.achievements["test_achievement"]
@@ -25,7 +47,7 @@ describe PointClickEngine::Core::AchievementManager do
     end
 
     it "registers a hidden achievement" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       manager.register("secret", "Secret Achievement", "Hidden description", hidden: true)
 
       achievement = manager.achievements["secret"]
@@ -35,7 +57,7 @@ describe PointClickEngine::Core::AchievementManager do
 
   describe "#unlock" do
     it "unlocks an achievement" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       manager.register("test", "Test", "Description")
 
       result = manager.unlock("test")
@@ -47,7 +69,7 @@ describe PointClickEngine::Core::AchievementManager do
     end
 
     it "doesn't unlock already unlocked achievement" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       manager.register("test", "Test", "Description")
 
       manager.unlock("test").should be_true
@@ -55,12 +77,12 @@ describe PointClickEngine::Core::AchievementManager do
     end
 
     it "returns false for non-existent achievement" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       manager.unlock("non_existent").should be_false
     end
 
     it "queues notification when unlocked" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       manager.register("test", "Test", "Description")
 
       manager.unlock("test")
@@ -70,7 +92,7 @@ describe PointClickEngine::Core::AchievementManager do
 
   describe "#is_unlocked?" do
     it "returns unlock status" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       manager.register("test", "Test", "Description")
 
       manager.is_unlocked?("test").should be_false
@@ -79,14 +101,14 @@ describe PointClickEngine::Core::AchievementManager do
     end
 
     it "returns false for non-existent achievement" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       manager.is_unlocked?("non_existent").should be_false
     end
   end
 
   describe "#get_progress" do
     it "returns unlocked and total count" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       initial_count = manager.achievements.size
 
       manager.register("test1", "Test 1", "Description 1")
@@ -107,7 +129,7 @@ describe PointClickEngine::Core::AchievementManager do
 
   describe "#update" do
     it "handles notification timing" do
-      manager = PointClickEngine::Core::AchievementManager.new
+      manager = build_achievement_manager
       manager.notification_duration = 1.0f32
       manager.register("test", "Test", "Description")
 
@@ -123,33 +145,28 @@ describe PointClickEngine::Core::AchievementManager do
 
   describe "#save_progress and #load_progress" do
     it "saves and loads achievement progress" do
-      File.delete("test_achievements.yaml") if File.exists?("test_achievements.yaml")
+      save_file = TEST_ACHIEVEMENT_PERSISTENCE_FILE
+      Dir.mkdir_p(File.dirname(save_file))
 
       # Save progress
-      manager1 = PointClickEngine::Core::AchievementManager.new
-      manager1.save_file = "test_achievements.yaml"
+      manager1 = build_achievement_manager(save_file)
       manager1.register("test1", "Test 1", "Description")
       manager1.register("test2", "Test 2", "Description")
       manager1.unlock("test1")
       manager1.save_progress
 
       # Load in new instance
-      manager2 = PointClickEngine::Core::AchievementManager.new
-      manager2.save_file = "test_achievements.yaml"
+      manager2 = build_achievement_manager(save_file)
       manager2.register("test1", "Test 1", "Description")
       manager2.register("test2", "Test 2", "Description")
       manager2.load_progress
 
       manager2.is_unlocked?("test1").should be_true
       manager2.is_unlocked?("test2").should be_false
-
-      # Clean up
-      File.delete("test_achievements.yaml")
     end
 
     it "handles missing save file gracefully" do
-      manager = PointClickEngine::Core::AchievementManager.new
-      manager.save_file = "non_existent_achievements.yaml"
+      manager = build_achievement_manager("tmp/non_existent_achievements.yaml")
       manager.load_progress # Should not crash
     end
   end

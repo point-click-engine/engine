@@ -144,6 +144,30 @@ describe PointClickEngine::UI::CursorManager do
       cursor_manager.current_verb.should eq expected_verb
     end
   end
+
+  it "loads configured custom cursor assets from a game-relative root" do
+    with_test_window do
+      cursor_manager = PointClickEngine::UI::CursorManager.new
+      cursor_manager.configure(
+        asset_base_dir: Dir.current,
+        cursor_root: "crystal_mystery/assets/ui/cursors"
+      )
+
+      cursor_manager.custom_cursor_available?.should be_true
+    end
+  end
+
+  it "keeps the system cursor when no custom cursor assets are found" do
+    with_test_window do
+      cursor_manager = PointClickEngine::UI::CursorManager.new
+      cursor_manager.configure(
+        asset_base_dir: Dir.current,
+        cursor_root: "spec/fixtures/does_not_exist"
+      )
+
+      cursor_manager.custom_cursor_available?.should be_false
+    end
+  end
 end
 
 # Mock classes for testing

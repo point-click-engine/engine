@@ -10,7 +10,7 @@ module PointClickEngine
       include IPerformanceMonitor
 
       @timings : Hash(String, Float32) = {} of String => Float32
-      @start_times : Hash(String, Time::Span) = {} of String => Time::Span
+      @start_times : Hash(String, Time::Instant) = {} of String => Time::Instant
       @metrics : Hash(String, Float32) = {} of String => Float32
       @enabled : Bool = true
 
@@ -20,7 +20,7 @@ module PointClickEngine
 
       def start_timing(category : String)
         return unless @enabled
-        @start_times[category] = Time.monotonic
+        @start_times[category] = Time.instant
       end
 
       def end_timing(category : String)
@@ -29,7 +29,7 @@ module PointClickEngine
         start_time = @start_times[category]?
         return unless start_time
 
-        elapsed = (Time.monotonic - start_time).total_milliseconds.to_f32
+        elapsed = (Time.instant - start_time).total_milliseconds.to_f32
         @timings[category] = elapsed
         @start_times.delete(category)
 

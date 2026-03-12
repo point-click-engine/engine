@@ -6,7 +6,9 @@
 
 require "./error_handling"
 require "./interfaces"
+require "./events/events"
 require "../scenes/scene"
+require "../graphics/effects/scene_effects/transition_effect"
 
 module PointClickEngine
   module Core
@@ -31,6 +33,21 @@ module PointClickEngine
     # manager.change_scene("main_menu")
     # ```
     class SceneManager
+      struct ActivationOptions
+        property force_reload : Bool = false
+        property call_enter : Bool = true
+        property load_script : Bool = true
+        property load_actions : Bool = true
+        property publish_events : Bool = true
+
+        def initialize(@force_reload : Bool = false,
+                       @call_enter : Bool = true,
+                       @load_script : Bool = true,
+                       @load_actions : Bool = true,
+                       @publish_events : Bool = true)
+        end
+      end
+
       include Core::GameConstants
       include ISceneManager
 
@@ -52,6 +69,9 @@ module PointClickEngine
       # Scene exit callbacks (called when scene becomes inactive)
       getter scene_exit_callbacks : Hash(String, Array(Proc(Nil))) = {} of String => Array(Proc(Nil))
 
+      # Action sequence registry (for global sequences loaded from game config)
+      getter sequences : Hash(String, Actions::ActionRunner) = {} of String => Actions::ActionRunner
+
       # Cache for preloaded scenes
       @scene_cache : Hash(String, Scenes::Scene) = {} of String => Scenes::Scene
 
@@ -61,7 +81,17 @@ module PointClickEngine
       # Track scene load times for performance monitoring
       @scene_load_times : Hash(String, Time::Span) = {} of String => Time::Span
 
-      def initialize
+      # Reference to engine for effect manager access
+      @engine : Engine?
+
+      # Optional EventBus for publishing scene events
+      property event_bus : Events::EventBus?
+      property log_activation_diagnostics : Bool = false
+
+      def initialize(@engine : Engine? = nil)
+      end
+
+      def initialize(@engine : Engine?, @event_bus : Events::EventBus?)
       end
 
       # Add a scene to the manager
@@ -121,23 +151,39 @@ module PointClickEngine
       # - *force_reload* : Whether to reload from disk even if cached
       #
       # Returns a Result with the activated scene or an error
-      def change_scene(name : String) : Result(Scenes::Scene, SceneError)
-        change_scene_with_reload(name, false)
+      def change_scene(name : String, activation_options : ActivationOptions = ActivationOptions.new) : Result(Scenes::Scene, SceneError)
+        activate_scene(name, activation_options)
       end
 
       def change_scene_with_reload(name : String, force_reload : Bool = false) : Result(Scenes::Scene, SceneError)
+        activate_scene(name, ActivationOptions.new(force_reload: force_reload))
+      end
+
+      private def activate_scene(name : String, activation_options : ActivationOptions) : Result(Scenes::Scene, SceneError)
         # Validate scene exists
         unless @scenes.has_key?(name)
           return Result(Scenes::Scene, SceneError).failure(SceneError.new("Scene not found: #{name}", name))
         end
 
+        previous_scene_name = @current_scene.try(&.name)
+        log_activation("activate_scene:start", name, activation_options, previous_scene_name)
+
+        # Publish transition start event
+        if activation_options.publish_events && (bus = @event_bus)
+          bus.publish(Events::SceneTransitionStartEvent.new(name, previous_scene_name))
+        end
+
         # Execute exit callbacks for current scene
         if current = @current_scene
           execute_scene_exit_callbacks(current)
+          # Publish scene exited event
+          if activation_options.publish_events && (bus = @event_bus)
+            bus.publish(Events::SceneExitedEvent.new(current.name))
+          end
         end
 
         # Load scene from cache or create new instance
-        target_scene = if force_reload
+        target_scene = if activation_options.force_reload
                          @scene_cache.delete(name)
                          @scenes[name].dup
                        else
@@ -149,15 +195,112 @@ module PointClickEngine
 
         # Activate new scene
         @current_scene = target_scene
-        target_scene.enter
+        target_scene.enter if activation_options.call_enter
 
         # Execute enter callbacks
-        execute_scene_enter_callbacks(target_scene)
+        execute_scene_enter_callbacks(target_scene) if activation_options.call_enter
+
+        # Load scene script BEFORE publishing event (so handlers are registered)
+        if activation_options.load_script && (engine = @engine)
+          target_scene.load_script(engine)
+        end
+
+        # Auto-play scene actions if defined
+        target_scene.load_actions if activation_options.load_actions
+
+        # Publish scene entered event
+        if activation_options.publish_events && (bus = @event_bus)
+          bus.publish(Events::SceneEnteredEvent.new(name, previous_scene_name))
+        end
 
         # Track performance
-        @scene_load_times[name] = Time.monotonic - Time.monotonic
+        @scene_load_times[name] = Time::Span.zero
+        log_activation("activate_scene:complete", name, activation_options, previous_scene_name)
 
         Result(Scenes::Scene, SceneError).success(target_scene)
+      end
+
+      # Change scene with a transition effect
+      #
+      # Performs a scene change with a visual transition effect. The transition
+      # will play, changing the scene at the midpoint of the effect.
+      #
+      # - *name* : Name of the scene to transition to
+      # - *transition_type* : Type of transition effect (fade, dissolve, slide_left, etc.)
+      # - *duration* : Duration of the transition in seconds
+      # - *player_position* : Optional position to place the player in the new scene
+      #
+      # Returns a Result with success or error
+      def change_scene_with_transition(name : String, transition_type : String = "fade",
+                                       duration : Float32 = 1.0f32,
+                                       player_position : RL::Vector2? = nil,
+                                       activation_options : ActivationOptions = ActivationOptions.new) : Result(Nil, SceneError)
+        duration = 1.0f32 if duration <= 0
+
+        # Validate scene exists
+        unless @scenes.has_key?(name)
+          return Result(Nil, SceneError).failure(SceneError.new("Scene not found: #{name}", name))
+        end
+
+        # Get engine reference
+        engine = @engine
+        unless engine
+          # If no engine reference, fall back to regular scene change
+          change_scene(name)
+          return Result(Nil, SceneError).success(nil)
+        end
+
+        # Parse transition type
+        transition_type_enum = case transition_type.downcase
+                               when "fade"         then Graphics::Effects::SceneEffects::TransitionType::Fade
+                               when "dissolve"     then Graphics::Effects::SceneEffects::TransitionType::Dissolve
+                               when "slide_left"   then Graphics::Effects::SceneEffects::TransitionType::SlideLeft
+                               when "slide_right"  then Graphics::Effects::SceneEffects::TransitionType::SlideRight
+                               when "slide_up"     then Graphics::Effects::SceneEffects::TransitionType::SlideUp
+                               when "slide_down"   then Graphics::Effects::SceneEffects::TransitionType::SlideDown
+                               when "iris"         then Graphics::Effects::SceneEffects::TransitionType::Iris
+                               when "swirl"        then Graphics::Effects::SceneEffects::TransitionType::Swirl
+                               when "star_wipe"    then Graphics::Effects::SceneEffects::TransitionType::StarWipe
+                               when "heart_wipe"   then Graphics::Effects::SceneEffects::TransitionType::HeartWipe
+                               when "curtain"      then Graphics::Effects::SceneEffects::TransitionType::Curtain
+                               when "checkerboard" then Graphics::Effects::SceneEffects::TransitionType::Checkerboard
+                               when "clock_wipe"   then Graphics::Effects::SceneEffects::TransitionType::ClockWipe
+                               when "barn_door"    then Graphics::Effects::SceneEffects::TransitionType::BarnDoor
+                               else                     Graphics::Effects::SceneEffects::TransitionType::Fade
+                               end
+
+        # Create transition effect with midpoint callback for scene change
+        transition = Graphics::Effects::SceneEffects::TransitionEffect.new(transition_type_enum, duration)
+
+        # Set up the midpoint callback to change the scene
+        transition.on_midpoint do
+          puts "[SceneManager] Transition midpoint callback triggered for scene: #{name}"
+          log_activation("transition:midpoint", name, activation_options, @current_scene.try(&.name))
+          # Use the engine's change_scene method to ensure proper synchronization
+          engine.change_scene(name, activation_options)
+
+          # Set player position if provided
+          if player_position && (player = engine.player)
+            puts "[SceneManager] Setting player position to: #{player_position}"
+            player.position = player_position
+          end
+        end
+
+        # Apply the transition effect through the engine's effect manager
+        engine.effect_manager.add_scene_effect(transition)
+
+        Result(Nil, SceneError).success(nil)
+      end
+
+      private def log_activation(phase : String, scene_name : String,
+                                 activation_options : ActivationOptions,
+                                 previous_scene_name : String?)
+        return unless @log_activation_diagnostics || Engine.debug_mode
+
+        puts "[SceneManager] #{phase} scene=#{scene_name} previous=#{previous_scene_name || "none"} " \
+             "enter=#{activation_options.call_enter} script=#{activation_options.load_script} " \
+             "actions=#{activation_options.load_actions} events=#{activation_options.publish_events} " \
+             "reload=#{activation_options.force_reload}"
       end
 
       # Preload a scene without activating it
@@ -205,7 +348,7 @@ module PointClickEngine
 
         # Reload if it's the current scene
         if @current_scene.try(&.name) == name
-          change_scene(name, force_reload: true)
+          change_scene(name, ActivationOptions.new(force_reload: true))
         end
 
         Result(Scenes::Scene, SceneError).success(original_scene)
@@ -309,6 +452,28 @@ module PointClickEngine
       def max_cache_size=(size : Int32)
         @max_cache_size = size
         trim_cache_if_needed
+      end
+
+      # Register an action sequence (for global sequences)
+      #
+      # - *name* : Name of the sequence
+      # - *runner* : The ActionRunner instance
+      def register_sequence(name : String, runner : Actions::ActionRunner)
+        @sequences[name] = runner
+      end
+
+      # Get a registered action sequence
+      #
+      # - *name* : Name of the sequence to retrieve
+      def get_sequence(name : String) : Actions::ActionRunner?
+        @sequences[name]?
+      end
+
+      # Check if a sequence exists
+      #
+      # - *name* : Name of the sequence to check
+      def has_sequence?(name : String) : Bool
+        @sequences.has_key?(name)
       end
 
       # Validate a scene before adding

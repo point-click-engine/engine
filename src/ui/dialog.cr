@@ -328,17 +328,10 @@ module PointClickEngine
             hide
           end
         else
-          raw_mouse = RL.get_mouse_position
-
-          # Convert screen coordinates to game coordinates if display manager exists
-          mouse_pos = if engine = Core::Engine.instance
-                        if dm = engine.display_manager
-                          dm.screen_to_game(raw_mouse)
-                        else
-                          raw_mouse
-                        end
+          mouse_pos = if engine = Core::Engine.instance?
+                        engine.transformed_mouse_position
                       else
-                        raw_mouse
+                        RL.get_mouse_position
                       end
 
           if Core::InputState.consume_mouse_click
@@ -373,9 +366,16 @@ module PointClickEngine
 
         if !@choices.empty?
           base_choice_y = @position.y + @size.y - (@choices.size * 30) - @padding
+
+          # Convert screen coordinates to game coordinates for hover detection
+          mouse_pos = if engine = Core::Engine.instance?
+                        engine.transformed_mouse_position
+                      else
+                        RL.get_mouse_position
+                      end
+
           @choices.each_with_index do |choice, index|
             choice_rect = get_choice_rect(index, base_choice_y)
-            mouse_pos = RL.get_mouse_position
             color = RL.check_collision_point_rec?(mouse_pos, choice_rect) ? RL::YELLOW : RL::WHITE
             RL.draw_text("> #{choice.text}", choice_rect.x.to_i, choice_rect.y.to_i, @font_size, color)
           end

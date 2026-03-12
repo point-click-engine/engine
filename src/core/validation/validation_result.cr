@@ -1,12 +1,12 @@
 module PointClickEngine
   module Core
     module Validation
-      # Comprehensive result structure for validation operations
+      # Comprehensive result class for validation operations
       #
-      # The ValidationResult struct provides a standardized way to collect
+      # The ValidationResult class provides a standardized way to collect
       # and report validation outcomes across different validation components.
       # It supports multiple severity levels and different types of feedback.
-      struct ValidationResult
+      class ValidationResult
         # Overall validation status
         property passed : Bool = true
 

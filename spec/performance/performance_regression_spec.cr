@@ -7,7 +7,7 @@ pending describe "Performance Regression Detection" do
     it "scene creation performance meets benchmarks" do
       # Baseline performance measurement
       scene_count = 1000
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       # Measure scene creation time
       scenes = [] of PointClickEngine::Scenes::Scene
@@ -16,7 +16,7 @@ pending describe "Performance Regression Detection" do
         scenes << scene
       end
 
-      creation_time = Time.monotonic - start_time
+      creation_time = Time.instant - start_time
       creation_time_per_scene = creation_time.total_milliseconds / scene_count
 
       puts "Scene creation performance:"
@@ -37,7 +37,7 @@ pending describe "Performance Regression Detection" do
       hotspot_count = 5000
 
       # Measure hotspot creation time
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       hotspot_count.times do |i|
         hotspot = PointClickEngine::Scenes::Hotspot.new(
@@ -48,7 +48,7 @@ pending describe "Performance Regression Detection" do
         scene.hotspots << hotspot
       end
 
-      creation_time = Time.monotonic - start_time
+      creation_time = Time.instant - start_time
       creation_time_per_hotspot = creation_time.total_milliseconds / hotspot_count
 
       puts "Hotspot creation performance:"
@@ -60,7 +60,7 @@ pending describe "Performance Regression Detection" do
       creation_time_per_hotspot.should be < 0.05 # 0.05ms per hotspot
 
       # Test hotspot access performance
-      access_start = Time.monotonic
+      access_start = Time.instant
 
       # Access each hotspot and verify properties
       scene.hotspots.each_with_index do |hotspot, i|
@@ -69,7 +69,7 @@ pending describe "Performance Regression Detection" do
         hotspot.position.y.should be >= 0
       end
 
-      access_time = Time.monotonic - access_start
+      access_time = Time.instant - access_start
       access_time_per_hotspot = access_time.total_milliseconds / hotspot_count
 
       puts "Hotspot access performance:"
@@ -85,7 +85,7 @@ pending describe "Performance Regression Detection" do
       operation_count = 10000
 
       # Measure state variable creation performance
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       operation_count.times do |i|
         case i % 4
@@ -100,7 +100,7 @@ pending describe "Performance Regression Detection" do
         end
       end
 
-      creation_time = Time.monotonic - start_time
+      creation_time = Time.instant - start_time
       creation_time_per_op = creation_time.total_milliseconds / operation_count
 
       puts "State variable creation performance:"
@@ -111,7 +111,7 @@ pending describe "Performance Regression Detection" do
       creation_time_per_op.should be < 0.01 # 0.01ms per operation
 
       # Measure state variable access performance
-      access_start = Time.monotonic
+      access_start = Time.instant
 
       # Access and type-check each state variable
       state_vars.each do |key, value|
@@ -127,7 +127,7 @@ pending describe "Performance Regression Detection" do
         end
       end
 
-      access_time = Time.monotonic - access_start
+      access_time = Time.instant - access_start
       access_time_per_var = access_time.total_milliseconds / state_vars.size
 
       puts "State variable access performance:"
@@ -144,7 +144,7 @@ pending describe "Performance Regression Detection" do
       objects_per_cycle = 100
 
       # Measure allocation performance
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       allocation_cycles.times do |cycle|
         # Create temporary objects
@@ -165,7 +165,7 @@ pending describe "Performance Regression Detection" do
         # Objects go out of scope here
       end
 
-      allocation_time = Time.monotonic - start_time
+      allocation_time = Time.instant - start_time
       total_objects = allocation_cycles * objects_per_cycle
       time_per_allocation = allocation_time.total_milliseconds / total_objects
 
@@ -177,9 +177,9 @@ pending describe "Performance Regression Detection" do
       time_per_allocation.should be < 0.02 # 0.02ms per allocation
 
       # Force garbage collection and measure time
-      gc_start = Time.monotonic
+      gc_start = Time.instant
       GC.collect
-      gc_time = Time.monotonic - gc_start
+      gc_time = Time.instant - gc_start
 
       puts "Garbage collection performance:"
       puts "  GC time: #{gc_time.total_milliseconds.round(2)}ms"
@@ -195,7 +195,7 @@ pending describe "Performance Regression Detection" do
       hotspots = [] of PointClickEngine::Scenes::Hotspot
 
       # Measure array append performance
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       array_size.times do |i|
         hotspot = PointClickEngine::Scenes::Hotspot.new(
@@ -206,7 +206,7 @@ pending describe "Performance Regression Detection" do
         hotspots << hotspot
       end
 
-      append_time = Time.monotonic - start_time
+      append_time = Time.instant - start_time
       append_time_per_item = append_time.total_milliseconds / array_size
 
       puts "Array append performance:"
@@ -217,14 +217,14 @@ pending describe "Performance Regression Detection" do
       append_time_per_item.should be < 0.005 # 0.005ms per append
 
       # Measure array iteration performance
-      iteration_start = Time.monotonic
+      iteration_start = Time.instant
 
       count = 0
       hotspots.each do |hotspot|
         count += 1 if hotspot.name.includes?("array_perf")
       end
 
-      iteration_time = Time.monotonic - iteration_start
+      iteration_time = Time.instant - iteration_start
       iteration_time_per_item = iteration_time.total_milliseconds / array_size
 
       puts "Array iteration performance:"
@@ -240,7 +240,7 @@ pending describe "Performance Regression Detection" do
       scenes = {} of String => PointClickEngine::Scenes::Scene
 
       # Measure hash insertion performance
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       hash_size.times do |i|
         key = "hash_perf_#{i}"
@@ -248,7 +248,7 @@ pending describe "Performance Regression Detection" do
         scenes[key] = scene
       end
 
-      insertion_time = Time.monotonic - start_time
+      insertion_time = Time.instant - start_time
       insertion_time_per_item = insertion_time.total_milliseconds / hash_size
 
       puts "Hash insertion performance:"
@@ -259,7 +259,7 @@ pending describe "Performance Regression Detection" do
       insertion_time_per_item.should be < 0.01 # 0.01ms per insertion
 
       # Measure hash lookup performance
-      lookup_start = Time.monotonic
+      lookup_start = Time.instant
 
       found_count = 0
       hash_size.times do |i|
@@ -270,7 +270,7 @@ pending describe "Performance Regression Detection" do
         end
       end
 
-      lookup_time = Time.monotonic - lookup_start
+      lookup_time = Time.instant - lookup_start
       lookup_time_per_item = lookup_time.total_milliseconds / hash_size
 
       puts "Hash lookup performance:"
@@ -285,7 +285,7 @@ pending describe "Performance Regression Detection" do
   describe "comprehensive performance baseline" do
     it "establishes performance baseline for complex operations" do
       # This test combines multiple operations to establish a comprehensive baseline
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       # Create scene with complex structure
       main_scene = PointClickEngine::Scenes::Scene.new("comprehensive_perf_test")
@@ -340,7 +340,7 @@ pending describe "Performance Regression Detection" do
         end
       end
 
-      total_time = Time.monotonic - start_time
+      total_time = Time.instant - start_time
       time_per_operation = total_time.total_milliseconds / operations
 
       puts "Comprehensive performance baseline:"

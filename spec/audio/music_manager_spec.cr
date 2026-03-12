@@ -138,15 +138,15 @@ describe PointClickEngine::Audio::MusicManager do
     it "updates music volume" do
       manager = PointClickEngine::Audio::MusicManager.new
 
-      manager.set_volume(0.7)
-      manager.music_volume.should eq(0.7)
+      manager.set_volume(0.7_f32)
+      manager.music_volume.should eq(0.7_f32)
 
       # Test clamping
-      manager.set_volume(1.5)
-      manager.music_volume.should eq(1.0)
+      manager.set_volume(1.5_f32)
+      manager.music_volume.should eq(1.0_f32)
 
-      manager.set_volume(-0.5)
-      manager.music_volume.should eq(0.0)
+      manager.set_volume(-0.5_f32)
+      manager.music_volume.should eq(0.0_f32)
     end
   end
 

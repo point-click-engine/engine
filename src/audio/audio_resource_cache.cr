@@ -40,9 +40,12 @@ module PointClickEngine
 
       # Mark resource as accessed
       def access_resource(name : String) : Nil
-        if info = @resource_info[name]?
+        if @resource_info.has_key?(name)
+          # Must update directly in hash since ResourceInfo is a struct (value type)
+          info = @resource_info[name]
           info.last_accessed = Time.local
           info.access_count += 1
+          @resource_info[name] = info
           @cache_hits += 1
         else
           @cache_misses += 1

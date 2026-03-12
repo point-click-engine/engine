@@ -366,19 +366,21 @@ items: Hash(String, Item)
     combine_effects: Hash(String, Array(Effect))? # Per target item
 ```
 
-## Cutscene Format (lines 582-652)
+## Action Sequence Format
 
-Cutscene files define scripted sequences.
+Sequence files define scripted scene actions.
 
 ```yaml
-id: String                  # Unique cutscene ID
-name: String                # Display name
-skippable: Bool?            # Can player skip
+name: String
+description: String?
+skippable: Bool?
+auto_advance: Bool?
+version: Int32?
 
-# Cutscene actions in sequence
+# Main action list
 actions: Array(Action)
   - type: String            # Action type
-    duration: Float32?      # Action duration
+    duration: Float32?      # Optional blocking duration
     
     # Action types:
     
@@ -409,30 +411,32 @@ actions: Array(Action)
     volume: Float32?        # Volume (0-1)
     
     # "play_music"
-    music: String           # Music name
+    track: String           # Music name
     loop: Bool?             # Loop music
     
     # "change_scene"
-    scene: String           # Target scene
+    target: String          # Target scene
     transition: String?     # Transition type
     
-    # "show_dialog"
-    speaker: String         # Character name
+    # "dialog" / "floating_dialog"
+    character: String       # Character name
     text: String            # Dialog text
-    
-    # "set_flag" / "set_variable"
-    name: String            # Flag/variable name
-    value: Any              # Value to set
-    
-    # "conditional"
-    conditions: Condition   # Conditions to check
-    if_true: Array(Action)  # Actions if true
-    if_false: Array(Action)? # Actions if false
     
     # "parallel"
     actions: Array(Action)  # Actions to run simultaneously
 
-# Cutscene end effects
-on_complete: Array(Effect)? # Effects when cutscene ends
-on_skip: Array(Effect)?     # Effects when cutscene is skipped
+# Optional reusable variables for `$variable` substitution
+variables: Hash(String, Any)?
+
+# Optional checkpoints for skip/resume
+checkpoints:
+  - name: String
+    time: Float32
+
+# Optional conditional blocks
+conditions:
+  - name: String
+    check: String
+    actions: Array(Action)?
+    skip_to: String?
 ```

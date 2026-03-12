@@ -3,7 +3,7 @@ require "../spec_helper"
 describe "Coordinate System Consistency" do
   describe "Screen vs Game Coordinate Usage" do
     it "identifies UI components that incorrectly use screen coordinates" do
-      RL.init_window(800, 600, "Coordinate Audit Test")
+      RaylibContext.ensure_window(800, 600, "Coordinate Audit Test")
 
       # Create engine with different game resolution than screen resolution
       engine = PointClickEngine::Core::Engine.new(1024, 768, "Coordinate Audit")
@@ -24,12 +24,10 @@ describe "Coordinate System Consistency" do
       # NOTE: This test documents the potential coordinate system issue
       # FloatingText.calculate_position uses RL.get_screen_width/height
       # which should probably use game dimensions instead
-
-      RL.close_window
     end
 
     it "ensures dialog positioning works correctly across different screen/game ratios" do
-      RL.init_window(1200, 800, "Dialog Positioning Test")
+      RaylibContext.ensure_window(1200, 800, "Dialog Positioning Test")
 
       # Test with game resolution different from screen
       engine = PointClickEngine::Core::Engine.new(1024, 768, "Dialog Position Test")
@@ -53,12 +51,10 @@ describe "Coordinate System Consistency" do
         dialog = dialog_manager.floating_manager.active_dialogs[0]
         dialog.character_position.should eq(game_position)
       end
-
-      RL.close_window
     end
 
     it "verifies display manager coordinate transformations" do
-      RL.init_window(800, 600, "Display Manager Test")
+      RaylibContext.ensure_window(800, 600, "Display Manager Test")
 
       engine = PointClickEngine::Core::Engine.new(1024, 768, "Display Test")
       engine.init
@@ -81,14 +77,12 @@ describe "Coordinate System Consistency" do
       back_to_screen = display_manager.game_to_screen(game_point)
       back_to_screen.x.should be_close(screen_point.x, 1f32)
       back_to_screen.y.should be_close(screen_point.y, 1f32)
-
-      RL.close_window
     end
   end
 
   describe "Render Layer Coordination" do
     it "ensures UI components render in correct layers" do
-      RL.init_window(800, 600, "Render Layer Test")
+      RaylibContext.ensure_window(800, 600, "Render Layer Test")
 
       engine = PointClickEngine::Core::Engine.new(800, 600, "Layer Test")
       engine.init
@@ -109,8 +103,6 @@ describe "Coordinate System Consistency" do
       # This test ensures render layers are properly coordinated
       render_stats = engine.render_manager.get_render_stats
       render_stats.should_not be_nil
-
-      RL.close_window
     end
   end
 end

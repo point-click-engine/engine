@@ -102,8 +102,9 @@ module PointClickEngine
       end
 
       # Convert from velocity vector to direction
+      # Favors horizontal direction when velocities are equal
       def self.from_velocity(velocity : RL::Vector2) : Direction
-        if velocity.x.abs > velocity.y.abs
+        if velocity.x.abs >= velocity.y.abs
           velocity.x > 0 ? Direction::Right : Direction::Left
         else
           velocity.y > 0 ? Direction::Down : Direction::Up

@@ -6,10 +6,12 @@ require "./sound_effect_manager"
 require "./music_manager"
 require "./volume_controller"
 require "./audio_resource_cache"
+require "../core/events/events"
 
 module PointClickEngine
   module Audio
     # Check if audio is available
+    # Always returns true since raylib audio is always available
     def self.available?
       true
     end
@@ -37,15 +39,13 @@ module PointClickEngine
         end
       end
 
-      def finalize
+      # Explicit cleanup - do NOT use finalizer as it causes GC deadlocks with Raylib
+      def cleanup
         if sound = @sound
-          begin
-            if sound.frame_count > 0
-              RAudio.unload_sound(sound)
-            end
-          rescue ex
-            # Ignore errors during finalization
+          if sound.frame_count > 0
+            RAudio.unload_sound(sound)
           end
+          @sound = nil
         end
       end
     end
@@ -96,15 +96,13 @@ module PointClickEngine
         end
       end
 
-      def finalize
+      # Explicit cleanup - do NOT use finalizer as it causes GC deadlocks with Raylib
+      def cleanup
         if music = @music
-          begin
-            if music.frame_count > 0
-              RAudio.unload_music_stream(music)
-            end
-          rescue ex
-            # Ignore errors during finalization
+          if music.frame_count > 0
+            RAudio.unload_music_stream(music)
           end
+          @music = nil
         end
       end
     end
@@ -116,6 +114,9 @@ module PointClickEngine
       getter music_manager : MusicManager
       getter volume_controller : VolumeController
       getter resource_cache : AudioResourceCache
+
+      # Optional EventBus for publishing audio events
+      property event_bus : Core::Events::EventBus?
 
       # Legacy property mappings for compatibility
       delegate master_volume, to: @volume_controller
@@ -180,6 +181,11 @@ module PointClickEngine
 
         @resource_cache.access_resource(name)
         @sound_effect_manager.play_sound(name, @volume_controller.effective_sfx_volume)
+
+        # Publish event
+        if bus = @event_bus
+          bus.publish(Core::Events::SoundPlayedEvent.new(name, @volume_controller.effective_sfx_volume))
+        end
       end
 
       def play_sound_at(name : String, position : RL::Vector2, listener_pos : RL::Vector2, max_distance : Float32 = 500.0)
@@ -205,6 +211,11 @@ module PointClickEngine
 
         @resource_cache.access_resource("music_#{name}")
         @music_manager.play_music(name, loop)
+
+        # Publish event
+        if bus = @event_bus
+          bus.publish(Core::Events::MusicStartedEvent.new(name, loop))
+        end
       end
 
       def crossfade_to(name : String, duration : Float32 = 2.0, loop : Bool = true)
@@ -215,7 +226,14 @@ module PointClickEngine
       end
 
       def stop_music
+        # Get current music name before stopping
+        current_name = @music_manager.current_music.try(&.name)
         @music_manager.stop_music
+
+        # Publish event
+        if current_name && (bus = @event_bus)
+          bus.publish(Core::Events::MusicStoppedEvent.new(current_name))
+        end
       end
 
       def pause_music
@@ -229,14 +247,19 @@ module PointClickEngine
       # Volume control methods
       def set_master_volume(volume : Float32)
         @volume_controller.set_master_volume(volume)
+        # Update internal components
+        @music_manager.set_volume(@volume_controller.effective_music_volume)
+        @sound_effect_manager.update_volume(@volume_controller.effective_sfx_volume)
       end
 
       def set_music_volume(volume : Float32)
         @volume_controller.set_music_volume(volume)
+        @music_manager.set_volume(@volume_controller.effective_music_volume)
       end
 
       def set_sfx_volume(volume : Float32)
         @volume_controller.set_sfx_volume(volume)
+        @sound_effect_manager.update_volume(@volume_controller.effective_sfx_volume)
       end
 
       def toggle_mute
@@ -273,7 +296,7 @@ module PointClickEngine
 
       def clear_cache
         @sound_effect_manager.clear_cache
-        @music_manager.finalize
+        @music_manager.cleanup
         @resource_cache = AudioResourceCache.new
       end
 
@@ -300,26 +323,17 @@ module PointClickEngine
         @volume_controller.from_settings(settings)
       end
 
-      def finalize
-        begin
-          @sound_effect_manager.finalize
-          @music_manager.finalize
-
-          RAudio.close_audio_device
-        rescue ex
-          # Ignore errors during finalization
-        end
+      # Explicit cleanup - do NOT use finalizer as it causes GC deadlocks with Raylib
+      def cleanup
+        @sound_effect_manager.cleanup
+        @music_manager.cleanup
+        RAudio.close_audio_device
       end
 
       private def setup_volume_callbacks
-        @volume_controller.on_volume_change do |type, volume|
-          case type
-          when :music
-            @music_manager.set_volume(volume)
-          when :sfx
-            @sound_effect_manager.update_volume(volume)
-          end
-        end
+        # Volume controller now uses EventBus for notifications
+        # We subscribe to volume changes via our own event_bus if set
+        # For internal component updates, we handle this in update() or when volumes are set
       end
 
       private def evict_least_used_resources

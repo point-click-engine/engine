@@ -1,6 +1,12 @@
 require "../spec_helper"
 
+HEADLESS_ACHIEVEMENT_SAVE_FILE = "tmp/simple_headless_achievements.yaml"
+
 describe "Engine Headless Tests" do
+  after_each do
+    File.delete(HEADLESS_ACHIEVEMENT_SAVE_FILE) if File.exists?(HEADLESS_ACHIEVEMENT_SAVE_FILE)
+  end
+
   describe "Basic Engine Creation" do
     it "can create an engine without Raylib window" do
       # Test that we can at least create the engine components
@@ -19,7 +25,7 @@ describe "Engine Headless Tests" do
       gui_manager = PointClickEngine::UI::GUIManager.new
       gui_manager.should_not be_nil
 
-      achievement_manager = PointClickEngine::Core::AchievementManager.new
+      achievement_manager = PointClickEngine::Core::AchievementManager.new(HEADLESS_ACHIEVEMENT_SAVE_FILE)
       achievement_manager.should_not be_nil
     end
   end
@@ -43,7 +49,7 @@ describe "Engine Headless Tests" do
 
   describe "Achievement System Tests" do
     it "unlocks achievements" do
-      am = PointClickEngine::Core::AchievementManager.new
+      am = PointClickEngine::Core::AchievementManager.new(HEADLESS_ACHIEVEMENT_SAVE_FILE)
 
       # Register achievement
       am.register("test", "Test Achievement", "Description")

@@ -2,8 +2,12 @@
 
 require "../../scenes/scene"
 require "../../ui/dialog"
-require "../../cutscenes/cutscene_manager"
-require "../../graphics/camera"
+require "../../actions/action_overlay_manager"
+require "../../graphics/graphics"
+require "../../graphics/effects/scene_effects/shader/fog_shader"
+require "../../graphics/effects/scene_effects/shader/rain_shader"
+require "../../graphics/effects/scene_effects/shader/darkness_shader"
+require "../../graphics/effects/scene_effects/shader/underwater_shader"
 
 module PointClickEngine
   module Core
@@ -21,23 +25,21 @@ module PointClickEngine
         # Main rendering method
         def render(scene : Scenes::Scene?,
                    dialogs : Array(UI::Dialog),
-                   cutscene_manager : Cutscenes::CutsceneManager,
-                   transition_manager : Graphics::TransitionManager?,
-                   camera : Graphics::Camera? = nil)
+                   overlay_manager : Actions::ActionOverlayManager,
+                   transition_effect : Graphics::TransitionSceneEffect?,
+                   camera : Graphics::Core::Camera? = nil)
           # Get display manager from engine
           if engine = Engine.instance
             if display_manager = engine.display_manager
               # Begin rendering to game render texture
               display_manager.begin_game_rendering
 
-              # Use transition manager if available and active
-              if transition_manager && transition_manager.transitioning?
-                puts "[RenderCoordinator] Rendering with transition"
-                transition_manager.render_with_transition do
-                  render_scene_content(scene, dialogs, cutscene_manager, camera)
-                end
+              # Apply transition effect if available and active
+              if transition_effect && !transition_effect.finished?
+                # For now, just render normally - transition effects are applied at layer level
+                render_scene_content(scene, dialogs, overlay_manager, camera)
               else
-                render_scene_content(scene, dialogs, cutscene_manager, camera)
+                render_scene_content(scene, dialogs, overlay_manager, camera)
               end
 
               # End game rendering
@@ -50,7 +52,7 @@ module PointClickEngine
               render_ui_overlay if @ui_visible
             else
               # Fallback if no display manager
-              render_scene_content(scene, dialogs, cutscene_manager, camera)
+              render_scene_content(scene, dialogs, overlay_manager, camera)
               render_ui_overlay if @ui_visible
             end
           end
@@ -59,19 +61,47 @@ module PointClickEngine
         # Render scene and game content
         private def render_scene_content(scene : Scenes::Scene?,
                                          dialogs : Array(UI::Dialog),
-                                         cutscene_manager : Cutscenes::CutsceneManager,
-                                         camera : Graphics::Camera? = nil)
+                                         overlay_manager : Actions::ActionOverlayManager,
+                                         camera : Graphics::Core::Camera? = nil)
           # Clear background
           RL.clear_background(RL::BLACK)
 
-          # Render current scene
-          scene.try(&.draw(camera))
+          # Get effect manager from engine
+          effect_manager = if engine = Engine.instance?
+            engine.effect_manager
+          end
+
+          # Check for active shader effects in effect manager
+          shader_effect = effect_manager.try do |em|
+            # Debug: print all scene effects
+            if Core::Engine.debug_mode && !em.scene_effects.empty?
+              puts "[RenderCoordinator] Scene effects in effect manager: #{em.scene_effects.map(&.class.name).join(", ")}"
+            end
+
+            # Find first shader effect that can render
+            em.scene_effects.find { |effect| effect.responds_to?(:render_scene_with_effect) }
+          end
+
+          if shader_effect && shader_effect.responds_to?(:render_scene_with_effect)
+            # Debug output
+            if Core::Engine.debug_mode
+              puts "[RenderCoordinator] Rendering with shader effect: #{shader_effect.class.name}"
+            end
+
+            # Render scene with shader effect
+            shader_effect.render_scene_with_effect do
+              scene.try(&.draw(camera))
+            end
+          else
+            # Render current scene normally
+            scene.try(&.draw(camera))
+          end
 
           # Render highlighted hotspots if enabled
           render_highlighted_hotspots(scene) if @hotspot_highlight_enabled && scene
 
-          # Render cutscenes
-          cutscene_manager.draw
+          # Render action sequence overlays
+          overlay_manager.draw
 
           # Render dialogs
           dialogs.each(&.draw)

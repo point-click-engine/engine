@@ -2,7 +2,7 @@ name: butler
 nodes:
   greeting:
     id: greeting
-    text: "Good evening, Detective. I trust you are finding the mansion... accommodating?"
+    text: "Good evening, Detective. I trust you are finding the mansion... accommodating? These old walls hold many secrets, but I endeavor to keep everything in order."
     character_name: butler
     actions: ["camera.sway(15.0, 14.0)"]
     choices:
@@ -12,10 +12,370 @@ nodes:
         target_node_id: nervous_observation
       - text: "Tell me about your duties here."
         target_node_id: duties_question
+      - text: "How long have you worked here?"
+        target_node_id: service_length
+
+  service_length:
+    id: service_length
+    text: "Twenty years this autumn, Detective. I was hired by the previous Professor Ashworth - the current one's grandfather. I've watched three generations of this family pursue their... obsession with that crystal."
+    character_name: butler
+    flags:
+      set: ["butler_service_revealed"]
+    choices:
+      - text: "You call it an obsession?"
+        target_node_id: obsession_comment
+      - text: "You knew the grandfather?"
+        target_node_id: grandfather_knowledge
+      - text: "Tell me about the crystal."
+        target_node_id: crystal_inquiry
+
+  obsession_comment:
+    id: obsession_comment
+    text: "Forgive me, Detective. Perhaps that was too strong a word. The Ashworths have always been... dedicated to their research. Though some might say the crystal has a hold on them as much as they have a hold on it."
+    character_name: butler
+    choices:
+      - text: "What do you mean, a hold on them?"
+        target_node_id: crystal_influence
+      - text: "Has it affected you too?"
+        target_node_id: personal_effect
+      - text: "Tell me about the theft."
+        target_node_id: crystal_inquiry
+
+  crystal_influence:
+    id: crystal_influence
+    text: "I've seen what it does to people, Detective. The grandfather spent every waking hour studying it. Barely ate. Barely slept. And when he passed... they found him still reaching for it. The current professor is following the same path."
+    character_name: butler
+    flags:
+      set: ["butler_crystal_warning"]
+    choices:
+      - text: "You're worried about the professor?"
+        target_node_id: professor_concern
+      - text: "Maybe someone stole it to protect him."
+        target_node_id: protection_theory
+      - text: "Did you take it?"
+        target_node_id: direct_accusation
+
+  professor_concern:
+    id: professor_concern
+    text: "He's a good man, Detective. Kind, brilliant, if somewhat scattered. But lately... the same look his grandfather had. The same desperate hunger. I've tried to intervene, subtly, but what can a butler do against family obsession?"
+    character_name: butler
+    choices:
+      - text: "You could remove the source of that obsession."
+        target_node_id: subtle_accusation
+      - text: "What kind of intervention?"
+        target_node_id: intervention_details
+      - text: "Let's focus on finding the crystal."
+        target_node_id: crystal_inquiry
+
+  intervention_details:
+    id: intervention_details
+    text: "Small things. Suggesting he take breaks. Preparing meals he 'forgets' he ordered. Dimming the laboratory lights when he works too late. A butler's weapons are subtle, Detective, but no less effective."
+    character_name: butler
+    choices:
+      - text: "Did these interventions include moving the crystal?"
+        target_node_id: crystal_movement
+      - text: "You care about him."
+        target_node_id: caring_admission
+      - text: "Where were you last night?"
+        target_node_id: alibi_question
+
+  crystal_movement:
+    id: crystal_movement
+    text: "I... no. The crystal was always locked away. Only the professor had the key to the display case. I had access to the laboratory, yes, but not to the crystal itself. That's the truth, Detective."
+    character_name: butler
+    choices:
+      - text: "But you could have copied the key."
+        target_node_id: key_copying
+      - text: "Yet you've been studying the crystal."
+        target_node_id: studying_accusation
+      - text: "I believe you."
+        target_node_id: belief_path
+
+  key_copying:
+    id: key_copying
+    text: "The keys here are antique, Detective. Custom-made by the original Lord Ashworth. They cannot be simply copied at the corner locksmith. Besides, I would never... well, perhaps I would never is too strong."
+    character_name: butler
+    flags:
+      set: ["butler_hesitation"]
+    choices:
+      - text: "Too strong? What do you mean?"
+        target_node_id: hesitation_explanation
+      - text: "You're hiding something."
+        target_node_id: hiding_accusation
+      - text: "Tell me the truth, James."
+        target_node_id: truth_confrontation
+
+  hesitation_explanation:
+    id: hesitation_explanation
+    text: "Twenty years, Detective. Twenty years of watching this family destroy themselves over a glowing rock. Sometimes I've thought... if only it were gone, they might live normal lives. But thinking isn't doing."
+    character_name: butler
+    choices:
+      - text: "But doing is what happened."
+        target_node_id: doing_confrontation
+      - text: "You wanted to save them."
+        target_node_id: savior_theory
+      - text: "Who else might have acted on those thoughts?"
+        target_node_id: other_suspects_question
+
+  doing_confrontation:
+    id: doing_confrontation
+    text: "Not by my hand! I confess I took the brass key - yes, I admit that. But the crystal? I swear on my twenty years of service, Detective. I did not take that crystal."
+    character_name: butler
+    flags:
+      set: ["butler_confessed", "butler_has_brass_key"]
+    actions: ["add_to_inventory:butler_confession"]
+    choices:
+      - text: "The brass key? Tell me about that."
+        target_node_id: brass_key_confession
+      - text: "Then who did?"
+        target_node_id: who_did_it
+      - text: "Why should I believe you?"
+        target_node_id: why_believe
+
+  brass_key_confession:
+    id: brass_key_confession
+    text: "I found it hidden behind a tome on mansion history. A serpent-shaped key, clearly old and valuable. I recognized the crest - it belonged to the grandfather. I took it, meaning to return it, but then I wondered... what does it open?"
+    character_name: butler
+    flags:
+      set: ["brass_key_confession_heard"]
+    choices:
+      - text: "And what does it open?"
+        target_node_id: key_destination
+      - text: "Give me the key now."
+        target_node_id: key_handover_direct
+      - text: "You stole from your employer."
+        target_node_id: theft_accusation
+
+  key_handover_direct:
+    id: key_handover_direct
+    text: "Here, take it. I've carried its weight long enough. The key opens a cabinet in the laboratory - the grandfather's final research. Perhaps you'll find what I was too afraid to discover."
+    character_name: butler
+    flags:
+      set: ["brass_key_received", "butler_gives_key"]
+    actions: ["add_to_inventory:brass_key", "complete_quest_objective:butler_mystery:obtain_brass_key"]
+    choices:
+      - text: "Thank you for your honesty."
+        target_node_id: honesty_thanks
+      - text: "Now tell me who took the crystal."
+        target_node_id: who_did_it
+      - text: "I'll find what you couldn't."
+        target_node_id: determination_response
+
+  theft_accusation:
+    id: theft_accusation
+    text: "Stole? I... yes. I suppose I did. Twenty years of faithful service, and I stooped to thievery. But you don't understand - I was trying to protect him! The professor follows the same path as his grandfather. Someone had to find answers before it consumed him too."
+    character_name: butler
+    choices:
+      - text: "Protecting him by stealing?"
+        target_node_id: protection_paradox
+      - text: "Just give me the key."
+        target_node_id: key_handover_direct
+      - text: "What answers were you seeking?"
+        target_node_id: answers_sought
+
+  protection_paradox:
+    id: protection_paradox
+    text: "I know it sounds absurd. But the key opens secrets the grandfather tried to hide. Secrets that might explain how to break the crystal's hold. If I could find a cure before the professor knew... but I was a coward. I never opened that cabinet."
+    character_name: butler
+    actions: ["add_to_inventory:brass_key", "complete_quest_objective:butler_mystery:obtain_brass_key"]
+    flags:
+      set: ["brass_key_received", "butler_gives_key"]
+    choices:
+      - text: "I'll find the cure you couldn't."
+        target_node_id: determination_response
+      - text: "The professor deserves to know."
+        target_node_id: professor_deserves
+
+  answers_sought:
+    id: answers_sought
+    text: "The grandfather spent his final years trying to understand the crystal's influence. How it bonds with bloodlines. How it... changes people. His notes might hold the key to freeing the Ashworths. Here - take the key. Find what I couldn't."
+    character_name: butler
+    actions: ["add_to_inventory:brass_key", "complete_quest_objective:butler_mystery:obtain_brass_key"]
+    flags:
+      set: ["brass_key_received", "butler_gives_key"]
+    choices:
+      - text: "I will."
+        target_node_id: determination_response
+      - text: "Who else might want this knowledge?"
+        target_node_id: who_else_wants
+
+  honesty_thanks:
+    id: honesty_thanks
+    text: "Honesty? I've been anything but. The letters I burned, the visitors I turned away, the secrets I kept... but perhaps honesty begins now. Find the crystal, Detective. Before it's too late."
+    character_name: butler
+    choices:
+      - text: "I will. Tell me about the visitors."
+        target_node_id: visitor_details
+      - text: "What letters did you burn?"
+        target_node_id: burned_letters
+      - text: "I should investigate the laboratory."
+        target_node_id: end_conversation
+
+  determination_response:
+    id: determination_response
+    text: "I believe you will. You have a determination the Ashworths lack - the ability to step back from the crystal's pull. Be careful in that laboratory. The grandfather's secrets are not for the faint of heart."
+    character_name: butler
+    choices:
+      - text: "What should I expect to find?"
+        target_node_id: cabinet_warning
+      - text: "Thank you for your help."
+        target_node_id: end_conversation
+
+  cabinet_warning:
+    id: cabinet_warning
+    text: "The grandfather was researching the veil between worlds. He believed the crystal could open doorways - to other places, other times. Whatever he discovered the night he died... it was enough to stop his heart. Tread carefully."
+    character_name: butler
+    choices:
+      - text: "I'll be careful."
+        target_node_id: end_conversation
+      - text: "Where exactly is this cabinet?"
+        target_node_id: cabinet_location
+
+  cabinet_location:
+    id: cabinet_location
+    text: "In the laboratory, near the window. A specimen cabinet with glass doors. The brass key opens a hidden compartment in its base. That's where the grandfather kept his most dangerous research."
+    character_name: butler
+    flags:
+      set: ["cabinet_location_known"]
+    choices:
+      - text: "I'll investigate immediately."
+        target_node_id: end_conversation
+
+  grandfather_knowledge:
+    id: grandfather_knowledge
+    text: "Ah, the old professor. A brilliant man, but troubled. He spent his final years consumed by the crystal's mysteries. I found him many nights asleep at his workbench, mumbling about doorways and alignments."
+    character_name: butler
+    flags:
+      set: ["butler_knows_grandfather"]
+    choices:
+      - text: "What kind of doorways?"
+        target_node_id: doorway_knowledge
+      - text: "Did he ever succeed?"
+        target_node_id: success_question
+      - text: "Tell me about his death."
+        target_node_id: grandfather_death
+
+  doorway_knowledge:
+    id: doorway_knowledge
+    text: "He believed the crystal could open passages - to other places, other times. 'The veil between worlds,' he called it. Most nights I thought it mere fantasy. But some nights... some nights, Detective, I saw things that made me wonder."
+    character_name: butler
+    flags:
+      set: ["butler_saw_things"]
+    choices:
+      - text: "What did you see?"
+        target_node_id: butler_visions
+      - text: "You believe in this?"
+        target_node_id: belief_question
+      - text: "This is why someone took the crystal."
+        target_node_id: motive_realization
+
+  butler_visions:
+    id: butler_visions
+    text: "Shadows where there should be none. Whispers in empty rooms. Once, I saw the grandfather speaking to... someone who wasn't there. Or someone I couldn't see. After that night, I stopped entering the laboratory after dark."
+    character_name: butler
+    actions: ["camera.sway(10.0, 15.0)"]
+    choices:
+      - text: "You were afraid."
+        target_node_id: fear_admission
+      - text: "The crystal is dangerous."
+        target_node_id: danger_agreement
+      - text: "Who was he speaking to?"
+        target_node_id: mysterious_visitor
+
+  fear_admission:
+    id: fear_admission
+    text: "Yes, Detective. I was - am - afraid. Not of ghosts or phantoms, but of what the crystal does to people. The grandfather died reaching for it. His son abandoned the family to escape it. And now the current professor..."
+    character_name: butler
+    choices:
+      - text: "You wanted to end the cycle."
+        target_node_id: cycle_theory
+      - text: "His son? The professor's father?"
+        target_node_id: father_story
+      - text: "Where is the crystal now?"
+        target_node_id: crystal_location_question
+
+  father_story:
+    id: father_story
+    text: "He fled when Edmund was just a boy. Couldn't bear to watch another generation fall under the crystal's spell. Left his son in the care of his grandfather and never returned. The current professor doesn't speak of him."
+    character_name: butler
+    flags:
+      set: ["father_fled"]
+    choices:
+      - text: "Perhaps he returned for the crystal."
+        target_node_id: father_suspect
+      - text: "That must have been hard for Edmund."
+        target_node_id: edmund_sympathy
+      - text: "Let's focus on the theft."
+        target_node_id: crystal_inquiry
+
+  father_suspect:
+    id: father_suspect
+    text: "I... I hadn't considered that. He would know the mansion, the crystal, how to access it. And if he believed taking it would save his son... perhaps he would see it as a father's duty."
+    character_name: butler
+    flags:
+      set: ["father_suspect_theory"]
+    choices:
+      - text: "How would we find him?"
+        target_node_id: find_father
+      - text: "Could someone else have this motive?"
+        target_node_id: other_motives
+      - text: "You seem relieved by this theory."
+        target_node_id: relief_observation
+
+  relief_observation:
+    id: relief_observation
+    text: "Perhaps I am, Detective. If the crystal was taken by someone who wished to protect Edmund rather than harm him... well, that would be a better outcome than many I've imagined."
+    character_name: butler
+    choices:
+      - text: "You've imagined other outcomes?"
+        target_node_id: dark_imaginations
+      - text: "Let's verify this theory."
+        target_node_id: verify_father
+      - text: "I still have questions for you."
+        target_node_id: more_questions
+
+  dark_imaginations:
+    id: dark_imaginations
+    text: "Working in a mansion with a cursed crystal, one imagines all sorts of things. Thieves who'd kill for it. Cultists seeking its power. Or simply... an accident. The crystal falling, shattering. The energy released..."
+    character_name: butler
+    actions: ["camera.sway(5.0, 10.0)"]
+    choices:
+      - text: "What would happen if it shattered?"
+        target_node_id: shatter_consequences
+      - text: "Has anyone threatened the professor?"
+        target_node_id: threats_question
+      - text: "Let's stay focused."
+        target_node_id: crystal_inquiry
+
+  shatter_consequences:
+    id: shatter_consequences
+    text: "According to the old journals, the energy contained within would be released all at once. The grandfather calculated it would be equivalent to... well, let's just say the mansion wouldn't survive. Nor would we."
+    character_name: butler
+    flags:
+      set: ["destruction_potential_known"]
+    choices:
+      - text: "All the more reason to find it quickly."
+        target_node_id: urgency_agreement
+      - text: "Who else knows about this danger?"
+        target_node_id: danger_knowledge
+      - text: "Could someone be trying to destroy it?"
+        target_node_id: destruction_motive
+
+  destruction_motive:
+    id: destruction_motive
+    text: "Destroy the crystal and everyone near it? That would be madness. Unless... unless someone believed the risk of the crystal existing outweighed the lives it might take. A terrible calculus."
+    character_name: butler
+    choices:
+      - text: "Who would think that way?"
+        target_node_id: extreme_thinkers
+      - text: "We need to find the crystal now."
+        target_node_id: urgency_agreement
+      - text: "Where would they hide it?"
+        target_node_id: hiding_places
 
   crystal_inquiry:
     id: crystal_inquiry
-    text: "Ah yes, the scientist mentioned that unfortunate incident. Most distressing, I'm sure. Though I must say, perhaps it's for the best - such dangerous objects shouldn't be kept in a home."
+    text: "Ah yes, the scientist mentioned that unfortunate incident. Most distressing, I'm sure. Though I must say, perhaps it's for the best - such dangerous objects shouldn't be kept in a home. They attract... unwanted attention."
     character_name: butler
     choices:
       - text: "Dangerous? How do you know about its properties?"
@@ -24,10 +384,92 @@ nodes:
         target_node_id: alibi_question
       - text: "Do you know who might have taken it?"
         target_node_id: suspect_question
+      - text: "What kind of unwanted attention?"
+        target_node_id: unwanted_attention
+
+  unwanted_attention:
+    id: unwanted_attention
+    text: "Letters, Detective. Strange visitors who never state their business clearly. Once, I found a man in the garden at midnight, simply... staring at the laboratory windows. He fled before I could confront him."
+    character_name: butler
+    flags:
+      set: ["mysterious_visitors"]
+    choices:
+      - text: "When was this?"
+        target_node_id: visitor_timing
+      - text: "Did you report this to the professor?"
+        target_node_id: reporting_question
+      - text: "Could this man have returned?"
+        target_node_id: return_theory
+
+  visitor_timing:
+    id: visitor_timing
+    text: "About a month ago. And again, two weeks later. Different times, same behavior. I've been watching the grounds more carefully since, but... I was in the library last night. Not the garden."
+    character_name: butler
+    choices:
+      - text: "So someone could have entered through the garden?"
+        target_node_id: garden_entry_discussion
+      - text: "Why were you in the library?"
+        target_node_id: library_reason
+      - text: "Describe this man."
+        target_node_id: man_description
+
+  man_description:
+    id: man_description
+    text: "Tall. Thin. An older gentleman, perhaps in his sixties. He moved like someone who knew the grounds, which troubled me. Wore a long coat despite the warm weather. I only saw his profile, but something about him seemed... familiar."
+    character_name: butler
+    flags:
+      set: ["mysterious_man_described"]
+    choices:
+      - text: "Familiar how?"
+        target_node_id: familiarity_question
+      - text: "Could it be the professor's father?"
+        target_node_id: father_theory
+      - text: "Did the professor see him?"
+        target_node_id: professor_saw
+
+  familiarity_question:
+    id: familiarity_question
+    text: "I've served three generations here, Detective. I know their postures, their gaits. This man moved like an Ashworth. But the current professor is the last of the line, unless..."
+    character_name: butler
+    choices:
+      - text: "Unless his father returned."
+        target_node_id: father_theory
+      - text: "You're suggesting a family connection."
+        target_node_id: family_connection_theory
+      - text: "Could the grandfather have survived?"
+        target_node_id: grandfather_survival
+
+  father_theory:
+    id: father_theory
+    text: "It's possible. After all these years, watching from afar, perhaps he decided to intervene. To save his son the way he couldn't save himself. The crystal drove him away once - perhaps he's come to destroy its hold."
+    character_name: butler
+    flags:
+      set: ["father_theory_formed"]
+    choices:
+      - text: "Would you recognize him?"
+        target_node_id: recognition_question
+      - text: "How can we find him?"
+        target_node_id: find_father
+      - text: "Let's check the garden for clues."
+        target_node_id: garden_suggestion
+
+  garden_suggestion:
+    id: garden_suggestion
+    text: "The garden... yes. That's where I've seen the stranger. And it's where the moonflowers grow - they only bloom in the crystal's presence. If it was taken that way, there might be evidence."
+    character_name: butler
+    flags:
+      set: ["garden_clue_given"]
+    choices:
+      - text: "I'll investigate the garden."
+        target_node_id: investigation_agreement
+      - text: "Come with me to look."
+        target_node_id: companion_request
+      - text: "First, tell me about the brass key."
+        target_node_id: brass_key_question
 
   nervous_observation:
     id: nervous_observation
-    text: "Nervous? I... well, it's not every day we have a detective investigating in the house. One must maintain proper decorum, you understand."
+    text: "Nervous? I... well, it's not every day we have a detective investigating in the house. One must maintain proper decorum, you understand. Though I confess, recent events have tested my composure."
     character_name: butler
     choices:
       - text: "You're hiding something."
@@ -36,35 +478,290 @@ nodes:
         target_node_id: routine_response
       - text: "Tell me about last night."
         target_node_id: last_night
+      - text: "What events have tested you?"
+        target_node_id: testing_events
+
+  testing_events:
+    id: testing_events
+    text: "The professor's increasing obsession. Strange noises at night. That feeling of being watched. And now the theft - the very thing I feared most. Someone has taken the crystal, and soon enough, they'll discover what it can do."
+    character_name: butler
+    choices:
+      - text: "You feared this would happen?"
+        target_node_id: fear_prediction
+      - text: "What noises? What watching?"
+        target_node_id: paranormal_events
+      - text: "What can the crystal do?"
+        target_node_id: crystal_powers
+
+  fear_prediction:
+    id: fear_prediction
+    text: "The crystal's existence couldn't stay secret forever. Too many know about it - scholars, collectors, those who believe in its power. I've been turning away inquiries for years. But someone finally acted."
+    character_name: butler
+    choices:
+      - text: "What kind of inquiries?"
+        target_node_id: inquiry_details
+      - text: "You've been protecting the crystal."
+        target_node_id: protector_role
+      - text: "Show me the inquiries."
+        target_node_id: show_inquiries
+
+  inquiry_details:
+    id: inquiry_details
+    text: "Letters from universities. Visits from collectors. Once, an offer of half a million pounds - I burned that letter before the professor could see it. The crystal isn't meant to be sold. It's meant to be..."
+    character_name: butler
+    choices:
+      - text: "Meant to be what?"
+        target_node_id: crystal_purpose
+      - text: "You intercepted the professor's mail?"
+        target_node_id: mail_interception
+      - text: "Who made that offer?"
+        target_node_id: offer_details
+
+  mail_interception:
+    id: mail_interception
+    text: "I did what I thought was right. The professor is too trusting, too focused on his research. He doesn't see the vultures circling. Someone had to protect him and the crystal. Perhaps... perhaps I failed."
+    character_name: butler
+    flags:
+      set: ["butler_protector"]
+    choices:
+      - text: "You haven't failed yet. Help me find it."
+        target_node_id: help_request
+      - text: "Or perhaps you decided to protect it yourself."
+        target_node_id: self_protection_accusation
+      - text: "Who were these vultures?"
+        target_node_id: vultures_list
+
+  crystal_purpose:
+    id: crystal_purpose
+    text: "Meant to be... hidden. Destroyed. Forgotten. The old journals speak of it as a curse as much as a wonder. The Ashworths have guarded it for generations, but to what end? More obsession, more death, more secrecy."
+    character_name: butler
+    choices:
+      - text: "You think it should be destroyed."
+        target_node_id: destruction_opinion
+      - text: "But you haven't destroyed it."
+        target_node_id: why_not_destroy
+      - text: "Someone else might try."
+        target_node_id: destruction_threat
+
+  destruction_opinion:
+    id: destruction_opinion
+    text: "I've thought about it, Detective. Every sleepless night, watching the professor descend into the same madness as his grandfather. But I'm just a butler. What right do I have to make such a decision?"
+    character_name: butler
+    choices:
+      - text: "The right of someone who cares."
+        target_node_id: caring_response
+      - text: "But you did act - you took the brass key."
+        target_node_id: brass_key_confrontation
+      - text: "Where would you hide it if you had?"
+        target_node_id: hypothetical_hiding
+
+  brass_key_confrontation:
+    id: brass_key_confrontation
+    text: "Yes... yes, I took the key. I found it hidden behind a book about the mansion's history. I thought... I thought if I understood what it opened, I might find a way to end this cycle safely."
+    character_name: butler
+    flags:
+      set: ["butler_confessed", "butler_has_brass_key"]
+    actions: ["add_to_inventory:butler_confession"]
+    choices:
+      - text: "What does the key open?"
+        target_node_id: key_destination
+      - text: "You wanted to understand before acting."
+        target_node_id: understanding_goal
+      - text: "Hand it over."
+        target_node_id: key_handover
+
+  key_destination:
+    id: key_destination
+    text: "A cabinet in the laboratory. The grandfather's final notes are inside - the research he completed the night he died. I've been trying to work up the courage to open it. What I might find inside... terrifies me."
+    character_name: butler
+    flags:
+      set: ["cabinet_location_known"]
+    choices:
+      - text: "Let's open it together."
+        target_node_id: open_together
+      - text: "You haven't opened it yet?"
+        target_node_id: unopened_surprise
+      - text: "Give me the key. I'll look."
+        target_node_id: key_handover
+
+  open_together:
+    id: open_together
+    text: "I... yes. Perhaps that would be best. Whatever secrets the grandfather left behind - they shouldn't be faced alone. Take the key, Detective. But be prepared. The Ashworths don't keep ordinary secrets."
+    character_name: butler
+    flags:
+      set: ["brass_key_received", "butler_gives_key"]
+    actions: ["add_to_inventory:brass_key"]
+    choices:
+      - text: "Thank you for trusting me."
+        target_node_id: trust_response
+      - text: "Now tell me about the crystal's theft."
+        target_node_id: theft_details
+      - text: "Who else knew about this cabinet?"
+        target_node_id: cabinet_knowledge
+
+  unopened_surprise:
+    id: unopened_surprise
+    text: "I couldn't bring myself to do it. The grandfather died with those papers locked away. His final act was to seal them. What right did I have to unseal them? But now, with the crystal missing... perhaps I should have looked sooner."
+    character_name: butler
+    choices:
+      - text: "Give me the key. I'll look."
+        target_node_id: key_handover
+      - text: "What do you think is inside?"
+        target_node_id: contents_speculation
+      - text: "Could the thief have wanted these notes?"
+        target_node_id: notes_motive
+
+  notes_motive:
+    id: notes_motive
+    text: "The notes and the crystal together... they would be everything needed to unlock its full power. If someone knew about both, they might have planned this for years. Waiting for the right moment."
+    character_name: butler
+    choices:
+      - text: "Who else knew?"
+        target_node_id: knowledge_circle
+      - text: "This changes everything."
+        target_node_id: revelation_moment
+      - text: "Give me the key."
+        target_node_id: key_handover
 
   duties_question:
     id: duties_question
-    text: "I oversee the daily operations of the mansion - cleaning, maintenance, security. I have keys to every room and know every corner of this estate."
+    text: "I oversee the daily operations of the mansion - cleaning, maintenance, security. I have keys to every room and know every corner of this estate. In twenty years, I've learned all its secrets. Or so I thought."
     character_name: butler
-    actions: ["set butler_has_all_keys"]
+    flags:
+      set: ["butler_has_all_keys"]
     choices:
       - text: "Including the laboratory?"
         target_node_id: lab_access
       - text: "That's a lot of responsibility."
         target_node_id: responsibility_comment
-      - text: "And the library?"
-        target_node_id: library_access
+      - text: "What secrets have you learned?"
+        target_node_id: mansion_secrets
+
+  mansion_secrets:
+    id: mansion_secrets
+    text: "Secret passages that Lord Ashworth built for... reasons unknown. Rooms that haven't been opened in decades. And the crystal, of course. Always the crystal. This mansion was built around it, Detective. Quite literally."
+    character_name: butler
+    flags:
+      set: ["secret_passages_revealed"]
+    choices:
+      - text: "Show me the secret passages."
+        target_node_id: passage_request
+      - text: "Built around the crystal?"
+        target_node_id: mansion_design
+      - text: "Could someone use these passages?"
+        target_node_id: passage_access
+
+  passage_request:
+    id: passage_request
+    text: "I've only found two. One leads from the library to the garden - behind the portrait of Lord Ashworth. The other... I've seen the entrance in the laboratory but never opened it. It requires a key I've never found."
+    character_name: butler
+    flags:
+      set: ["passages_revealed"]
+    choices:
+      - text: "The brass key?"
+        target_node_id: brass_key_passage
+      - text: "Behind the portrait?"
+        target_node_id: portrait_passage
+      - text: "The thief might have used these."
+        target_node_id: passage_theft_theory
+
+  portrait_passage:
+    id: portrait_passage
+    text: "Yes - tilt the frame to the left and push. The mechanism is old but still functional. I use it sometimes to check the garden without being seen. Old habits of a protective servant."
+    character_name: butler
+    flags:
+      set: ["portrait_secret_known"]
+    choices:
+      - text: "Who else knows about this?"
+        target_node_id: passage_knowledge
+      - text: "Show me."
+        target_node_id: show_passage
+      - text: "The thief could have used it."
+        target_node_id: thief_passage
 
   knowledge_suspicion:
     id: knowledge_suspicion
-    text: "Well, I... one overhears things. The scientist can be quite vocal about his work when he's excited. I may have picked up a detail or two."
+    text: "Well, I... one overhears things. The scientist can be quite vocal about his work when he's excited. And I've served this family long enough to understand more than perhaps I should about crystalline resonance."
     character_name: butler
+    flags:
+      set: ["butler_overheard"]
     choices:
       - text: "What exactly did you overhear?"
         target_node_id: overheard_details
       - text: "You were eavesdropping?"
         target_node_id: eavesdropping_accusation
-      - text: "That's very convenient."
+      - text: "That's very convenient knowledge to have."
         target_node_id: convenient_response
+
+  overheard_details:
+    id: overheard_details
+    text: "The importance of 11:47 PM. The fountain's harmonic frequency. The dangers of uncontrolled resonance. I know enough to understand why the crystal must be found - and why it should never have existed in the first place."
+    character_name: butler
+    flags:
+      set: ["butler_knows_parameters"]
+    choices:
+      - text: "You know how to use the crystal."
+        target_node_id: usage_accusation
+      - text: "Why do you say it shouldn't exist?"
+        target_node_id: existence_objection
+      - text: "Then help me find it."
+        target_node_id: help_request
+
+  usage_accusation:
+    id: usage_accusation
+    text: "Knowing and using are very different things, Detective. I know how to fire a gun - doesn't mean I'd shoot someone. The crystal's power is not something to be wielded lightly. The grandfather learned that the hard way."
+    character_name: butler
+    choices:
+      - text: "What happened to the grandfather?"
+        target_node_id: grandfather_death
+      - text: "But you were tempted?"
+        target_node_id: temptation_question
+      - text: "Who would use it?"
+        target_node_id: who_would_use
+
+  grandfather_death:
+    id: grandfather_death
+    text: "He died in the laboratory, crystal in hand, at exactly 11:47 PM. The alignment was perfect that night. Whatever he attempted... didn't go as planned. We found him at dawn, peaceful, as if he'd simply... stepped away."
+    character_name: butler
+    flags:
+      set: ["grandfather_death_known"]
+    actions: ["camera.sway(8.0, 12.0)"]
+    choices:
+      - text: "Stepped away where?"
+        target_node_id: stepped_where
+      - text: "You found him?"
+        target_node_id: finding_grandfather
+      - text: "The crystal killed him."
+        target_node_id: crystal_killed
+
+  stepped_where:
+    id: stepped_where
+    text: "I've asked myself that for twenty years. His body was here, but the expression on his face... wonder, Detective. Pure wonder. Wherever his mind went, it was somewhere remarkable. I hope."
+    character_name: butler
+    choices:
+      - text: "He achieved his goal."
+        target_node_id: goal_achieved
+      - text: "Or the crystal trapped him."
+        target_node_id: crystal_trap
+      - text: "The thief might try the same thing."
+        target_node_id: thief_attempt
+
+  finding_grandfather:
+    id: finding_grandfather
+    text: "I was young then, just starting my service. The old butler had passed the year before, and I was alone in the mansion that night. I'll never forget walking into the laboratory, seeing him there..."
+    character_name: butler
+    actions: ["camera.sway(5.0, 15.0)"]
+    choices:
+      - text: "That must have been traumatic."
+        target_node_id: trauma_acknowledgment
+      - text: "What happened to the crystal that night?"
+        target_node_id: crystal_that_night
+      - text: "Did you call for help?"
+        target_node_id: calling_help
 
   alibi_question:
     id: alibi_question
-    text: "Last night? I was... attending to my usual evening duties. Checking locks, turning off lights. I retired to my quarters around midnight."
+    text: "Last night? I was... attending to my usual evening duties. Checking locks, turning off lights. But I'll confess - I spent more time in the library than usual. Reading old texts about the crystal. Trying to understand."
     character_name: butler
     choices:
       - text: "Can anyone verify that?"
@@ -73,37 +770,147 @@ nodes:
         target_node_id: lab_check_time
       - text: "Did you see anything unusual?"
         target_node_id: unusual_sightings
+      - text: "What were you trying to understand?"
+        target_node_id: understanding_quest
+
+  understanding_quest:
+    id: understanding_quest
+    text: "Whether this curse - and I use that word deliberately now - can ever be broken. The crystal has claimed three generations of Ashworths. I wanted to know if there was a way to end it that didn't involve..."
+    character_name: butler
+    choices:
+      - text: "Didn't involve what?"
+        target_node_id: drastic_measures
+      - text: "You wanted to save the professor."
+        target_node_id: saving_professor
+      - text: "Did you find an answer?"
+        target_node_id: answer_found
+
+  drastic_measures:
+    id: drastic_measures
+    text: "Destruction. The journals speak of it - destroying the crystal would release its energy catastrophically. But there are also hints of... another way. Returning it to where it came from. The Carpathian Mountains."
+    character_name: butler
+    flags:
+      set: ["return_option_known"]
+    choices:
+      - text: "Someone might be trying to return it."
+        target_node_id: return_theory
+      - text: "That's across the continent."
+        target_node_id: distance_concern
+      - text: "Who else knows about this option?"
+        target_node_id: return_knowledge
+
+  return_theory:
+    id: return_theory
+    text: "The professor's father... he left for Eastern Europe. He never said where exactly. But if he's been researching a way to end the crystal's curse permanently... perhaps he's finally ready to act."
+    character_name: butler
+    flags:
+      set: ["father_return_theory"]
+    choices:
+      - text: "We need to find him."
+        target_node_id: find_father
+      - text: "He took the crystal to destroy it safely."
+        target_node_id: safe_destruction
+      - text: "How do we know he's still alive?"
+        target_node_id: father_alive
 
   hiding_accusation:
     id: hiding_accusation
-    text: "I... that is... Detective, I assure you my only concern is for the proper functioning of this household!"
+    text: "I... that is... Detective, I assure you my only concern is for the proper functioning of this household! Though I confess, there are things I haven't told the professor. Things I thought would only worry him."
     character_name: butler
     choices:
-      - text: "Then why are you so defensive?"
+      - text: "What things?"
+        target_node_id: hidden_things
+      - text: "Why are you so defensive?"
         target_node_id: defensive_response
       - text: "I think you know more than you're saying."
         target_node_id: knows_more
-      - text: "Let's start over. Where were you last night?"
-        target_node_id: alibi_question
 
-  # Key revelation path
+  hidden_things:
+    id: hidden_things
+    text: "The letters I've intercepted. The visitors I've turned away. The brass key I found and kept. I was trying to protect him, Detective. To give him space for his research without the vultures circling."
+    character_name: butler
+    flags:
+      set: ["butler_protector_revealed"]
+    choices:
+      - text: "Show me these letters."
+        target_node_id: show_letters
+      - text: "The brass key - tell me about it."
+        target_node_id: brass_key_confession
+      - text: "You've been playing guardian."
+        target_node_id: guardian_role
+
+  show_letters:
+    id: show_letters
+    text: "I burned most of them. But the most recent one... I kept it. Something about it troubled me. A threat, disguised as an offer. 'Surrender the crystal or face consequences.' No return address."
+    character_name: butler
+    flags:
+      set: ["threatening_letter"]
+    choices:
+      - text: "When did this arrive?"
+        target_node_id: letter_timing
+      - text: "May I see it?"
+        target_node_id: see_letter
+      - text: "Why didn't you report this?"
+        target_node_id: why_not_report
+
+  letter_timing:
+    id: letter_timing
+    text: "A week ago. I was going to tell the professor, but he was so close to his breakthrough. I didn't want to distract him. And then... and then the crystal was taken. If I'd spoken up sooner..."
+    character_name: butler
+    choices:
+      - text: "This isn't your fault."
+        target_node_id: not_your_fault
+      - text: "It might have prevented the theft."
+        target_node_id: could_have_prevented
+      - text: "Let me see the letter now."
+        target_node_id: see_letter
+
   pressed_confession:
     id: pressed_confession
-    text: "Alright, alright! I... I did take something, but not the crystal! I found this old key in the library and thought... thought it might be valuable."
+    text: "Alright, alright! I... I did take something, but not the crystal! I found this old key in the library and thought... thought it might be valuable. Or important. The serpent design matched symbols in the old journals."
     character_name: butler
-    actions: ["set butler_confessed", "set butler_has_brass_key"]
+    flags:
+      set: ["butler_confessed", "butler_has_brass_key"]
+    actions: ["add_to_inventory:butler_confession"]
     choices:
       - text: "What key? Show me."
         target_node_id: show_key
       - text: "You're a thief!"
         target_node_id: thief_accusation
-      - text: "Why did you think it was valuable?"
-        target_node_id: key_value_question
+      - text: "Why did you think it was important?"
+        target_node_id: key_importance_explanation
+
+  key_importance_explanation:
+    id: key_importance_explanation
+    text: "The serpent is the Ashworth family symbol. 'Wisdom through observation,' their motto. The grandfather wrote about a serpent key that would 'unlock the final truth.' I thought... I thought I might find a way to help."
+    character_name: butler
+    choices:
+      - text: "Help how?"
+        target_node_id: help_intention
+      - text: "What final truth?"
+        target_node_id: final_truth
+      - text: "Give me the key."
+        target_node_id: key_handover
+
+  final_truth:
+    id: final_truth
+    text: "The grandfather believed the crystal held memories - not just energy. Memories of its creation, its purpose, its... makers. He thought unlocking those memories would reveal why the crystal exists and how to be free of its influence."
+    character_name: butler
+    choices:
+      - text: "And the key unlocks these memories?"
+        target_node_id: key_unlocks
+      - text: "He never found out."
+        target_node_id: never_found_out
+      - text: "Someone else might be trying to unlock them."
+        target_node_id: others_trying
 
   show_key:
     id: show_key
-    text: "Here... it's just an old brass key I found behind a book. I thought the master wouldn't miss it, but if it helps find the real thief..."
+    text: "Here... it's just an old brass key I found behind a book. The serpent bow, the unusual notches. I thought the professor wouldn't miss it - it had been hidden for decades. But if it helps find the real thief..."
     character_name: butler
+    flags:
+      set: ["brass_key_received", "butler_gives_key"]
+    actions: ["add_to_inventory:brass_key"]
     choices:
       - text: "This might unlock something important."
         target_node_id: key_importance
@@ -114,46 +921,132 @@ nodes:
 
   key_importance:
     id: key_importance
-    text: "You think so? I just... I've been struggling financially, and I thought it might be worth something. I never meant any real harm."
+    text: "You think so? I just... I've been struggling, Detective. Twenty years of service, and what do I have? I thought perhaps if I understood the crystal's secrets, I might find... something. Anything."
     character_name: butler
     choices:
       - text: "Help me find the real thief and all is forgiven."
         target_node_id: cooperation_offer
       - text: "This key might lead us to the crystal."
         target_node_id: crystal_lead
+      - text: "What were you hoping to find?"
+        target_node_id: hoping_to_find
+
+  hoping_to_find:
+    id: hoping_to_find
+    text: "Purpose. Meaning. The Ashworths have dedicated generations to this crystal. Surely there must be something worth all that sacrifice? I wanted to believe their obsession had a point beyond madness."
+    character_name: butler
+    choices:
+      - text: "Perhaps you'll find that answer now."
+        target_node_id: answer_hope
+      - text: "Help me solve this case first."
+        target_node_id: cooperation_offer
+      - text: "Some mysteries aren't worth solving."
+        target_node_id: mystery_warning
 
   cooperation_offer:
     id: cooperation_offer
-    text: "Yes! Yes, of course! I know this mansion better than anyone. I'll help however I can, Detective."
+    text: "Yes! Yes, of course! I know this mansion better than anyone - every creak, every shadow, every hidden corner. I'll help however I can, Detective. The crystal must be found before someone uses it foolishly."
     character_name: butler
-    actions: ["set butler_cooperating"]
+    flags:
+      set: ["butler_cooperating"]
     choices:
       - text: "Good. Now, who else knew about the crystal?"
         target_node_id: other_suspects
       - text: "Tell me about the laboratory's security."
         target_node_id: lab_security
+      - text: "Start with the garden - you mentioned strange visitors."
+        target_node_id: garden_investigation
 
-  # Different conversation path if player has evidence
-  evidence_confrontation:
-    id: evidence_confrontation
-    text: "That key... where did you get it? I haven't seen it in years..."
+  lab_security:
+    id: lab_security
+    text: "The professor is careful but not cautious, if you understand me. The laboratory door locks automatically, but he often props it open for air. The display case has a special lock - only he has that key - but I've seen him leave it unlocked during experiments."
+    character_name: butler
+    flags:
+      set: ["lab_security_known"]
+    choices:
+      - text: "So someone familiar could have walked in."
+        target_node_id: familiar_thief
+      - text: "Was it unlocked last night?"
+        target_node_id: last_night_lock
+      - text: "What about the garden door?"
+        target_node_id: garden_door_security
+
+  familiar_thief:
+    id: familiar_thief
+    text: "Someone who knew his habits, yes. Who knew when he'd be distracted, when the doors would be unlocked. That points to an insider, Detective. But I swear to you - I may have taken the key, but I did not take the crystal."
     character_name: butler
     choices:
-      - text: "You tell me - it's from the library."
-        target_node_id: library_key_revelation
-      - text: "So you do recognize it."
-        target_node_id: recognition_admission
+      - text: "Who else is inside enough?"
+        target_node_id: insider_list
+      - text: "Then who did?"
+        target_node_id: who_did_it
+      - text: "I believe you. For now."
+        target_node_id: tentative_belief
+
+  who_did_it:
+    id: who_did_it
+    text: "I... I don't know. But there are clues. The moonflowers in the garden are blooming - they only do that in the crystal's presence. Check the garden, Detective. And the statue - the guardian. If anyone placed the crystal somewhere specific, it would be there."
+    character_name: butler
+    flags:
+      set: ["garden_clues_given"]
+    choices:
+      - text: "Tell me about this guardian statue."
+        target_node_id: guardian_statue
+      - text: "The moonflowers track the crystal?"
+        target_node_id: moonflower_tracking
+      - text: "I'll check the garden immediately."
+        target_node_id: end_conversation
+
+  guardian_statue:
+    id: guardian_statue
+    text: "A robed figure in the garden, hands cupped as if holding something precious. The grandfather believed it was built to focus the crystal's energy during rituals. Its hands are exactly the right shape to hold the Crystal of Luminus."
+    character_name: butler
+    flags:
+      set: ["statue_clue_given"]
+    choices:
+      - text: "Someone might place the crystal there."
+        target_node_id: placement_theory
+      - text: "For what kind of rituals?"
+        target_node_id: ritual_purpose
+      - text: "I need to check this statue."
+        target_node_id: end_conversation
+
+  placement_theory:
+    id: placement_theory
+    text: "If someone wanted to use the crystal properly - with the fountain's resonance, at the right time - they would place it in the statue's hands. It's what the grandfather tried to do the night he died."
+    character_name: butler
+    choices:
+      - text: "Someone is repeating his experiment."
+        target_node_id: experiment_repeat
+      - text: "We must check it now."
+        target_node_id: urgency_check
+      - text: "What time is it?"
+        target_node_id: time_check
+
+  time_check:
+    id: time_check
+    text: "It's... Detective, it's nearly ten o'clock. If someone plans to use the crystal at 11:47, we have less than two hours. The garden - you must check the garden now!"
+    character_name: butler
+    flags:
+      set: ["time_pressure"]
+    choices:
+      - text: "Come with me."
+        target_node_id: companion_accepted
+      - text: "Stay here in case they return."
+        target_node_id: stay_guard
+      - text: "I'll handle this alone."
+        target_node_id: end_conversation
 
   end_conversation:
     id: end_conversation
-    text: "I hope you find the real culprit soon, Detective. This mansion hasn't felt safe since the crystal disappeared."
+    text: "I hope you find the real culprit soon, Detective. This mansion hasn't felt safe since the crystal disappeared. Check the garden, the statue, the fountain. And Detective... be careful. The crystal's power is not to be underestimated."
     character_name: butler
     is_end: true
 
-  # Helper nodes for various conversation branches
+  # Additional conversation stubs
   defensive_response:
     id: defensive_response
-    text: "I've served this family faithfully for twenty years! I would never... that is... perhaps I have been on edge lately."
+    text: "I've served this family faithfully for twenty years! I would never... that is... perhaps I have been on edge lately. The crystal's influence, the professor's obsession, the strange visitors. It weighs on a person."
     character_name: butler
     choices:
       - text: "Why have you been on edge?"
@@ -161,214 +1054,506 @@ nodes:
       - text: "Then help me by telling the truth."
         target_node_id: truth_request
 
+  edge_explanation:
+    id: edge_explanation
+    text: "Detective work in the house... it's unsettling. Makes one wonder what secrets might be uncovered. I've kept so many things hidden to protect the professor. Now they may come to light."
+    character_name: butler
+    choices:
+      - text: "What have you hidden?"
+        target_node_id: hidden_things
+      - text: "The truth will help us."
+        target_node_id: truth_request
+
   truth_request:
     id: truth_request
-    text: "The truth is... I've been worried. There are old stories about that crystal, Detective. Dark stories. Perhaps it's better off gone."
+    text: "The truth is... I've been worried. There are old stories about that crystal, Detective. Dark stories. Perhaps it's better off gone. Perhaps whoever took it is doing us all a favor."
     character_name: butler
-    actions: ["set butler_knows_crystal_lore"]
+    flags:
+      set: ["butler_knows_crystal_lore"]
     choices:
       - text: "What kind of stories?"
         target_node_id: crystal_stories
       - text: "You think someone stole it for a reason?"
         target_node_id: motivated_theft
 
-  # Stub nodes for missing targets (basic responses that lead to end)
   crystal_stories:
     id: crystal_stories
-    text: "Old stories of its power and danger. Perhaps it's better discussed another time."
+    text: "Stories of minds lost, families destroyed. The crystal amplifies what's inside a person - good and bad. The Ashworths were ambitious, curious, obsessive. The crystal made them more so. And look where it's led them."
     character_name: butler
     choices:
-      - text: "I understand. Thank you for your time."
+      - text: "Has it affected you?"
+        target_node_id: personal_effect
+      - text: "We need to find it anyway."
         target_node_id: end_conversation
+
+  personal_effect:
+    id: personal_effect
+    text: "I've been careful to keep my distance. But twenty years in its presence... I dream of it sometimes. Of light pouring through its facets. Of doors opening to impossible places. Perhaps we're all affected, in the end."
+    character_name: butler
+    choices:
+      - text: "That's why we must find it."
+        target_node_id: end_conversation
+      - text: "Or perhaps that's why it should stay lost."
+        target_node_id: lost_argument
 
   motivated_theft:
     id: motivated_theft
-    text: "Perhaps... someone who knew its true value. But I've said too much already."
+    text: "Perhaps... someone who knew its true value. Or someone who feared what might happen if the professor achieved his breakthrough. The crystal opens doorways, Detective. Some doors should remain closed."
     character_name: butler
     choices:
+      - text: "What doorways?"
+        target_node_id: doorway_knowledge
       - text: "I'll investigate further."
         target_node_id: end_conversation
 
   lab_access:
     id: lab_access
-    text: "Yes, including the laboratory. The scientist is often forgetful about locking up."
-    character_name: butler
-    choices:
-      - text: "Interesting. Thank you."
-        target_node_id: end_conversation
-
-  responsibility_comment:
-    id: responsibility_comment
-    text: "Indeed it is. Twenty years of faithful service to this household."
-    character_name: butler
-    choices:
-      - text: "I appreciate your dedication."
-        target_node_id: end_conversation
-
-  library_access:
-    id: library_access
-    text: "Of course. I maintain all the rooms, including the library where you found me."
-    character_name: butler
-    choices:
-      - text: "Thank you for the information."
-        target_node_id: end_conversation
-
-  overheard_details:
-    id: overheard_details
-    text: "Just... general talk about its properties. Nothing specific, I assure you."
-    character_name: butler
-    choices:
-      - text: "I see."
-        target_node_id: end_conversation
-
-  eavesdropping_accusation:
-    id: eavesdropping_accusation
-    text: "I would never deliberately eavesdrop! It's just... impossible not to hear when voices carry."
-    character_name: butler
-    choices:
-      - text: "Of course. My apologies."
-        target_node_id: end_conversation
-
-  convenient_response:
-    id: convenient_response
-    text: "I... I suppose it is. But I assure you, it's the truth."
-    character_name: butler
-    choices:
-      - text: "Very well."
-        target_node_id: end_conversation
-
-  verify_alibi:
-    id: verify_alibi
-    text: "I... well, no. I live alone in the servant's quarters. But I assure you—"
-    character_name: butler
-    choices:
-      - text: "That's concerning."
-        target_node_id: end_conversation
-
-  lab_check_time:
-    id: lab_check_time
-    text: "Around 11:30, I believe. Everything seemed normal then."
-    character_name: butler
-    choices:
-      - text: "Thank you for the information."
-        target_node_id: end_conversation
-
-  unusual_sightings:
-    id: unusual_sightings
-    text: "Nothing unusual... well, perhaps a light in the garden later than normal."
-    character_name: butler
-    choices:
-      - text: "Tell me more about this light."
-        target_node_id: end_conversation
-
-  knows_more:
-    id: knows_more
-    text: "I... I've told you everything I know, Detective. Truly."
-    character_name: butler
-    choices:
-      - text: "We'll see about that."
-        target_node_id: end_conversation
-
-  routine_response:
-    id: routine_response
-    text: "Yes, of course. I understand you're just doing your job."
-    character_name: butler
-    choices:
-      - text: "Thank you for understanding."
-        target_node_id: end_conversation
-
-  last_night:
-    id: last_night
-    text: "As I said, just my usual evening duties. Nothing out of the ordinary."
-    character_name: butler
-    choices:
-      - text: "I see."
-        target_node_id: end_conversation
-
-  edge_explanation:
-    id: edge_explanation
-    text: "Well, detective work in the house... it's unsettling. Makes one wonder what secrets might be uncovered."
-    character_name: butler
-    choices:
-      - text: "What secrets?"
-        target_node_id: end_conversation
-
-  suspect_question:
-    id: suspect_question
-    text: "I... I couldn't say. Perhaps someone from outside? A stranger?"
-    character_name: butler
-    choices:
-      - text: "Perhaps."
-        target_node_id: end_conversation
-
-  thief_accusation:
-    id: thief_accusation
-    text: "I... yes, I suppose I am. But only this once, and only because of desperation!"
-    character_name: butler
-    choices:
-      - text: "Desperation?"
-        target_node_id: end_conversation
-
-  key_value_question:
-    id: key_value_question
-    text: "It looked old and ornate. I thought perhaps an antique dealer might... well, it was foolish."
-    character_name: butler
-    choices:
-      - text: "It was indeed foolish."
-        target_node_id: end_conversation
-
-  truth_lesson:
-    id: truth_lesson
-    text: "You're absolutely right, Detective. I should have been honest from the beginning."
-    character_name: butler
-    choices:
-      - text: "Honesty is always best."
-        target_node_id: end_conversation
-
-  crystal_lead:
-    id: crystal_lead
-    text: "Do you think so? If it helps find the real thief, then I'm glad I confessed."
-    character_name: butler
-    choices:
-      - text: "It might indeed help."
-        target_node_id: end_conversation
-
-  other_suspects:
-    id: other_suspects
-    text: "Well, there's the scientist, of course. And occasionally we have visitors... but I keep track of everyone."
-    character_name: butler
-    choices:
-      - text: "Good to know."
-        target_node_id: end_conversation
-
-  lab_security:
-    id: lab_security
-    text: "The scientist is quite careless, I'm afraid. Often leaves doors unlocked, equipment exposed."
+    text: "Yes, including the laboratory. The scientist is often forgetful about locking up. I've found the door propped open countless times. Anyone who knew his habits could have walked right in."
     character_name: butler
     choices:
       - text: "That's very helpful information."
         target_node_id: end_conversation
+      - text: "Who else knew his habits?"
+        target_node_id: habits_knowledge
 
-  library_key_revelation:
-    id: library_key_revelation
-    text: "Yes... yes, that's where I found it. Behind one of the old leather volumes."
+  responsibility_comment:
+    id: responsibility_comment
+    text: "Indeed it is. Twenty years of faithful service to this household. Watching generations struggle with the crystal's influence. Sometimes responsibility becomes a burden, Detective. A heavy one."
     character_name: butler
     choices:
-      - text: "Which book exactly?"
+      - text: "Heavy enough to act?"
+        target_node_id: acting_question
+      - text: "I appreciate your dedication."
         target_node_id: end_conversation
 
-  recognition_admission:
-    id: recognition_admission
-    text: "I... I do recognize it, yes. It belongs to the old master's collection."
+  verify_alibi:
+    id: verify_alibi
+    text: "I... well, no. I live alone in the servant's quarters. But the books I was reading - they're still on the library table. You can see which ones, trace my research. I was trying to understand, not to steal."
     character_name: butler
     choices:
-      - text: "Tell me more about this collection."
+      - text: "Show me these books."
+        target_node_id: show_books
+      - text: "That's concerning."
+        target_node_id: alibi_concern
+
+  lab_check_time:
+    id: lab_check_time
+    text: "Around 11:30, I believe. Everything seemed normal then. The professor was at his workbench, the crystal glowing in its case. I didn't disturb him - he was deep in calculations."
+    character_name: butler
+    flags:
+      set: ["timeline_data"]
+    choices:
+      - text: "And after 11:30?"
+        target_node_id: after_check
+      - text: "Did anyone else know you checked then?"
+        target_node_id: check_knowledge
+
+  after_check:
+    id: after_check
+    text: "I went to the library. The professor usually works until midnight, so I waited there. I heard him close the laboratory door around twelve, then nothing until morning. When I checked at seven... the crystal was gone."
+    character_name: butler
+    choices:
+      - text: "So the theft happened between midnight and seven."
+        target_node_id: theft_window
+      - text: "Did you hear anything unusual?"
+        target_node_id: unusual_sounds
+
+  theft_window:
+    id: theft_window
+    text: "Yes. The witching hours, as they say. Whoever took it knew the professor's schedule, knew when the house would be quiet. This was planned, Detective. Carefully planned."
+    character_name: butler
+    choices:
+      - text: "By someone who knew the routine."
+        target_node_id: routine_knowledge
+      - text: "We need to find them before 11:47."
+        target_node_id: time_pressure_urgent
+
+  unusual_sightings:
+    id: unusual_sightings
+    text: "Nothing unusual inside. But through the library windows, I thought I saw a light in the garden. Moving, like someone with a lantern. I assumed it was imagination - the moonlight plays tricks through the fog."
+    character_name: butler
+    flags:
+      set: ["garden_light_seen"]
+    choices:
+      - text: "That was no imagination."
+        target_node_id: garden_intruder
+      - text: "Why didn't you investigate?"
+        target_node_id: why_not_investigate
+
+  garden_intruder:
+    id: garden_intruder
+    text: "Then the thief was in the garden while I sat reading in the library! They must have used the garden door - it's often unlocked. And I was just... sitting there, oblivious. I failed them, Detective."
+    character_name: butler
+    choices:
+      - text: "You didn't fail. Help me now."
+        target_node_id: help_now
+      - text: "The garden is the key."
+        target_node_id: garden_investigation
+
+  knows_more:
+    id: knows_more
+    text: "I... I've told you everything I know, Detective. Truly. But I've had suspicions - fears, really - about who might want the crystal and why. Shall I share them with you?"
+    character_name: butler
+    choices:
+      - text: "Tell me your suspicions."
+        target_node_id: butler_suspicions
+      - text: "I prefer evidence to suspicions."
+        target_node_id: evidence_preference
+
+  butler_suspicions:
+    id: butler_suspicions
+    text: "The professor's father. He left decades ago to escape the crystal's influence. But he never stopped caring about his son. If he believed Edmund was in danger... he might do anything to protect him. Even steal the very thing that threatens him."
+    character_name: butler
+    flags:
+      set: ["father_suspect_mentioned"]
+    choices:
+      - text: "Including taking the crystal."
+        target_node_id: father_theory
+      - text: "How would he know about current events?"
+        target_node_id: father_information
+      - text: "Is there anyone else?"
+        target_node_id: other_suspects
+
+  other_suspects:
+    id: other_suspects
+    text: "The academic world has been circling for years. Collectors, researchers, cultists who believe in the crystal's supernatural power. Any of them might have grown desperate enough to act. But an outsider would need inside help..."
+    character_name: butler
+    choices:
+      - text: "Inside help from you?"
+        target_node_id: insider_accusation
+      - text: "Or inside information."
+        target_node_id: inside_information
+      - text: "Let's focus on finding it."
         target_node_id: end_conversation
+
+  suspect_question:
+    id: suspect_question
+    text: "I... I couldn't say for certain. Perhaps someone from outside? A stranger? Though the mansion's security makes that difficult. It would have to be someone who knew the layout, the routines..."
+    character_name: butler
+    choices:
+      - text: "Someone like you."
+        target_node_id: direct_accusation
+      - text: "Or someone who once lived here."
+        target_node_id: former_resident
+      - text: "Tell me more about these strangers."
+        target_node_id: stranger_details
+
+  direct_accusation:
+    id: direct_accusation
+    text: "Me? Detective, I... I admit I took the brass key, yes. But the crystal? I would never. Do you know what that crystal represents? Generations of obsession, death, madness. Why would I want it?"
+    character_name: butler
+    choices:
+      - text: "To end the obsession."
+        target_node_id: ending_obsession
+      - text: "To protect the professor."
+        target_node_id: protection_motive
+      - text: "Then prove your innocence."
+        target_node_id: prove_innocence
+
+  protection_motive:
+    id: protection_motive
+    text: "Protect him by... taking the very thing that might kill him? I've considered it, Detective. Many sleepless nights, I've considered it. But I'm just a butler. What right do I have to make such a decision?"
+    character_name: butler
+    choices:
+      - text: "You made a decision about the key."
+        target_node_id: key_decision
+      - text: "Perhaps someone else made that decision for you."
+        target_node_id: someone_else
+      - text: "Help me find the real thief."
+        target_node_id: cooperation_offer
+
+  thief_accusation:
+    id: thief_accusation
+    text: "I... yes, I suppose I am. A thief of a key, at least. But only this once, and only because of desperation! I've watched this family destroy themselves for generations. I thought... I thought if I understood..."
+    character_name: butler
+    choices:
+      - text: "Understood what?"
+        target_node_id: understanding_goal
+      - text: "Desperation drives people to do things."
+        target_node_id: desperation_understanding
+      - text: "Help me find the crystal."
+        target_node_id: cooperation_offer
 
   key_purpose:
     id: key_purpose
-    text: "I believe it opens something in the old wing of the mansion. A cabinet or chest perhaps."
+    text: "The grandfather's final notes. Locked away in a cabinet in the laboratory since the night he died. The key opens that cabinet - I'm almost certain. What's inside... what he discovered... it might explain everything."
     character_name: butler
     choices:
-      - text: "Show me where."
+      - text: "Let's find out together."
+        target_node_id: open_together
+      - text: "You've never looked?"
+        target_node_id: unopened_surprise
+      - text: "Give me the key."
+        target_node_id: key_handover
+
+  key_handover:
+    id: key_handover
+    text: "Take it. Whatever it unlocks, whatever truths it reveals... I hope they help you find the crystal. And perhaps... perhaps help end this curse once and for all."
+    character_name: butler
+    flags:
+      set: ["brass_key_received", "butler_gives_key"]
+    actions: ["add_to_inventory:brass_key"]
+    choices:
+      - text: "Thank you, James."
+        target_node_id: gratitude_response
+      - text: "I'll find the truth."
+        target_node_id: truth_promise
+      - text: "Now tell me about the garden."
+        target_node_id: garden_investigation
+
+  truth_lesson:
+    id: truth_lesson
+    text: "You're right, Detective. I should have been honest from the beginning. Fear and habit kept me silent. Twenty years of keeping secrets for this family... it becomes second nature."
+    character_name: butler
+    choices:
+      - text: "It's not too late to help."
+        target_node_id: cooperation_offer
+      - text: "What other secrets are you keeping?"
+        target_node_id: other_secrets
+
+  crystal_lead:
+    id: crystal_lead
+    text: "Do you think so? The key and the crystal... they're connected. The grandfather wrote about 'the serpent that guards the light.' If the key unlocks his final notes, they might reveal where the crystal is meant to go."
+    character_name: butler
+    choices:
+      - text: "Meant to go?"
+        target_node_id: crystal_destination
+      - text: "Let's check the cabinet now."
+        target_node_id: cabinet_check
+      - text: "First, the garden."
         target_node_id: end_conversation
+
+  # Helper responses
+  routine_response:
+    id: routine_response
+    text: "Yes, of course. I understand you're just doing your job. As I do mine. We're both servants, in our way - you to justice, I to this household. I'll help however I can."
+    character_name: butler
+    choices:
+      - text: "Then tell me everything."
+        target_node_id: everything_request
+      - text: "Start with last night."
+        target_node_id: last_night
+
+  last_night:
+    id: last_night
+    text: "Last night... I did my rounds as usual. The professor was in the laboratory until midnight. I was in the library, researching the crystal's history. I heard nothing unusual. This morning, chaos."
+    character_name: butler
+    choices:
+      - text: "Why were you researching?"
+        target_node_id: research_reason
+      - text: "What did your research reveal?"
+        target_node_id: research_findings
+      - text: "Did you enter the laboratory?"
+        target_node_id: lab_entry
+
+  research_reason:
+    id: research_reason
+    text: "The professor's obsession is reaching a dangerous point. I wanted to understand what drives it. What the crystal truly is. Whether there's any way to... break its hold. For his sake."
+    character_name: butler
+    choices:
+      - text: "What did you find?"
+        target_node_id: research_findings
+      - text: "You care about him deeply."
+        target_node_id: caring_admission
+      - text: "Help me end this."
+        target_node_id: cooperation_offer
+
+  caring_admission:
+    id: caring_admission
+    text: "I've served three generations of Ashworths. Watched them struggle, suffer, and ultimately fall to the crystal's influence. Edmund is the last of them. I don't want to see him become another victim."
+    character_name: butler
+    choices:
+      - text: "Then help me find the crystal."
+        target_node_id: cooperation_offer
+      - text: "Did you try to protect him?"
+        target_node_id: protection_attempts
+      - text: "By removing the crystal?"
+        target_node_id: removal_question
+
+  eavesdropping_accusation:
+    id: eavesdropping_accusation
+    text: "I would never deliberately eavesdrop! It's simply... impossible not to hear when voices carry. And the professor often talks to himself during experiments. One learns things, even unwillingly."
+    character_name: butler
+    choices:
+      - text: "What things have you learned?"
+        target_node_id: learned_things
+      - text: "That's a convenient excuse."
+        target_node_id: convenient_response
+      - text: "Move on - where were you last night?"
+        target_node_id: alibi_question
+
+  convenient_response:
+    id: convenient_response
+    text: "I... I suppose it is convenient. But it's also the truth. I've spent twenty years in this mansion, Detective. You learn things simply by existing here. The crystal's secrets seep into everything."
+    character_name: butler
+    choices:
+      - text: "What secrets?"
+        target_node_id: crystal_secrets
+      - text: "I need facts, not impressions."
+        target_node_id: facts_demand
+      - text: "Very well. Continue."
+        target_node_id: end_conversation
+
+  evidence_confrontation:
+    id: evidence_confrontation
+    text: "That key... where did you get it? I haven't seen it in years. It belonged to the grandfather - he showed it to me once. Said it was 'the key to everything.' I thought it was lost forever."
+    character_name: butler
+    choices:
+      - text: "You tell me - it was hidden in the library."
+        target_node_id: library_key_revelation
+      - text: "So you do recognize it."
+        target_node_id: recognition_admission
+
+  library_key_revelation:
+    id: library_key_revelation
+    text: "The library... yes, that's where he spent his final evening. He must have hidden it there, knowing someone would find it eventually. But not who. And not when. Fate, perhaps."
+    character_name: butler
+    choices:
+      - text: "What does it unlock?"
+        target_node_id: key_destination
+      - text: "You found it first."
+        target_node_id: found_first
+
+  recognition_admission:
+    id: recognition_admission
+    text: "I do recognize it, yes. The serpent design, the peculiar notches. The grandfather treasured this key. He said it would 'reveal the final truth.' I never knew what he meant... until now."
+    character_name: butler
+    choices:
+      - text: "What truth?"
+        target_node_id: final_truth
+      - text: "Show me where it leads."
+        target_node_id: key_destination
+
+  # Garden investigation path
+  garden_investigation:
+    id: garden_investigation
+    text: "The garden holds many secrets. The fountain that resonates with the crystal. The statue that guards its power. The moonflowers that track its presence. If the crystal was taken through the garden, there will be signs."
+    character_name: butler
+    choices:
+      - text: "Take me there."
+        target_node_id: garden_tour
+      - text: "What signs should I look for?"
+        target_node_id: garden_signs
+      - text: "I'll investigate alone."
+        target_node_id: end_conversation
+
+  garden_signs:
+    id: garden_signs
+    text: "The moonflowers glow brighter near the crystal. The fountain's water ripples in strange patterns when crystalline energy is near. And the statue... if someone placed the crystal in its hands, there would be residual warmth."
+    character_name: butler
+    flags:
+      set: ["garden_investigation_tips"]
+    choices:
+      - text: "This is helpful."
+        target_node_id: helpful_acknowledgment
+      - text: "Come with me to check."
+        target_node_id: companion_accepted
+      - text: "Stay here. I'll return."
+        target_node_id: end_conversation
+
+  companion_accepted:
+    id: companion_accepted
+    text: "Yes, Detective. I'll come with you. Whatever we find in that garden... we'll face it together. Perhaps it's time I stopped hiding from the crystal's influence and confronted it directly."
+    character_name: butler
+    flags:
+      set: ["butler_companion"]
+    choices:
+      - text: "Let's go."
+        target_node_id: end_conversation
+
+  gratitude_response:
+    id: gratitude_response
+    text: "James... I haven't been called that in years. Always 'butler' or 'Thornton.' Thank you, Detective. For seeing me as more than my position. I hope I can be worthy of that trust."
+    character_name: butler
+    choices:
+      - text: "We'll find the crystal together."
+        target_node_id: end_conversation
+      - text: "Start by telling me everything."
+        target_node_id: everything_request
+
+  everything_request:
+    id: everything_request
+    text: "Everything I know? The crystal arrived in 1847. Three generations have studied it. Two have died in its pursuit. Secret passages riddle this mansion. And someone, perhaps tonight, plans to unlock its full power."
+    character_name: butler
+    choices:
+      - text: "Then we have no time to waste."
+        target_node_id: end_conversation
+      - text: "Tell me about these passages."
+        target_node_id: passage_request
+
+  trust_response:
+    id: trust_response
+    text: "Trust is hard-earned in this household, Detective. I've served silently for twenty years, watching, waiting. Perhaps it's time to stop watching and start acting. The crystal must be found."
+    character_name: butler
+    choices:
+      - text: "Then let's find it."
+        target_node_id: end_conversation
+
+  truth_promise:
+    id: truth_promise
+    text: "The truth... yes. It's what we all seek, isn't it? The professor wants the truth about the crystal. I want the truth about how to save him from it. And you, Detective... you seek the truth about who took it."
+    character_name: butler
+    choices:
+      - text: "Perhaps we can find all three truths."
+        target_node_id: three_truths
+      - text: "One mystery at a time."
+        target_node_id: end_conversation
+
+  three_truths:
+    id: three_truths
+    text: "Perhaps. The grandfather believed all truths were connected - that understanding the crystal would reveal everything else. Maybe he was right. The cabinet, Detective. The grandfather's final notes. Start there."
+    character_name: butler
+    choices:
+      - text: "I will."
+        target_node_id: end_conversation
+
+  # Return visit node
+  return_visit:
+    id: return_visit
+    text: "Detective, you've returned. Have you found anything? The hours are slipping away, and I fear what might happen when the clock strikes 11:47."
+    character_name: butler
+    conditions: ["butler_cooperating"]
+    choices:
+      - text: "I found the crystal."
+        target_node_id: crystal_found
+        conditions: ["has_crystal"]
+      - text: "I need more information."
+        target_node_id: more_info_request
+      - text: "Nothing yet. Still searching."
+        target_node_id: keep_searching
+
+  crystal_found:
+    id: crystal_found
+    text: "You found it! Thank heavens. Where was it? No, it doesn't matter - what matters is that it's safe. The professor... he'll be relieved. And perhaps now, finally, we can discuss what to do with it."
+    character_name: butler
+    choices:
+      - text: "What should be done?"
+        target_node_id: crystal_fate
+      - text: "I need to return it to the professor."
+        target_node_id: return_to_professor
+
+  crystal_fate:
+    id: crystal_fate
+    text: "Three generations of obsession, Detective. Three generations of death and madness. Perhaps it's time to end the cycle. Return it to the mountains. Destroy it if we must. But don't let it claim another Ashworth."
+    character_name: butler
+    choices:
+      - text: "That's not my decision to make."
+        target_node_id: decision_deferred
+      - text: "I'll speak to the professor."
+        target_node_id: end_conversation
+
+  keep_searching:
+    id: keep_searching
+    text: "Time is running short, Detective. The garden, the statue, the fountain - if the crystal is to be used tonight, that's where it will be. Please, hurry."
+    character_name: butler
+    choices:
+      - text: "I'm doing my best."
+        target_node_id: best_acknowledgment
+      - text: "Any new information?"
+        target_node_id: new_info
+
+  best_acknowledgment:
+    id: best_acknowledgment
+    text: "I know, Detective. And I'm grateful. Whatever happens tonight, know that you've done more for this household than anyone in twenty years. Now go. Find the crystal. Save Edmund."
+    character_name: butler
+    is_end: true

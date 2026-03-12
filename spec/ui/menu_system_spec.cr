@@ -54,6 +54,25 @@ describe PointClickEngine::UI::MenuSystem do
       menu_system.visible.should be_false
     end
 
+    it "resets input state when showing or hiding a menu" do
+      menu_system = PointClickEngine::UI::MenuSystem.new
+      menu_system.input_handler.mouse_position = vec2(250.0f32, 180.0f32)
+      menu_system.input_handler.last_input_time = 42.0
+
+      menu_system.show("main")
+      menu_system.input_handler.mouse_position.x.should eq(0.0f32)
+      menu_system.input_handler.mouse_position.y.should eq(0.0f32)
+      menu_system.input_handler.last_input_time.should eq(0.0)
+
+      menu_system.input_handler.mouse_position = vec2(120.0f32, 90.0f32)
+      menu_system.input_handler.last_input_time = 7.0
+      menu_system.hide
+
+      menu_system.input_handler.mouse_position.x.should eq(0.0f32)
+      menu_system.input_handler.mouse_position.y.should eq(0.0f32)
+      menu_system.input_handler.last_input_time.should eq(0.0)
+    end
+
     it "updates layout when showing menu" do
       menu_system = PointClickEngine::UI::MenuSystem.new
       original_bounds = menu_system.menu_bounds
@@ -73,6 +92,19 @@ describe PointClickEngine::UI::MenuSystem do
 
       menu_system.current_menu.should eq("options")
       menu_system.navigator.total_items.should eq(menu_system.menu_items["options"].size)
+    end
+
+    it "resets stale mouse/input state when switching menus" do
+      menu_system = PointClickEngine::UI::MenuSystem.new
+      menu_system.show("main")
+      menu_system.input_handler.mouse_position = vec2(300.0f32, 400.0f32)
+      menu_system.input_handler.last_input_time = 2.0
+
+      menu_system.switch_to_menu("options")
+
+      menu_system.input_handler.mouse_position.x.should eq(0.0f32)
+      menu_system.input_handler.mouse_position.y.should eq(0.0f32)
+      menu_system.input_handler.last_input_time.should eq(0.0)
     end
 
     it "validates menu exists before switching" do
@@ -246,6 +278,25 @@ describe PointClickEngine::UI::MenuSystem do
         menu_system.menu_bounds.width.should be > 100
         menu_system.menu_bounds.height.should be > 100
       end
+    end
+
+    it "lays out menus in the active game-area screen rectangle when attached to an engine display" do
+      engine = PointClickEngine::Core::Engine.new(
+        1920,
+        1200,
+        "Menu Layout Test",
+        skip_singleton: true
+      )
+      engine.system_manager.display_manager = PointClickEngine::Graphics::Display.new(1920, 1200, 1024, 768)
+
+      menu_system = PointClickEngine::UI::MenuSystem.new(engine)
+      menu_system.show("main")
+
+      center_x = menu_system.menu_bounds.x + menu_system.menu_bounds.width / 2
+      center_y = menu_system.menu_bounds.y + menu_system.menu_bounds.height / 2
+
+      center_x.should be_close(960.0f32, 1.0f32)
+      center_y.should be_close(600.0f32, 1.0f32)
     end
   end
 

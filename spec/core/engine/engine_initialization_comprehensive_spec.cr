@@ -81,6 +81,16 @@ describe PointClickEngine::Core::Engine do
         engine.fullscreen.should be_true
       end
 
+      it "applies startup fullscreen through the live display path during init" do
+        engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
+        engine.fullscreen = true
+        engine.init
+
+        engine.display_manager.should_not be_nil
+        engine.display_manager.not_nil!.fullscreen?.should be_true
+        engine.fullscreen.should be_true
+      end
+
       it "configures performance settings" do
         engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
         engine.auto_save_interval = 300.0f32

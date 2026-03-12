@@ -299,8 +299,8 @@ module PointClickEngine
           begin
             sound = RAudio.load_sound(file_path)
             @loaded_sounds[file_path] = sound
-          rescue
-            puts "Warning: Could not load footstep sound #{file_path}"
+          rescue ex
+            # Silent failure - sound will be skipped during playback
           end
         {% else %}
           @loaded_sounds[file_path] = file_path

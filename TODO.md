@@ -34,7 +34,7 @@
 - Debug character stuck after first movement (may be resolved by movement controller refactoring)
 
 ## Pending - Future Enhancements
-See [REFACTORING_TODO.md](REFACTORING_TODO.md) for additional improvement opportunities.
+See [REFACTORING_TODO.md](docs/developer-guide/plans/REFACTORING_TODO.md) for additional improvement opportunities.
 
 ### Documentation Updates Needed
 - Update ARCHITECTURE.md to reflect new component structure

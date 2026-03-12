@@ -27,15 +27,15 @@ describe PointClickEngine::Audio::SoundEffectManager do
   describe "#play_sound" do
     it "plays sounds with volume multiplier" do
       manager = PointClickEngine::Audio::SoundEffectManager.new
-      manager.sfx_volume = 0.5
+      manager.sfx_volume = 0.5_f32
 
       mock_sound = MockSoundEffect.new("test", "fake.wav")
       manager.sound_effects["test"] = mock_sound
 
-      manager.play_sound("test", 0.8)
+      manager.play_sound("test", 0.8_f32)
 
       mock_sound.play_count.should eq(1)
-      mock_sound.last_volume.should eq(0.4) # 0.8 * 0.5
+      mock_sound.last_volume.should eq(0.4_f32) # 0.8 * 0.5
     end
 
     it "handles missing sounds gracefully" do

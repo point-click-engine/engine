@@ -38,6 +38,12 @@ module PointClickEngine
         message = "Validation failed with #{@errors.size} error(s):\n" + @errors.join("\n")
         super(message, filename)
       end
+
+      # Single message convenience constructor
+      def initialize(message : String, filename : String? = nil)
+        @errors = [message]
+        super("Validation failed: #{message}", filename)
+      end
     end
 
     class SaveGameError < LoadingError

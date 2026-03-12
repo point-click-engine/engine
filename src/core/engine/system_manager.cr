@@ -2,17 +2,14 @@
 
 require "../achievement_manager"
 require "../../audio/audio_manager"
-require "../../graphics/shaders/shader_system"
+require "../../graphics/graphics"
 require "../../ui/gui_manager"
 require "../../scripting/script_engine"
-require "../../scripting/event_system"
 require "../../ui/dialog_manager"
 require "../config_manager"
-require "../../graphics/cameras/camera_manager"
-require "../../graphics/display_manager"
-require "../../graphics/transitions"
 require "../../ui/menu_system"
 require "./verb_input_system"
+require "../events/events"
 
 module PointClickEngine
   module Core
@@ -21,28 +18,31 @@ module PointClickEngine
       class SystemManager
         property achievement_manager : AchievementManager?
         property audio_manager : Audio::AudioManager?
-        property shader_system : Graphics::Shaders::ShaderSystem?
+        property shader_system : Graphics::ShaderSystem?
         property gui : UI::GUIManager?
         property script_engine : Scripting::ScriptEngine?
-        property event_system : Scripting::EventSystem
         property dialog_manager : UI::DialogManager?
         property config : ConfigManager?
-        property camera_manager : Graphics::Cameras::CameraManager?
-        property display_manager : Graphics::DisplayManager?
-        property transition_manager : Graphics::TransitionManager?
+        property renderer : Graphics::Renderer?
+        property display_manager : Graphics::Display?
         property menu_system : UI::MenuSystem?
 
+        # Unified event bus
+        property event_bus : Events::EventBus
+
         def initialize
-          @event_system = Scripting::EventSystem.new
+          @event_bus = Events::EventBus.new
         end
 
         # Initialize all engine systems
-        def initialize_systems(width : Int32, height : Int32)
+        def initialize_systems(width : Int32, height : Int32,
+                               reference_width : Int32 = width,
+                               reference_height : Int32 = height)
           # Initialize display manager first
-          @display_manager = Graphics::DisplayManager.new(width, height)
+          @display_manager = Graphics::Display.new(width, height, reference_width, reference_height)
 
-          # Initialize camera manager
-          @camera_manager = Graphics::Cameras::CameraManager.new(width, height)
+          # Initialize renderer with display
+          @renderer = Graphics::Renderer.new(@display_manager.not_nil!)
 
           # Initialize audio system
           if Audio::AudioManager.available?
@@ -53,7 +53,7 @@ module PointClickEngine
           @achievement_manager = AchievementManager.new
 
           # Initialize shader system
-          @shader_system = Graphics::Shaders::ShaderSystem.new
+          @shader_system = Graphics::ShaderSystem.new
 
           # Initialize GUI manager
           @gui = UI::GUIManager.new
@@ -65,7 +65,7 @@ module PointClickEngine
           @dialog_manager = UI::DialogManager.new
 
           # Initialize transition manager
-          @transition_manager = Graphics::TransitionManager.new(width, height)
+          # Transition effects are now handled by the effect manager
 
           # Initialize menu system
           @menu_system = UI::MenuSystem.new
@@ -73,6 +73,8 @@ module PointClickEngine
           # Initialize scripting engine
           begin
             @script_engine = Scripting::ScriptEngine.new
+            # Subscribe script engine to EventBus for event-driven Lua callbacks
+            @script_engine.not_nil!.subscribe_to_events(@event_bus)
             puts "Script engine initialized successfully"
           rescue ex
             puts "Warning: Script engine initialization failed: #{ex.message}"
@@ -83,6 +85,8 @@ module PointClickEngine
         # Setup menu callbacks with engine reference
         def setup_menu_callbacks(engine)
           return unless @menu_system
+
+          @menu_system.not_nil!.engine = engine
 
           # New Game callback
           @menu_system.not_nil!.on_new_game = -> {
@@ -106,13 +110,19 @@ module PointClickEngine
 
           # Resume callback
           @menu_system.not_nil!.on_resume = -> {
-            @menu_system.not_nil!.hide
+            engine.resume_game
           }
 
           # Quit callback
           @menu_system.not_nil!.on_quit = -> {
             engine.stop
           }
+        end
+
+        def update_menu_only(dt : Float32)
+          @audio_manager.try(&.update)
+          @menu_system.try(&.update(dt))
+          @event_bus.process
         end
 
         # Update all systems
@@ -122,26 +132,30 @@ module PointClickEngine
           # @shader_system.try(&.update(dt)) # No update method
           @gui.try(&.update(dt))
           @dialog_manager.try(&.update(dt))
-          @transition_manager.try(&.update(dt))
+          # Transitions are now handled by the effect system
           @menu_system.try(&.update(dt))
-          @event_system.process_events
+
+          # Process events
+          @event_bus.process
         end
 
         # Cleanup all systems
         def cleanup_systems
+          # Unsubscribe script engine from EventBus before cleanup
+          @script_engine.try(&.unsubscribe_from_events(@event_bus))
+
           # Cleanup systems that have cleanup methods
-          @audio_manager.try(&.finalize) # Has finalize method
+          @audio_manager.try(&.cleanup) # Has cleanup method
           @shader_system.try(&.cleanup)  # Has cleanup method
           # @gui.try(&.cleanup)               # No cleanup method - GUI::GUIManager
           @script_engine.try(&.cleanup)      # Has cleanup method
           @dialog_manager.try(&.cleanup)     # Has cleanup method
-          @transition_manager.try(&.cleanup) # Has cleanup method
-          @display_manager.try(&.cleanup)    # Has cleanup method
+          # Transitions are now handled by the effect system
+          # Display doesn't need cleanup in new graphics system
 
           # Systems without cleanup methods:
           # - @achievement_manager (no cleanup method)
           # - @gui (no cleanup method)
-          # - @event_system (no cleanup method)
           # - @config (no cleanup method)
           # - @menu_system (no cleanup method)
         end
