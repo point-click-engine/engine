@@ -28,6 +28,12 @@ All visual enhancements are implemented as effects that can be:
 - Shader caching and reuse
 - Layer-based rendering to minimize state changes
 
+### 4. **Single Frame Graph**
+- World rendering happens in logical render targets, not directly in display space
+- Scene shader effects are texture-in / texture-out transforms
+- Cinematic overlays and UI are composed in logical space before presentation
+- `Display` performs the final window/fullscreen presentation exactly once per frame
+
 ## Module Structure
 
 ```
@@ -51,11 +57,11 @@ Manages the game window and resolution scaling:
 - Provides coordinate system transformations
 
 ### Renderer (`core/renderer.cr`)
-The main rendering pipeline:
-- Coordinates all rendering operations
-- Manages render state
-- Handles layer composition
-- Integrates post-processing effects
+The logical-frame renderer:
+- Owns the logical render targets used by the engine frame graph
+- Applies camera transforms for world rendering
+- Builds frame context objects for world/UI/cinematic composition
+- Leaves final presentation to `Display`
 
 ### Camera (`core/camera.cr`)
 2D world camera with:

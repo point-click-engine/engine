@@ -1,5 +1,17 @@
 # Render / Display Refactor Plan
 
+## Status
+
+The core rebuild described here is now implemented in the live engine:
+
+- renderer-owned logical render targets
+- one top-level frame graph in `Engine`
+- texture-in / texture-out shader scene effects
+- final presentation handled once through `Display`
+- world, cinematic, and UI composition kept in logical space before presentation
+
+The newer [RENDER_PIPELINE_ARCHITECTURE_REBUILD_PLAN.md](/Users/remy/dev/point_click_engine/RENDER_PIPELINE_ARCHITECTURE_REBUILD_PLAN.md) remains the more specific reconstruction/audit document for remaining cleanup and validation tasks.
+
 ## Goal
 
 Replace the current ad hoc display/render/input layering with one explicit render contract that:

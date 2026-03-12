@@ -161,9 +161,10 @@ module PointClickEngine
 
       # Initializes the engine and all subsystems
       def init
+        requested_fullscreen = @fullscreen
+
         # Initialize Raylib window only if not already open (for tests using RaylibContext)
         unless RL.window_ready?
-          RL.set_config_flags(RL::ConfigFlags::FullscreenMode) if @fullscreen
           RL.init_window(@window_width, @window_height, @window_title)
         end
         RL.set_exit_key(RL::KeyboardKey::Null.value)
@@ -174,6 +175,11 @@ module PointClickEngine
         if dm = display_manager
           dm.refresh_from_window
           sync_display_state(dm)
+
+          if requested_fullscreen && !dm.fullscreen?
+            dm.set_fullscreen(true)
+            sync_display_state(dm)
+          end
         end
 
         # Wire up timer manager with EventBus
@@ -287,104 +293,52 @@ module PointClickEngine
       # Renders the game
       private def render
         refresh_runtime_render_context
+        renderer.ensure_render_textures
+        frame = current_frame_context
 
-        # Check if we have an active shader-based transition
-        if transition = @effect_manager.active_transition
-          log_render_debug("transition", "type=#{transition.transition_type} camera=#{format_vec(camera.position)}")
-          if transition.responds_to?(:render_with_shader)
-            render_shader_scene do
-              transition.render_with_shader do
-                render_scene_layers(true)
-              end
-            end
-          else
-            render_scene_content
-          end
-          # Check if we have an active rain effect
-        elsif rain_effect = @effect_manager.active_rain_effect
-          log_render_debug("rain_shader", "scene=#{@current_scene.try(&.name) || "none"} camera=#{format_vec(camera.position)}")
-          if rain_effect.responds_to?(:render_scene_with_rain)
-            render_shader_scene do
-              rain_effect.render_scene_with_rain do
-                render_scene_layers(true)
-              end
-            end
-          else
-            render_scene_content
-          end
-          # Check if we have an active fog effect
-        elsif fog_effect = @effect_manager.active_fog_effect
-          log_render_debug("fog_shader", "scene=#{@current_scene.try(&.name) || "none"} camera=#{format_vec(camera.position)}")
-          if fog_effect.responds_to?(:render_scene_with_fog)
-            render_shader_scene do
-              fog_effect.render_scene_with_fog do
-                render_scene_layers(true)
-              end
-            end
-          else
-            render_scene_content
-          end
-          # Check if we have an active darkness effect
-        elsif darkness_effect = @effect_manager.active_darkness_effect
-          log_render_debug("darkness_shader", "scene=#{@current_scene.try(&.name) || "none"} camera=#{format_vec(camera.position)}")
-          if darkness_effect.responds_to?(:render_scene_with_darkness)
-            render_shader_scene do
-              darkness_effect.render_scene_with_darkness do
-                render_scene_layers(true)
-              end
-            end
-          else
-            render_scene_content
-          end
-          # Check if we have an active underwater effect
-        elsif underwater_effect = @effect_manager.active_underwater_effect
-          log_render_debug("underwater_shader", "scene=#{@current_scene.try(&.name) || "none"} camera=#{format_vec(camera.position)}")
-          if underwater_effect.responds_to?(:render_scene_with_underwater)
-            render_shader_scene do
-              underwater_effect.render_scene_with_underwater do
-                render_scene_layers(true)
-              end
-            end
-          else
-            render_scene_content
-          end
+        world_target = renderer.world_render_texture.not_nil!
+        scene_target_a = renderer.scene_render_texture_a.not_nil!
+        scene_target_b = renderer.scene_render_texture_b.not_nil!
+        final_target = renderer.final_render_texture.not_nil!
+
+        log_render_debug(
+          "frame_graph",
+          "scene=#{@current_scene.try(&.name) || "none"} logical=#{frame.logical_width}x#{frame.logical_height} " \
+          "scene_rt=#{world_target.texture.width}x#{world_target.texture.height}"
+        )
+
+        RL.begin_texture_mode(world_target)
+        RL.clear_background(RL::BLANK)
+        render_world_scene
+        RL.end_texture_mode
+
+        scene_result = @effect_manager.apply_scene_shader_chain(world_target, scene_target_a, scene_target_b, frame)
+
+        RL.begin_texture_mode(final_target)
+        RL.clear_background(RL::BLANK)
+        renderer.blit_logical_texture(scene_result.texture, frame.logical_width, frame.logical_height)
+        render_action_and_script_overlays
+        @effect_manager.draw_scene_overlays(renderer)
+        render_ui_layers
+        draw_modal_cursor_to_logical_frame if modal_ui_active?
+        RL.end_texture_mode
+
+        if dm = display_manager
+          dm.present(final_target.texture, frame.logical_width, frame.logical_height)
         else
-          render_scene_content
+          renderer.blit_logical_texture(final_target.texture, frame.logical_width, frame.logical_height)
         end
 
-        if modal_ui_active?
-          draw_modal_cursor
-        elsif gameplay_cursor_active?
-          @verb_input_system.try(&.draw(self.display_manager))
-        else
+        if gameplay_cursor_active?
+          draw_gameplay_cursor_to_screen
+        elsif !modal_ui_active?
           RL.show_cursor
         end
       end
 
-      # Renders the scene content (separated for use with transitions)
-      private def render_scene_content(skip_overlays : Bool = false, apply_display_transform : Bool = true)
-        if apply_display_transform
-          with_logical_render_space(true) do
-            render_scene_content(skip_overlays: skip_overlays, apply_display_transform: false)
-          end
-          return
-        end
-
-        render_scene_layers(skip_overlays)
-        render_ui_layers
-      end
-
-      private def render_shader_scene(&block)
-        with_logical_render_space(true) do
-          yield
-          @effect_manager.draw_scene_overlays(renderer, skip_transitions: true)
-          render_ui_layers
-        end
-      end
-
       private def render_scene_layers(skip_overlays : Bool = false)
-        render_world_scene(false)
-        render_action_and_script_overlays(false)
+        render_world_scene
+        render_action_and_script_overlays
         unless skip_overlays
           @effect_manager.draw_scene_overlays(renderer)
         end
@@ -394,7 +348,7 @@ module PointClickEngine
         render_hotspots_ui_and_debug(false)
       end
 
-      private def render_world_scene(apply_display_transform : Bool)
+      private def render_world_scene
         # Create a temporary layer manager for scene effects
         # In a full implementation, this would be part of the renderer
         layers = Graphics::LayerManager.new
@@ -404,49 +358,46 @@ module PointClickEngine
         @effect_manager.apply_scene_effects(renderer, layers, RL.get_frame_time)
 
         # Render scene with camera using the renderer
-        renderer.render(apply_display_transform) do |context|
+        renderer.render(false) do |context|
           @current_scene.try do |scene|
             scene.draw(camera)
           end
         end
       end
 
-      private def render_action_and_script_overlays(apply_display_transform : Bool)
-        with_logical_render_space(apply_display_transform) do
-          @action_overlay_manager.draw
-          @current_scene.try(&.draw_script_overlays)
-          @global_script_runner.try(&.draw)
-        end
+      private def render_action_and_script_overlays
+        @action_overlay_manager.draw
+        @current_scene.try(&.draw_script_overlays)
+        @global_script_runner.try(&.draw)
       end
 
-      private def render_hotspots_ui_and_debug(apply_display_transform : Bool)
-        with_logical_render_space(apply_display_transform) do
-          if @render_coordinator.hotspot_highlight_enabled && @current_scene
-            render_hotspot_highlights(@current_scene.not_nil!)
-          end
-
-          @system_manager.dialog_manager.try(&.draw)
-          @inventory.draw
-          @system_manager.menu_system.try(&.render)
-          render_debug_info if @@debug_mode
+      private def render_hotspots_ui_and_debug(apply_display_transform : Bool = false)
+        if @render_coordinator.hotspot_highlight_enabled && @current_scene
+          render_hotspot_highlights(@current_scene.not_nil!)
         end
+
+        @system_manager.dialog_manager.try(&.draw)
+        @inventory.draw
+        @system_manager.menu_system.try(&.render)
+        render_debug_info if @@debug_mode
       end
 
-      private def draw_modal_cursor
+      private def draw_modal_cursor_to_logical_frame
         if dm = display_manager
-          raw_mouse = RL.get_mouse_position
-          game_mouse = dm.screen_to_game(raw_mouse)
+          game_mouse = dm.screen_to_game(RL.get_mouse_position)
 
-          with_logical_render_space(true) do
-            if cursor_manager = @verb_input_system.try(&.cursor_manager)
-              cursor_manager.draw(game_mouse)
-            else
-              draw_software_cursor(game_mouse)
-            end
+          if cursor_manager = @verb_input_system.try(&.cursor_manager)
+            cursor_manager.draw(game_mouse)
+          else
+            draw_software_cursor(game_mouse)
           end
         else
           RL.show_cursor
         end
+      end
+
+      private def draw_gameplay_cursor_to_screen
+        @verb_input_system.try(&.draw(self.display_manager))
       end
 
       private def draw_software_cursor(position : RL::Vector2)

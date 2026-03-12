@@ -5,8 +5,6 @@
 
 require "../shader_scene_effect"
 require "../../shader_library"
-require "../../../core/display"
-
 module PointClickEngine
   module Graphics
     module Effects
@@ -33,11 +31,6 @@ module PointClickEngine
                          @fog_density : Float32 = 0.02f32,
                          duration : Float32 = 0.0f32)
             super(duration)
-
-            # Scene effects need a fullscreen render texture
-            if ShaderEffect.gl_context_available?
-              @render_texture = RL.load_render_texture(Display.reference_width, Display.reference_height)
-            end
           end
           
           def vertex_shader_source : String
@@ -163,51 +156,13 @@ module PointClickEngine
             context.active_shader = shader
           end
           
-          def render_scene_with_fog(display : PointClickEngine::Graphics::Display? = nil, &block : -> Nil)
-            return yield unless shader = @shader
-            return yield unless render_texture = @render_texture
-            
-            # Render scene to texture
-            RL.begin_texture_mode(render_texture)
-            RL.clear_background(RL::BLANK)
-            yield
-            RL.end_texture_mode
-            
-            # Apply fog shader
-            RL.begin_shader_mode(shader)
-            
-            # Update uniforms
-            update_common_uniforms(shader)
+          protected def update_effect_uniforms(shader : RL::Shader, logical_width : Int32, logical_height : Int32)
             set_shader_value("fogType", @fog_type.value.to_f32)
             set_shader_value("fogColor", @fog_color)
             set_shader_value("fogDensity", @fog_density)
             set_shader_value("fogStart", @fog_start)
             set_shader_value("fogEnd", @fog_end)
             set_shader_value("heightFalloff", @height_falloff)
-            
-            # Draw the scene with fog
-            source_rect = RL::Rectangle.new(
-              x: 0,
-              y: 0,
-              width: render_texture.texture.width.to_f32,
-              height: -render_texture.texture.height.to_f32
-            )
-            destination_rect = display ? display.logical_rect : RL::Rectangle.new(
-              x: 0.0f32,
-              y: 0.0f32,
-              width: render_texture.texture.width.to_f32,
-              height: render_texture.texture.height.to_f32
-            )
-            RL.draw_texture_pro(
-              render_texture.texture,
-              source_rect,
-              destination_rect,
-              RL::Vector2.new(x: 0.0f32, y: 0.0f32),
-              0.0f32,
-              RL::WHITE
-            )
-            
-            RL.end_shader_mode
           end
           
           def clone : Effect
@@ -218,10 +173,6 @@ module PointClickEngine
             effect
           end
           
-          # Alias for generic render method
-          def render_scene_with_effect(&block : -> Nil)
-            render_scene_with_fog(&block)
-          end
         end
       end
     end

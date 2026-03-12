@@ -12,8 +12,6 @@ module PointClickEngine
       # Base class for shader-based effects
       abstract class ShaderEffect < Effect
         @shader : RL::Shader?
-        @render_texture : RL::RenderTexture2D?
-
         # Common uniform locations
         @time_loc : Int32 = -1
         @progress_loc : Int32 = -1
@@ -91,17 +89,10 @@ module PointClickEngine
           
           # Update resolution if used
           if @resolution_loc >= 0
-            resolution = if render_texture = @render_texture
-                           RL::Vector2.new(
-                             x: render_texture.texture.width.to_f32,
-                             y: render_texture.texture.height.to_f32
-                           )
-                         else
-                           RL::Vector2.new(
-                             x: Display.reference_width.to_f32,
-                             y: Display.reference_height.to_f32
-                           )
-                         end
+            resolution = RL::Vector2.new(
+              x: Display.reference_width.to_f32,
+              y: Display.reference_height.to_f32
+            )
             RL.set_shader_value(shader, @resolution_loc, pointerof(resolution), RL::ShaderUniformDataType::Vec2)
           end
         end
@@ -112,9 +103,7 @@ module PointClickEngine
         # Cleanup resources
         def cleanup
           @shader.try { |s| RL.unload_shader(s) }
-          @render_texture.try { |rt| RL.unload_render_texture(rt) }
           @shader = nil
-          @render_texture = nil
         end
         
         # Helper to load shader from source strings

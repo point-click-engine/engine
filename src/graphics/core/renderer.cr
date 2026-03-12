@@ -44,9 +44,11 @@ module PointClickEngine
         # Effects and post-processing
         property post_processing_enabled : Bool = false
 
-        # Render targets for effects
+        # Logical render targets used by the engine frame graph
         @game_render_texture : RL::RenderTexture2D?
         @effect_render_texture : RL::RenderTexture2D?
+        @scratch_render_texture : RL::RenderTexture2D?
+        @final_render_texture : RL::RenderTexture2D?
 
         def initialize(@display : Display)
           @camera = Camera.new
@@ -66,6 +68,22 @@ module PointClickEngine
           @display.logical_rect
         end
 
+        def world_render_texture : RL::RenderTexture2D?
+          @game_render_texture
+        end
+
+        def scene_render_texture_a : RL::RenderTexture2D?
+          @effect_render_texture
+        end
+
+        def scene_render_texture_b : RL::RenderTexture2D?
+          @scratch_render_texture
+        end
+
+        def final_render_texture : RL::RenderTexture2D?
+          @final_render_texture
+        end
+
         def build_frame_context(scene_width : Int32? = nil, scene_height : Int32? = nil,
                                 cinematic_width : Int32? = nil, cinematic_height : Int32? = nil) : FrameContext
           FrameContext.new(
@@ -83,55 +101,23 @@ module PointClickEngine
         # Main render method with context
         def render(apply_display_transform : Bool = true, &block : RenderContext ->)
           @render_calls = 0
+          ensure_render_textures
 
-          # Start rendering to game texture if post-processing is enabled
-          if @post_processing_enabled && (game_texture = @game_render_texture)
-            RL.begin_texture_mode(game_texture)
-            RL.clear_background(RL::BLANK)
-          end
+          # The renderer always operates in logical space. Final presentation
+          # to the window/fullscreen surface is handled by Display#present.
+          camera2d = RL::Camera2D.new(
+            offset: RL::Vector2.new(x: 0, y: 0),
+            target: RL::Vector2.new(x: -@camera.position.x, y: -@camera.position.y),
+            rotation: 0.0f32,
+            zoom: 1.0f32
+          )
 
-          # Apply display scaling and camera transformation
-          if apply_display_transform
-            @display.with_game_coordinates do
-              # Apply camera transformation using Camera2D
-              camera2d = RL::Camera2D.new(
-                offset: RL::Vector2.new(x: 0, y: 0),
-                target: RL::Vector2.new(x: -@camera.position.x, y: -@camera.position.y),
-                rotation: 0.0f32,
-                zoom: 1.0f32
-              )
+          RL.begin_mode_2d(camera2d)
 
-              RL.begin_mode_2d(camera2d)
+          context = RenderContext.new(self, @camera, @viewport)
+          yield context
 
-              # Create render context and yield to caller
-              context = RenderContext.new(self, @camera, @viewport)
-              yield context
-
-              RL.end_mode_2d
-            end
-          else
-            # Apply camera transformation using Camera2D
-            camera2d = RL::Camera2D.new(
-              offset: RL::Vector2.new(x: 0, y: 0),
-              target: RL::Vector2.new(x: -@camera.position.x, y: -@camera.position.y),
-              rotation: 0.0f32,
-              zoom: 1.0f32
-            )
-
-            RL.begin_mode_2d(camera2d)
-
-            # Create render context and yield to caller
-            context = RenderContext.new(self, @camera, @viewport)
-            yield context
-
-            RL.end_mode_2d
-          end
-
-          # End texture mode and apply post-processing
-          if @post_processing_enabled && (game_texture = @game_render_texture)
-            RL.end_texture_mode
-            apply_post_processing(game_texture)
-          end
+          RL.end_mode_2d
 
           # Draw debug info if enabled
           draw_debug_info if @debug_mode
@@ -190,6 +176,46 @@ module PointClickEngine
           @post_processing_enabled = false
         end
 
+        def ensure_render_textures
+          expected_width = logical_width
+          expected_height = logical_height
+
+          needs_resize = false
+          { @game_render_texture, @effect_render_texture, @scratch_render_texture, @final_render_texture }.each do |texture|
+            if texture.nil? || texture.not_nil!.texture.width != expected_width || texture.not_nil!.texture.height != expected_height
+              needs_resize = true
+              break
+            end
+          end
+
+          setup_render_textures if needs_resize
+        end
+
+        def blit_logical_texture(texture : RL::Texture2D, width : Int32 = logical_width, height : Int32 = logical_height, tint : RL::Color = RL::WHITE)
+          source_rect = RL::Rectangle.new(
+            x: 0.0f32,
+            y: 0.0f32,
+            width: width.to_f32,
+            height: -height.to_f32
+          )
+
+          destination_rect = RL::Rectangle.new(
+            x: 0.0f32,
+            y: 0.0f32,
+            width: logical_width.to_f32,
+            height: logical_height.to_f32
+          )
+
+          RL.draw_texture_pro(
+            texture,
+            source_rect,
+            destination_rect,
+            RL::Vector2.new(x: 0.0f32, y: 0.0f32),
+            0.0f32,
+            tint
+          )
+        end
+
         # Check if a world position is visible
         def visible?(world_x : Float32, world_y : Float32, margin : Float32 = 50.0f32) : Bool
           screen_x = world_x - @camera.position.x
@@ -212,9 +238,21 @@ module PointClickEngine
             RL.unload_render_texture(texture)
             @effect_render_texture = nil
           end
+
+          if texture = @scratch_render_texture
+            RL.unload_render_texture(texture)
+            @scratch_render_texture = nil
+          end
+
+          if texture = @final_render_texture
+            RL.unload_render_texture(texture)
+            @final_render_texture = nil
+          end
         end
 
         private def setup_render_textures
+          cleanup
+
           @game_render_texture = RL.load_render_texture(
             logical_width,
             logical_height
@@ -224,32 +262,15 @@ module PointClickEngine
             logical_width,
             logical_height
           )
-        end
 
-        private def apply_post_processing(source_texture : RL::RenderTexture2D)
-          # For now, just draw the texture without effects
-          # This will be expanded when we implement the effects system
-          source_rect = RL::Rectangle.new(
-            x: 0,
-            y: 0,
-            width: @display.reference_width.to_f32,
-            height: -@display.reference_height.to_f32 # Flip Y
+          @scratch_render_texture = RL.load_render_texture(
+            logical_width,
+            logical_height
           )
 
-          dest_rect = RL::Rectangle.new(
-            x: 0,
-            y: 0,
-            width: @display.reference_width.to_f32,
-            height: @display.reference_height.to_f32
-          )
-
-          RL.draw_texture_pro(
-            source_texture.texture,
-            source_rect,
-            dest_rect,
-            RL::Vector2.new(x: 0, y: 0),
-            0.0f32,
-            RL::WHITE
+          @final_render_texture = RL.load_render_texture(
+            logical_width,
+            logical_height
           )
         end
 

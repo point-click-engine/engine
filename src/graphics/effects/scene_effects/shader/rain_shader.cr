@@ -5,8 +5,6 @@
 
 require "../shader_scene_effect"
 require "../../shader_library"
-require "../../../core/display"
-
 module PointClickEngine
   module Graphics
     module Effects
@@ -31,10 +29,6 @@ module PointClickEngine
                          @wind_strength : Float32 = 0.2f32,
                          duration : Float32 = 0.0f32)
             super(duration)
-
-            if ShaderEffect.gl_context_available?
-              @render_texture = RL.load_render_texture(Display.reference_width, Display.reference_height)
-            end
           end
           
           def vertex_shader_source : String
@@ -204,50 +198,12 @@ module PointClickEngine
             context.active_shader = shader
           end
           
-          def render_scene_with_rain(display : PointClickEngine::Graphics::Display? = nil, &block : -> Nil)
-            return yield unless shader = @shader
-            return yield unless render_texture = @render_texture
-
-            # Render scene to texture
-            RL.begin_texture_mode(render_texture)
-            RL.clear_background(RL::BLANK)
-            yield
-            RL.end_texture_mode
-            
-            # Apply rain shader
-            RL.begin_shader_mode(shader)
-            
-            # Update uniforms
-            update_common_uniforms(shader)
+          protected def update_effect_uniforms(shader : RL::Shader, logical_width : Int32, logical_height : Int32)
             set_shader_value("rainIntensity", @rain_intensity.value.to_f32)
             set_shader_value("windStrength", @wind_strength)
             set_shader_value("rainColor", @rain_color)
             set_shader_value("splashEnabled", @splash_enabled ? 1.0f32 : 0.0f32)
             set_shader_value("depthLayers", @depth_layers.to_f32)
-            
-            # Draw the scene with rain
-            source_rect = RL::Rectangle.new(
-              x: 0,
-              y: 0,
-              width: render_texture.texture.width.to_f32,
-              height: -render_texture.texture.height.to_f32
-            )
-            destination_rect = display ? display.logical_rect : RL::Rectangle.new(
-              x: 0.0f32,
-              y: 0.0f32,
-              width: render_texture.texture.width.to_f32,
-              height: render_texture.texture.height.to_f32
-            )
-            RL.draw_texture_pro(
-              render_texture.texture,
-              source_rect,
-              destination_rect,
-              RL::Vector2.new(x: 0.0f32, y: 0.0f32),
-              0.0f32,
-              RL::WHITE
-            )
-            
-            RL.end_shader_mode
           end
           
           def clone : Effect
@@ -258,10 +214,6 @@ module PointClickEngine
             effect
           end
           
-          # Alias for generic render method
-          def render_scene_with_effect(&block : -> Nil)
-            render_scene_with_rain(&block)
-          end
         end
       end
     end

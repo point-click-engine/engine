@@ -14,7 +14,6 @@ module PointClickEngine
         # Base class for shader-based scene effects
         abstract class ShaderSceneEffect < BaseSceneEffect
           @shader : RL::Shader?
-          @render_texture : RL::RenderTexture2D?
 
           # Common uniform locations
           @time_loc : Int32 = -1
@@ -96,13 +95,7 @@ module PointClickEngine
             end
             
             # Resolution
-            if @resolution_loc >= 0
-              resolution = RL::Vector2.new(
-                x: Core::Display.reference_width.to_f32,
-                y: Core::Display.reference_height.to_f32
-              )
-              RL.set_shader_value(shader, @resolution_loc, pointerof(resolution), RL::ShaderUniformDataType::Vec2)
-            end
+            # Resolution is provided by the frame graph when rendering to a target.
           end
           
           # Helper to set shader values
@@ -146,6 +139,58 @@ module PointClickEngine
             # Default implementation - subclasses should override this
             yield
           end
+
+          def apply_to_render_target(source : RL::RenderTexture2D, destination : RL::RenderTexture2D,
+                                     logical_width : Int32, logical_height : Int32)
+            RL.begin_texture_mode(destination)
+            RL.clear_background(RL::BLANK)
+
+            if shader = @shader
+              RL.begin_shader_mode(shader)
+              update_common_uniforms(shader)
+              set_resolution_uniform(shader, logical_width.to_f32, logical_height.to_f32)
+              update_effect_uniforms(shader, logical_width, logical_height)
+            end
+
+            draw_source_texture(source.texture, logical_width, logical_height)
+
+            RL.end_shader_mode if @shader
+            RL.end_texture_mode
+          end
+
+          protected def update_effect_uniforms(shader : RL::Shader, logical_width : Int32, logical_height : Int32)
+          end
+
+          protected def set_resolution_uniform(shader : RL::Shader, width : Float32, height : Float32)
+            return unless @resolution_loc >= 0
+
+            resolution = RL::Vector2.new(x: width, y: height)
+            RL.set_shader_value(shader, @resolution_loc, pointerof(resolution), RL::ShaderUniformDataType::Vec2)
+          end
+
+          protected def draw_source_texture(texture : RL::Texture2D, logical_width : Int32, logical_height : Int32)
+            source_rect = RL::Rectangle.new(
+              x: 0.0f32,
+              y: 0.0f32,
+              width: logical_width.to_f32,
+              height: -logical_height.to_f32
+            )
+            destination_rect = RL::Rectangle.new(
+              x: 0.0f32,
+              y: 0.0f32,
+              width: logical_width.to_f32,
+              height: logical_height.to_f32
+            )
+
+            RL.draw_texture_pro(
+              texture,
+              source_rect,
+              destination_rect,
+              RL::Vector2.new(x: 0.0f32, y: 0.0f32),
+              0.0f32,
+              RL::WHITE
+            )
+          end
           
           # Cleanup
           def cleanup
@@ -153,12 +198,7 @@ module PointClickEngine
               RL.unload_shader(shader)
               @shader = nil
             end
-            
-            if render_texture = @render_texture
-              RL.unload_render_texture(render_texture)
-              @render_texture = nil
-            end
-            
+
             super
           end
         end

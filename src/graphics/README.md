@@ -13,6 +13,25 @@ The graphics module features:
 - **Shader post-processing** with retro effects
 - **Utility functions** for colors, fonts, palettes, and screenshots
 
+## Runtime Frame Graph
+
+The engine uses one logical frame graph:
+
+1. `WorldSpace`
+   Scene/background/characters render into a logical world render target with camera transforms applied.
+2. `Scene Effect Chain`
+   Shader scene effects transform logical textures. They do not choose final screen rectangles.
+3. `CinematicSpace`
+   Action overlays and sequence presentation render after the world/effect pass.
+4. `UIScreenSpace`
+   Menus, dialogs, inventory, and other UI render in logical UI space with no camera transform.
+5. `ScreenComposite`
+   `Graphics::Display` presents the final logical texture once into the active game-area rect.
+
+Important rule:
+
+- display scaling happens at presentation time, not during scene/effect rendering
+
 ## Quick Start
 
 ```crystal

@@ -97,8 +97,14 @@ module PointClickEngine
           if RL.window_ready?
             RL.poll_input_events
             @fullscreen = RL.window_fullscreen?
-            @window_width = RL.get_screen_width
-            @window_height = RL.get_screen_height
+            if @fullscreen
+              monitor = RL.get_current_monitor
+              @window_width = RL.get_monitor_width(monitor)
+              @window_height = RL.get_monitor_height(monitor)
+            else
+              @window_width = RL.get_screen_width
+              @window_height = RL.get_screen_height
+            end
             calculate_scaling
           end
         end
@@ -230,7 +236,7 @@ module PointClickEngine
           RL.end_mode_2d
         end
 
-        def draw_logical_texture(texture : RL::Texture2D, source_width : Int32? = nil, source_height : Int32? = nil, tint : RL::Color = RL::WHITE)
+        def present(texture : RL::Texture2D, source_width : Int32? = nil, source_height : Int32? = nil, tint : RL::Color = RL::WHITE)
           src_width = (source_width || texture.width).to_f32
           src_height = (source_height || texture.height).to_f32
           source_rect = RL::Rectangle.new(
@@ -248,6 +254,10 @@ module PointClickEngine
             0.0f32,
             tint
           )
+        end
+
+        def draw_logical_texture(texture : RL::Texture2D, source_width : Int32? = nil, source_height : Int32? = nil, tint : RL::Color = RL::WHITE)
+          present(texture, source_width, source_height, tint)
         end
 
         # Draw debug information

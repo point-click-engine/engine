@@ -5,8 +5,6 @@
 
 require "../shader_scene_effect"
 require "../../shader_library"
-require "../../../core/display"
-
 module PointClickEngine
   module Graphics
     module Effects
@@ -47,10 +45,6 @@ module PointClickEngine
                          @darkness_intensity : Float32 = 0.8f32,
                          duration : Float32 = 0.0f32)
             super(duration)
-
-            if ShaderEffect.gl_context_available?
-              @render_texture = RL.load_render_texture(Display.reference_width, Display.reference_height)
-            end
           end
           
           def vertex_shader_source : String
@@ -182,21 +176,7 @@ module PointClickEngine
             @light_sources.clear
           end
           
-          def render_scene_with_darkness(display : PointClickEngine::Graphics::Display? = nil, &block : -> Nil)
-            return yield unless shader = @shader
-            return yield unless render_texture = @render_texture
-            
-            # Render scene to texture
-            RL.begin_texture_mode(render_texture)
-            RL.clear_background(RL::BLANK)
-            yield
-            RL.end_texture_mode
-            
-            # Apply darkness shader
-            RL.begin_shader_mode(shader)
-            
-            # Update uniforms
-            update_common_uniforms(shader)
+          protected def update_effect_uniforms(shader : RL::Shader, logical_width : Int32, logical_height : Int32)
             set_shader_value("darknessType", @darkness_type.value.to_f32)
             set_shader_value("darknessColor", @darkness_color)
             set_shader_value("intensity", @darkness_intensity)
@@ -204,8 +184,8 @@ module PointClickEngine
             set_shader_value("outerRadius", @outer_radius)
             set_shader_value("gradientAngle", @gradient_angle)
             set_shader_value("resolution", RL::Vector2.new(
-              x: render_texture.texture.width.to_f32,
-              y: render_texture.texture.height.to_f32
+              x: logical_width.to_f32,
+              y: logical_height.to_f32
             ))
             
             # Set light sources for multi-light mode
@@ -238,30 +218,6 @@ module PointClickEngine
                 RL.set_shader_value(shader, loc, pointerof(color_vec), RL::ShaderUniformDataType::Vec4)
               end
             end
-            
-            # Draw the scene with darkness
-            source_rect = RL::Rectangle.new(
-              x: 0,
-              y: 0,
-              width: render_texture.texture.width.to_f32,
-              height: -render_texture.texture.height.to_f32
-            )
-            destination_rect = display ? display.logical_rect : RL::Rectangle.new(
-              x: 0.0f32,
-              y: 0.0f32,
-              width: render_texture.texture.width.to_f32,
-              height: render_texture.texture.height.to_f32
-            )
-            RL.draw_texture_pro(
-              render_texture.texture,
-              source_rect,
-              destination_rect,
-              RL::Vector2.new(x: 0.0f32, y: 0.0f32),
-              0.0f32,
-              RL::WHITE
-            )
-            
-            RL.end_shader_mode
           end
           
           def clone : Effect
@@ -274,10 +230,6 @@ module PointClickEngine
             effect
           end
           
-          # Alias for generic render method
-          def render_scene_with_effect(&block : -> Nil)
-            render_scene_with_darkness(&block)
-          end
         end
       end
     end

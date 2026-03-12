@@ -4,6 +4,7 @@ require "./effect"
 require "./object_effects"
 require "./scene_effects/base_scene_effect"
 require "./scene_effects/ambient_effects"
+require "./scene_effects/shader_scene_effect"
 require "./camera_effects"
 
 module PointClickEngine
@@ -214,6 +215,29 @@ module PointClickEngine
               effect.draw_overlay(renderer, logical_width, logical_height)
             end
           end
+        end
+
+        def apply_scene_shader_chain(source : RL::RenderTexture2D,
+                                     scratch_a : RL::RenderTexture2D,
+                                     scratch_b : RL::RenderTexture2D,
+                                     frame_context : PointClickEngine::Graphics::FrameContext) : RL::RenderTexture2D
+          current = source
+          destination = scratch_a
+
+          @scene_effects.active_effects.each do |effect|
+            next unless shader_effect = effect.as?(SceneEffects::ShaderSceneEffect)
+
+            shader_effect.apply_to_render_target(
+              current,
+              destination,
+              frame_context.logical_width,
+              frame_context.logical_height
+            )
+
+            current, destination = destination, current == scratch_a ? scratch_b : scratch_a
+          end
+
+          current
         end
 
         # Get active transition effect if any

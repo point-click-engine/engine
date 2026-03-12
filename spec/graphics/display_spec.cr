@@ -22,5 +22,28 @@ describe PointClickEngine::Graphics::Display do
       game_center.x.should be_close(640.0f32, 0.01f32)
       game_center.y.should be_close(360.0f32, 0.01f32)
     end
+
+    it "refreshes fullscreen dimensions from the monitor instead of the logical render size" do
+      display = PointClickEngine::Graphics::Display.new(1024, 768, 1024, 768)
+
+      RL.init_window(1024, 768, "Display spec")
+      RL.toggle_fullscreen
+      display.refresh_from_window
+      monitor = RL.get_current_monitor
+      monitor_width = RL.get_monitor_width(monitor)
+      monitor_height = RL.get_monitor_height(monitor)
+
+      rect = display.active_game_area_rect
+      display.window_width.should eq(monitor_width)
+      display.window_height.should eq(monitor_height)
+      expected_scale = Math.min(monitor_width.to_f32 / 1024.0f32, monitor_height.to_f32 / 768.0f32)
+      rect.width.should be_close(1024.0f32 * expected_scale, 0.01f32)
+      rect.height.should be_close(768.0f32 * expected_scale, 0.01f32)
+      rect.x.should be_close((monitor_width.to_f32 - rect.width) / 2.0f32, 0.01f32)
+      rect.y.should be_close((monitor_height.to_f32 - rect.height) / 2.0f32, 0.01f32)
+
+      RL.toggle_fullscreen
+      RL.close_window if RL.window_ready?
+    end
   end
 end
