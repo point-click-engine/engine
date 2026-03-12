@@ -509,32 +509,37 @@ module PointClickEngine
             end
           end
 
-          # Load the start scene first so scene-level actions and scripts can initialize.
+          playing_intro = !should_skip_intro && !intro_sequence_name.to_s.empty?
+
+          # Startup cinematics need to survive scene changes, so load the starting scene
+          # immediately and run the sequence on the engine-level runner instead of the scene.
           if scene_name = start_scene_name
-            engine.change_scene_with_transition(scene_name, "fade", 1.0f32)
+            if playing_intro
+              engine.change_scene(scene_name)
+            else
+              engine.change_scene_with_transition(scene_name, "fade", 1.0f32)
+            end
           end
 
-          # If a startup sequence is configured and the scene did not already start one,
-          # run it now.
-          if !should_skip_intro && (sequence_name = intro_sequence_name)
-            if !engine.script_running?
+          if playing_intro
+            if sequence_name = intro_sequence_name
               if runner = engine.scene_manager.get_sequence(sequence_name)
                 engine.run_script(runner)
               end
             end
-          end
-
-          # Play start music
-          if music_name = start_music_name
-            puts "[Engine] Playing start music: #{music_name}"
-            engine.system_manager.audio_manager.try do |audio|
-              audio.play_music(music_name, true)
-              puts "[Engine] Music play command sent"
+          else
+            # Play start music
+            if music_name = start_music_name
+              puts "[Engine] Playing start music: #{music_name}"
+              engine.system_manager.audio_manager.try do |audio|
+                audio.play_music(music_name, true)
+                puts "[Engine] Music play command sent"
+              end
             end
-          end
 
-          # Show opening message and hints
-          setup_ui_hints(engine, ui_config)
+            # Show opening message and hints only when not handing off to the intro cinematic.
+            setup_ui_hints(engine, ui_config)
+          end
 
           # Start the game
           engine.start_game

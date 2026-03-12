@@ -790,7 +790,7 @@ module PointClickEngine
         engine.game_state["callback_stored"].should eq("true")
       end
 
-      it "start_sequence runs the registered sequence through the current scene" do
+      it "start_sequence runs the registered sequence through the engine-level runner" do
         with_test_window do
           engine = PointClickEngine::Core::Engine.new(800, 600, "Test")
           scene = PointClickEngine::Scenes::Scene.new("test")
@@ -803,8 +803,9 @@ module PointClickEngine
           script_engine = Scripting::ScriptEngine.new
           script_engine.execute_script("return start_sequence('intro')").should be_true
 
-          scene.script_runner.should eq(runner)
-          scene.script_running?.should be_true
+          engine.global_script_runner.should eq(runner)
+          engine.script_running?.should be_true
+          scene.script_runner.should be_nil
         end
       end
     end

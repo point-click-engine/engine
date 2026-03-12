@@ -949,7 +949,7 @@ module PointClickEngine
       end
 
       private def sequence_canvas_size(scene : Scenes::Scene) : Tuple(Int32, Int32)?
-        variables = scene.script_runner.try(&.variables)
+        variables = @engine.active_script_runner.try(&.variables) || scene.script_runner.try(&.variables)
         return unless variables
 
         width = yaml_any_to_int(variables["sequence_canvas_width"]?)

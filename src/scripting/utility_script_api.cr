@@ -384,7 +384,8 @@ module PointClickEngine
           end
         end
 
-        # Sequence callback - uses scene's action runner
+        # Sequence callbacks run through the engine-level sequence runner so they can
+        # survive scene changes triggered from YAML or Lua.
         @registry.register_value_function("_engine_start_sequence", 1) do |state|
           if state.size >= 1
             sequence_id = state.to_string(1)
@@ -411,11 +412,7 @@ module PointClickEngine
         # Check if sequence is playing
         @registry.register_value_function("_engine_is_sequence_playing", 1) do |state|
           if engine = Core::Engine.instance
-            if scene = engine.current_scene
-              state.push(scene.script_running?)
-            else
-              state.push(false)
-            end
+            state.push(engine.script_running?)
           else
             state.push(false)
           end
@@ -424,13 +421,7 @@ module PointClickEngine
         # Skip current sequence
         @registry.register_void_function("_engine_skip_sequence") do |state|
           if engine = Core::Engine.instance
-            if scene = engine.current_scene
-              if runner = scene.script_runner
-                if runner.running
-                  scene.skip_script
-                end
-              end
-            end
+            engine.skip_script
           end
         end
 

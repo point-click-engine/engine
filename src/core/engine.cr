@@ -48,6 +48,7 @@ module PointClickEngine
       property quest_manager : QuestManager?
       property timer_manager : TimerManager = TimerManager.new
       property action_overlay_manager : Actions::ActionOverlayManager = Actions::ActionOverlayManager.new
+      getter global_script_runner : Actions::ActionRunner?
 
       # Core components
       @input_handler : EngineComponents::InputHandler?
@@ -229,8 +230,11 @@ module PointClickEngine
         # Update timer manager
         @timer_manager.update(dt)
 
-        # Update scene (includes action sequence updates via script_runner)
+        # Update scene-local sequences first, then any engine-level sequence
+        # that should survive scene changes (startup cinematics, Lua-triggered sequences).
         @current_scene.try(&.update(dt))
+        @global_script_runner.try(&.update(dt))
+        clear_completed_script_runners
         @action_overlay_manager.update(dt)
 
         # Update inventory
@@ -333,6 +337,7 @@ module PointClickEngine
 
         # Draw action-sequence text and other script overlays above sequence visuals.
         @current_scene.try(&.draw_script_overlays)
+        @global_script_runner.try(&.draw)
 
         # Draw scene effect overlays (like transition fade, sparkles)
         # Skip overlays when rendering to texture for shader transitions
@@ -500,7 +505,7 @@ module PointClickEngine
         @system_manager.menu_system.try(&.show)
         @game_started = false
         # Clear current scene and action overlays
-        @current_scene.try(&.stop_script)
+        stop_script
         @action_overlay_manager.clear_all
         @effect_manager.clear_scene_effects
         # Stop music
@@ -610,22 +615,39 @@ module PointClickEngine
 
       # Run an action sequence from an ActionRunner
       def run_script(runner : Actions::ActionRunner)
-        @current_scene.try(&.run_script(runner))
+        if current_runner = @global_script_runner
+          return if current_runner == runner && current_runner.running
+          current_runner.stop if current_runner.running
+        end
+
+        runner.engine = self
+        @global_script_runner = runner
+        runner.play
       end
 
       # Check if an action sequence is running
       def script_running? : Bool
-        @current_scene.try(&.script_running?) || false
+        (@global_script_runner.try(&.running) || false) || (@current_scene.try(&.script_running?) || false)
       end
 
       # Stop current action sequence
       def stop_script
+        @global_script_runner.try(&.stop)
+        @global_script_runner = nil
         @current_scene.try(&.stop_script)
       end
 
       # Skip current action sequence
       def skip_script
-        @current_scene.try(&.skip_script)
+        if runner = @global_script_runner
+          runner.skip if runner.running
+        else
+          @current_scene.try(&.skip_script)
+        end
+      end
+
+      def active_script_runner : Actions::ActionRunner?
+        @global_script_runner || @current_scene.try(&.script_runner)
       end
 
       # Window management
@@ -686,6 +708,12 @@ module PointClickEngine
 
           # Reset timer
           @auto_save_timer = 0.0_f32
+        end
+      end
+
+      private def clear_completed_script_runners
+        if runner = @global_script_runner
+          @global_script_runner = nil if runner.completed
         end
       end
     end

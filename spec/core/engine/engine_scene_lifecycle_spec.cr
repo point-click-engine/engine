@@ -168,6 +168,30 @@ describe PointClickEngine::Core::Engine do
 
         enter_called.should be_true
       end
+
+      it "keeps engine-level sequences running across scene changes" do
+        engine = PointClickEngine::Core::Engine.new(800, 600, "Test Game")
+        engine.init
+
+        start_scene = PointClickEngine::Scenes::Scene.new("start")
+        target_scene = PointClickEngine::Scenes::Scene.new("target")
+
+        engine.add_scene(start_scene)
+        engine.add_scene(target_scene)
+        engine.change_scene("start")
+
+        runner = PointClickEngine::Actions::ActionRunner.new("intro")
+        runner.add(PointClickEngine::Actions::ActionData.create("change_scene", duration: 0.0f32, target: "target"))
+        runner.add(PointClickEngine::Actions::ActionData.new("wait", {} of String => YAML::Any, 1.2f32))
+
+        engine.run_script(runner)
+
+        20.times { engine.update(0.1f32) }
+
+        engine.current_scene.not_nil!.name.should eq("target")
+        runner.completed.should be_true
+        engine.global_script_runner.should be_nil
+      end
     end
 
     context "scene validation during transitions" do
